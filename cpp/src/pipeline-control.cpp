@@ -103,14 +103,15 @@ PipelineControl::~PipelineControl()
 {
 }
 
-void PipelineControl::start()
+void PipelineControl::start(const boost::shared_ptr<NetworkDataAlias>& metadata)
 {
     if (machine_.getState() != kStateIdle)
         throw std::runtime_error("Can't start Pipeline Control as it has been "
                                  "started already. Use reset() and start() to restart.");
 
+    metadata_ = metadata;
     machine_.attach(this);
-    machine_.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
+    machine_.dispatch(boost::make_shared<EventStart>(metadata));
 
     LogDebugC << "started." << std::endl;
 }
@@ -126,7 +127,8 @@ void PipelineControl::segmentArrived(const boost::shared_ptr<WireSegment> &s)
 {
     if (s->getSampleClass() == SampleClass::Key ||
         s->getSampleClass() == SampleClass::Delta ||
-        s->getSegmentClass() == SegmentClass::Meta)
+        s->getSegmentClass() == SegmentClass::Meta || // TODO: do we still need class Meta here?
+        s->getSegmentClass() == SegmentClass::Pointer)
     {
         machine_.dispatch(boost::make_shared<EventSegment>(s));
     }
@@ -183,7 +185,7 @@ void PipelineControl::onStateMachineChangedState(const boost::shared_ptr<const P
         (*statStorage_)[statistics::Indicator::RebufferingsNum]++;
 
         stop();
-        start();
+        start(metadata_);
     }
 }
 

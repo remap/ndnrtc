@@ -50,7 +50,7 @@ class PipelineControl : public NdnRtcComponent,
   public:
     ~PipelineControl();
 
-    void start();
+    void start(const boost::shared_ptr<NetworkDataAlias>&);
     void stop();
 
     void segmentArrived(const boost::shared_ptr<WireSegment> &);
@@ -97,6 +97,9 @@ class PipelineControl : public NdnRtcComponent,
     PipelineControlStateMachine machine_;
     boost::shared_ptr<IInterestControl> interestControl_;
     boost::shared_ptr<IPipeliner> pipeliner_;
+    // TODO: clean this up. bootstrapping process is messed up
+    // making quick fixes for EB workshop.
+    boost::shared_ptr<NetworkDataAlias> metadata_;
 
     PipelineControl(const boost::shared_ptr<statistics::StatisticsStorage> &statStorage,
                     const PipelineControlStateMachine &machine,

@@ -185,7 +185,7 @@ void RemoteVideoStreamImpl::initiateFetching()
 
     setupDecoder();
     setupPipelineControl();
-    pipelineControl_->start();
+    pipelineControl_->start(threadsMeta_[threadName_]);
 }
 
 void RemoteVideoStreamImpl::stopFetching()

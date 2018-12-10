@@ -50,7 +50,7 @@ Pipeliner::~Pipeliner()
 void
 Pipeliner::expressBootstrap(const ndn::Name& threadPrefix)
 {
-    boost::shared_ptr<Interest> interest = nameScheme_->metadataInterest(Name(threadPrefix), interestLifetime_, seqCounter_);
+    boost::shared_ptr<Interest> interest = nameScheme_->bootstrapInterest(Name(threadPrefix), interestLifetime_, seqCounter_);
     request(interest, DeadlinePriority::fromNow(0));
 
     LogDebugC << interest->getName() << std::endl;
@@ -242,12 +242,18 @@ Pipeliner::VideoNameScheme::metadataPrefix(const ndn::Name& threadPrefix)
     return prefix.append(NameComponents::NameComponentMeta);
 }
 
+Name
+Pipeliner::VideoNameScheme::rdrLatestPrefix(const ndn::Name &threadPrefix)
+{
+    return Name(threadPrefix).append(NameComponents::NameComponentRdrLatest);
+}
+
 boost::shared_ptr<ndn::Interest>
-Pipeliner::VideoNameScheme::metadataInterest(const ndn::Name threadPrefix,
+Pipeliner::VideoNameScheme::bootstrapInterest(const ndn::Name threadPrefix,
                                              unsigned int lifetime,
                                              SequenceCounter seqCounter)
 {
-    boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(metadataPrefix(threadPrefix),
+    boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(rdrLatestPrefix(threadPrefix),
                                                                       lifetime));
     interest->setMustBeFresh(true);
     // set "can be prefix"?
@@ -267,12 +273,18 @@ Pipeliner::AudioNameScheme::metadataPrefix(const ndn::Name& threadPrefix)
     return prefix.append(NameComponents::NameComponentMeta).appendVersion(0).appendSegment(0);
 }
 
+Name
+Pipeliner::AudioNameScheme::rdrLatestPrefix(const ndn::Name &threadPrefix)
+{
+    return Name(threadPrefix).append(NameComponents::NameComponentRdrLatest);
+}
+
 boost::shared_ptr<ndn::Interest>
-Pipeliner::AudioNameScheme::metadataInterest(const ndn::Name threadPrefix,
+Pipeliner::AudioNameScheme::bootstrapInterest(const ndn::Name threadPrefix,
                                              unsigned int lifetime,
                                              SequenceCounter seqCounter)
 {
-    boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(metadataPrefix(threadPrefix),
+    boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(rdrLatestPrefix(threadPrefix),
                                                                       lifetime));
     interest->setMustBeFresh(true);
     

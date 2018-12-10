@@ -647,6 +647,7 @@ class WireSegment
     MediaStreamParams::MediaStreamType getStreamType() const { return dataNameInfo_.streamType_; }
     std::string getStreamName() const { return dataNameInfo_.streamName_; }
     bool isMeta() const { return dataNameInfo_.isMeta_; }
+    bool isPointer() const { return dataNameInfo_.segmentClass_ == SegmentClass::Pointer; }
     PacketNumber getSampleNo() const { return dataNameInfo_.sampleNo_; }
     bool isDelta() const { return dataNameInfo_.isDelta_; }
     SampleClass getSampleClass() const { return dataNameInfo_.class_; }

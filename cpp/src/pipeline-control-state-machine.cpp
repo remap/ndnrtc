@@ -8,6 +8,7 @@
 #include "pipeline-control-state-machine.hpp"
 #include <boost/make_shared.hpp>
 #include <boost/assign.hpp>
+#include <ndn-cpp/delegation-set.hpp>
 
 #include "clock.hpp"
 #include "latency-control.hpp"
@@ -43,53 +44,165 @@ template <typename MetadataClass>
 class ReceivedMetadataProcessing
 {
   public:
-    ReceivedMetadataProcessing() {}
+    ReceivedMetadataProcessing() : startOffSeqNums_(0,0), bootstrapSeqNums_(0,0) {}
 
   protected:
     ENABLE_IF(MetadataClass, VideoThreadMeta)
-    bool processMetadata(boost::shared_ptr<VideoThreadMeta> metadata,
-                         boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
+    bool processPointer(const boost::shared_ptr<const WireSegment>& segment,
+                        const boost::shared_ptr<MetadataClass>& metadata,
+                        boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
     {
-        if (metadata)
+        /*
+        ndn::Name frameName;
+        frameName.wireDecode(segment->getData()->getContent());
+
+        try 
         {
-            unsigned char gopPos = metadata->getGopPos();
-            unsigned int gopSize = metadata->getCoderParams().gop_;
-            PacketNumber deltaToFetch, keyToFetch;
-            double initialDrd = ctrl->drdEstimator_->getOriginalEstimation();
-            unsigned int pipelineInitial =
+            PacketNumber latestSeq = frameName[-2].toSequenceNumber();
+            SampleClass sampleClass = 
+                (frameName[-3] == ndn::Name::Component(NameComponents::NameComponentKey) ? SampleClass::Key : SampleClass::Delta);
+
+
+
+            if (sampleClass == SampleClass::Delta)
+            {
+                unsigned int gopSize = metadata->getCoderParams().gop_;
+                unsigned char gopPos = latestSeq % gopSize;
+
+                double initialDrd = ctrl->drdEstimator_->getOriginalEstimation();
+                unsigned int pipelineInitial =
                 ctrl->interestControl_->getCurrentStrategy()->calculateDemand(metadata->getRate(),
                                                                               initialDrd, initialDrd * 0.05);
 
+                LOG_USING(ctrl->pipeliner_, ndnlog::NdnLoggerLevelDebug)
+                    << "received DELTA _latest pointer. " 
+                    << latestSeq
+                    << " gop pos " << (int)gopPos
+                    << " gop size " << gopSize
+                    << " rate " << metadata->getRate()
+                    << " drd " << initialDrd
+                    << std::endl;
+
+                // add some smart logic about what to fetch next...
+                if (gopPos < ((float)gopSize / 2.))
+                {
+                    startOffSeqNums_.first = latestSeq + pipelineInitial;
+                    // now we need to determine sequence number of delta from which we need to start fetching
+                    // for this case, it will be the beginning of the GOP
+                    PacketNumber firstDeltaInGop = (gopPos ? latestSeq - (gopPos - 1) : latestSeq);
+                    bootstrapSeqNums_.first = firstDeltaInGop;
+
+                    pipelineInitial += gopPos;
+                }
+                else
+                {
+                    startOffSeqNums_.first = pipelineInitial < (gopSize-gopPos) ? -1 : latestSeq + pipelineInitial;
+                    bootstrapSeqNums_.first = latestSeq;
+
+                    // if latest delta close to the end of GOP, bootstrap and play from the next Key frame
+                    startOffSeqNums_.second += 1;
+                    bootstrapSeqNums_.second += 1;
+
+                    pipelineInitial += (gopSize - gopPos);
+                }
+
+                ctrl->interestControl_->initialize(metadata->getRate(), pipelineInitial);
+            }
+            else
+            {
+                LOG_USING(ctrl->pipeliner_, ndnlog::NdnLoggerLevelDebug)
+                    << "received KEY _latest pointer. " 
+                    << latestSeq
+                    << std::endl;
+
+                startOffSeqNums_.second += latestSeq;
+                bootstrapSeqNums_.second += latestSeq;
+            }
+            
+            if (nReceived_ == 2) // when both latest pointers received
+            {
+                LOG_USING(ctrl->playoutControl_, ndnlog::NdnLoggerLevelInfo)
+                    << "bootstrapping with " 
+                    << bootstrapSeqNums_.first << " (delta) "
+                    << bootstrapSeqNums_.second << " (key) "
+                    << "playback start off sequence numbers: "
+                    << startOffSeqNums_.first << " (delta) "
+                    << startOffSeqNums_.second << " (key)"
+                    << std::endl;
+
+                ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().deltaAvgSegNum_,
+                                                               SampleClass::Delta, SegmentClass::Data);
+                ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().deltaAvgParitySegNum_,
+                                                               SampleClass::Delta, SegmentClass::Parity);
+                ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().keyAvgSegNum_,
+                                                               SampleClass::Key, SegmentClass::Data);
+                ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().keyAvgParitySegNum_,
+                                                               SampleClass::Key, SegmentClass::Parity);
+
+                ctrl->pipeliner_->setSequenceNumber(bootstrapSeqNums_.first, SampleClass::Delta);
+                ctrl->pipeliner_->setSequenceNumber(bootstrapSeqNums_.second, SampleClass::Key);
+                ctrl->pipeliner_->setNeedSample(SampleClass::Key);
+                ctrl->pipeliner_->fillUpPipeline(ctrl->threadPrefix_);
+
+                return true;
+            }
+        }
+        catch (std::exception &e)
+        {
+            LOG_USING(ctrl->pipeliner_, ndnlog::NdnLoggerLevelError)
+                << "Exception while processing _latest pointer (" << frameName << "): "
+                << e.what() << std::endl;
+        }
+
+        return false;
+            
+            PacketNumber frameToFetch;
+
             LOG_USING(ctrl->pipeliner_, ndnlog::NdnLoggerLevelDebug)
-                << "received metadata. delta seq " << metadata->getSeqNo().first 
-                << " key seq " << metadata->getSeqNo().second
+                << "received latest pointer. " 
+                << (sampleClass == SampleClass::Key ? "KEY " : "DELTA ") 
+                << latestSeq
                 << " gop pos " << (int)gopPos
                 << " gop size " << gopSize
                 << " rate " << metadata->getRate()
                 << " drd " << initialDrd
                 << std::endl;
+            
+            // TODO: Calculate GOP POS... as we can't rely on metadata now
 
             // add some smart logic about what to fetch next...
             if (gopPos < ((float)gopSize / 2.))
             {
                 // initial pipeline size helps us determine from which delta frame we need to start playback
-                startOffSeqNums_.first = metadata->getSeqNo().first + pipelineInitial;
-                startOffSeqNums_.second = metadata->getSeqNo().second;
+                if (sampleClass == SampleClass::Key)
+                {
+                    startOffSeqNums_.second = latestSeq;
+                    keyToFetch = latestSeq;
+                }
+                else
+                {
+                    startOffSeqNums_.first = latestSeq + pipelineInitial;
+                    // now we need to determine sequence number of delta from which we need to start fetching
+                    // for this case, it will be the beginning of the GOP
+                    PacketNumber firstDeltaInGop = (gopPos ? latestSeq - (gopPos - 1) : latestSeq);
+                    deltaToFetch = firstDeltaInGop;
+                }
 
-                // now we need to determine sequence number of delta from which we need to start fetching
-                // for this case, it will be the beginning of the GOP
-                PacketNumber firstDeltaInGop = (gopPos ? metadata->getSeqNo().first - (gopPos - 1) : metadata->getSeqNo().first);
-                deltaToFetch = firstDeltaInGop;
-                keyToFetch = metadata->getSeqNo().second;
                 pipelineInitial += gopPos;
             }
             else
             {
-                startOffSeqNums_.first = pipelineInitial < (gopSize-gopPos) ? -1 : metadata->getSeqNo().first + pipelineInitial;
-                startOffSeqNums_.second = metadata->getSeqNo().second + 1;
-                // should fetch next key
-                deltaToFetch = metadata->getSeqNo().first;
-                keyToFetch = metadata->getSeqNo().second + 1;
+                if (sampleClass == SampleClass::Key)
+                {
+                    startOffSeqNums_.second = latestSeq + 1;
+                    keyToFetch = latestSeq + 1;
+                }
+                else
+                {
+                    startOffSeqNums_.first = pipelineInitial < (gopSize-gopPos) ? -1 : latestSeq + pipelineInitial;
+                    deltaToFetch = latestSeq;
+                }
+                
                 pipelineInitial += (gopSize - gopPos);
             }
 
@@ -119,14 +232,107 @@ class ReceivedMetadataProcessing
 
             return true;
         }
+        catch (std::exception &e)
+        {
+            LOG_USING(ctrl->pipeliner_, ndnlog::NdnLoggerLevelError)
+                << "Exception while processing _latest pointer (" << frameName << "): "
+                << e.what() << std::endl;
+        }
 
         return false;
+        */
+
+        ndn::DelegationSet pointers;
+        pointers.wireDecode(segment->getData()->getContent());
+        ndn::Name deltaFrameName = pointers.get(0).getName();
+        ndn::Name keyFrameName = pointers.get(1).getName();
+
+        if (!deltaFrameName[-1].isSequenceNumber() ||
+            !keyFrameName[-1].isSequenceNumber())
+        {
+            LOG_USING(ctrl->pipeliner_, ndnlog::NdnLoggerLevelError)
+                << "malformed _latest pointer(s): " << deltaFrameName
+                << " " << keyFrameName << std::endl;
+            return false;
+        }
+
+        PacketNumber latestDelta = deltaFrameName[-1].toSequenceNumber();
+        PacketNumber latestKey = keyFrameName[-1].toSequenceNumber();
+
+        unsigned int gopSize = metadata->getCoderParams().gop_;
+        unsigned char gopPos = latestDelta % gopSize;
+        
+        PacketNumber latestPointer, deltaToFetch, keyToFetch;
+        double initialDrd = ctrl->drdEstimator_->getOriginalEstimation();
+        unsigned int pipelineInitial =
+            ctrl->interestControl_->getCurrentStrategy()->calculateDemand(metadata->getRate(),
+                                                                          initialDrd, initialDrd * 0.05);
+
+        LOG_USING(ctrl->pipeliner_, ndnlog::NdnLoggerLevelDebug)
+            << "received metadata. delta seq " << latestDelta
+            << " key seq " << latestKey
+            << " gop pos " << (int)gopPos
+            << " gop size " << gopSize
+            << " rate " << metadata->getRate()
+            << " drd " << initialDrd
+            << std::endl;
+
+        // add some smart logic about what to fetch next...
+        if (gopPos < ((float)gopSize / 2.))
+        {
+            // initial pipeline size helps us determine from which delta frame we need to start playback
+            startOffSeqNums_.first = latestDelta + pipelineInitial;
+            startOffSeqNums_.second = latestKey;
+
+            // now we need to determine sequence number of delta from which we need to start fetching
+            // for this case, it will be the beginning of the GOP
+            PacketNumber firstDeltaInGop = (gopPos ? latestDelta - (gopPos - 1) : latestDelta);
+            deltaToFetch = firstDeltaInGop;
+            keyToFetch = latestKey;
+            pipelineInitial += gopPos;
+        }
+        else
+        {
+            startOffSeqNums_.first = pipelineInitial < (gopSize-gopPos) ? -1 : latestDelta + pipelineInitial;
+            startOffSeqNums_.second = latestKey + 1;
+            // should fetch next key
+            deltaToFetch = latestDelta;
+            keyToFetch = latestKey + 1;
+            pipelineInitial += (gopSize - gopPos);
+        }
+
+        LOG_USING(ctrl->playoutControl_, ndnlog::NdnLoggerLevelInfo)
+            << "playback start off sequence numbers: "
+            << startOffSeqNums_.first << " (delta) "
+            << startOffSeqNums_.second << " (key)"
+            << std::endl;
+
+        ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().deltaAvgSegNum_,
+                                                       SampleClass::Delta, SegmentClass::Data);
+        ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().deltaAvgParitySegNum_,
+                                                       SampleClass::Delta, SegmentClass::Parity);
+        ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().keyAvgSegNum_,
+                                                       SampleClass::Key, SegmentClass::Data);
+        ctrl->sampleEstimator_->bootstrapSegmentNumber(metadata->getSegInfo().keyAvgParitySegNum_,
+                                                       SampleClass::Key, SegmentClass::Parity);
+
+        ctrl->interestControl_->initialize(metadata->getRate(), pipelineInitial);
+        ctrl->pipeliner_->setSequenceNumber(deltaToFetch, SampleClass::Delta);
+        ctrl->pipeliner_->setSequenceNumber(keyToFetch, SampleClass::Key);
+        ctrl->pipeliner_->setNeedSample(SampleClass::Key);
+        ctrl->pipeliner_->fillUpPipeline(ctrl->threadPrefix_);
+
+        bootstrapSeqNums_.first = deltaToFetch;
+        bootstrapSeqNums_.second = keyToFetch;
+
+        return true;
     }
 
     // TODO: update code for audio too
     ENABLE_IF(MetadataClass, AudioThreadMeta)
-    bool processMetadata(boost::shared_ptr<AudioThreadMeta> metadata,
-                         boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
+    bool processPointer(const boost::shared_ptr<const WireSegment>& segment,
+                        const boost::shared_ptr<MetadataClass>& metadata,
+                        boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
     {
         if (metadata)
         {
@@ -150,13 +356,6 @@ class ReceivedMetadataProcessing
         }
 
         return false;
-    }
-
-    boost::shared_ptr<MetadataClass> extractMetadata(boost::shared_ptr<const WireSegment> segment)
-    {
-        ImmutableHeaderPacket<DataSegmentHeader> packet(segment->getData()->getContent());
-        NetworkData nd(packet.getPayload().size(), packet.getPayload().data());
-        return boost::make_shared<MetadataClass>(boost::move(nd));
     }
 
   protected:
@@ -192,7 +391,7 @@ class Idle : public PipelineControlState
     Idle(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
 
     std::string str() const override { return kStateIdle; }
-    void enter() override
+    void enter(const boost::shared_ptr<const PipelineControlEvent> &ev) override
     {
         ctrl_->buffer_->reset();
         ctrl_->pipeliner_->reset();
@@ -225,28 +424,32 @@ class BootstrappingT : public PipelineControlState,
     BootstrappingT(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
 
     std::string str() const override { return kStateBootstrapping; }
-    void enter() override { askMetadata(); }
+    void enter(const boost::shared_ptr<const PipelineControlEvent> &ev) override {
+        boost::shared_ptr<const EventStart> s = boost::dynamic_pointer_cast<const EventStart>(ev);
+        metadata_ = boost::make_shared<MetadataClass>(s->getMetadata()->data());
+        askLatest(); 
+    }
     int toInt() override { return (int)StateId::Bootstrapping; }
 
   protected:
     std::string onTimeout(const boost::shared_ptr<const EventTimeout> &ev) override
     {
         if (ev->getInfo().isMeta_)
-            askMetadata();
+            askLatest();
         return str();
     }
 
     std::string onNack(const boost::shared_ptr<const EventNack> &ev) override
     {
         if (ev->getInfo().isMeta_)
-            askMetadata();
+            askLatest();
         return str();
     }
 
     std::string onSegment(const boost::shared_ptr<const EventSegment> &ev) override
     {
-        if (ev->getSegment()->isMeta())
-            return receivedMetadata(boost::dynamic_pointer_cast<const EventSegment>(ev));
+        if (ev->getSegment()->isPointer())
+            return receivedLatestPointer(boost::dynamic_pointer_cast<const EventSegment>(ev));
         else
         { // process frame segments
             // check if we are receiving expected frames
@@ -269,16 +472,15 @@ class BootstrappingT : public PipelineControlState,
         }
     }
 
-    void askMetadata()
+    void askLatest()
     {
         // ctrl_->pipeliner_->setNeedMetadata();
         ctrl_->pipeliner_->expressBootstrap(ctrl_->threadPrefix_);
     }
 
-    std::string receivedMetadata(const boost::shared_ptr<const EventSegment> &ev)
+    std::string receivedLatestPointer(const boost::shared_ptr<const EventSegment> &ev)
     {
-        metadata_ = ReceivedMetadataProcessing<MetadataClass>::extractMetadata(ev->getSegment());
-        ReceivedMetadataProcessing<MetadataClass>::processMetadata(metadata_, ctrl_);
+        ReceivedMetadataProcessing<MetadataClass>::processPointer(ev->getSegment(), metadata_, ctrl_);
 
         return kStateBootstrapping;
     }
@@ -367,7 +569,7 @@ class SeedBootstrapping : public PipelineControlState {
     {}
 
     std::string str() const override { return kStateBootstrapping; }
-    void enter() override { askSeedFrame(); }
+    void enter(const boost::shared_ptr<const PipelineControlEvent> &ev) override { askSeedFrame(); }
     int toInt() override { return (int)StateId::Bootstrapping; }
 
   protected:
@@ -444,7 +646,7 @@ class Adjusting : public PipelineControlState
     Adjusting(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
 
     std::string str() const override { return kStateAdjusting; }
-    void enter() override;
+    void enter(const boost::shared_ptr<const PipelineControlEvent> &ev) override;
     int toInt() override { return (int)StateId::Adjusting; }
 
   private:
@@ -576,7 +778,7 @@ PipelineControlStateMachine::PipelineControlStateMachine(const boost::shared_ptr
     assert(ppCtrl_->latencyControl_.get());
     assert(ppCtrl_->playoutControl_.get());
 
-    currentState_->enter();
+    currentState_->enter(boost::shared_ptr<const PipelineControlEvent>());
     description_ = "state-machine";
 
     // add indirection to avoid confusion in C++11 (Ubuntu)
@@ -667,7 +869,7 @@ void PipelineControlStateMachine::switchToState(const boost::shared_ptr<Pipeline
 
     currentState_->exit();
     currentState_ = state;
-    currentState_->enter();
+    currentState_->enter(event);
 
     for (auto o : observers_)
         o->onStateMachineChangedState(event, currentState_->str());
@@ -699,7 +901,7 @@ PipelineControlState::dispatchEvent(const boost::shared_ptr<const PipelineContro
 }
 
 //******************************************************************************
-void Adjusting::enter()
+void Adjusting::enter(const boost::shared_ptr<const PipelineControlEvent> &ev)
 {
     pipelineLowerLimit_ = ctrl_->interestControl_->pipelineLimit();
 }

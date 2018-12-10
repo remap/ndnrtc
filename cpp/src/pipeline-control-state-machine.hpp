@@ -83,17 +83,17 @@ class EventSegment : public PipelineControlEvent
     boost::shared_ptr<const WireSegment> segment_;
 };
 
-// class EventInit : public PipelineControlEvent
-// {
-//   public:
-//     EventInit(const boost::shared_ptr<NetworkDataAlias> &data) 
-//         : PipelineControlEvent(PipelineControlEvent::Init), data_(data){};
+class EventStart : public PipelineControlEvent
+{
+   public:
+     EventStart(const boost::shared_ptr<NetworkDataAlias> &data) 
+         : PipelineControlEvent(PipelineControlEvent::Start), data_(data){};
 
-//     const boost::shared_ptr<NetworkDataAlias> getNetworkData() const { return data_; }
+     const boost::shared_ptr<NetworkDataAlias> getMetadata() const { return data_; }
 
-//   private:
-//     boost::shared_ptr<NetworkDataAlias> data_;
-// };
+   private:
+     boost::shared_ptr<NetworkDataAlias> data_;
+};
 
 class EventTimeout : public PipelineControlEvent
 {
@@ -251,8 +251,9 @@ class PipelineControlState
 
     /**
      * Called when state is entered
+     * @param ev Event that caused entering this state
      */
-    virtual void enter() {}
+    virtual void enter(const boost::shared_ptr<const PipelineControlEvent> &ev) {}
 
     /**
      * Called when state is exited

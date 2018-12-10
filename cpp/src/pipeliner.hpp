@@ -153,7 +153,8 @@ namespace ndnrtc {
         public:
             virtual ndn::Name samplePrefix(const ndn::Name&, SampleClass) = 0;
             virtual ndn::Name metadataPrefix(const ndn::Name&) = 0;
-            virtual boost::shared_ptr<ndn::Interest> metadataInterest(const ndn::Name,
+            virtual ndn::Name rdrLatestPrefix(const ndn::Name&) = 0;
+            virtual boost::shared_ptr<ndn::Interest> bootstrapInterest(const ndn::Name,
                                                                       unsigned int,
                                                                       SequenceCounter) = 0;
         };
@@ -162,7 +163,8 @@ namespace ndnrtc {
         public:
             ndn::Name samplePrefix(const ndn::Name&, SampleClass);
             ndn::Name metadataPrefix(const ndn::Name&);
-            boost::shared_ptr<ndn::Interest> metadataInterest(const ndn::Name,
+            ndn::Name rdrLatestPrefix(const ndn::Name&);
+            boost::shared_ptr<ndn::Interest> bootstrapInterest(const ndn::Name,
                                                               unsigned int,
                                                               SequenceCounter);
         };
@@ -171,7 +173,8 @@ namespace ndnrtc {
         public:
             ndn::Name samplePrefix(const ndn::Name&, SampleClass);
             ndn::Name metadataPrefix(const ndn::Name&);
-            boost::shared_ptr<ndn::Interest> metadataInterest(const ndn::Name,
+            ndn::Name rdrLatestPrefix(const ndn::Name&);
+            boost::shared_ptr<ndn::Interest> bootstrapInterest(const ndn::Name,
                                                               unsigned int,
                                                               SequenceCounter);
         };

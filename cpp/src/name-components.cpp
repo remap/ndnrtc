@@ -252,6 +252,13 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
                 return true;
             return false;
         }
+        else if (name[idx-1] == Name::Component(NameComponents::NameComponentRdrLatest))
+        {
+            info.segmentClass_ = SegmentClass::Pointer;
+            if (idx < name.size())
+                info.segmentVersion_ = name[idx].toVersion();
+            return true;
+        }
 
         if (name[idx-1] == Name::Component(NameComponents::NameComponentDelta) || 
             name[idx-1] == Name::Component(NameComponents::NameComponentKey))
@@ -262,15 +269,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
             try{
                 if (name.size() > idx)
                 {
-                    if (name[idx] == Name::Component(NameComponents::NameComponentRdrLatest))
-                    {
-                        info.segmentClass_ = SegmentClass::Pointer;
-                        if (idx+1 < name.size())
-                            info.segmentVersion_ = name[idx+1].toVersion();
-                        return true;
-                    }
-                    else
-                        info.sampleNo_ = (PacketNumber)name[idx++].toSequenceNumber();
+                    info.sampleNo_ = (PacketNumber)name[idx++].toSequenceNumber();
                 }
                 else
                 {
@@ -376,6 +375,13 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
             if (name.size() > idx+1 && extractMeta(name.getSubName(idx+1), info))
                 return true;
             return false;
+        }
+        else if (name[idx-1] == Name::Component(NameComponents::NameComponentRdrLatest))
+        {
+            info.segmentClass_ = SegmentClass::Pointer;
+            if (idx < name.size())
+                info.segmentVersion_ = name[idx].toVersion();
+            return true;
         }
 
         info.isDelta_ = true;

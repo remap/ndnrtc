@@ -248,19 +248,13 @@ TEST(TestNameComponents, TestNameFiltering)
     }
     {
         NamespaceInfo info;
-        EXPECT_TRUE(NameComponents::extractInfo("/hello-ndn/client0/ndnrtc/%FD%03/video/camera/%FC%00%00%01g%97%018l/320p/k/_latest/%FD%06%E1", info));
+        EXPECT_TRUE(NameComponents::extractInfo("/ndnrtc-loopback/producer/ndnrtc/%FD%03/video/camera/%FC%00%00%01g%9A%0F%86%0C/320p/_latest/%FD%05%87", info));
         EXPECT_EQ(info.segmentClass_, SegmentClass::Pointer);
         EXPECT_NE(info.segmentVersion_, 0);
     }
     {
         NamespaceInfo info;
-        EXPECT_TRUE(NameComponents::extractInfo("/hello-ndn/client0/ndnrtc/%FD%03/video/camera/%FC%00%00%01g%97%018l/320p/d/_latest/%FD%06%E1", info));
-        EXPECT_EQ(info.segmentClass_, SegmentClass::Pointer);
-        EXPECT_NE(info.segmentVersion_, 0);
-    }
-    {
-        NamespaceInfo info;
-        EXPECT_TRUE(NameComponents::extractInfo("/hello-ndn/client0/ndnrtc/%FD%03/audio/mic/%FC%00%00%01g%97%018l/pcmu/_latest/%FD%06%E1", info));
+        EXPECT_TRUE(NameComponents::extractInfo("/ndnrtc-loopback/producer/ndnrtc/%FD%03/audio/mic/%FC%00%00%01g%9A%0F%86%0C/pcmu/_latest/%FD%05%87", info));
         EXPECT_EQ(info.segmentClass_, SegmentClass::Pointer);
         EXPECT_NE(info.segmentVersion_, 0);
     }
