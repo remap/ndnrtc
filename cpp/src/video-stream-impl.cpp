@@ -367,6 +367,7 @@ VideoStreamImpl::getCurrentSyncList(bool forKey)
     return syncList;
 }
 
+// publishes thread-level meta
 bool VideoStreamImpl::updateMeta()
 {
     boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
@@ -376,6 +377,7 @@ bool VideoStreamImpl::updateMeta()
         Name metaName(streamPrefix_);
         metaName.append(it.first).append(NameComponents::NameComponentMeta)
                 .appendVersion(it.second->getVersionNumber());
+
         metadataPublisher_->publish(metaName, it.second->getMeta());
 
         LogDebugC << "published meta: seginfo " 
@@ -388,10 +390,31 @@ bool VideoStreamImpl::updateMeta()
                   << " gop pos " << (int)it.second->getMeta().getGopPos()
                   << std::endl;
 
+        publishRdrPointer(it.first, it.second, false);
+        publishRdrPointer(it.first, it.second, true);
+
         (*statStorage_)[Indicator::CurrentProducerFramerate] = it.second->getRate();
     }
 
     return false;
+}
+
+void VideoStreamImpl::publishRdrPointer(const std::string& thread,
+                                        boost::shared_ptr<MetaKeeper> metaKeeper,
+                                        bool isKey)
+{
+    Name framePrefix(Name(streamPrefix_)
+                        .append(thread)
+                        .append(isKey ? NameComponents::NameComponentKey : NameComponents::NameComponentDelta));
+    boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(framePrefix)
+                                                .append(NameComponents::NameComponentRdrLatest)
+                                                .appendVersion(metaKeeper->getVersionNumber()));
+    PacketNumber seqNo = (isKey ? metaKeeper->getMeta().getSeqNo().second : metaKeeper->getMeta().getSeqNo().first);
+    Name pointer(Name(framePrefix).appendSequenceNumber(seqNo));
+    d->setContent(pointer.wireEncode());
+    metadataPublisher_->publish(d);
+
+    LogTraceC << d->getName() << " -> " << pointer << std::endl;  
 }
 
 //******************************************************************************

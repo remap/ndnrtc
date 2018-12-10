@@ -81,6 +81,18 @@ class PacketPublisher : public NdnRtcComponent
         assert(settings_.statStorage_);
     }
 
+    // just sign, set freshness period & publish a data packet
+    void publish(boost::shared_ptr<ndn::Data>& d, int freshnessMs = -1) 
+    {
+        freshnessMs = (freshnessMs == -1 ? settings_.freshnessPeriodMs_ : freshnessMs);
+        d->getMetaInfo().setFreshnessPeriod(freshnessMs);
+        sign(d);
+        settings_.memoryCache_->add(*d);
+
+        // shall increment counter?
+        (*settings_.statStorage_)[statistics::Indicator::PublishedSegmentsNum]++;
+    }
+
     PublishedDataPtrVector publish(const ndn::Name &name, const MutableNetworkData &data, 
                                    int freshnessMs = -1,
                                    bool forcePitClean = false, bool banPitClean = false)

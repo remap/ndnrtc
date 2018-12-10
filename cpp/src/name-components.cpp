@@ -30,6 +30,7 @@ const string NameComponents::NameComponentDelta = "d";
 const string NameComponents::NameComponentKey = "k";
 const string NameComponents::NameComponentParity = "_parity";
 const string NameComponents::NameComponentManifest = "_manifest";
+const string NameComponents::NameComponentRdrLatest = "_latest";
 
 #include <bitset>
 
