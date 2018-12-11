@@ -64,7 +64,8 @@ namespace ndnrtc {
 
             void fetchStreamMeta();
             void fetchThreadMeta();
-            void initiateStreamFetching(const Blob& meta);
+            void bootstrap();
+            void initiateStreamFetching(); //const Blob& meta);
             void requestFrame(const NamespaceInfo& frameInfo);
             void requestNextFrame(const NamespaceInfo& fetchedFrame);
 
@@ -123,6 +124,15 @@ StreamRecorderImpl::start(const StreamRecorder::FetchSettings& settings)
     isFetching_ = true;
     fetchStreamMeta();
     fetchThreadMeta();
+
+    if (settings_.seedFrame_)
+    {
+        fetchIndex_.first = 0;
+        fetchIndex_.second = settings_.seedFrame_;
+        initiateStreamFetching();
+    }
+    else
+        bootstrap();
 }
 
 void 
@@ -139,7 +149,7 @@ StreamRecorderImpl::fetchStreamMeta(){
     Interest i(ninfo_.getPrefix(prefix_filter::Stream).append(NameComponents::NameComponentMeta), settings_.lifetime_);
     boost::shared_ptr<StreamRecorderImpl> me = dynamic_pointer_cast<StreamRecorderImpl>(shared_from_this());
 
-    // LogDebugC << "fetching " << i.getName() << endl;
+    LogTraceC << "fetching " << i.getName() << endl;
 
     SegmentFetcher::fetch(*face_, i, keyChain_.get(), 
                         [me,this](const Blob &content,
@@ -147,7 +157,7 @@ StreamRecorderImpl::fetchStreamMeta(){
                                   const vector<boost::shared_ptr<Data>>& contentData){
                                     for (auto d:contentData)
                                     {
-                                        // LogTraceC << "store " << d->getName() << endl; 
+                                        LogTraceC << "store " << d->getName() << endl; 
                                         store(d);
                                     }
                                     stats_.streamMetaStored_++;
@@ -169,7 +179,7 @@ StreamRecorderImpl::fetchThreadMeta(){
     Interest i(ninfo_.getPrefix(prefix_filter::ThreadNT).append(NameComponents::NameComponentMeta), settings_.lifetime_);
     boost::shared_ptr<StreamRecorderImpl> me = dynamic_pointer_cast<StreamRecorderImpl>(shared_from_this());
 
-    // LogDebugC << "fetching " << i.getName() << endl;
+    LogTraceC << "fetching " << i.getName() << endl;
 
     SegmentFetcher::fetch(*face_, i, keyChain_.get(), 
                         [me,this](const Blob &content,
@@ -177,15 +187,15 @@ StreamRecorderImpl::fetchThreadMeta(){
                                   const vector<boost::shared_ptr<Data>>& contentData){
                                     for (auto d:contentData)
                                     {
-                                        // LogTraceC << "store " << d->getName() << endl; 
+                                        LogTraceC << "store " << d->getName() << endl; 
                                         store(d);
                                     }
                                     stats_.threadMetaStored_++;
 
                                     if (isFetching_)
                                     {
-                                        if (!isFetchingStream_)
-                                            initiateStreamFetching(content);
+                                        // if (!isFetchingStream_)
+                                        //     initiateStreamFetching(content);
                                         face_->callLater(settings_.threadMetaFetchInterval_, 
                                                          boost::bind(&StreamRecorderImpl::fetchThreadMeta, me));
                                     }
@@ -199,35 +209,73 @@ StreamRecorderImpl::fetchThreadMeta(){
 }
 
 void
-StreamRecorderImpl::initiateStreamFetching(const Blob &metaBlob)
+StreamRecorderImpl::bootstrap()
+{
+    // fetch _latest pointers
+    Interest i(ninfo_.getPrefix(prefix_filter::ThreadNT).append(NameComponents::NameComponentRdrLatest), settings_.lifetime_);
+    boost::shared_ptr<StreamRecorderImpl> me = dynamic_pointer_cast<StreamRecorderImpl>(shared_from_this());
+
+    LogTraceC << i.getName() << std::endl;
+
+    face_->expressInterest(i,
+        [me,this](const boost::shared_ptr<const Interest>& interest,
+                  const boost::shared_ptr<Data>& data)
+        {
+            DelegationSet pointers;
+            pointers.wireDecode(data->getContent());
+
+            Name deltaFrameName = pointers.get(0).getName();
+            Name keyFrameName = pointers.get(1).getName();
+
+            if (!deltaFrameName[-1].isSequenceNumber() ||
+                !keyFrameName[-1].isSequenceNumber())
+            {
+                LogErrorC << "malformed _latest pointer(s): " << deltaFrameName
+                          << " " << keyFrameName << std::endl;
+                if (isFetching_)
+                    me->bootstrap();
+            }
+            else
+            {
+                fetchIndex_.first = deltaFrameName[-1].toSequenceNumber();
+                fetchIndex_.second = keyFrameName[-1].toSequenceNumber();
+
+                LogTraceC << "received _latest pointers, delta - " 
+                          << fetchIndex_.first
+                          << ", key - " << fetchIndex_.second << std::endl;
+
+                initiateStreamFetching();
+            }
+        },
+        [me,this](const boost::shared_ptr<const Interest>& interest)
+        {
+            LogErrorC << "failed to bootstrap from " << interest->getName() << std::endl;
+            if (isFetching_)
+                me->bootstrap();
+        });
+}
+
+void
+StreamRecorderImpl::initiateStreamFetching()
 {
     isFetchingStream_ = true;
-    fetchIndex_.first = settings_.seedFrame_;
-    fetchIndex_.second = 0;
 
-    if (fetchIndex_.first == 0)
+    if (fetchIndex_.second != settings_.seedFrame_)
     {
         // extract latest key and delta numbers from metadata
         if (ninfo_.streamType_ == MediaStreamParams::MediaStreamTypeVideo)
         {
-            ImmutableHeaderPacket<DataSegmentHeader> packet(metaBlob);
-            NetworkData nd(packet.getPayload().size(), packet.getPayload().data());
-            VideoThreadMeta threadMeta(boost::move(nd));
-
-            fetchIndex_.first = threadMeta.getSeqNo().second;
-            fetchIndex_.second = threadMeta.getSeqNo().first;
-
             NamespaceInfo frameInfo = ninfo_;
             frameInfo.class_ = SampleClass::Key;
-            frameInfo.sampleNo_ = fetchIndex_.first;
-            fetchIndex_.first++;
+            frameInfo.sampleNo_ = fetchIndex_.second;
+            fetchIndex_.second++;
             requestFrame(frameInfo);
 
             while (pipelineReserve_)
             {
                 frameInfo.class_ = SampleClass::Delta;
-                frameInfo.sampleNo_ = fetchIndex_.second;
-                fetchIndex_.second++;
+                frameInfo.sampleNo_ = fetchIndex_.first;
+                fetchIndex_.first++;
                 requestFrame(frameInfo);
             }
         }
@@ -334,9 +382,9 @@ StreamRecorderImpl::requestNextFrame(const NamespaceInfo& fetchedFrame)
 {
     NamespaceInfo nextFrame(fetchedFrame);
     if (nextFrame.class_ == SampleClass::Key)
-        nextFrame.sampleNo_ = fetchIndex_.first++;
-    else
         nextFrame.sampleNo_ = fetchIndex_.second++;
+    else
+        nextFrame.sampleNo_ = fetchIndex_.first++;
 
     requestFrame(nextFrame);
 }
