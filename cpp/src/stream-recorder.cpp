@@ -122,6 +122,10 @@ StreamRecorderImpl::start(const StreamRecorder::FetchSettings& settings)
         << ", pipeline: " << settings_.pipelineSize_ << endl;
 
     isFetching_ = true;
+    // TODO: EB-workshop update: we won't store stream and thread meta for now
+    // as it messes up with live streams
+    // TODO: Need to clarify the expected behaviour of repo when fresh data is requested.
+
     fetchStreamMeta();
     fetchThreadMeta();
 

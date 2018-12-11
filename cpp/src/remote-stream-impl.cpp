@@ -294,12 +294,15 @@ void RemoteStreamImpl::initiateFetching()
     }
     else
     {
+        // TODO: [EB-Workshop update] commenting this out for now
+        /*
         if (threadsMeta_.find(threadName_) == threadsMeta_.end())
         {
             LogErrorC << "Can't find requested thread " << threadName_
                       << " in received metadata" << std::endl;
             throw std::runtime_error("Can't find requested thread to fetch");
         }
+        */
     }
 
     LogInfoC << "initiating fetching from " << getStreamPrefix()

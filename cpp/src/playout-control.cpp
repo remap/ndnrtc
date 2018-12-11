@@ -27,14 +27,16 @@ PlayoutControl::PlayoutControl(const boost::shared_ptr<IPlayout> &playout,
                                const boost::shared_ptr<IPlaybackQueue> &queue,
                                const boost::shared_ptr<RetransmissionController> &rtxController,
                                unsigned int minimalPlayableLevel)
-    : playoutAllowed_(false),
-      ffwdMs_(0), queueCheckMs_(0), 
-      playbackQueueSize_(Average(boost::make_shared<TimeWindow>(QUEUE_CHECK_INTERVAL))),
-      playout_(playout),
-      queue_(queue),
-      rtxController_(rtxController),
-      userThresholdMs_(minimalPlayableLevel),
-      thresholdMs_(fmax(minimalPlayableLevel, PlayoutControl::MinimalPlayableLevel))
+    : playoutAllowed_(false)
+    , adjustQueue_(true)
+    , ffwdMs_(0)
+    , queueCheckMs_(0)
+    , playbackQueueSize_(Average(boost::make_shared<TimeWindow>(QUEUE_CHECK_INTERVAL)))
+    , playout_(playout)
+    , queue_(queue)
+    , rtxController_(rtxController)
+    , userThresholdMs_(minimalPlayableLevel)
+    , thresholdMs_(fmax(minimalPlayableLevel, PlayoutControl::MinimalPlayableLevel))
 {
     description_ = "playout-control";
 }
@@ -57,7 +59,7 @@ void PlayoutControl::onNewSampleReady()
     if (playout_->isRunning())
     {
         playbackQueueSize_.newValue((double)queue_->size());
-        checkPlaybackQueueSize();
+        if (adjustQueue_) checkPlaybackQueueSize();
     }
 }
 

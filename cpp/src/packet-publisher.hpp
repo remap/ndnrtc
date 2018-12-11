@@ -274,11 +274,18 @@ class PacketPublisher : public NdnRtcComponent
 
     void publishNack(const ndn::Name &name)
     {
+        // TODO: figure out whether we need to reply with NACKs or not
+        // EB-Workshop update: disable NACKS. for the use case where repo is present alongside the producer
+        // if producer gets to answer historical requests first, they'll be NACKed, thus
+        // preventing receiving valid historical data from the repo
+ 
+        /*
         boost::shared_ptr<ndn::Data> nack(boost::make_shared<ndn::Data>(name));
         nack->getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);
         nack->setContent((const uint8_t *)"nack", 4);
         nack->getMetaInfo().setType(ndn_ContentType_NACK);
         settings_.memoryCache_->add(*nack);
+        */
     }
 };
 

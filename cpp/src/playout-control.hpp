@@ -30,6 +30,8 @@ class IPlayoutControl : public IPlaybackQueueObserver,
     virtual void onQueueEmpty() = 0;
     virtual void setThreshold(unsigned int t) = 0;
     virtual unsigned int getThreshold() const = 0;
+    virtual void setAdjustQueue(bool adjustQueue) = 0;
+    virtual bool getAdjustQueue() const = 0;
 };
 
 /**
@@ -54,13 +56,15 @@ class PlayoutControl : public NdnRtcComponent,
     // void onSamplePlayed() { /*ignored*/ }
     void setThreshold(unsigned int t);
     unsigned int getThreshold() const { return thresholdMs_; }
+    void setAdjustQueue(bool adjustQueue) { adjustQueue_ = adjustQueue; }
+    bool getAdjustQueue() const { return adjustQueue_; }
 
     const boost::shared_ptr<const IPlayout> getPlayoutMechanism() const { return playout_; }
     const boost::shared_ptr<const IPlaybackQueue> getPlaybackQueue() const { return queue_; }
 
     static unsigned int MinimalPlayableLevel;
   private:
-    bool playoutAllowed_;
+    bool playoutAllowed_, adjustQueue_;
     int ffwdMs_;
     int64_t queueCheckMs_;
     estimators::Average playbackQueueSize_;

@@ -131,7 +131,7 @@ int main(int argc, char **argv)
                     // allocating ARGB buffer
                     frameBuffer = (uint8_t*)malloc(width*height*4);
                     return frameBuffer;
-                },
+            },
                 [&args](const boost::shared_ptr<IFrameFetcher>&, const FrameInfo&, int nFramesFetched,
                    int width, int height, const uint8_t* buffer)
                 {
