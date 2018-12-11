@@ -573,7 +573,7 @@ class AudioThreadMeta : public DataPacket
 
     std::string getCodec() const;
     double getRate() const;
-    uint64_t getBundleNo() const;
+    uint64_t getBundleNo() const DEPRECATED;
 };
 
 class VideoThreadMeta : public DataPacket
@@ -585,7 +585,7 @@ class VideoThreadMeta : public DataPacket
     VideoThreadMeta(NetworkData &&data);
 
     double getRate() const;
-    std::pair<PacketNumber, PacketNumber> getSeqNo() const;
+    std::pair<PacketNumber, PacketNumber> getSeqNo() const DEPRECATED;
     unsigned char getGopPos() const; // GOP position of delta frame
     FrameSegmentsInfo getSegInfo() const;
     VideoCoderParams getCoderParams() const;
