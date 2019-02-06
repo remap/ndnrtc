@@ -3,7 +3,7 @@
 # 
 
 AC_PREREQ([2.69])
-AC_INIT([NDN-RTC],[v3.0.1-34-gee6be],[peter@remap.ucla.edu],[ndnrtc],[https://github.com/remap/ndnrtc])
+AC_INIT([NDN-RTC],[v3.0.2-80-g4652d43],[peter@remap.ucla.edu],[ndnrtc],[https://github.com/remap/ndnrtc])
 AM_INIT_AUTOMAKE([1.10 -Wall no-define foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 
