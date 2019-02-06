@@ -90,6 +90,7 @@ map_list_of
 ( Indicator::PublishedKeyNum, "Published key frames" )
 ( Indicator::InterestsReceivedNum, "Interests received" )
 ( Indicator::SignNum, "Sign operations")
+( Indicator::RdrPointerNum, "RDR pointer num")
 
 // encoder
 ( Indicator::EncodedNum, "Encoded frames" )
@@ -174,6 +175,7 @@ map_list_of ( Indicator::Timestamp, 0. )
 ( Indicator::InterestsReceivedNum, 0. )
 ( Indicator::SignNum, 0. )
 ( Indicator::CurrentProducerFramerate, 0. )
+( Indicator::RdrPointerNum, 0. )
 // encoder
 ( Indicator::DroppedNum, 0. )
 ( Indicator::EncodedNum, 0. )
@@ -253,6 +255,7 @@ boost::assign::map_list_of
 (Indicator::PublishedKeyNum, "framesPubKey")
 (Indicator::InterestsReceivedNum, "irecvd")
 (Indicator::SignNum, "signNum")
+(Indicator::RdrPointerNum, "rdrNum")
 // encoder
 (Indicator::EncodedNum, "framesEncoded")
 // capturer

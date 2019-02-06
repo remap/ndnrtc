@@ -100,6 +100,7 @@ namespace ndnrtc {
                 PublishedKeyNum,
                 InterestsReceivedNum,
                 SignNum,
+                RdrPointerNum,
                 
                 // encoder
                 // DroppedNum, // borrowed from buffer (above)
