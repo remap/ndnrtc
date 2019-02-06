@@ -188,7 +188,7 @@ bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame &frame)
         {
             FutureFramePtr ff =
                 boost::make_shared<FutureFrame>(boost::move(boost::async(boost::launch::async,
-                                                                         boost::bind(&VideoThread::encode, it.second.get(), 
+                                                                         boost::bind(&VideoThread::encode, it.second.get(),
                                                                          (*scalers_[it.first])(frame)))));
             futureFrames[it.first] = ff;
         }
@@ -381,11 +381,11 @@ bool VideoStreamImpl::updateMeta()
 
         metadataPublisher_->publish(metaName, it.second->getMeta());
 
-        LogDebugC << "published meta: seginfo " 
+        LogDebugC << "published meta: seginfo "
                   << it.second->getMeta().getSegInfo().deltaAvgSegNum_ << " "
                   << it.second->getMeta().getSegInfo().deltaAvgParitySegNum_ << " "
                   << it.second->getMeta().getSegInfo().keyAvgSegNum_ << " "
-                  << it.second->getMeta().getSegInfo().keyAvgParitySegNum_ 
+                  << it.second->getMeta().getSegInfo().keyAvgParitySegNum_
                   << " seq " << it.second->getMeta().getSeqNo().first << " "
                   << it.second->getMeta().getSeqNo().second << " "
                   << " gop pos " << (int)it.second->getMeta().getGopPos()
@@ -418,8 +418,9 @@ void VideoStreamImpl::publishRdrPointer(const std::string& thread,
     d->setContent(pointers.wireEncode());
     metadataPublisher_->publish(d);
 
-    LogTraceC << d->getName() 
-        << " -> " << pointers.get(0).getName() 
+    (*statStorage_)[Indicator::CurrentProducerFramerate] = metaKeeper->getRate();
+    LogTraceC << d->getName()
+        << " -> " << pointers.get(0).getName()
         << " && " << pointers.get(1).getName() << std::endl;
 }
 
