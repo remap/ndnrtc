@@ -1,4 +1,4 @@
-FROM peetonn/ndn-docker:latest
+FROM ubuntu:16.04
 LABEL maintainer "Peter Gusev <peter@remap.ucla.edu>"
 
 ARG BRANCH=master
@@ -69,8 +69,6 @@ RUN apt autoremove \
 RUN ndnsec-keygen /ndnrtc-test | ndnsec-install-cert - \
     && ndnsec-dump-certificate -i /ndnrtc-test > /ndnrtc/cpp/tests/policy_config/signing.cert
 
-ENV START_CLIENT=yes
-ENV NFD_LOG=/tmp/nfd.log
 ENV RUNTIME=10000
 ENV SIGNING_IDENTITY=/ndnrtc-test
 ENV CONFIG_FILE=tests/sample-producer.cfg
