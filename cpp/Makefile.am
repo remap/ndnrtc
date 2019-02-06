@@ -63,6 +63,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/playout-control.cpp src/playout-control.hpp \
   src/playout.cpp src/playout.hpp \
   src/playout-impl.cpp src/playout-impl.hpp \
+	src/proto/ndnrtc.pb.cc \
   src/rate-adaptation-module.hpp \
   src/remote-audio-stream.cpp src/remote-audio-stream.hpp \
   src/remote-stream-impl.cpp src/remote-stream-impl.hpp \
@@ -93,10 +94,16 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/persistent-storage/persistent-storage.cpp src/persistent-storage/persistent-storage.hpp \
   src/persistent-storage/storage-engine.cpp include/storage-engine.hpp
 
-
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
 libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB}
+
+%.pb.cc: %.proto
+	if test "no${PROTOC}" == "no"; then \
+	  cat protobuf-stub.txt > $@ ; \
+	else \
+	  $(PROTOC) --proto_path=$(dir $<) --cpp_out=$(dir $<) $< ; \
+	fi
 
 if OS_DARWIN
 
@@ -156,13 +163,13 @@ bin_PROGRAMS += stream-recorder networked-storage
 stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
     include/stream-recorder.hpp \
     contrib/docopt/docopt.cpp
-stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
+stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@
 stream_recorder_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 stream_recorder_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
 networked_storage_SOURCES = tools/networked-storage/main.cpp \
     contrib/docopt/docopt.cpp
-networked_storage_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
+networked_storage_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@
 networked_storage_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 networked_storage_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
@@ -176,7 +183,7 @@ EXTRA_PROGRAMS = ndnrtc-client
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
 ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
-ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la 
+ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
 noinst_SCRIPTS = client/params.cfg
 
 if HAVE_NANOMSG
@@ -188,8 +195,8 @@ endif
 
 if OS_LINUX
 
-ndnrtc_client_LDFLAGS += -pthread 
-ndnrtc_client_LDADD += -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes 
+ndnrtc_client_LDFLAGS += -pthread
+ndnrtc_client_LDADD += -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes
 #-lXrender -lXcomposite
 # TODO: check ubuntu build after commenting below line (part of LDADD flags)
 #/usr/lib/x86_64-linux-gnu/libboost_system.so
@@ -274,12 +281,12 @@ endif
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_config_load_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la 
+bin_tests_test_config_load_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la
 
 bin_tests_test_client_params_SOURCES = tests/test-client-params.cc tests/tests-helpers.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_client_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_client_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_client_params_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_} 
+bin_tests_test_client_params_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_}
 
 bin_tests_test_stat_collector_SOURCES = tests/test-stat-collector.cc client/src/stat-collector.cpp client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_stat_collector_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -289,12 +296,12 @@ bin_tests_test_stat_collector_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_
 bin_tests_test_renderer_SOURCES = tests/test-renderer.cc client/src/renderer.cpp client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_renderer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_renderer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_renderer_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_} 
+bin_tests_test_renderer_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_}
 
 bin_tests_test_frame_io_SOURCES = tests/test-frame-io.cc client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_frame_io_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_io_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_frame_io_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_} 
+bin_tests_test_frame_io_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_}
 
 bin_tests_test_video_source_SOURCES = tests/test-video-source.cc client/src/frame-io.cpp client/src/video-source.cpp client/src/precise-generator.cpp src/simple-log.cpp src/estimators.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_source_DEPENDENCIES = res/test-source-1280x720.argb
@@ -305,12 +312,12 @@ bin_tests_test_video_source_LDADD = ${libndnrtc_la_LIBADD} $(top_builddir)/libnd
 bin_tests_test_generator_SOURCES = tests/test-generator.cc client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_generator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_generator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_generator_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_} 
+bin_tests_test_generator_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_}
 
 bin_tests_test_client_SOURCES = tests/test-client.cc client/src/client.cpp client/src/stat-collector.cpp client/src/renderer.cpp client/src/frame-io.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/config.cpp tests/tests-helpers.cc ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_client_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_client_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_client_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_} 
+bin_tests_test_client_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_}
 
 
 ### NDN-RTC tests
@@ -353,12 +360,12 @@ bin_tests_test_media_thread_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 bin_tests_test_webrtc_audio_channel_SOURCES = tests/test-webrtc-audio-channel.cc src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_webrtc_audio_channel_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_webrtc_audio_channel_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_webrtc_audio_channel_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} 
+bin_tests_test_webrtc_audio_channel_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
 bin_tests_test_audio_capturer_SOURCES = tests/test-audio-capturer.cc tests/tests-helpers.cc src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/simple-log.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/fec.cpp src/name-components.cpp src/frame-data.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_audio_capturer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_audio_capturer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_audio_capturer_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} 
+bin_tests_test_audio_capturer_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
 bin_tests_test_frame_converter_SOURCES = tests/test-frame-converter.cc tests/tests-helpers.cc src/fec.cpp src/frame-converter.cpp src/name-components.cpp src/frame-data.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_frame_converter_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}

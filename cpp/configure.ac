@@ -1,6 +1,6 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
-# 
+#
 
 AC_PREREQ([2.69])
 AC_INIT([NDN-RTC],[v3.0.2-80-g4652d43],[peter@remap.ucla.edu],[ndnrtc],[https://github.com/remap/ndnrtc])
@@ -30,7 +30,7 @@ AC_ARG_VAR([NANOMSGLIB], [Optional (for client demo app): path to the directory 
 AC_ARG_VAR([PSTORAGEDIR], [Optional: path to the directory which contains persistent storage library headers (LevelDB for Android or RocksDB otherwise, default is /usr/local/include)])
 AC_ARG_VAR([PSTORAGELIB], [Optional: path to the directory which contains persistent storage library binaries (LevelDB for Android or RocksDB otherwise, default is /usr/local/lib)])
 
-AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in library])], 
+AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in library])],
 	[],
 	[
 	AC_DEFINE([NDN_LOGGING])
@@ -57,7 +57,7 @@ LT_INIT()
 # checking platform
 case $host_os in
   darwin* )
-		# Do something specific for MacOS  
+		# Do something specific for MacOS
 		# Special case.
 		case "$host" in
 		  *-darwin* | *-macos10*)
@@ -80,7 +80,7 @@ case $host_os in
 		;;
    *BSD*)
 		# Do something specific for BSD
-		os_module=bsd        
+		os_module=bsd
 		;;
     *)
 		#Default Case
@@ -249,14 +249,14 @@ AC_CHECK_PROGS([WGET], [wget curl])
 AC_MSG_CHECKING(if wget was wget)
 if test "X$WGET" = "Xwget"; then
    AC_MSG_RESULT(yes)
-   WGET="wget -q" 
+   WGET="wget -q"
 else
    AC_MSG_RESULT(no)
 fi
 AC_MSG_CHECKING(if wget was curl)
 if test "X$WGET" = "Xcurl"; then
    AC_MSG_RESULT(yes)
-   WGET="curl -O" 
+   WGET="curl -O"
 else
    AC_MSG_RESULT(no)
 fi
@@ -316,7 +316,7 @@ if test "$build_os" == "$host_os"; then
 		)],
 		[AC_MSG_RESULT([yes])],
 		[AC_MSG_RESULT([no])]
-		[AC_MSG_FAILURE([NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr])]	
+		[AC_MSG_FAILURE([NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr])]
 	)
 fi
 
@@ -338,6 +338,39 @@ AC_CHECK_LIB([openfec],[of_create_codec_instance],,[AC_MSG_FAILURE([can't find O
 CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 LIBS=$SAVED_LIBS
+
+###############################
+# Check for OpenFEC library
+AC_MSG_CHECKING([for Protobuf])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+    [[#include <google/protobuf/message.h>]]
+    [[google::protobuf::Message *message;]])
+], [
+    AC_MSG_RESULT([yes])
+    HAVE_PROTOBUF=1
+], [
+    AC_MSG_RESULT([no])
+    HAVE_PROTOBUF=0
+])
+AC_DEFINE_UNQUOTED([HAVE_PROTOBUF], $HAVE_PROTOBUF, [1 if have Google Protobuf.])
+if test "$HAVE_PROTOBUF" == "1" ; then
+  AC_CHECK_LIB([protobuf], [main], [],
+               [AC_MSG_FAILURE([have protobuf headers but no libprotobuf])])
+  # libprotobuf needs libpthread.
+  AC_CHECK_LIB([pthread], [main], [],
+               [AC_MSG_FAILURE([have libprotobuf but no libpthread])])
+
+  # See https://stackoverflow.com/questions/13939904/how-to-use-protocol-buffers-with-autoconf-automake
+  AC_ARG_WITH([protoc],
+      [AS_HELP_STRING([--with-protoc=/path/of/protoc],
+          [Location of the protocol buffers compiler protoc. Defaults to looking on path.])],
+      [PROTOC="$withval"],
+      [ AS_IF([test "x${PROTOC}" == "x"],
+          [AC_PATH_PROG([PROTOC], [protoc], [no])])
+      ]
+  )
+  AS_IF([test "${PROTOC}" == "no"], [AC_MSG_ERROR([ProtoBuf compiler "protoc" not found.])])
+fi
 
 ###############################
 # Check for nanomsg
@@ -372,7 +405,7 @@ then
 else
     # check headers for leveldb
     AC_CHECK_HEADERS([leveldb/db.h],[AM_CONDITIONAL([HAVE_PERSISTENT_STORAGE], [test "true" = true])])
-    
+
     AC_MSG_CHECKING([for leveldb library...])
     AC_LINK_IFELSE(
     [AC_LANG_PROGRAM([#include <leveldb/db.h>],

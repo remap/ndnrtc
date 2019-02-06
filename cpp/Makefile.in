@@ -166,8 +166,8 @@ EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1)
 @HAVE_NANOMSG_TRUE@am__append_11 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
 @HAVE_NANOMSG_TRUE@am__append_12 = -L@NANOMSGLIB@
 @HAVE_NANOMSG_TRUE@am__append_13 = -lnanomsg
-@OS_LINUX_TRUE@am__append_14 = -pthread 
-@OS_LINUX_TRUE@am__append_15 = -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes 
+@OS_LINUX_TRUE@am__append_14 = -pthread
+@OS_LINUX_TRUE@am__append_15 = -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes
 #-lXrender -lXcomposite
 # TODO: check ubuntu build after commenting below line (part of LDADD flags)
 #/usr/lib/x86_64-linux-gnu/libboost_system.so
@@ -382,6 +382,7 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
 	src/libndnrtc_la-pipeliner.lo \
 	src/libndnrtc_la-playout-control.lo \
 	src/libndnrtc_la-playout.lo src/libndnrtc_la-playout-impl.lo \
+	src/proto/libndnrtc_la-ndnrtc.pb.lo \
 	src/libndnrtc_la-remote-audio-stream.lo \
 	src/libndnrtc_la-remote-stream-impl.lo \
 	src/libndnrtc_la-remote-stream.lo \
@@ -2510,6 +2511,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	src/persistent-storage/$(DEPDIR)/libndnrtc_la-frame-fetcher.Plo \
 	src/persistent-storage/$(DEPDIR)/libndnrtc_la-persistent-storage.Plo \
 	src/persistent-storage/$(DEPDIR)/libndnrtc_la-storage-engine.Plo \
+	src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Plo \
 	tests/$(DEPDIR)/bin_tests_test_async-test-async.Po \
 	tests/$(DEPDIR)/bin_tests_test_audio_capturer-test-audio-capturer.Po \
 	tests/$(DEPDIR)/bin_tests_test_audio_capturer-tests-helpers.Po \
@@ -3030,6 +3032,7 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PROTOC = @PROTOC@
 PSTORAGEDIR = @PSTORAGEDIR@
 PSTORAGELIB = @PSTORAGELIB@
 PSTORAGE_LIB = @PSTORAGE_LIB@
@@ -3164,6 +3167,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/playout-control.cpp src/playout-control.hpp \
   src/playout.cpp src/playout.hpp \
   src/playout-impl.cpp src/playout-impl.hpp \
+	src/proto/ndnrtc.pb.cc \
   src/rate-adaptation-module.hpp \
   src/remote-audio-stream.cpp src/remote-audio-stream.hpp \
   src/remote-stream-impl.cpp src/remote-stream-impl.hpp \
@@ -3222,13 +3226,13 @@ stream_scrubber_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER
 @HAVE_PERSISTENT_STORAGE_TRUE@    include/stream-recorder.hpp \
 @HAVE_PERSISTENT_STORAGE_TRUE@    contrib/docopt/docopt.cpp
 
-@HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
+@HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 @HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_SOURCES = tools/networked-storage/main.cpp \
 @HAVE_PERSISTENT_STORAGE_TRUE@    contrib/docopt/docopt.cpp
 
-@HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ 
+@HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@
 @HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 @HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
@@ -3276,11 +3280,11 @@ UNIT_TESTS_COMMON_SOURCES_ =  \
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_config_load_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la 
+bin_tests_test_config_load_LDADD = ${UNIT_TESTS_LDADD_} $(top_builddir)/libndnrtc.la
 bin_tests_test_client_params_SOURCES = tests/test-client-params.cc tests/tests-helpers.cc client/src/config.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_client_params_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_client_params_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_client_params_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_} 
+bin_tests_test_client_params_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_}
 bin_tests_test_stat_collector_SOURCES = tests/test-stat-collector.cc client/src/stat-collector.cpp client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_stat_collector_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_stat_collector_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -3288,11 +3292,11 @@ bin_tests_test_stat_collector_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_
 bin_tests_test_renderer_SOURCES = tests/test-renderer.cc client/src/renderer.cpp client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_renderer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_renderer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_renderer_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_} 
+bin_tests_test_renderer_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_}
 bin_tests_test_frame_io_SOURCES = tests/test-frame-io.cc client/src/frame-io.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_frame_io_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_io_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_frame_io_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_} 
+bin_tests_test_frame_io_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_}
 bin_tests_test_video_source_SOURCES = tests/test-video-source.cc client/src/frame-io.cpp client/src/video-source.cpp client/src/precise-generator.cpp src/simple-log.cpp src/estimators.cpp src/clock.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_source_DEPENDENCIES = res/test-source-1280x720.argb
 bin_tests_test_video_source_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -3301,11 +3305,11 @@ bin_tests_test_video_source_LDADD = ${libndnrtc_la_LIBADD} $(top_builddir)/libnd
 bin_tests_test_generator_SOURCES = tests/test-generator.cc client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_generator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_generator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_generator_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_} 
+bin_tests_test_generator_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_}
 bin_tests_test_client_SOURCES = tests/test-client.cc client/src/client.cpp client/src/stat-collector.cpp client/src/renderer.cpp client/src/frame-io.cpp client/src/video-source.cpp client/src/precise-generator.cpp client/src/config.cpp tests/tests-helpers.cc ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_client_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_client_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_client_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_} 
+bin_tests_test_client_LDADD = $(top_builddir)/libndnrtc.la ${UNIT_TESTS_LDADD_}
 
 ### NDN-RTC tests
 bin_tests_test_params_SOURCES = tests/test-params.cc tests/tests-helpers.cc src/fec.cpp src/name-components.cpp src/frame-data.cpp ${UNIT_TESTS_COMMON_SOURCES_}
@@ -3339,11 +3343,11 @@ bin_tests_test_media_thread_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 bin_tests_test_webrtc_audio_channel_SOURCES = tests/test-webrtc-audio-channel.cc src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_webrtc_audio_channel_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_webrtc_audio_channel_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_webrtc_audio_channel_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} 
+bin_tests_test_webrtc_audio_channel_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 bin_tests_test_audio_capturer_SOURCES = tests/test-audio-capturer.cc tests/tests-helpers.cc src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/simple-log.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/fec.cpp src/name-components.cpp src/frame-data.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_audio_capturer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_audio_capturer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_audio_capturer_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} 
+bin_tests_test_audio_capturer_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 bin_tests_test_frame_converter_SOURCES = tests/test-frame-converter.cc tests/tests-helpers.cc src/fec.cpp src/frame-converter.cpp src/name-components.cpp src/frame-data.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_frame_converter_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_converter_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -3695,6 +3699,14 @@ src/libndnrtc_la-playout.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-playout-impl.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/proto/$(am__dirstamp):
+	@$(MKDIR_P) src/proto
+	@: > src/proto/$(am__dirstamp)
+src/proto/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/proto/$(DEPDIR)
+	@: > src/proto/$(DEPDIR)/$(am__dirstamp)
+src/proto/libndnrtc_la-ndnrtc.pb.lo: src/proto/$(am__dirstamp) \
+	src/proto/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-remote-audio-stream.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-remote-stream-impl.lo: src/$(am__dirstamp) \
@@ -5424,6 +5436,8 @@ mostlyclean-compile:
 	-rm -f src/helpers/*.lo
 	-rm -f src/persistent-storage/*.$(OBJEXT)
 	-rm -f src/persistent-storage/*.lo
+	-rm -f src/proto/*.$(OBJEXT)
+	-rm -f src/proto/*.lo
 	-rm -f tests/*.$(OBJEXT)
 	-rm -f tools/frame-fetcher/*.$(OBJEXT)
 	-rm -f tools/networked-storage/*.$(OBJEXT)
@@ -6037,6 +6051,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/persistent-storage/$(DEPDIR)/libndnrtc_la-frame-fetcher.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/persistent-storage/$(DEPDIR)/libndnrtc_la-persistent-storage.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/persistent-storage/$(DEPDIR)/libndnrtc_la-storage-engine.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_async-test-async.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_audio_capturer-test-audio-capturer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_audio_capturer-tests-helpers.Po@am__quote@ # am--include-marker
@@ -7046,6 +7061,13 @@ src/libndnrtc_la-playout-impl.lo: src/playout-impl.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/playout-impl.cpp' object='src/libndnrtc_la-playout-impl.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-playout-impl.lo `test -f 'src/playout-impl.cpp' || echo '$(srcdir)/'`src/playout-impl.cpp
+
+src/proto/libndnrtc_la-ndnrtc.pb.lo: src/proto/ndnrtc.pb.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/proto/libndnrtc_la-ndnrtc.pb.lo -MD -MP -MF src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Tpo -c -o src/proto/libndnrtc_la-ndnrtc.pb.lo `test -f 'src/proto/ndnrtc.pb.cc' || echo '$(srcdir)/'`src/proto/ndnrtc.pb.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Tpo src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/proto/ndnrtc.pb.cc' object='src/proto/libndnrtc_la-ndnrtc.pb.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/proto/libndnrtc_la-ndnrtc.pb.lo `test -f 'src/proto/ndnrtc.pb.cc' || echo '$(srcdir)/'`src/proto/ndnrtc.pb.cc
 
 src/libndnrtc_la-remote-audio-stream.lo: src/remote-audio-stream.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-remote-audio-stream.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-remote-audio-stream.Tpo -c -o src/libndnrtc_la-remote-audio-stream.lo `test -f 'src/remote-audio-stream.cpp' || echo '$(srcdir)/'`src/remote-audio-stream.cpp
@@ -15221,6 +15243,7 @@ clean-libtool:
 	-rm -rf src/.libs src/_libs
 	-rm -rf src/helpers/.libs src/helpers/_libs
 	-rm -rf src/persistent-storage/.libs src/persistent-storage/_libs
+	-rm -rf src/proto/.libs src/proto/_libs
 
 distclean-libtool:
 	-rm -f libtool config.lt
@@ -15992,6 +16015,8 @@ distclean-generic:
 	-rm -f src/helpers/$(am__dirstamp)
 	-rm -f src/persistent-storage/$(DEPDIR)/$(am__dirstamp)
 	-rm -f src/persistent-storage/$(am__dirstamp)
+	-rm -f src/proto/$(DEPDIR)/$(am__dirstamp)
+	-rm -f src/proto/$(am__dirstamp)
 	-rm -f tests/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tests/$(am__dirstamp)
 	-rm -f tools/frame-fetcher/$(DEPDIR)/$(am__dirstamp)
@@ -16617,6 +16642,7 @@ distclean: distclean-am
 	-rm -f src/persistent-storage/$(DEPDIR)/libndnrtc_la-frame-fetcher.Plo
 	-rm -f src/persistent-storage/$(DEPDIR)/libndnrtc_la-persistent-storage.Plo
 	-rm -f src/persistent-storage/$(DEPDIR)/libndnrtc_la-storage-engine.Plo
+	-rm -f src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Plo
 	-rm -f tests/$(DEPDIR)/bin_tests_test_async-test-async.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_audio_capturer-test-audio-capturer.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_audio_capturer-tests-helpers.Po
@@ -17342,6 +17368,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/persistent-storage/$(DEPDIR)/libndnrtc_la-frame-fetcher.Plo
 	-rm -f src/persistent-storage/$(DEPDIR)/libndnrtc_la-persistent-storage.Plo
 	-rm -f src/persistent-storage/$(DEPDIR)/libndnrtc_la-storage-engine.Plo
+	-rm -f src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Plo
 	-rm -f tests/$(DEPDIR)/bin_tests_test_async-test-async.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_audio_capturer-test-audio-capturer.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_audio_capturer-tests-helpers.Po
@@ -17461,6 +17488,13 @@ uninstall-am: uninstall-binPROGRAMS uninstall-helpersincludeHEADERS \
 
 .PRECIOUS: Makefile
 
+
+%.pb.cc: %.proto
+	if test "no${PROTOC}" == "no"; then \
+	  cat protobuf-stub.txt > $@ ; \
+	else \
+	  $(PROTOC) --proto_path=$(dir $<) --cpp_out=$(dir $<) $< ; \
+	fi
 
 @OS_DARWIN_FALSE@.PHONY: libwebrtc-all.mri libwebrtc-all.a
 
