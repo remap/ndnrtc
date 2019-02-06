@@ -14,7 +14,6 @@
 		AF889B522037733900F36342 /* ndnrtcTOP_base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF889B4920374DA700F36342 /* ndnrtcTOP_base.cpp */; };
 		AF889B542037733900F36342 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF9431BB20357CF20042FB3A /* OpenGL.framework */; };
 		AF889B552037733900F36342 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43CA5202E330100072172 /* libboost_system.a */; };
-		AF889B562037733900F36342 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
 		AF889B582037733900F36342 /* touchdesigner.cert in Resources */ = {isa = PBXBuildFile; fileRef = AF9431A42033A71C0042FB3A /* touchdesigner.cert */; };
 		AF889B66203773D400F36342 /* ndnrtcIn.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF889B642037733900F36342 /* ndnrtcIn.plugin */; };
 		AF889B69203773FF00F36342 /* ndnrtcIn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF889B67203773FF00F36342 /* ndnrtcIn.cpp */; };
@@ -27,8 +26,11 @@
 		AF9431A22033A5380042FB3A /* foundation-helpers.mm in Sources */ = {isa = PBXBuildFile; fileRef = AF9431A12033A5380042FB3A /* foundation-helpers.mm */; };
 		AF9431A52033A71C0042FB3A /* touchdesigner.cert in Resources */ = {isa = PBXBuildFile; fileRef = AF9431A42033A71C0042FB3A /* touchdesigner.cert */; };
 		AF9431BC20357CF20042FB3A /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF9431BB20357CF20042FB3A /* OpenGL.framework */; };
+		AFCD0A8521BB419F0057EAF9 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFCD0A8421BB419F0057EAF9 /* libndnrtc.a */; };
+		AFCD0A8621BB419F0057EAF9 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFCD0A8421BB419F0057EAF9 /* libndnrtc.a */; };
+		AFCD0A8921C0857A0057EAF9 /* policy_any.conf in Resources */ = {isa = PBXBuildFile; fileRef = AFCD0A8821C0857A0057EAF9 /* policy_any.conf */; };
+		AFCD0A8A21C0857A0057EAF9 /* policy_any.conf in Resources */ = {isa = PBXBuildFile; fileRef = AFCD0A8821C0857A0057EAF9 /* policy_any.conf */; };
 		AFE43C90202E239900072172 /* ndnrtcOut.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFE43C8D202E239900072172 /* ndnrtcOut.cpp */; };
-		AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43C99202E2D9700072172 /* libndnrtc.a */; };
 		AFE43CA6202E330100072172 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE43CA5202E330100072172 /* libboost_system.a */; };
 		AFE43CA8202E43CC00072172 /* ndnrtcOut.plugin in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */; };
 /* End PBXBuildFile section */
@@ -143,13 +145,14 @@
 		AF9431A12033A5380042FB3A /* foundation-helpers.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "foundation-helpers.mm"; sourceTree = "<group>"; };
 		AF9431A42033A71C0042FB3A /* touchdesigner.cert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = touchdesigner.cert; sourceTree = "<group>"; };
 		AF9431BB20357CF20042FB3A /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		AFCD0A8421BB419F0057EAF9 /* libndnrtc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libndnrtc.a; path = ../build/lib/libndnrtc.a; sourceTree = "<group>"; };
+		AFCD0A8821C0857A0057EAF9 /* policy_any.conf */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = policy_any.conf; sourceTree = "<group>"; };
 		AFE43C83202DDCD200072172 /* ndnrtcOut.plugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ndnrtcOut.plugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFE43C86202DDCD200072172 /* ndnrtcOut-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ndnrtcOut-Info.plist"; sourceTree = "<group>"; };
 		AFE43C8C202E239900072172 /* CPlusPlus_Common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CPlusPlus_Common.h; sourceTree = "<group>"; };
 		AFE43C8D202E239900072172 /* ndnrtcOut.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ndnrtcOut.cpp; sourceTree = "<group>"; };
 		AFE43C8E202E239900072172 /* TOP_CPlusPlusBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TOP_CPlusPlusBase.h; sourceTree = "<group>"; };
 		AFE43C8F202E239900072172 /* ndnrtcOut.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ndnrtcOut.hpp; sourceTree = "<group>"; };
-		AFE43C99202E2D9700072172 /* libndnrtc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libndnrtc.a; path = ../build/lib/libndnrtc.a; sourceTree = "<group>"; };
 		AFE43CA5202E330100072172 /* libboost_system.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_system.a; path = /usr/local/lib/libboost_system.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -160,8 +163,8 @@
 			files = (
 				AF889B542037733900F36342 /* OpenGL.framework in Frameworks */,
 				AF889B552037733900F36342 /* libboost_system.a in Frameworks */,
+				AFCD0A8621BB419F0057EAF9 /* libndnrtc.a in Frameworks */,
 				AF8C8114217E7EA000A61BE5 /* libndn-cpp.a in Frameworks */,
-				AF889B562037733900F36342 /* libndnrtc.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -171,8 +174,8 @@
 			files = (
 				AF9431BC20357CF20042FB3A /* OpenGL.framework in Frameworks */,
 				AFE43CA6202E330100072172 /* libboost_system.a in Frameworks */,
+				AFCD0A8521BB419F0057EAF9 /* libndnrtc.a in Frameworks */,
 				AF8C8113217E7EA000A61BE5 /* libndn-cpp.a in Frameworks */,
-				AFE43C9A202E2D9700072172 /* libndnrtc.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -217,6 +220,7 @@
 				AF2B18FB203AEEE800FE272A /* policy.conf */,
 				AF9431A72033A9110042FB3A /* keychain */,
 				AF9431A42033A71C0042FB3A /* touchdesigner.cert */,
+				AFCD0A8821C0857A0057EAF9 /* policy_any.conf */,
 			);
 			name = res;
 			sourceTree = "<group>";
@@ -274,8 +278,8 @@
 			children = (
 				AF9431BB20357CF20042FB3A /* OpenGL.framework */,
 				AFE43CA5202E330100072172 /* libboost_system.a */,
-				AFE43C99202E2D9700072172 /* libndnrtc.a */,
 				AF8C8112217E7EA000A61BE5 /* libndn-cpp.a */,
+				AFCD0A8421BB419F0057EAF9 /* libndnrtc.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -326,6 +330,7 @@
 				AF889B5B2037733900F36342 /* CopyFiles */,
 				AF889B5F2037733900F36342 /* CopyFiles */,
 				AF7EB62121ACD35A00959863 /* ShellScript */,
+				AF7EB64221ADF8F200959863 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -349,6 +354,7 @@
 				AF9431B32033AC040042FB3A /* Copy Files */,
 				AFE43CA7202E43BA00072172 /* CopyFiles */,
 				AF7EB61F21AC94BF00959863 /* ShellScript */,
+				AF7EB64121ADF88600959863 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -410,6 +416,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFCD0A8A21C0857A0057EAF9 /* policy_any.conf in Resources */,
 				AF889B582037733900F36342 /* touchdesigner.cert in Resources */,
 				AF2B18FD203AEEE800FE272A /* policy.conf in Resources */,
 			);
@@ -419,6 +426,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFCD0A8921C0857A0057EAF9 /* policy_any.conf in Resources */,
 				AF9431A52033A71C0042FB3A /* touchdesigner.cert in Resources */,
 				AF2B18FC203AEEE800FE272A /* policy.conf in Resources */,
 			);
@@ -429,7 +437,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		AF7EB61F21AC94BF00959863 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			files = (
 			);
 			inputPaths = (
@@ -453,7 +461,34 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ `command -v dylibbundler` ]; then\n    pluginPath=\"${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin/Contents/MacOS/${PRODUCT_NAME}\"\n    depsPath=\"${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin/Contents/libs\"\n    loaderPath=\"@loader_path/../libs\"\n    printf '/usr/local/lib\\n' | dylibbundler -od -b -x $pluginPath -d $depsPath -p $loaderPath\nelse\n    echo \"Can't create deployable plugins - dylibbundler needed!\"\n    echo \"dylibbundler was not found. Install it from https://github.com/auriamg/macdylibbundler\"\nfi";
+			shellScript = "if [ `command -v dylibbundler` ]; then\npluginPath=\"${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin/Contents/MacOS/${PRODUCT_NAME}\"\ndepsPath=\"${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin/Contents/libs\"\nloaderPath=\"@loader_path/../libs\"\nprintf '/usr/local/lib\\n' | dylibbundler -od -b -x $pluginPath -d $depsPath -p $loaderPath\nelse\necho \"Can't create deployable plugins - dylibbundler needed!\"\necho \"dylibbundler was not found. Install it from https://github.com/auriamg/macdylibbundler\"\nfi";
+		};
+		AF7EB64121ADF88600959863 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+				"${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "echo \"Copying plugin to distribution folder\"\nDIST_FOLDER=\"/Users/peetonn/Google Drive/eb/modules/touch-plugins\"\ncp -R ${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin \"${DIST_FOLDER}\"";
+		};
+		AF7EB64221ADF8F200959863 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "echo \"Copying plugin to distribution folder\"\nDIST_FOLDER=\"/Users/peetonn/Google Drive/eb/modules/touch-plugins\"\ncp -R ${LIBNDNRTC_INSTALL_DIR}/${PRODUCT_NAME}.plugin \"${DIST_FOLDER}\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -590,14 +625,14 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					$LIBNDNCPP_INSTALL_DIR/include,
-					$LIBNDNRTC_INSTALL_DIR/include,
 					/usr/local/include,
+					$LIBNDNRTC_INSTALL_DIR/include,
 				);
 				LIBNDNCPP_INSTALL_DIR = "$PROJECT_DIR/../../../ndnrtc-thirdparty/ndn-cpp/build";
 				LIBNDNRTC_INSTALL_DIR = $PROJECT_DIR/../build;
 				LIBRARY_SEARCH_PATHS = (
-					$LIBNDNCPP_INSTALL_DIR/lib,
 					$LIBNDNRTC_INSTALL_DIR/lib,
+					$LIBNDNCPP_INSTALL_DIR/lib,
 					/usr/local/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
@@ -652,14 +687,14 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
 					$LIBNDNCPP_INSTALL_DIR/include,
-					$LIBNDNRTC_INSTALL_DIR/include,
 					/usr/local/include,
+					$LIBNDNRTC_INSTALL_DIR/include,
 				);
 				LIBNDNCPP_INSTALL_DIR = "$PROJECT_DIR/../../../ndnrtc-thirdparty/ndn-cpp/build";
 				LIBNDNRTC_INSTALL_DIR = $PROJECT_DIR/../build;
 				LIBRARY_SEARCH_PATHS = (
-					$LIBNDNCPP_INSTALL_DIR/lib,
 					$LIBNDNRTC_INSTALL_DIR/lib,
+					$LIBNDNCPP_INSTALL_DIR/lib,
 					/usr/local/lib,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
