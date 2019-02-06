@@ -172,6 +172,7 @@ public:
         }
         
         void setInfo(const FrameInfo& info) { info_ = info; }
+        void resetBuffer() { memset(frameBuffer_, 0, frameBufferSize_); }
         
     private:
         FrameBuffer(const FrameBuffer&) = delete;
@@ -195,7 +196,11 @@ public:
     
     uint8_t* getFrameBuffer(int width, int height, IExternalRenderer::BufferType*);
     void renderFrame(const FrameInfo& frameInfo, int width, int height, const uint8_t* buffer);
-    
+    void resetBuffers() {
+        frontBuffer_.load()->resetBuffer();
+        backBuffer_.load()->resetBuffer();
+    }
+
 private:
     std::mutex                bufferReadMutex_;
     vector<FrameBuffer>       buffers_;
@@ -211,7 +216,8 @@ static set<string> ReinitParams({PAR_LIFETIME, PAR_JITTER});
 //******************************************************************************
 ndnrtcIn::ndnrtcIn(const OP_NodeInfo *info) :
 ndnrtcTOPbase(info),
-streamRenderer_(boost::make_shared<RemoteStreamRenderer>())
+streamRenderer_(boost::make_shared<RemoteStreamRenderer>()),
+state_(0)
 {
     params_ = new ndnrtcIn::Params();
     memset((void*)params_, 0, sizeof(Params));
@@ -287,7 +293,7 @@ ndnrtcIn::getInfoCHOPChan(int32_t index,
             case InfoChopIndex::State:
                 {
                     chan->name = ChanNames[idx].c_str();
-                    chan->value = 0;
+                    chan->value = state_;
                 }
                 break;
             case InfoChopIndex::ReceivedFrameIsKey:
@@ -482,6 +488,7 @@ ndnrtcIn::startFetch(const TOP_OutputFormatSpecs* outputFormat,
     
     if (stream_)
     {
+        dynamic_pointer_cast<RemoteStream>(stream_)->stop();
         // TODO: have EXC_BAD_ACCESS here
         //        dynamic_pointer_cast<RemoteStream>(stream_)->unregisterObserver(this);
         stream_.reset();
@@ -534,7 +541,7 @@ ndnrtcIn::startFetch(const TOP_OutputFormatSpecs* outputFormat,
                 NameComponents::extractInfo(endPrefix, endPrefixInfo) && prefixHasFrameLevelInfo(endPrefixInfo) &&
                 prefixInfo.class_ == SampleClass::Key &&
                 endPrefixInfo.class_ == SampleClass::Key)
-                createRemoteStreamHistorical(prefixInfo, endPrefixInfo);
+                return createRemoteStreamHistorical(prefixInfo, endPrefixInfo);
             else
                 errorString_ = "Fetching historical data (looped): bad prefix(es) provided (must be frame-level and KEY frame type)";
             
@@ -546,7 +553,7 @@ ndnrtcIn::startFetch(const TOP_OutputFormatSpecs* outputFormat,
                 // check if frame-level info is available
                 if (prefixHasFrameLevelInfo(prefixInfo))
                     // we are fetching historical, not looped
-                    createRemoteStreamHistorical(prefixInfo);
+                    return createRemoteStreamHistorical(prefixInfo);
                 else
                 { // otherwise -- continue with fetching stream
                     basePrefix = prefixInfo.getPrefix(prefix_filter::Base).toUri();
@@ -556,7 +563,7 @@ ndnrtcIn::startFetch(const TOP_OutputFormatSpecs* outputFormat,
         }
     }
     
-    LogInfoC << "creating remote stream for prefix: " << prefixInfo.getPrefix(prefix_filter::Base).toUri() << endl;
+    LogInfoC << "creating remote stream " << streamName << ", base prefix: " << basePrefix << endl;
     createRemoteStream(basePrefix, streamName);
 }
 
@@ -583,7 +590,7 @@ ndnrtcIn::createRemoteStreamHistorical(const NamespaceInfo& prefixStart, const N
     ruleset.skipDelta_ = false;
     ruleset.loop_ = 0;
     ruleset.speed_ = 1;
-    ruleset.pipelineSize_ = 20;
+    ruleset.pipelineSize_ = 10;
     ruleset.seedKeyNo_ = prefixStart.sampleNo_;
     
     if (prefixHasFrameLevelInfo(prefixEnd))
@@ -615,6 +622,8 @@ ndnrtcIn::fetchFrame(const ndnrtc::NamespaceInfo& frameInfo)
     LogInfoC << "fetching frame " << frameInfo.getPrefix(prefix_filter::Sample) << std::endl;
     
     boost::shared_ptr<RemoteStreamRenderer> renderer = streamRenderer_;
+    renderer->resetBuffers();
+    
     frameFetcher_ = boost::make_shared<FrameFetcher>(faceProcessor_->getFace(),
                                                      keyChainManager_->instanceKeyChain());
     frameFetcher_->setLogger(logger_);
@@ -624,16 +633,18 @@ ndnrtcIn::fetchFrame(const ndnrtc::NamespaceInfo& frameInfo)
                          {
                              return renderer->getFrameBuffer(width, height, bufferType);
                          },
-                         [renderer](const boost::shared_ptr<IFrameFetcher>&, const FrameInfo& finfo, int nFramesFetched,
+                         [renderer, this](const boost::shared_ptr<IFrameFetcher>&, const FrameInfo& finfo, int nFramesFetched,
                                  int width, int height, const uint8_t* buffer)
                          {
                              renderer->renderFrame(finfo, width, height, buffer);
+                             state_ = 2;
                          },
                          [this](const boost::shared_ptr<IFrameFetcher>&, std::string reason)
                          {
                              LogError("") << "failed to retrieve frame: " << reason << std::endl;
                              errorString_ = string("Failed to retrieve frame: "+reason);
                          });
+    state_ = 1;
 }
 
 void

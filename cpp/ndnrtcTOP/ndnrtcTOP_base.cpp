@@ -24,7 +24,8 @@
 
 #include "foundation-helpers.h"
 
-#define LOG_ON
+//#define LOG_ON
+#define NOVERIFY_POLICY
 
 using namespace std;
 //using namespace std::placeholders;
@@ -52,6 +53,10 @@ enum class InfoDatIndex {
     LibVersion,
     Prefix,
     NdnRtcPrefix,
+    SignIdentity,
+    SignCertificate,
+    InstanceIdentity,
+    InstanceCertificate
 };
 
 /**
@@ -61,7 +66,11 @@ enum class InfoDatIndex {
 static std::map<InfoDatIndex, std::string> RowNames = {
     { InfoDatIndex::LibVersion, "Library Version" },
     { InfoDatIndex::Prefix, "Prefix" },
-    { InfoDatIndex::NdnRtcPrefix, "NDNRTC Prefix" }
+    { InfoDatIndex::NdnRtcPrefix, "NDNRTC Prefix" },
+    { InfoDatIndex::SignIdentity, "Sign Identity" },
+    { InfoDatIndex::SignCertificate, "Sign Certificate" },
+    { InfoDatIndex::InstanceIdentity, "Instance Identity" },
+    { InfoDatIndex::InstanceCertificate, "Instance Certificate" }
 };
 
 const std::string ndnrtcTOPbase::SigningIdentityName = "/touchdesigner";
@@ -81,7 +90,7 @@ reinitParams_(ReinitParams)
 
     Logger::initAsyncLogging();
 #ifdef LOG_ON
-    logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
+    logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
                                          boost::make_shared<CallbackSink>(bind(&ndnrtcTOPbase::logSink, this, _1)));
 #else
     logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
@@ -199,6 +208,27 @@ ndnrtcTOPbase::getInfoDATEntries(int32_t index,
             {
                 if (stream_)
                     strcpy(tempBuffer2, stream_->getBasePrefix().c_str());
+            }
+                break;
+            case InfoDatIndex::SignIdentity:
+            {
+                std::string identity(keyChainManager_->defaultKeyChain()->getDefaultIdentity().toUri().c_str());
+                strcpy(tempBuffer2, identity.c_str());
+            }
+                break;
+            case InfoDatIndex::SignCertificate:
+            {
+                strcpy(tempBuffer2, keyChainManager_->signingIdentityCertificate()->getName().toUri().c_str());
+            }
+                break;
+            case InfoDatIndex::InstanceIdentity:
+            {
+                strcpy(tempBuffer2, keyChainManager_->instancePrefix().c_str());
+            }
+                break;
+            case InfoDatIndex::InstanceCertificate:
+            {
+                strcpy(tempBuffer2, keyChainManager_->instanceCertificate()->getName().toUri().c_str());
             }
                 break;
             default:
@@ -341,7 +371,11 @@ ndnrtcTOPbase::initKeyChainManager(const TOP_OutputFormatSpecs* outputFormat,
     std::string instanceName(opName_);
     bool useMacOsKeyChain = inputs->getParInt(PAR_USE_MACOS_KEYCHAIN);
     
+#ifdef NOVERIFY_POLICY
+    string policyFilePath = string(get_resources_path())+"/policy_any.conf";
+#else
     string policyFilePath = string(get_resources_path())+"/policy.conf";
+#endif
     string keyChainPath = string(get_resources_path())+"/keychain";
     
     try

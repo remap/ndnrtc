@@ -59,6 +59,7 @@ private:
     boost::shared_ptr<RemoteStreamRenderer> streamRenderer_;
     ndnrtc::FrameInfo       receivedFrameInfo_;
     boost::shared_ptr<ndnrtc::FrameFetcher> frameFetcher_;
+    int                     state_;
 
     void                    initStream() override;
     std::set<std::string>   checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *) override;

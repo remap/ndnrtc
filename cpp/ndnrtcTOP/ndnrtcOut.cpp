@@ -121,12 +121,12 @@ static std::map<InfoChopIndex, std::string> ChanNames = {
  */
 enum class InfoDatIndex {
     PublishedFrameName,
-    PublishedFrameTimestamp,
+    PublishedFrameTimestamp
 };
 
 static std::map<InfoDatIndex, std::string> RowNames = {
     { InfoDatIndex::PublishedFrameName, "Published Frame Name" },
-    { InfoDatIndex::PublishedFrameTimestamp, "Published Frame Timestamp" },
+    { InfoDatIndex::PublishedFrameTimestamp, "Published Frame Timestamp" }
 };
 
 /**
