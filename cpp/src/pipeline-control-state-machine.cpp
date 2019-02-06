@@ -244,14 +244,14 @@ class BootstrappingT : public PipelineControlState,
   protected:
     std::string onTimeout(const boost::shared_ptr<const EventTimeout> &ev) override
     {
-        if (ev->getInfo().isMeta_)
+        if (ev->getInfo().segmentClass_ == SegmentClass::Pointer)
             askLatest();
         return str();
     }
 
     std::string onNack(const boost::shared_ptr<const EventNack> &ev) override
     {
-        if (ev->getInfo().isMeta_)
+        if (ev->getInfo().segmentClass_ == SegmentClass::Pointer)
             askLatest();
         return str();
     }
