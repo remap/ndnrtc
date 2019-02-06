@@ -55,7 +55,7 @@ void SampleValidator::onNewData(const BufferReceipt &receipt)
 
 ManifestValidator::ManifestValidator(boost::shared_ptr<ndn::Face> face,
                                      boost::shared_ptr<ndn::KeyChain> keyChain,
-                                     const boost::shared_ptr<StatisticsStorage> &statStorage) 
+                                     const boost::shared_ptr<StatisticsStorage> &statStorage)
     : StatObject(statStorage), face_(face), keyChain_(keyChain),
     metaFetcherPool_(META_FETCHER_POOL_SIZE)
 {
@@ -73,10 +73,12 @@ void ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot> &slot)
         boost::shared_ptr<ManifestValidator> me = boost::dynamic_pointer_cast<ManifestValidator>(shared_from_this());
         boost::shared_ptr<MetaFetcher> mfetcher = metaFetcherPool_.pop();
         Name manifestName = slot->getNameInfo().getPrefix(prefix_filter::Sample).append(NameComponents::NameComponentManifest);
+        // TODO: NOTE - meta fetcher uses SegmentedFetcher that expresses interests with MustBeFresh
+        // this is not required here. In fact, manifests should probably be fetched with MustBeFresh==false
         mfetcher->fetch(face_, keyChain_,
                         manifestName,
-                        [mfetcher, slot, me, this](NetworkData &nd, 
-                                                   const std::vector<ValidationErrorInfo> info, 
+                        [mfetcher, slot, me, this](NetworkData &nd,
+                                                   const std::vector<ValidationErrorInfo> info,
                                                    const std::vector<boost::shared_ptr<Data>>&) {
                             if (info.size())
                             {
