@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package ndnrtc;
+
+message StreamMeta {
+  uint32 width = 1;
+  uint32 height = 2;
+  string description = 3;
+}
+
+message LiveMeta {
+  google.protobuf.Timestamp timestamp = 1;
+  float framerate = 2;
+}
+
+message FrameMeta {
+  int32 parity_size = 1;
+  int32 gop_position = 2;
+  int32 gop_number = 3;
+  google.protobuf.Timestamp capture_timestamp = 4;
+  bool complete = 5;
+  int32 generation_delay = 6;
+
+  enum FrameType {
+    Unknown = 0;
+    Delta = 1;
+    Key = 2;
+  }
+
+  FrameType type = 7;
+}
