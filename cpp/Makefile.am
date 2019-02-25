@@ -20,15 +20,8 @@ helpersinclude_HEADERS = include/helpers/key-chain-manager.hpp \
   include/helpers/face-processor.hpp
 
 lib_LTLIBRARIES = libndnrtc.la
-libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
-  src/audio-capturer.cpp src/audio-capturer.hpp \
-  src/audio-controller.cpp src/audio-controller.hpp \
-  src/audio-playout.cpp src/audio-playout.hpp \
-  src/audio-playout-impl.cpp src/audio-playout-impl.hpp \
-  src/audio-renderer.cpp src/audio-renderer.hpp \
-  src/audio-stream-impl.cpp src/audio-stream-impl.hpp \
-  src/audio-thread.cpp src/audio-thread.hpp \
-  src/av-sync.cpp src/av-sync.hpp \
+libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
+  src/async.cpp src/async.hpp \
   src/buffer-control.cpp src/buffer-control.hpp \
   src/clock.cpp src/clock.hpp \
   src/c-wrapper.cpp include/c-wrapper.h \
@@ -63,9 +56,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/playout-control.cpp src/playout-control.hpp \
   src/playout.cpp src/playout.hpp \
   src/playout-impl.cpp src/playout-impl.hpp \
-	src/proto/ndnrtc.pb.cc \
   src/rate-adaptation-module.hpp \
-  src/remote-audio-stream.cpp src/remote-audio-stream.hpp \
   src/remote-stream-impl.cpp src/remote-stream-impl.hpp \
   src/remote-stream.cpp include/remote-stream.hpp \
   src/remote-video-stream.cpp src/remote-video-stream.hpp \
@@ -83,19 +74,18 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/threading-capability.cpp src/threading-capability.hpp \
   src/video-coder.cpp src/video-coder.hpp \
   src/video-decoder.cpp src/video-decoder.hpp \
+	src/video-codec.cpp src/video-codec.hpp \
   src/video-playout.cpp src/video-playout.hpp \
   src/video-playout-impl.cpp src/video-playout-impl.hpp \
   src/video-stream-impl.cpp src/video-stream-impl.hpp \
   src/video-thread.cpp src/video-thread.hpp \
-  src/webrtc-audio-channel.cpp src/webrtc-audio-channel.hpp \
-  src/webrtc.hpp \
   src/persistent-storage/frame-fetcher.cpp include/frame-fetcher.hpp \
   src/persistent-storage/fetching-task.cpp src/persistent-storage/fetching-task.hpp \
   src/persistent-storage/persistent-storage.cpp src/persistent-storage/persistent-storage.hpp \
   src/persistent-storage/storage-engine.cpp include/storage-engine.hpp
 
-libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
-libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
+libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB}
 
 %.pb.cc: %.proto
@@ -105,29 +95,29 @@ libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB}
 	  $(PROTOC) --proto_path=$(dir $<) --cpp_out=$(dir $<) $< ; \
 	fi
 
-if OS_DARWIN
+# if OS_DARWIN
 
-libndnrtc_la_LDFLAGS += -flat_namespace -L@WEBRTCDIR@/out/Default/allibs
-libndnrtc_la_LIBADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
+# libndnrtc_la_LDFLAGS += -flat_namespace -L@WEBRTCDIR@/out/Default/allibs
+# libndnrtc_la_LIBADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
 
-else
+# else
 
-.PHONY: libwebrtc-all.mri libwebrtc-all.a
+# .PHONY: libwebrtc-all.mri libwebrtc-all.a
 
-libwebrtc-all.mri:
-  $(shell echo "create libwebrtc-all.a" > @WEBRTCLIB@/libwebrtc-all.mri && \
-  for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
-  echo "addlib $$lib" >> @WEBRTCLIB@/libwebrtc-all.mri; done && \
-  echo "save" >> @WEBRTCLIB@/libwebrtc-all.mri && \
-  echo "end" >> @WEBRTCLIB@/libwebrtc-all.mri)
+# libwebrtc-all.mri:
+#   $(shell echo "create libwebrtc-all.a" > @WEBRTCLIB@/libwebrtc-all.mri && \
+#   for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
+#   echo "addlib $$lib" >> @WEBRTCLIB@/libwebrtc-all.mri; done && \
+#   echo "save" >> @WEBRTCLIB@/libwebrtc-all.mri && \
+#   echo "end" >> @WEBRTCLIB@/libwebrtc-all.mri)
+#
+# libwebrtc-all.a: libwebrtc-all.mri
+#   $(shell cd @WEBRTCLIB@ && @AR@ -M <libwebrtc-all.mri)
+#
+# libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
+# libndnrtc_la_LIBADD += -lwebrtc-all -lX11
 
-libwebrtc-all.a: libwebrtc-all.mri
-  $(shell cd @WEBRTCLIB@ && @AR@ -M <libwebrtc-all.mri)
-
-libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
-libndnrtc_la_LIBADD += -lwebrtc-all -lX11
-
-endif
+# endif
 
 if OS_ANDROID
 
@@ -141,14 +131,14 @@ bin_PROGRAMS = frame-fetcher stream-scrubber
 
 frame_fetcher_SOURCES = tools/frame-fetcher/main.cpp \
     contrib/docopt/docopt.cpp
-frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
+frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
 frame_fetcher_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 frame_fetcher_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
 stream_scrubber_SOURCES = tools/stream-scrubber/main.cpp \
     contrib/docopt/docopt.cpp \
     tools/stream-scrubber/renderer.cpp tools/stream-scrubber/renderer.hpp
-stream_scrubber_CXXFLAGS =  -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
+stream_scrubber_CXXFLAGS =  -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
 stream_scrubber_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 stream_scrubber_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
@@ -175,8 +165,19 @@ networked_storage_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIM
 
 endif
 
+if HAVE_VPX
+
+bin_PROGRAMS += codec-run
+
+codec_run_SOURCES = tools/codec-run/main.cpp contrib/docopt/docopt.cpp tools/codec-run/tools.cpp
+codec_run_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
+codec_run_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+codec_run_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
+
+endif
+
 #################
-# client app	  #
+# client apps	  #
 #################
 #bin_PROGRAMS = ndnrtc-client
 EXTRA_PROGRAMS = ndnrtc-client
@@ -206,8 +207,8 @@ endif
 if OS_DARWIN
 
 ndnrtc_client_CPPFLAGS += -DOS_DARWIN
-ndnrtc_client_LDFLAGS += -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio -L@WEBRTCDIR@/out/Default/allibs
-ndnrtc_client_LDADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
+ndnrtc_client_LDFLAGS += -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
+# ndnrtc_client_LDADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
 
 endif
 
@@ -228,6 +229,20 @@ nanopipe_adaptor_CXXFLAGS = -std=c++11
 nanopipe_adaptor_CPPFLAGS = -I@NANOMSGDIR@ -I$(includedir)
 nanopipe_adaptor_LDFLAGS = -L@NANOMSGLIB@
 nanopipe_adaptor_LDADD = -lnanomsg
+
+endif
+
+if HAVE_CNL_CPP
+EXTRA_PROGRAMS += stream
+
+# ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
+# ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
+# ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
+
+stream_SOURCES = client/stream/main.cpp contrib/docopt/docopt.cpp
+stream_CPPFLAGS = -I$(top_srcdir)/client/src -I$(includedir) -I$(top_srcdir)/contrib -I@NDNCPPDIR@ -I@CNLCPPDIR@ ${BOOST_CPPFLAGS}
+stream_LDFLAGS = -L@NDNCPPLIB@ -L@CNLCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
+stream_LDADD = -lcnl-cpp -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
 
 endif
 
@@ -272,7 +287,7 @@ res/test-source-320x240.argb:
 	$(WGET) https://s3.amazonaws.com/ndnrtc-test-files/raw/test-source-320x240.argb.tar.gz
 	$(TAR) -xf test-source-320x240.argb.tar.gz -C $(top_builddir)/res/
 
-check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-video-decoder bin/tests/test-webrtc-audio-channel bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-name-components bin/tests/test-local-media-stream bin/tests/test-frame-buffer bin/tests/test-rtx-controller bin/tests/test-playout bin/tests/test-video-playout bin/tests/test-audio-playout bin/tests/test-segment-controller bin/tests/test-periodic bin/tests/test-sample-estimator bin/tests/test-drd-estimator bin/tests/test-latency-control bin/tests/test-buffer-control bin/tests/test-interest-control bin/tests/test-pipeline-control bin/tests/test-pipeliner bin/tests/test-pipeline-control-state-machine bin/tests/test-interest-queue bin/tests/test-playout-control bin/tests/test-loop bin/tests/test-video-source bin/tests/test-config-load bin/tests/test-client-params bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client
+check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-video-decoder bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-name-components bin/tests/test-local-media-stream bin/tests/test-frame-buffer bin/tests/test-rtx-controller bin/tests/test-playout bin/tests/test-video-playout bin/tests/test-audio-playout bin/tests/test-segment-controller bin/tests/test-periodic bin/tests/test-sample-estimator bin/tests/test-drd-estimator bin/tests/test-latency-control bin/tests/test-buffer-control bin/tests/test-interest-control bin/tests/test-pipeline-control bin/tests/test-pipeliner bin/tests/test-pipeline-control-state-machine bin/tests/test-interest-queue bin/tests/test-playout-control bin/tests/test-loop bin/tests/test-video-source bin/tests/test-config-load bin/tests/test-client-params bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client
 
 if HAVE_PERSISTENT_STORAGE
     check_PROGRAMS += bin/tests/test-persistent-storage
@@ -357,10 +372,10 @@ bin_tests_test_media_thread_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_media_thread_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_media_thread_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
-bin_tests_test_webrtc_audio_channel_SOURCES = tests/test-webrtc-audio-channel.cc src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_webrtc_audio_channel_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-bin_tests_test_webrtc_audio_channel_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_webrtc_audio_channel_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
+# bin_tests_test_webrtc_audio_channel_SOURCES = tests/test-webrtc-audio-channel.cc src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+# bin_tests_test_webrtc_audio_channel_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+# bin_tests_test_webrtc_audio_channel_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+# bin_tests_test_webrtc_audio_channel_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
 bin_tests_test_audio_capturer_SOURCES = tests/test-audio-capturer.cc tests/tests-helpers.cc src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/simple-log.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/fec.cpp src/name-components.cpp src/frame-data.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_audio_capturer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}

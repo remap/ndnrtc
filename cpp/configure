@@ -637,7 +637,10 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
-WEBRTCLIBS
+HAVE_VPX_FALSE
+HAVE_VPX_TRUE
+HAVE_CNL_CPP_FALSE
+HAVE_CNL_CPP_TRUE
 PSTORAGE_LIB
 HAVE_PERSISTENT_STORAGE_FALSE
 HAVE_PERSISTENT_STORAGE_TRUE
@@ -731,6 +734,8 @@ build_os
 build_vendor
 build_cpu
 build
+CNLCPPLIB
+CNLCPPDIR
 PSTORAGELIB
 PSTORAGEDIR
 NANOMSGLIB
@@ -861,6 +866,8 @@ NANOMSGGDIR
 NANOMSGLIB
 PSTORAGEDIR
 PSTORAGELIB
+CNLCPPDIR
+CNLCPPLIB
 CC
 CFLAGS
 LDFLAGS
@@ -1596,6 +1603,10 @@ Some influential environment variables:
   PSTORAGELIB Optional: path to the directory which contains persistent
               storage library binaries (LevelDB for Android or RocksDB
               otherwise, default is /usr/local/lib)
+  CNLCPPDIR   Path to the directory which contains CNL-CPP library headers
+              folder (default is /usr/local/include)
+  CNLCPPLIB   Path to the directory which contains CNL-CPP library binaries
+              (default is /usr/local/lib)
   CC          C compiler command
   CFLAGS      C compiler flags
   LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
@@ -3554,6 +3565,8 @@ else
   AM_DEFAULT_V=$AM_DEFAULT_VERBOSITY
 fi
 AM_BACKSLASH='\'
+
+
 
 
 
@@ -17486,6 +17499,28 @@ else
 	PSTORAGELIB="/usr/local/lib"
 fi
 
+if test ${CNLCPPDIR}; then
+	DIR=$(cd $CNLCPPDIR && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $CNLCPPDIR" "$LINENO" 5
+	fi
+	CNLCPPDIR=$DIR
+else
+	CNLCPPDIR="/usr/local/include"
+fi
+
+if test ${CNLCPPLIB}; then
+	DIR=$(cd $CNLCPPLIB && pwd || echo "not found")
+	if [[ "$DIR" = "not found" ]];
+	then
+		as_fn_error $? "directory not found - $CNLCPPLIB" "$LINENO" 5
+	fi
+	CNLCPPLIB=$DIR
+else
+	CNLCPPLIB="/usr/local/lib"
+fi
+
 # create links for client config file
 ac_config_links="$ac_config_links client/params.cfg:tests/default.cfg"
 
@@ -20637,12 +20672,131 @@ rm -f core conftest.err conftest.$ac_objext \
 
 fi
 
+###############################
+# Check for CNL
+SAVED_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS -I$CNLCPPDIR"
+SAVED_LDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -L$CNLCPPLIB"
+SAVED_LIBS=$LIBS
+LIBS="$LIBS -lcnl-cpp -lndn-cpp"
+
+for ac_header in cnl-cpp/namespace.hpp
+do :
+  ac_fn_cxx_check_header_mongrel "$LINENO" "cnl-cpp/namespace.hpp" "ac_cv_header_cnl_cpp_namespace_hpp" "$ac_includes_default"
+if test "x$ac_cv_header_cnl_cpp_namespace_hpp" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_CNL_CPP_NAMESPACE_HPP 1
+_ACEOF
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find namespace.hpp" >&5
+$as_echo "$as_me: WARNING: can't find namespace.hpp" >&2;}
+fi
+
+done
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for CNL-CPP library..." >&5
+$as_echo_n "checking for CNL-CPP library...... " >&6; }
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+					#include <cnl-cpp/namespace.hpp>
+
+int
+main ()
+{
+
+					cnl_cpp::Namespace n(ndn::Name("/test"))
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+			$as_echo "#define HAVE_CNL_CPP 1" >>confdefs.h
+
+			 if test "true" = true; then
+  HAVE_CNL_CPP_TRUE=
+  HAVE_CNL_CPP_FALSE='#'
+else
+  HAVE_CNL_CPP_TRUE='#'
+  HAVE_CNL_CPP_FALSE=
+fi
+
+
+else
+
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find CNL-CPP lib" >&5
+$as_echo "$as_me: WARNING: can't find CNL-CPP lib" >&2;}
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
 CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 LIBS=$SAVED_LIBS
 
 ###############################
-WEBRTCLIBS="-lwebrtc"
+# Check for VPX
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for vpx_codec_version in -lvpx" >&5
+$as_echo_n "checking for vpx_codec_version in -lvpx... " >&6; }
+if ${ac_cv_lib_vpx_vpx_codec_version+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lvpx  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char vpx_codec_version ();
+int
+main ()
+{
+return vpx_codec_version ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_vpx_vpx_codec_version=yes
+else
+  ac_cv_lib_vpx_vpx_codec_version=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_vpx_vpx_codec_version" >&5
+$as_echo "$ac_cv_lib_vpx_vpx_codec_version" >&6; }
+if test "x$ac_cv_lib_vpx_vpx_codec_version" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBVPX 1
+_ACEOF
+
+  LIBS="-lvpx $LIBS"
+
+fi
+
+ if test "$ac_cv_lib_vpx_vpx_codec_version" = yes; then
+  HAVE_VPX_TRUE=
+  HAVE_VPX_FALSE='#'
+else
+  HAVE_VPX_TRUE='#'
+  HAVE_VPX_FALSE=
+fi
+
 
 
 cat >confcache <<\_ACEOF
@@ -20864,6 +21018,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HAVE_PERSISTENT_STORAGE_TRUE}" && test -z "${HAVE_PERSISTENT_STORAGE_FALSE}"; then
   as_fn_error $? "conditional \"HAVE_PERSISTENT_STORAGE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_CNL_CPP_TRUE}" && test -z "${HAVE_CNL_CPP_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_CNL_CPP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_VPX_TRUE}" && test -z "${HAVE_VPX_FALSE}"; then
+  as_fn_error $? "conditional \"HAVE_VPX\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

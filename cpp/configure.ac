@@ -29,6 +29,8 @@ AC_ARG_VAR([NANOMSGGDIR], [Optional (for client demo app): path to the directory
 AC_ARG_VAR([NANOMSGLIB], [Optional (for client demo app): path to the directory which contains nanomsg library binaries (default is /usr/local/lib)])
 AC_ARG_VAR([PSTORAGEDIR], [Optional: path to the directory which contains persistent storage library headers (LevelDB for Android or RocksDB otherwise, default is /usr/local/include)])
 AC_ARG_VAR([PSTORAGELIB], [Optional: path to the directory which contains persistent storage library binaries (LevelDB for Android or RocksDB otherwise, default is /usr/local/lib)])
+AC_ARG_VAR([CNLCPPDIR], [Path to the directory which contains CNL-CPP library headers folder (default is /usr/local/include)])
+AC_ARG_VAR([CNLCPPLIB], [Path to the directory which contains CNL-CPP library binaries (default is /usr/local/lib)])
 
 AC_ARG_ENABLE([logging], [AS_HELP_STRING([--disable-logging],[disable logging in library])],
 	[],
@@ -200,6 +202,28 @@ if test ${PSTORAGELIB}; then
 	PSTORAGELIB=$(cd $PSTORAGELIB; pwd)
 else
 	PSTORAGELIB="/usr/local/lib"
+fi
+
+if test ${CNLCPPDIR}; then
+	DIR=$(cd $CNLCPPDIR && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $CNLCPPDIR])
+	fi
+	CNLCPPDIR=$DIR
+else
+	CNLCPPDIR="/usr/local/include"
+fi
+
+if test ${CNLCPPLIB}; then
+	DIR=$(cd $CNLCPPLIB && pwd || echo "not found")
+	if [[[ "$DIR" = "not found" ]]];
+	then
+		AC_MSG_ERROR([directory not found - $CNLCPPLIB])
+	fi
+	CNLCPPLIB=$DIR
+else
+	CNLCPPLIB="/usr/local/lib"
 fi
 
 # create links for client config file
@@ -416,11 +440,39 @@ else
     AC_SUBST([PSTORAGE_LIB], ["-lleveldb"])
 fi
 
+###############################
+# Check for CNL
+SAVED_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS -I$CNLCPPDIR"
+SAVED_LDFLAGS=$LDFLAGS
+LDFLAGS="$LDFLAGS -L$CNLCPPLIB"
+SAVED_LIBS=$LIBS
+LIBS="$LIBS -lcnl-cpp -lndn-cpp"
+
+AC_CHECK_HEADERS([cnl-cpp/namespace.hpp],,[AC_MSG_WARN([can't find namespace.hpp])])
+AC_MSG_CHECKING([for CNL-CPP library...])
+
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([
+					#include <cnl-cpp/namespace.hpp>
+				],[
+					cnl_cpp::Namespace n(ndn::Name("/test"))
+		])],[
+			AC_MSG_RESULT([yes])
+			AC_DEFINE(HAVE_CNL_CPP)
+			AM_CONDITIONAL([HAVE_CNL_CPP], [test "true" = true])
+		],[
+			AC_MSG_WARN([can't find CNL-CPP lib])
+		])
+
 CPPFLAGS=$SAVED_CPPFLAGS
 LDFLAGS=$SAVED_LDFLAGS
 LIBS=$SAVED_LIBS
 
 ###############################
-AC_SUBST([WEBRTCLIBS], ["-lwebrtc"])
+# Check for VPX
+AC_CHECK_LIB([vpx], [vpx_codec_version])
+AM_CONDITIONAL([HAVE_VPX], [test "$ac_cv_lib_vpx_vpx_codec_version" = yes])
+
 
 AC_OUTPUT

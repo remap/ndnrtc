@@ -91,159 +91,70 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@OS_DARWIN_TRUE@am__append_1 = -flat_namespace -L@WEBRTCDIR@/out/Default/allibs
-@OS_DARWIN_TRUE@am__append_2 = -lana_config_proto \
-@OS_DARWIN_TRUE@	-lana_debug_dump_proto -lapprtc_common \
-@OS_DARWIN_TRUE@	-lapprtc_signaling -laudio -laudio_coder \
-@OS_DARWIN_TRUE@	-laudio_coding -laudio_conference_mixer \
-@OS_DARWIN_TRUE@	-laudio_device -laudio_encoder_interface \
-@OS_DARWIN_TRUE@	-laudio_format_conversion \
-@OS_DARWIN_TRUE@	-laudio_frame_manipulator \
-@OS_DARWIN_TRUE@	-laudio_frame_operations -laudio_level \
-@OS_DARWIN_TRUE@	-laudio_mixer_impl -laudio_network_adaptor \
-@OS_DARWIN_TRUE@	-laudio_processing -laudio_processing_sse2 \
-@OS_DARWIN_TRUE@	-laudioproc_debug_proto \
-@OS_DARWIN_TRUE@	-laudioproc_protobuf_utils \
-@OS_DARWIN_TRUE@	-laudioproc_unittest_proto \
-@OS_DARWIN_TRUE@	-lbitrate_controller -lboringssl \
-@OS_DARWIN_TRUE@	-lbuiltin_audio_decoder_factory \
-@OS_DARWIN_TRUE@	-lbuiltin_audio_decoder_factory_internal \
-@OS_DARWIN_TRUE@	-lbuiltin_audio_encoder_factory \
-@OS_DARWIN_TRUE@	-lbwe_simulator_lib -lcall -lchart_proto -lcng \
-@OS_DARWIN_TRUE@	-lcommand_line_parser -lcommon_audio \
-@OS_DARWIN_TRUE@	-lcommon_audio_sse2 -lcommon_video \
-@OS_DARWIN_TRUE@	-lcongestion_controller -ldesktop_capture \
-@OS_DARWIN_TRUE@	-ldesktop_capture_differ_sse2 -ldl \
-@OS_DARWIN_TRUE@	-levent_log_visualizer_utils -lexpat \
-@OS_DARWIN_TRUE@	-lfield_trial_default -lfile_player \
-@OS_DARWIN_TRUE@	-lfile_recorder -lframe_editing_lib -lg711 \
-@OS_DARWIN_TRUE@	-lg722 -lgmock -lgtest -lilbc -lisac -lisac_c \
-@OS_DARWIN_TRUE@	-lisac_common -lisac_fix \
-@OS_DARWIN_TRUE@	-ljingle_peerconnection \
-@OS_DARWIN_TRUE@	-ljingle_peerconnection_api -ljpeg \
-@OS_DARWIN_TRUE@	-llegacy_encoded_audio_frame -lmedia_file \
-@OS_DARWIN_TRUE@	-lmetrics_default -lneteq \
-@OS_DARWIN_TRUE@	-lneteq_unittest_proto -lopus -lortc -lpacing \
-@OS_DARWIN_TRUE@	-lpcm16b -lprimitives -lprotobuf_full \
-@OS_DARWIN_TRUE@	-lprotobuf_lite -lprotoc_lib -lred \
-@OS_DARWIN_TRUE@	-lreference_less_video_analysis_lib \
-@OS_DARWIN_TRUE@	-lremote_bitrate_estimator -lrent_a_codec \
-@OS_DARWIN_TRUE@	-lrtc_base -lrtc_base_approved \
-@OS_DARWIN_TRUE@	-lrtc_event_log_impl -lrtc_event_log_parser \
-@OS_DARWIN_TRUE@	-lrtc_event_log_proto -lrtc_event_log_source \
-@OS_DARWIN_TRUE@	-lrtc_media -lrtc_media_base -lrtc_numerics \
-@OS_DARWIN_TRUE@	-lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc \
-@OS_DARWIN_TRUE@	-lrtc_sdk_peerconnection_objc -lrtc_stats \
-@OS_DARWIN_TRUE@	-lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm \
-@OS_DARWIN_TRUE@	-lsocketrocket -lsrtp -lstunprober \
-@OS_DARWIN_TRUE@	-lsystem_wrappers -lusrsctp -lutility -lvideo \
-@OS_DARWIN_TRUE@	-lvideo_capture -lvideo_capture_internal_impl \
-@OS_DARWIN_TRUE@	-lvideo_capture_module -lvideo_coding \
-@OS_DARWIN_TRUE@	-lvideo_coding_utility -lvideo_processing \
-@OS_DARWIN_TRUE@	-lvideo_processing_sse2 \
-@OS_DARWIN_TRUE@	-lvideo_quality_analysis -lvoice_engine -lvpx \
-@OS_DARWIN_TRUE@	-lvpx_yasm -lwebrtc -lwebrtc_common \
-@OS_DARWIN_TRUE@	-lwebrtc_h264 -lwebrtc_h264_video_toolbox \
-@OS_DARWIN_TRUE@	-lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 \
-@OS_DARWIN_TRUE@	-lwebrtc_vp9 -lyasm_utils -lyuv_internal
-@OS_DARWIN_TRUE@libndnrtc_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-@OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-@OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-@OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-@OS_DARWIN_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-@OS_DARWIN_TRUE@	$(am__DEPENDENCIES_2)
-@OS_DARWIN_FALSE@am__append_3 = -lwebrtc-all -lX11
-@OS_ANDROID_TRUE@am__append_4 = -fexceptions -frtti
-@OS_ANDROID_TRUE@am__append_5 = -llog -lOpenSLES -lboost_timer -lboost_thread
+
+# if OS_DARWIN
+
+# libndnrtc_la_LDFLAGS += -flat_namespace -L@WEBRTCDIR@/out/Default/allibs
+# libndnrtc_la_LIBADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
+
+# else
+
+# .PHONY: libwebrtc-all.mri libwebrtc-all.a
+
+# libwebrtc-all.mri:
+#   $(shell echo "create libwebrtc-all.a" > @WEBRTCLIB@/libwebrtc-all.mri && \
+#   for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
+#   echo "addlib $$lib" >> @WEBRTCLIB@/libwebrtc-all.mri; done && \
+#   echo "save" >> @WEBRTCLIB@/libwebrtc-all.mri && \
+#   echo "end" >> @WEBRTCLIB@/libwebrtc-all.mri)
+#
+# libwebrtc-all.a: libwebrtc-all.mri
+#   $(shell cd @WEBRTCLIB@ && @AR@ -M <libwebrtc-all.mri)
+#
+# libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
+# libndnrtc_la_LIBADD += -lwebrtc-all -lX11
+
+# endif
+@OS_ANDROID_TRUE@am__append_1 = -fexceptions -frtti
+@OS_ANDROID_TRUE@am__append_2 = -llog -lOpenSLES -lboost_timer -lboost_thread
 bin_PROGRAMS = frame-fetcher$(EXEEXT) stream-scrubber$(EXEEXT) \
+	$(am__EXEEXT_3) $(am__EXEEXT_4)
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_3 = -I@PSTORAGEDIR@ -DHAVE_PERSISTENT_STORAGE
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_4 = -L@PSTORAGELIB@
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_5 = ${PSTORAGE_LIB}
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_6 = stream-recorder networked-storage
+@HAVE_VPX_TRUE@am__append_7 = codec-run
+EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1) \
 	$(am__EXEEXT_2)
-@HAVE_PERSISTENT_STORAGE_TRUE@am__append_6 = -I@PSTORAGEDIR@ -DHAVE_PERSISTENT_STORAGE
-@HAVE_PERSISTENT_STORAGE_TRUE@am__append_7 = -L@PSTORAGELIB@
-@HAVE_PERSISTENT_STORAGE_TRUE@am__append_8 = ${PSTORAGE_LIB}
-@HAVE_PERSISTENT_STORAGE_TRUE@am__append_9 = stream-recorder networked-storage
-EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1)
-@HAVE_NANOMSG_TRUE@am__append_10 = client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__append_11 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
-@HAVE_NANOMSG_TRUE@am__append_12 = -L@NANOMSGLIB@
-@HAVE_NANOMSG_TRUE@am__append_13 = -lnanomsg
-@OS_LINUX_TRUE@am__append_14 = -pthread
-@OS_LINUX_TRUE@am__append_15 = -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes
+@HAVE_NANOMSG_TRUE@am__append_8 = client/src/ipc-shim.c client/src/ipc-shim.h
+@HAVE_NANOMSG_TRUE@am__append_9 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
+@HAVE_NANOMSG_TRUE@am__append_10 = -L@NANOMSGLIB@
+@HAVE_NANOMSG_TRUE@am__append_11 = -lnanomsg
+@OS_LINUX_TRUE@am__append_12 = -pthread
+@OS_LINUX_TRUE@am__append_13 = -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes
 #-lXrender -lXcomposite
 # TODO: check ubuntu build after commenting below line (part of LDADD flags)
 #/usr/lib/x86_64-linux-gnu/libboost_system.so
-@OS_DARWIN_TRUE@am__append_16 = -DOS_DARWIN
-@OS_DARWIN_TRUE@am__append_17 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio -L@WEBRTCDIR@/out/Default/allibs
-@OS_DARWIN_TRUE@am__append_18 = -lana_config_proto \
-@OS_DARWIN_TRUE@	-lana_debug_dump_proto -lapprtc_common \
-@OS_DARWIN_TRUE@	-lapprtc_signaling -laudio -laudio_coder \
-@OS_DARWIN_TRUE@	-laudio_coding -laudio_conference_mixer \
-@OS_DARWIN_TRUE@	-laudio_device -laudio_encoder_interface \
-@OS_DARWIN_TRUE@	-laudio_format_conversion \
-@OS_DARWIN_TRUE@	-laudio_frame_manipulator \
-@OS_DARWIN_TRUE@	-laudio_frame_operations -laudio_level \
-@OS_DARWIN_TRUE@	-laudio_mixer_impl -laudio_network_adaptor \
-@OS_DARWIN_TRUE@	-laudio_processing -laudio_processing_sse2 \
-@OS_DARWIN_TRUE@	-laudioproc_debug_proto \
-@OS_DARWIN_TRUE@	-laudioproc_protobuf_utils \
-@OS_DARWIN_TRUE@	-laudioproc_unittest_proto \
-@OS_DARWIN_TRUE@	-lbitrate_controller -lboringssl \
-@OS_DARWIN_TRUE@	-lbuiltin_audio_decoder_factory \
-@OS_DARWIN_TRUE@	-lbuiltin_audio_decoder_factory_internal \
-@OS_DARWIN_TRUE@	-lbuiltin_audio_encoder_factory \
-@OS_DARWIN_TRUE@	-lbwe_simulator_lib -lcall -lchart_proto -lcng \
-@OS_DARWIN_TRUE@	-lcommand_line_parser -lcommon_audio \
-@OS_DARWIN_TRUE@	-lcommon_audio_sse2 -lcommon_video \
-@OS_DARWIN_TRUE@	-lcongestion_controller -ldesktop_capture \
-@OS_DARWIN_TRUE@	-ldesktop_capture_differ_sse2 -ldl \
-@OS_DARWIN_TRUE@	-levent_log_visualizer_utils -lexpat \
-@OS_DARWIN_TRUE@	-lfield_trial_default -lfile_player \
-@OS_DARWIN_TRUE@	-lfile_recorder -lframe_editing_lib -lg711 \
-@OS_DARWIN_TRUE@	-lg722 -lgmock -lgtest -lilbc -lisac -lisac_c \
-@OS_DARWIN_TRUE@	-lisac_common -lisac_fix \
-@OS_DARWIN_TRUE@	-ljingle_peerconnection \
-@OS_DARWIN_TRUE@	-ljingle_peerconnection_api -ljpeg \
-@OS_DARWIN_TRUE@	-llegacy_encoded_audio_frame -lmedia_file \
-@OS_DARWIN_TRUE@	-lmetrics_default -lneteq \
-@OS_DARWIN_TRUE@	-lneteq_unittest_proto -lopus -lortc -lpacing \
-@OS_DARWIN_TRUE@	-lpcm16b -lprimitives -lprotobuf_full \
-@OS_DARWIN_TRUE@	-lprotobuf_lite -lprotoc_lib -lred \
-@OS_DARWIN_TRUE@	-lreference_less_video_analysis_lib \
-@OS_DARWIN_TRUE@	-lremote_bitrate_estimator -lrent_a_codec \
-@OS_DARWIN_TRUE@	-lrtc_base -lrtc_base_approved \
-@OS_DARWIN_TRUE@	-lrtc_event_log_impl -lrtc_event_log_parser \
-@OS_DARWIN_TRUE@	-lrtc_event_log_proto -lrtc_event_log_source \
-@OS_DARWIN_TRUE@	-lrtc_media -lrtc_media_base -lrtc_numerics \
-@OS_DARWIN_TRUE@	-lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc \
-@OS_DARWIN_TRUE@	-lrtc_sdk_peerconnection_objc -lrtc_stats \
-@OS_DARWIN_TRUE@	-lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm \
-@OS_DARWIN_TRUE@	-lsocketrocket -lsrtp -lstunprober \
-@OS_DARWIN_TRUE@	-lsystem_wrappers -lusrsctp -lutility -lvideo \
-@OS_DARWIN_TRUE@	-lvideo_capture -lvideo_capture_internal_impl \
-@OS_DARWIN_TRUE@	-lvideo_capture_module -lvideo_coding \
-@OS_DARWIN_TRUE@	-lvideo_coding_utility -lvideo_processing \
-@OS_DARWIN_TRUE@	-lvideo_processing_sse2 \
-@OS_DARWIN_TRUE@	-lvideo_quality_analysis -lvoice_engine -lvpx \
-@OS_DARWIN_TRUE@	-lvpx_yasm -lwebrtc -lwebrtc_common \
-@OS_DARWIN_TRUE@	-lwebrtc_h264 -lwebrtc_h264_video_toolbox \
-@OS_DARWIN_TRUE@	-lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 \
-@OS_DARWIN_TRUE@	-lwebrtc_vp9 -lyasm_utils -lyuv_internal
-@OS_ANDROID_TRUE@am__append_19 = -fPIE -fexceptions -frtti
-@OS_ANDROID_TRUE@am__append_20 = -fPIE -pie
-@OS_ANDROID_TRUE@am__append_21 = -llog -lOpenSLES -lboost_timer -lboost_thread
-@HAVE_NANOMSG_TRUE@am__append_22 = nanopipe-adaptor
-@HAVE_NANOMSG_TRUE@am__append_23 = client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__append_24 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
-@HAVE_NANOMSG_TRUE@am__append_25 = -L@NANOMSGLIB@
-@HAVE_NANOMSG_TRUE@am__append_26 = -lnanomsg
-@OS_LINUX_TRUE@am__append_27 = -ldl -lX11
-@OS_DARWIN_TRUE@am__append_28 = -DOS_DARWIN
+@OS_DARWIN_TRUE@am__append_14 = -DOS_DARWIN
+@OS_DARWIN_TRUE@am__append_15 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
+# ndnrtc_client_LDADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
+@OS_ANDROID_TRUE@am__append_16 = -fPIE -fexceptions -frtti
+@OS_ANDROID_TRUE@am__append_17 = -fPIE -pie
+@OS_ANDROID_TRUE@am__append_18 = -llog -lOpenSLES -lboost_timer -lboost_thread
+@HAVE_NANOMSG_TRUE@am__append_19 = nanopipe-adaptor
+@HAVE_CNL_CPP_TRUE@am__append_20 = stream
+@HAVE_NANOMSG_TRUE@am__append_21 = client/src/ipc-shim.c client/src/ipc-shim.h
+@HAVE_NANOMSG_TRUE@am__append_22 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
+@HAVE_NANOMSG_TRUE@am__append_23 = -L@NANOMSGLIB@
+@HAVE_NANOMSG_TRUE@am__append_24 = -lnanomsg
+@OS_LINUX_TRUE@am__append_25 = -ldl -lX11
+@OS_DARWIN_TRUE@am__append_26 = -DOS_DARWIN
 check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-network-data$(EXEEXT) \
 	bin/tests/test-packet-publisher$(EXEEXT) \
 	bin/tests/test-data-validator$(EXEEXT) \
 	bin/tests/test-video-coder$(EXEEXT) \
 	bin/tests/test-video-decoder$(EXEEXT) \
-	bin/tests/test-webrtc-audio-channel$(EXEEXT) \
 	bin/tests/test-media-thread$(EXEEXT) \
 	bin/tests/test-audio-capturer$(EXEEXT) \
 	bin/tests/test-frame-converter$(EXEEXT) \
@@ -277,8 +188,8 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-video-source$(EXEEXT) \
 	bin/tests/test-renderer$(EXEEXT) \
 	bin/tests/test-stat-collector$(EXEEXT) \
-	bin/tests/test-client$(EXEEXT) $(am__EXEEXT_3)
-@HAVE_PERSISTENT_STORAGE_TRUE@am__append_29 = bin/tests/test-persistent-storage
+	bin/tests/test-client$(EXEEXT) $(am__EXEEXT_5)
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_27 = bin/tests/test-persistent-storage
 TESTS = $(check_PROGRAMS)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -308,11 +219,13 @@ CONFIG_CLEAN_VPATH_FILES = tests/default.cfg tests/sample-consumer.cfg \
 	tests/sample-producer.cfg tests/sample-bad1.cfg \
 	tests/consumer-audio.cfg tests/consumer-video.cfg
 @HAVE_NANOMSG_TRUE@am__EXEEXT_1 = nanopipe-adaptor$(EXEEXT)
-@HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_2 = stream-recorder$(EXEEXT) \
+@HAVE_CNL_CPP_TRUE@am__EXEEXT_2 = stream$(EXEEXT)
+@HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_3 = stream-recorder$(EXEEXT) \
 @HAVE_PERSISTENT_STORAGE_TRUE@	networked-storage$(EXEEXT)
+@HAVE_VPX_TRUE@am__EXEEXT_4 = codec-run$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(helpersincludedir)" "$(DESTDIR)$(pkgincludedir)"
-@HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_3 = bin/tests/test-persistent-storage$(EXEEXT)
+@HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_5 = bin/tests/test-persistent-storage$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -345,17 +258,15 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 @HAVE_PERSISTENT_STORAGE_TRUE@am__DEPENDENCIES_2 =  \
 @HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1)
+libndnrtc_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_2)
 am__dirstamp = $(am__leading_dot)dirstamp
-am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
-	src/libndnrtc_la-audio-capturer.lo \
-	src/libndnrtc_la-audio-controller.lo \
-	src/libndnrtc_la-audio-playout.lo \
-	src/libndnrtc_la-audio-playout-impl.lo \
-	src/libndnrtc_la-audio-renderer.lo \
-	src/libndnrtc_la-audio-stream-impl.lo \
-	src/libndnrtc_la-audio-thread.lo src/libndnrtc_la-av-sync.lo \
-	src/libndnrtc_la-buffer-control.lo src/libndnrtc_la-clock.lo \
-	src/libndnrtc_la-c-wrapper.lo \
+am_libndnrtc_la_OBJECTS = src/proto/libndnrtc_la-ndnrtc.pb.lo \
+	src/libndnrtc_la-async.lo src/libndnrtc_la-buffer-control.lo \
+	src/libndnrtc_la-clock.lo src/libndnrtc_la-c-wrapper.lo \
 	src/libndnrtc_la-consumer-storage.lo \
 	src/libndnrtc_la-data-validator.lo \
 	src/libndnrtc_la-drd-estimator.lo \
@@ -382,8 +293,6 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
 	src/libndnrtc_la-pipeliner.lo \
 	src/libndnrtc_la-playout-control.lo \
 	src/libndnrtc_la-playout.lo src/libndnrtc_la-playout-impl.lo \
-	src/proto/libndnrtc_la-ndnrtc.pb.lo \
-	src/libndnrtc_la-remote-audio-stream.lo \
 	src/libndnrtc_la-remote-stream-impl.lo \
 	src/libndnrtc_la-remote-stream.lo \
 	src/libndnrtc_la-remote-video-stream.lo \
@@ -398,11 +307,11 @@ am_libndnrtc_la_OBJECTS = src/libndnrtc_la-async.lo \
 	src/libndnrtc_la-threading-capability.lo \
 	src/libndnrtc_la-video-coder.lo \
 	src/libndnrtc_la-video-decoder.lo \
+	src/libndnrtc_la-video-codec.lo \
 	src/libndnrtc_la-video-playout.lo \
 	src/libndnrtc_la-video-playout-impl.lo \
 	src/libndnrtc_la-video-stream-impl.lo \
 	src/libndnrtc_la-video-thread.lo \
-	src/libndnrtc_la-webrtc-audio-channel.lo \
 	src/persistent-storage/libndnrtc_la-frame-fetcher.lo \
 	src/persistent-storage/libndnrtc_la-fetching-task.lo \
 	src/persistent-storage/libndnrtc_la-persistent-storage.lo \
@@ -428,7 +337,6 @@ am_bin_tests_test_async_OBJECTS =  \
 	src/bin_tests_test_async-async.$(OBJEXT) $(am__objects_2)
 bin_tests_test_async_OBJECTS = $(am_bin_tests_test_async_OBJECTS)
 am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
@@ -1770,31 +1678,20 @@ bin_tests_test_video_source_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_video_source_LDFLAGS) $(LDFLAGS) -o $@
-am__bin_tests_test_webrtc_audio_channel_SOURCES_DIST =  \
-	tests/test-webrtc-audio-channel.cc \
-	src/webrtc-audio-channel.cpp src/audio-controller.cpp \
-	src/threading-capability.cpp \
-	contrib/gtest/googlemock/src/gmock-all.cc \
-	contrib/gtest/googletest/src/gtest-all.cc \
-	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_81 = client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.$(OBJEXT)
-am__objects_82 = contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.$(OBJEXT) \
-	contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.$(OBJEXT) \
-	$(am__objects_81)
-am_bin_tests_test_webrtc_audio_channel_OBJECTS = tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.$(OBJEXT) \
-	src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.$(OBJEXT) \
-	src/bin_tests_test_webrtc_audio_channel-audio-controller.$(OBJEXT) \
-	src/bin_tests_test_webrtc_audio_channel-threading-capability.$(OBJEXT) \
-	$(am__objects_82)
-bin_tests_test_webrtc_audio_channel_OBJECTS =  \
-	$(am_bin_tests_test_webrtc_audio_channel_OBJECTS)
-bin_tests_test_webrtc_audio_channel_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4)
-bin_tests_test_webrtc_audio_channel_LINK = $(LIBTOOL) $(AM_V_lt) \
-	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
-	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
-	$(bin_tests_test_webrtc_audio_channel_LDFLAGS) $(LDFLAGS) -o \
-	$@
+am__codec_run_SOURCES_DIST = tools/codec-run/main.cpp \
+	contrib/docopt/docopt.cpp tools/codec-run/tools.cpp
+@HAVE_VPX_TRUE@am_codec_run_OBJECTS =  \
+@HAVE_VPX_TRUE@	tools/codec-run/codec_run-main.$(OBJEXT) \
+@HAVE_VPX_TRUE@	contrib/docopt/codec_run-docopt.$(OBJEXT) \
+@HAVE_VPX_TRUE@	tools/codec-run/codec_run-tools.$(OBJEXT)
+codec_run_OBJECTS = $(am_codec_run_OBJECTS)
+@HAVE_VPX_TRUE@codec_run_DEPENDENCIES = libndnrtc.la \
+@HAVE_VPX_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+@HAVE_VPX_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+@HAVE_VPX_TRUE@	$(am__DEPENDENCIES_1)
+codec_run_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(codec_run_CXXFLAGS) \
+	$(CXXFLAGS) $(codec_run_LDFLAGS) $(LDFLAGS) -o $@
 am_frame_fetcher_OBJECTS =  \
 	tools/frame-fetcher/frame_fetcher-main.$(OBJEXT) \
 	contrib/docopt/frame_fetcher-docopt.$(OBJEXT)
@@ -1827,7 +1724,7 @@ am__ndnrtc_client_SOURCES_DIST = client/src/main.cpp \
 	client/src/precise-generator.hpp \
 	client/src/precise-generator.cpp client/src/ipc-shim.c \
 	client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_83 = client/src/ndnrtc_client-ipc-shim.$(OBJEXT)
+@HAVE_NANOMSG_TRUE@am__objects_81 = client/src/ndnrtc_client-ipc-shim.$(OBJEXT)
 am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
 	client/src/ndnrtc_client-renderer.$(OBJEXT) \
 	client/src/ndnrtc_client-config.$(OBJEXT) \
@@ -1836,13 +1733,12 @@ am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
 	client/src/ndnrtc_client-frame-io.$(OBJEXT) \
 	client/src/ndnrtc_client-video-source.$(OBJEXT) \
 	client/src/ndnrtc_client-precise-generator.$(OBJEXT) \
-	$(am__objects_83)
+	$(am__objects_81)
 ndnrtc_client_OBJECTS = $(am_ndnrtc_client_OBJECTS)
 ndnrtc_client_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 ndnrtc_client_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ndnrtc_client_LDFLAGS) $(LDFLAGS) \
@@ -1863,6 +1759,18 @@ networked_storage_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(networked_storage_CXXFLAGS) $(CXXFLAGS) \
 	$(networked_storage_LDFLAGS) $(LDFLAGS) -o $@
+am__stream_SOURCES_DIST = client/stream/main.cpp \
+	contrib/docopt/docopt.cpp
+@HAVE_CNL_CPP_TRUE@am_stream_OBJECTS =  \
+@HAVE_CNL_CPP_TRUE@	client/stream/stream-main.$(OBJEXT) \
+@HAVE_CNL_CPP_TRUE@	contrib/docopt/stream-docopt.$(OBJEXT)
+stream_OBJECTS = $(am_stream_OBJECTS)
+@HAVE_CNL_CPP_TRUE@stream_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+@HAVE_CNL_CPP_TRUE@	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+@HAVE_CNL_CPP_TRUE@	$(top_builddir)/libndnrtc.la
+stream_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(stream_LDFLAGS) $(LDFLAGS) -o $@
 am__stream_recorder_SOURCES_DIST = tools/stream-recorder/main.cpp \
 	include/stream-recorder.hpp contrib/docopt/docopt.cpp
 @HAVE_PERSISTENT_STORAGE_TRUE@am_stream_recorder_OBJECTS = tools/stream-recorder/stream_recorder-main.$(OBJEXT) \
@@ -1981,7 +1889,6 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	client/src/$(DEPDIR)/bin_tests_test_video_source-ipc-shim.Po \
 	client/src/$(DEPDIR)/bin_tests_test_video_source-precise-generator.Po \
 	client/src/$(DEPDIR)/bin_tests_test_video_source-video-source.Po \
-	client/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-ipc-shim.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-client.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-config.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po \
@@ -1991,8 +1898,11 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	client/src/$(DEPDIR)/ndnrtc_client-renderer.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-video-source.Po \
+	client/stream/$(DEPDIR)/stream-main.Po \
+	contrib/docopt/$(DEPDIR)/codec_run-docopt.Po \
 	contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po \
 	contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po \
+	contrib/docopt/$(DEPDIR)/stream-docopt.Po \
 	contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po \
 	contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po \
@@ -2035,7 +1945,6 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_decoder-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_playout-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_source-gmock-all.Po \
-	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gmock-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_async-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_capturer-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_playout-gtest-all.Po \
@@ -2076,7 +1985,6 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_decoder-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_playout-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_source-gtest-all.Po \
-	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gtest-all.Po \
 	src/$(DEPDIR)/bin_tests_test_async-async.Po \
 	src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-capturer.Po \
 	src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-controller.Po \
@@ -2438,18 +2346,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	src/$(DEPDIR)/bin_tests_test_video_source-clock.Po \
 	src/$(DEPDIR)/bin_tests_test_video_source-estimators.Po \
 	src/$(DEPDIR)/bin_tests_test_video_source-simple-log.Po \
-	src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-audio-controller.Po \
-	src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-threading-capability.Po \
-	src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.Po \
 	src/$(DEPDIR)/libndnrtc_la-async.Plo \
-	src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo \
-	src/$(DEPDIR)/libndnrtc_la-audio-controller.Plo \
-	src/$(DEPDIR)/libndnrtc_la-audio-playout-impl.Plo \
-	src/$(DEPDIR)/libndnrtc_la-audio-playout.Plo \
-	src/$(DEPDIR)/libndnrtc_la-audio-renderer.Plo \
-	src/$(DEPDIR)/libndnrtc_la-audio-stream-impl.Plo \
-	src/$(DEPDIR)/libndnrtc_la-audio-thread.Plo \
-	src/$(DEPDIR)/libndnrtc_la-av-sync.Plo \
 	src/$(DEPDIR)/libndnrtc_la-buffer-control.Plo \
 	src/$(DEPDIR)/libndnrtc_la-c-wrapper.Plo \
 	src/$(DEPDIR)/libndnrtc_la-clock.Plo \
@@ -2479,7 +2376,6 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	src/$(DEPDIR)/libndnrtc_la-playout-control.Plo \
 	src/$(DEPDIR)/libndnrtc_la-playout-impl.Plo \
 	src/$(DEPDIR)/libndnrtc_la-playout.Plo \
-	src/$(DEPDIR)/libndnrtc_la-remote-audio-stream.Plo \
 	src/$(DEPDIR)/libndnrtc_la-remote-stream-impl.Plo \
 	src/$(DEPDIR)/libndnrtc_la-remote-stream.Plo \
 	src/$(DEPDIR)/libndnrtc_la-remote-video-stream.Plo \
@@ -2493,13 +2389,13 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	src/$(DEPDIR)/libndnrtc_la-statistics.Plo \
 	src/$(DEPDIR)/libndnrtc_la-stream-recorder.Plo \
 	src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo \
+	src/$(DEPDIR)/libndnrtc_la-video-codec.Plo \
 	src/$(DEPDIR)/libndnrtc_la-video-coder.Plo \
 	src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo \
 	src/$(DEPDIR)/libndnrtc_la-video-playout-impl.Plo \
 	src/$(DEPDIR)/libndnrtc_la-video-playout.Plo \
 	src/$(DEPDIR)/libndnrtc_la-video-stream-impl.Plo \
 	src/$(DEPDIR)/libndnrtc_la-video-thread.Plo \
-	src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Plo \
 	src/helpers/$(DEPDIR)/libndnrtc_la-face-processor.Plo \
 	src/helpers/$(DEPDIR)/libndnrtc_la-key-chain-manager.Plo \
 	src/persistent-storage/$(DEPDIR)/bin_tests_test_local_media_stream-storage-engine.Po \
@@ -2579,7 +2475,8 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	tests/$(DEPDIR)/bin_tests_test_video_playout-test-video-playout.Po \
 	tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po \
 	tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po \
-	tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po \
+	tools/codec-run/$(DEPDIR)/codec_run-main.Po \
+	tools/codec-run/$(DEPDIR)/codec_run-tools.Po \
 	tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po \
 	tools/networked-storage/$(DEPDIR)/networked_storage-main.Po \
 	tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po \
@@ -2661,11 +2558,11 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_video_coder_SOURCES) \
 	$(bin_tests_test_video_decoder_SOURCES) \
 	$(bin_tests_test_video_playout_SOURCES) \
-	$(bin_tests_test_video_source_SOURCES) \
-	$(bin_tests_test_webrtc_audio_channel_SOURCES) \
+	$(bin_tests_test_video_source_SOURCES) $(codec_run_SOURCES) \
 	$(frame_fetcher_SOURCES) $(nanopipe_adaptor_SOURCES) \
 	$(ndnrtc_client_SOURCES) $(networked_storage_SOURCES) \
-	$(stream_recorder_SOURCES) $(stream_scrubber_SOURCES)
+	$(stream_SOURCES) $(stream_recorder_SOURCES) \
+	$(stream_scrubber_SOURCES)
 DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_async_SOURCES_DIST) \
 	$(am__bin_tests_test_audio_capturer_SOURCES_DIST) \
@@ -2707,11 +2604,12 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_video_decoder_SOURCES_DIST) \
 	$(am__bin_tests_test_video_playout_SOURCES_DIST) \
 	$(am__bin_tests_test_video_source_SOURCES_DIST) \
-	$(am__bin_tests_test_webrtc_audio_channel_SOURCES_DIST) \
-	$(frame_fetcher_SOURCES) $(am__nanopipe_adaptor_SOURCES_DIST) \
+	$(am__codec_run_SOURCES_DIST) $(frame_fetcher_SOURCES) \
+	$(am__nanopipe_adaptor_SOURCES_DIST) \
 	$(am__ndnrtc_client_SOURCES_DIST) \
 	$(am__networked_storage_SOURCES_DIST) \
-	$(am__stream_recorder_SOURCES_DIST) $(stream_scrubber_SOURCES)
+	$(am__stream_SOURCES_DIST) $(am__stream_recorder_SOURCES_DIST) \
+	$(stream_scrubber_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -2965,6 +2863,8 @@ BOOST_TIMER_STATIC_LIB = @BOOST_TIMER_STATIC_LIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
+CNLCPPDIR = @CNLCPPDIR@
+CNLCPPLIB = @CNLCPPLIB@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
@@ -3045,7 +2945,6 @@ TAR = @TAR@
 VERSION = @VERSION@
 WEBRTCDIR = @WEBRTCDIR@
 WEBRTCLIB = @WEBRTCLIB@
-WEBRTCLIBS = @WEBRTCLIBS@
 WEBRTCSRC = @WEBRTCSRC@
 WGET = @WGET@
 abs_builddir = @abs_builddir@
@@ -3124,15 +3023,8 @@ helpersinclude_HEADERS = include/helpers/key-chain-manager.hpp \
   include/helpers/face-processor.hpp
 
 lib_LTLIBRARIES = libndnrtc.la
-libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
-  src/audio-capturer.cpp src/audio-capturer.hpp \
-  src/audio-controller.cpp src/audio-controller.hpp \
-  src/audio-playout.cpp src/audio-playout.hpp \
-  src/audio-playout-impl.cpp src/audio-playout-impl.hpp \
-  src/audio-renderer.cpp src/audio-renderer.hpp \
-  src/audio-stream-impl.cpp src/audio-stream-impl.hpp \
-  src/audio-thread.cpp src/audio-thread.hpp \
-  src/av-sync.cpp src/av-sync.hpp \
+libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
+  src/async.cpp src/async.hpp \
   src/buffer-control.cpp src/buffer-control.hpp \
   src/clock.cpp src/clock.hpp \
   src/c-wrapper.cpp include/c-wrapper.h \
@@ -3167,9 +3059,7 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/playout-control.cpp src/playout-control.hpp \
   src/playout.cpp src/playout.hpp \
   src/playout-impl.cpp src/playout-impl.hpp \
-	src/proto/ndnrtc.pb.cc \
   src/rate-adaptation-module.hpp \
-  src/remote-audio-stream.cpp src/remote-audio-stream.hpp \
   src/remote-stream-impl.cpp src/remote-stream-impl.hpp \
   src/remote-stream.cpp include/remote-stream.hpp \
   src/remote-video-stream.cpp src/remote-video-stream.hpp \
@@ -3187,39 +3077,37 @@ libndnrtc_la_SOURCES = src/async.cpp src/async.hpp \
   src/threading-capability.cpp src/threading-capability.hpp \
   src/video-coder.cpp src/video-coder.hpp \
   src/video-decoder.cpp src/video-decoder.hpp \
+	src/video-codec.cpp src/video-codec.hpp \
   src/video-playout.cpp src/video-playout.hpp \
   src/video-playout-impl.cpp src/video-playout-impl.hpp \
   src/video-stream-impl.cpp src/video-stream-impl.hpp \
   src/video-thread.cpp src/video-thread.hpp \
-  src/webrtc-audio-channel.cpp src/webrtc-audio-channel.hpp \
-  src/webrtc.hpp \
   src/persistent-storage/frame-fetcher.cpp include/frame-fetcher.hpp \
   src/persistent-storage/fetching-task.cpp src/persistent-storage/fetching-task.hpp \
   src/persistent-storage/persistent-storage.cpp src/persistent-storage/persistent-storage.hpp \
   src/persistent-storage/storage-engine.cpp include/storage-engine.hpp
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include \
-	-I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@WEBRTCDIR@ \
-	-I@WEBRTCSRC@ -I@NDNCPPDIR@ -I@OPENFECSRC@ -D \
-	BASE_FILE_NAME=\"$*\" $(am__append_4) $(am__append_6)
-libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@WEBRTCLIB@ \
-	-L@BOOSTLIB@ ${BOOST_LDFLAGS} $(am__append_1) $(am__append_7)
+	-I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ \
+	-I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\" $(am__append_1) \
+	$(am__append_3)
+libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@BOOSTLIB@ \
+	${BOOST_LDFLAGS} $(am__append_4)
 libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} \
 	${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} \
 	${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB} $(am__append_2) \
-	$(am__append_3) $(am__append_5) $(am__append_8)
-@OS_DARWIN_FALSE@libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
+	$(am__append_5)
 frame_fetcher_SOURCES = tools/frame-fetcher/main.cpp \
     contrib/docopt/docopt.cpp
 
-frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
+frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
 frame_fetcher_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 frame_fetcher_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 stream_scrubber_SOURCES = tools/stream-scrubber/main.cpp \
     contrib/docopt/docopt.cpp \
     tools/stream-scrubber/renderer.cpp tools/stream-scrubber/renderer.hpp
 
-stream_scrubber_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@WEBRTCDIR@ -I@WEBRTCSRC@ -I@OPENFECSRC@
+stream_scrubber_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
 stream_scrubber_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 stream_scrubber_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
@@ -3235,6 +3123,10 @@ stream_scrubber_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER
 @HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@
 @HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
 @HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
+@HAVE_VPX_TRUE@codec_run_SOURCES = tools/codec-run/main.cpp contrib/docopt/docopt.cpp tools/codec-run/tools.cpp
+@HAVE_VPX_TRUE@codec_run_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
+@HAVE_VPX_TRUE@codec_run_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+@HAVE_VPX_TRUE@codec_run_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
 	client/src/renderer.cpp client/src/config.cpp \
 	client/src/config.hpp client/src/stat-collector.cpp \
@@ -3242,23 +3134,31 @@ ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
 	client/src/client.hpp client/src/frame-io.hpp \
 	client/src/frame-io.cpp client/src/video-source.cpp \
 	client/src/video-source.hpp client/src/precise-generator.hpp \
-	client/src/precise-generator.cpp $(am__append_10)
+	client/src/precise-generator.cpp $(am__append_8)
 ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
 	${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@ \
-	$(am__append_11) $(am__append_16) $(am__append_19)
+	$(am__append_9) $(am__append_14) $(am__append_16)
 ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} \
-	-L$(libdir) $(am__append_12) $(am__append_14) $(am__append_17) \
-	$(am__append_20)
+	-L$(libdir) $(am__append_10) $(am__append_12) $(am__append_15) \
+	$(am__append_17)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} \
 	${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} \
-	$(top_builddir)/libndnrtc.la $(am__append_13) $(am__append_15) \
-	$(am__append_18) $(am__append_21)
+	$(top_builddir)/libndnrtc.la $(am__append_11) $(am__append_13) \
+	$(am__append_18)
 noinst_SCRIPTS = client/params.cfg
 @HAVE_NANOMSG_TRUE@nanopipe_adaptor_SOURCES = client/nanopipe-adaptor/nanopipe.cpp client/nanopipe-adaptor/ipc-shim.c
 @HAVE_NANOMSG_TRUE@nanopipe_adaptor_CXXFLAGS = -std=c++11
 @HAVE_NANOMSG_TRUE@nanopipe_adaptor_CPPFLAGS = -I@NANOMSGDIR@ -I$(includedir)
 @HAVE_NANOMSG_TRUE@nanopipe_adaptor_LDFLAGS = -L@NANOMSGLIB@
 @HAVE_NANOMSG_TRUE@nanopipe_adaptor_LDADD = -lnanomsg
+
+# ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
+# ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
+# ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
+@HAVE_CNL_CPP_TRUE@stream_SOURCES = client/stream/main.cpp contrib/docopt/docopt.cpp
+@HAVE_CNL_CPP_TRUE@stream_CPPFLAGS = -I$(top_srcdir)/client/src -I$(includedir) -I$(top_srcdir)/contrib -I@NDNCPPDIR@ -I@CNLCPPDIR@ ${BOOST_CPPFLAGS}
+@HAVE_CNL_CPP_TRUE@stream_LDFLAGS = -L@NDNCPPLIB@ -L@CNLCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
+@HAVE_CNL_CPP_TRUE@stream_LDADD = -lcnl-cpp -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
 
 #################
 # unit tests    #
@@ -3269,14 +3169,14 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
 	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} @DEFS@ \
-	$(am__append_24) $(am__append_28)
+	$(am__append_22) $(am__append_26)
 UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS} \
+	$(am__append_23)
+UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_24) \
 	$(am__append_25)
-UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_26) \
-	$(am__append_27)
 UNIT_TESTS_COMMON_SOURCES_ =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
-	contrib/gtest/googletest/src/gtest-all.cc $(am__append_23)
+	contrib/gtest/googletest/src/gtest-all.cc $(am__append_21)
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -3340,10 +3240,11 @@ bin_tests_test_media_thread_SOURCES = tests/test-media-thread.cc src/video-threa
 bin_tests_test_media_thread_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_media_thread_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_media_thread_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
-bin_tests_test_webrtc_audio_channel_SOURCES = tests/test-webrtc-audio-channel.cc src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_webrtc_audio_channel_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-bin_tests_test_webrtc_audio_channel_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_webrtc_audio_channel_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
+
+# bin_tests_test_webrtc_audio_channel_SOURCES = tests/test-webrtc-audio-channel.cc src/webrtc-audio-channel.cpp src/audio-controller.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+# bin_tests_test_webrtc_audio_channel_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+# bin_tests_test_webrtc_audio_channel_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+# bin_tests_test_webrtc_audio_channel_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 bin_tests_test_audio_capturer_SOURCES = tests/test-audio-capturer.cc tests/tests-helpers.cc src/audio-capturer.cpp src/webrtc-audio-channel.cpp src/audio-controller.cpp src/simple-log.cpp src/threading-capability.cpp src/ndnrtc-object.cpp src/fec.cpp src/name-components.cpp src/frame-data.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_audio_capturer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_audio_capturer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -3605,6 +3506,14 @@ clean-libLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
+src/proto/$(am__dirstamp):
+	@$(MKDIR_P) src/proto
+	@: > src/proto/$(am__dirstamp)
+src/proto/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) src/proto/$(DEPDIR)
+	@: > src/proto/$(DEPDIR)/$(am__dirstamp)
+src/proto/libndnrtc_la-ndnrtc.pb.lo: src/proto/$(am__dirstamp) \
+	src/proto/$(DEPDIR)/$(am__dirstamp)
 src/$(am__dirstamp):
 	@$(MKDIR_P) src
 	@: > src/$(am__dirstamp)
@@ -3612,22 +3521,6 @@ src/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) src/$(DEPDIR)
 	@: > src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-async.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-audio-capturer.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-audio-controller.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-audio-playout.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-audio-playout-impl.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-audio-renderer.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-audio-stream-impl.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-audio-thread.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-av-sync.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-buffer-control.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -3699,16 +3592,6 @@ src/libndnrtc_la-playout.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-playout-impl.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/proto/$(am__dirstamp):
-	@$(MKDIR_P) src/proto
-	@: > src/proto/$(am__dirstamp)
-src/proto/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) src/proto/$(DEPDIR)
-	@: > src/proto/$(DEPDIR)/$(am__dirstamp)
-src/proto/libndnrtc_la-ndnrtc.pb.lo: src/proto/$(am__dirstamp) \
-	src/proto/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-remote-audio-stream.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-remote-stream-impl.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-remote-stream.lo: src/$(am__dirstamp) \
@@ -3739,6 +3622,8 @@ src/libndnrtc_la-video-coder.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-video-decoder.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
+src/libndnrtc_la-video-codec.lo: src/$(am__dirstamp) \
+	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-video-playout.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-video-playout-impl.lo: src/$(am__dirstamp) \
@@ -3746,8 +3631,6 @@ src/libndnrtc_la-video-playout-impl.lo: src/$(am__dirstamp) \
 src/libndnrtc_la-video-stream-impl.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-video-thread.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-webrtc-audio-channel.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/persistent-storage/$(am__dirstamp):
 	@$(MKDIR_P) src/persistent-storage
@@ -5284,27 +5167,31 @@ client/src/bin_tests_test_video_source-ipc-shim.$(OBJEXT):  \
 bin/tests/test-video-source$(EXEEXT): $(bin_tests_test_video_source_OBJECTS) $(bin_tests_test_video_source_DEPENDENCIES) $(EXTRA_bin_tests_test_video_source_DEPENDENCIES) bin/tests/$(am__dirstamp)
 	@rm -f bin/tests/test-video-source$(EXEEXT)
 	$(AM_V_CXXLD)$(bin_tests_test_video_source_LINK) $(bin_tests_test_video_source_OBJECTS) $(bin_tests_test_video_source_LDADD) $(LIBS)
-tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.$(OBJEXT):  \
-	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
-src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.$(OBJEXT):  \
-	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/bin_tests_test_webrtc_audio_channel-audio-controller.$(OBJEXT):  \
-	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/bin_tests_test_webrtc_audio_channel-threading-capability.$(OBJEXT):  \
-	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.$(OBJEXT):  \
-	contrib/gtest/googlemock/src/$(am__dirstamp) \
-	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
-contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.$(OBJEXT):  \
-	contrib/gtest/googletest/src/$(am__dirstamp) \
-	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
-client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
+tools/codec-run/$(am__dirstamp):
+	@$(MKDIR_P) tools/codec-run
+	@: > tools/codec-run/$(am__dirstamp)
+tools/codec-run/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tools/codec-run/$(DEPDIR)
+	@: > tools/codec-run/$(DEPDIR)/$(am__dirstamp)
+tools/codec-run/codec_run-main.$(OBJEXT):  \
+	tools/codec-run/$(am__dirstamp) \
+	tools/codec-run/$(DEPDIR)/$(am__dirstamp)
+contrib/docopt/$(am__dirstamp):
+	@$(MKDIR_P) contrib/docopt
+	@: > contrib/docopt/$(am__dirstamp)
+contrib/docopt/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) contrib/docopt/$(DEPDIR)
+	@: > contrib/docopt/$(DEPDIR)/$(am__dirstamp)
+contrib/docopt/codec_run-docopt.$(OBJEXT):  \
+	contrib/docopt/$(am__dirstamp) \
+	contrib/docopt/$(DEPDIR)/$(am__dirstamp)
+tools/codec-run/codec_run-tools.$(OBJEXT):  \
+	tools/codec-run/$(am__dirstamp) \
+	tools/codec-run/$(DEPDIR)/$(am__dirstamp)
 
-bin/tests/test-webrtc-audio-channel$(EXEEXT): $(bin_tests_test_webrtc_audio_channel_OBJECTS) $(bin_tests_test_webrtc_audio_channel_DEPENDENCIES) $(EXTRA_bin_tests_test_webrtc_audio_channel_DEPENDENCIES) bin/tests/$(am__dirstamp)
-	@rm -f bin/tests/test-webrtc-audio-channel$(EXEEXT)
-	$(AM_V_CXXLD)$(bin_tests_test_webrtc_audio_channel_LINK) $(bin_tests_test_webrtc_audio_channel_OBJECTS) $(bin_tests_test_webrtc_audio_channel_LDADD) $(LIBS)
+codec-run$(EXEEXT): $(codec_run_OBJECTS) $(codec_run_DEPENDENCIES) $(EXTRA_codec_run_DEPENDENCIES) 
+	@rm -f codec-run$(EXEEXT)
+	$(AM_V_CXXLD)$(codec_run_LINK) $(codec_run_OBJECTS) $(codec_run_LDADD) $(LIBS)
 tools/frame-fetcher/$(am__dirstamp):
 	@$(MKDIR_P) tools/frame-fetcher
 	@: > tools/frame-fetcher/$(am__dirstamp)
@@ -5314,12 +5201,6 @@ tools/frame-fetcher/$(DEPDIR)/$(am__dirstamp):
 tools/frame-fetcher/frame_fetcher-main.$(OBJEXT):  \
 	tools/frame-fetcher/$(am__dirstamp) \
 	tools/frame-fetcher/$(DEPDIR)/$(am__dirstamp)
-contrib/docopt/$(am__dirstamp):
-	@$(MKDIR_P) contrib/docopt
-	@: > contrib/docopt/$(am__dirstamp)
-contrib/docopt/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) contrib/docopt/$(DEPDIR)
-	@: > contrib/docopt/$(DEPDIR)/$(am__dirstamp)
 contrib/docopt/frame_fetcher-docopt.$(OBJEXT):  \
 	contrib/docopt/$(am__dirstamp) \
 	contrib/docopt/$(DEPDIR)/$(am__dirstamp)
@@ -5387,6 +5268,21 @@ contrib/docopt/networked_storage-docopt.$(OBJEXT):  \
 networked-storage$(EXEEXT): $(networked_storage_OBJECTS) $(networked_storage_DEPENDENCIES) $(EXTRA_networked_storage_DEPENDENCIES) 
 	@rm -f networked-storage$(EXEEXT)
 	$(AM_V_CXXLD)$(networked_storage_LINK) $(networked_storage_OBJECTS) $(networked_storage_LDADD) $(LIBS)
+client/stream/$(am__dirstamp):
+	@$(MKDIR_P) client/stream
+	@: > client/stream/$(am__dirstamp)
+client/stream/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) client/stream/$(DEPDIR)
+	@: > client/stream/$(DEPDIR)/$(am__dirstamp)
+client/stream/stream-main.$(OBJEXT): client/stream/$(am__dirstamp) \
+	client/stream/$(DEPDIR)/$(am__dirstamp)
+contrib/docopt/stream-docopt.$(OBJEXT):  \
+	contrib/docopt/$(am__dirstamp) \
+	contrib/docopt/$(DEPDIR)/$(am__dirstamp)
+
+stream$(EXEEXT): $(stream_OBJECTS) $(stream_DEPENDENCIES) $(EXTRA_stream_DEPENDENCIES) 
+	@rm -f stream$(EXEEXT)
+	$(AM_V_CXXLD)$(stream_LINK) $(stream_OBJECTS) $(stream_LDADD) $(LIBS)
 tools/stream-recorder/$(am__dirstamp):
 	@$(MKDIR_P) tools/stream-recorder
 	@: > tools/stream-recorder/$(am__dirstamp)
@@ -5427,6 +5323,7 @@ mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f client/nanopipe-adaptor/*.$(OBJEXT)
 	-rm -f client/src/*.$(OBJEXT)
+	-rm -f client/stream/*.$(OBJEXT)
 	-rm -f contrib/docopt/*.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/*.$(OBJEXT)
 	-rm -f contrib/gtest/googletest/src/*.$(OBJEXT)
@@ -5439,6 +5336,7 @@ mostlyclean-compile:
 	-rm -f src/proto/*.$(OBJEXT)
 	-rm -f src/proto/*.lo
 	-rm -f tests/*.$(OBJEXT)
+	-rm -f tools/codec-run/*.$(OBJEXT)
 	-rm -f tools/frame-fetcher/*.$(OBJEXT)
 	-rm -f tools/networked-storage/*.$(OBJEXT)
 	-rm -f tools/stream-recorder/*.$(OBJEXT)
@@ -5521,7 +5419,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_video_source-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_video_source-precise-generator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_video_source-video-source.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-client.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-config.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po@am__quote@ # am--include-marker
@@ -5531,8 +5428,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-renderer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-video-source.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@client/stream/$(DEPDIR)/stream-main.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/codec_run-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/stream-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po@am__quote@ # am--include-marker
@@ -5575,7 +5475,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_decoder-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_playout-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_source-gmock-all.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_async-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_capturer-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_playout-gtest-all.Po@am__quote@ # am--include-marker
@@ -5616,7 +5515,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_decoder-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_playout-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_source-gtest-all.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_async-async.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-capturer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-controller.Po@am__quote@ # am--include-marker
@@ -5978,18 +5876,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_source-clock.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_source-estimators.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_source-simple-log.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-audio-controller.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-threading-capability.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-async.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-controller.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-playout-impl.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-playout.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-renderer.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-stream-impl.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-audio-thread.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-av-sync.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-buffer-control.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-c-wrapper.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-clock.Plo@am__quote@ # am--include-marker
@@ -6019,7 +5906,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-playout-control.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-playout-impl.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-playout.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-remote-audio-stream.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-remote-stream-impl.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-remote-stream.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-remote-video-stream.Plo@am__quote@ # am--include-marker
@@ -6033,13 +5919,13 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-statistics.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-stream-recorder.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-codec.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-coder.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-playout-impl.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-playout.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-stream-impl.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-thread.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/helpers/$(DEPDIR)/libndnrtc_la-face-processor.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/helpers/$(DEPDIR)/libndnrtc_la-key-chain-manager.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/persistent-storage/$(DEPDIR)/bin_tests_test_local_media_stream-storage-engine.Po@am__quote@ # am--include-marker
@@ -6119,7 +6005,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_playout-test-video-playout.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tools/codec-run/$(DEPDIR)/codec_run-main.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tools/codec-run/$(DEPDIR)/codec_run-tools.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/networked-storage/$(DEPDIR)/networked_storage-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po@am__quote@ # am--include-marker
@@ -6716,20 +6603,6 @@ client/src/bin_tests_test_video_source-ipc-shim.obj: client/src/ipc-shim.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_source_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/bin_tests_test_video_source-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
 
-client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.o: client/src/ipc-shim.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-ipc-shim.Tpo -c -o client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.o `test -f 'client/src/ipc-shim.c' || echo '$(srcdir)/'`client/src/ipc-shim.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-ipc-shim.Tpo client/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-ipc-shim.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/src/ipc-shim.c' object='client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.o `test -f 'client/src/ipc-shim.c' || echo '$(srcdir)/'`client/src/ipc-shim.c
-
-client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.obj: client/src/ipc-shim.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-ipc-shim.Tpo -c -o client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-ipc-shim.Tpo client/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-ipc-shim.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/src/ipc-shim.c' object='client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/bin_tests_test_webrtc_audio_channel-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
-
 client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o: client/nanopipe-adaptor/ipc-shim.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o -MD -MP -MF client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Tpo -c -o client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o `test -f 'client/nanopipe-adaptor/ipc-shim.c' || echo '$(srcdir)/'`client/nanopipe-adaptor/ipc-shim.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Tpo client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Po
@@ -6782,68 +6655,19 @@ client/src/ndnrtc_client-ipc-shim.obj: client/src/ipc-shim.c
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
+src/proto/libndnrtc_la-ndnrtc.pb.lo: src/proto/ndnrtc.pb.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/proto/libndnrtc_la-ndnrtc.pb.lo -MD -MP -MF src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Tpo -c -o src/proto/libndnrtc_la-ndnrtc.pb.lo `test -f 'src/proto/ndnrtc.pb.cc' || echo '$(srcdir)/'`src/proto/ndnrtc.pb.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Tpo src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/proto/ndnrtc.pb.cc' object='src/proto/libndnrtc_la-ndnrtc.pb.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/proto/libndnrtc_la-ndnrtc.pb.lo `test -f 'src/proto/ndnrtc.pb.cc' || echo '$(srcdir)/'`src/proto/ndnrtc.pb.cc
+
 src/libndnrtc_la-async.lo: src/async.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-async.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-async.Tpo -c -o src/libndnrtc_la-async.lo `test -f 'src/async.cpp' || echo '$(srcdir)/'`src/async.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-async.Tpo src/$(DEPDIR)/libndnrtc_la-async.Plo
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/async.cpp' object='src/libndnrtc_la-async.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-async.lo `test -f 'src/async.cpp' || echo '$(srcdir)/'`src/async.cpp
-
-src/libndnrtc_la-audio-capturer.lo: src/audio-capturer.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-capturer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-capturer.Tpo -c -o src/libndnrtc_la-audio-capturer.lo `test -f 'src/audio-capturer.cpp' || echo '$(srcdir)/'`src/audio-capturer.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-capturer.Tpo src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-capturer.cpp' object='src/libndnrtc_la-audio-capturer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-capturer.lo `test -f 'src/audio-capturer.cpp' || echo '$(srcdir)/'`src/audio-capturer.cpp
-
-src/libndnrtc_la-audio-controller.lo: src/audio-controller.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-controller.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-controller.Tpo -c -o src/libndnrtc_la-audio-controller.lo `test -f 'src/audio-controller.cpp' || echo '$(srcdir)/'`src/audio-controller.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-controller.Tpo src/$(DEPDIR)/libndnrtc_la-audio-controller.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-controller.cpp' object='src/libndnrtc_la-audio-controller.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-controller.lo `test -f 'src/audio-controller.cpp' || echo '$(srcdir)/'`src/audio-controller.cpp
-
-src/libndnrtc_la-audio-playout.lo: src/audio-playout.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-playout.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-playout.Tpo -c -o src/libndnrtc_la-audio-playout.lo `test -f 'src/audio-playout.cpp' || echo '$(srcdir)/'`src/audio-playout.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-playout.Tpo src/$(DEPDIR)/libndnrtc_la-audio-playout.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-playout.cpp' object='src/libndnrtc_la-audio-playout.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-playout.lo `test -f 'src/audio-playout.cpp' || echo '$(srcdir)/'`src/audio-playout.cpp
-
-src/libndnrtc_la-audio-playout-impl.lo: src/audio-playout-impl.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-playout-impl.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-playout-impl.Tpo -c -o src/libndnrtc_la-audio-playout-impl.lo `test -f 'src/audio-playout-impl.cpp' || echo '$(srcdir)/'`src/audio-playout-impl.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-playout-impl.Tpo src/$(DEPDIR)/libndnrtc_la-audio-playout-impl.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-playout-impl.cpp' object='src/libndnrtc_la-audio-playout-impl.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-playout-impl.lo `test -f 'src/audio-playout-impl.cpp' || echo '$(srcdir)/'`src/audio-playout-impl.cpp
-
-src/libndnrtc_la-audio-renderer.lo: src/audio-renderer.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-renderer.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-renderer.Tpo -c -o src/libndnrtc_la-audio-renderer.lo `test -f 'src/audio-renderer.cpp' || echo '$(srcdir)/'`src/audio-renderer.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-renderer.Tpo src/$(DEPDIR)/libndnrtc_la-audio-renderer.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-renderer.cpp' object='src/libndnrtc_la-audio-renderer.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-renderer.lo `test -f 'src/audio-renderer.cpp' || echo '$(srcdir)/'`src/audio-renderer.cpp
-
-src/libndnrtc_la-audio-stream-impl.lo: src/audio-stream-impl.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-stream-impl.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-stream-impl.Tpo -c -o src/libndnrtc_la-audio-stream-impl.lo `test -f 'src/audio-stream-impl.cpp' || echo '$(srcdir)/'`src/audio-stream-impl.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-stream-impl.Tpo src/$(DEPDIR)/libndnrtc_la-audio-stream-impl.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-stream-impl.cpp' object='src/libndnrtc_la-audio-stream-impl.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-stream-impl.lo `test -f 'src/audio-stream-impl.cpp' || echo '$(srcdir)/'`src/audio-stream-impl.cpp
-
-src/libndnrtc_la-audio-thread.lo: src/audio-thread.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-audio-thread.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-audio-thread.Tpo -c -o src/libndnrtc_la-audio-thread.lo `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-audio-thread.Tpo src/$(DEPDIR)/libndnrtc_la-audio-thread.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-thread.cpp' object='src/libndnrtc_la-audio-thread.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-audio-thread.lo `test -f 'src/audio-thread.cpp' || echo '$(srcdir)/'`src/audio-thread.cpp
-
-src/libndnrtc_la-av-sync.lo: src/av-sync.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-av-sync.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-av-sync.Tpo -c -o src/libndnrtc_la-av-sync.lo `test -f 'src/av-sync.cpp' || echo '$(srcdir)/'`src/av-sync.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-av-sync.Tpo src/$(DEPDIR)/libndnrtc_la-av-sync.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/av-sync.cpp' object='src/libndnrtc_la-av-sync.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-av-sync.lo `test -f 'src/av-sync.cpp' || echo '$(srcdir)/'`src/av-sync.cpp
 
 src/libndnrtc_la-buffer-control.lo: src/buffer-control.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-buffer-control.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-buffer-control.Tpo -c -o src/libndnrtc_la-buffer-control.lo `test -f 'src/buffer-control.cpp' || echo '$(srcdir)/'`src/buffer-control.cpp
@@ -7062,20 +6886,6 @@ src/libndnrtc_la-playout-impl.lo: src/playout-impl.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-playout-impl.lo `test -f 'src/playout-impl.cpp' || echo '$(srcdir)/'`src/playout-impl.cpp
 
-src/proto/libndnrtc_la-ndnrtc.pb.lo: src/proto/ndnrtc.pb.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/proto/libndnrtc_la-ndnrtc.pb.lo -MD -MP -MF src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Tpo -c -o src/proto/libndnrtc_la-ndnrtc.pb.lo `test -f 'src/proto/ndnrtc.pb.cc' || echo '$(srcdir)/'`src/proto/ndnrtc.pb.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Tpo src/proto/$(DEPDIR)/libndnrtc_la-ndnrtc.pb.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/proto/ndnrtc.pb.cc' object='src/proto/libndnrtc_la-ndnrtc.pb.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/proto/libndnrtc_la-ndnrtc.pb.lo `test -f 'src/proto/ndnrtc.pb.cc' || echo '$(srcdir)/'`src/proto/ndnrtc.pb.cc
-
-src/libndnrtc_la-remote-audio-stream.lo: src/remote-audio-stream.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-remote-audio-stream.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-remote-audio-stream.Tpo -c -o src/libndnrtc_la-remote-audio-stream.lo `test -f 'src/remote-audio-stream.cpp' || echo '$(srcdir)/'`src/remote-audio-stream.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-remote-audio-stream.Tpo src/$(DEPDIR)/libndnrtc_la-remote-audio-stream.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/remote-audio-stream.cpp' object='src/libndnrtc_la-remote-audio-stream.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-remote-audio-stream.lo `test -f 'src/remote-audio-stream.cpp' || echo '$(srcdir)/'`src/remote-audio-stream.cpp
-
 src/libndnrtc_la-remote-stream-impl.lo: src/remote-stream-impl.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-remote-stream-impl.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-remote-stream-impl.Tpo -c -o src/libndnrtc_la-remote-stream-impl.lo `test -f 'src/remote-stream-impl.cpp' || echo '$(srcdir)/'`src/remote-stream-impl.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-remote-stream-impl.Tpo src/$(DEPDIR)/libndnrtc_la-remote-stream-impl.Plo
@@ -7181,6 +6991,13 @@ src/libndnrtc_la-video-decoder.lo: src/video-decoder.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-decoder.lo `test -f 'src/video-decoder.cpp' || echo '$(srcdir)/'`src/video-decoder.cpp
 
+src/libndnrtc_la-video-codec.lo: src/video-codec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-codec.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-codec.Tpo -c -o src/libndnrtc_la-video-codec.lo `test -f 'src/video-codec.cpp' || echo '$(srcdir)/'`src/video-codec.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-codec.Tpo src/$(DEPDIR)/libndnrtc_la-video-codec.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-codec.cpp' object='src/libndnrtc_la-video-codec.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-codec.lo `test -f 'src/video-codec.cpp' || echo '$(srcdir)/'`src/video-codec.cpp
+
 src/libndnrtc_la-video-playout.lo: src/video-playout.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-playout.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-playout.Tpo -c -o src/libndnrtc_la-video-playout.lo `test -f 'src/video-playout.cpp' || echo '$(srcdir)/'`src/video-playout.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-playout.Tpo src/$(DEPDIR)/libndnrtc_la-video-playout.Plo
@@ -7208,13 +7025,6 @@ src/libndnrtc_la-video-thread.lo: src/video-thread.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-thread.cpp' object='src/libndnrtc_la-video-thread.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-thread.lo `test -f 'src/video-thread.cpp' || echo '$(srcdir)/'`src/video-thread.cpp
-
-src/libndnrtc_la-webrtc-audio-channel.lo: src/webrtc-audio-channel.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-webrtc-audio-channel.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Tpo -c -o src/libndnrtc_la-webrtc-audio-channel.lo `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Tpo src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/webrtc-audio-channel.cpp' object='src/libndnrtc_la-webrtc-audio-channel.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-webrtc-audio-channel.lo `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp
 
 src/persistent-storage/libndnrtc_la-frame-fetcher.lo: src/persistent-storage/frame-fetcher.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/persistent-storage/libndnrtc_la-frame-fetcher.lo -MD -MP -MF src/persistent-storage/$(DEPDIR)/libndnrtc_la-frame-fetcher.Tpo -c -o src/persistent-storage/libndnrtc_la-frame-fetcher.lo `test -f 'src/persistent-storage/frame-fetcher.cpp' || echo '$(srcdir)/'`src/persistent-storage/frame-fetcher.cpp
@@ -14874,89 +14684,47 @@ contrib/gtest/googletest/src/bin_tests_test_video_source-gtest-all.obj: contrib/
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_source_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_video_source-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
 
-tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.o: tests/test-webrtc-audio-channel.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Tpo -c -o tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.o `test -f 'tests/test-webrtc-audio-channel.cc' || echo '$(srcdir)/'`tests/test-webrtc-audio-channel.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Tpo tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tests/test-webrtc-audio-channel.cc' object='tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.o' libtool=no @AMDEPBACKSLASH@
+tools/codec-run/codec_run-main.o: tools/codec-run/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(codec_run_CXXFLAGS) $(CXXFLAGS) -MT tools/codec-run/codec_run-main.o -MD -MP -MF tools/codec-run/$(DEPDIR)/codec_run-main.Tpo -c -o tools/codec-run/codec_run-main.o `test -f 'tools/codec-run/main.cpp' || echo '$(srcdir)/'`tools/codec-run/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/codec-run/$(DEPDIR)/codec_run-main.Tpo tools/codec-run/$(DEPDIR)/codec_run-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/codec-run/main.cpp' object='tools/codec-run/codec_run-main.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.o `test -f 'tests/test-webrtc-audio-channel.cc' || echo '$(srcdir)/'`tests/test-webrtc-audio-channel.cc
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(codec_run_CXXFLAGS) $(CXXFLAGS) -c -o tools/codec-run/codec_run-main.o `test -f 'tools/codec-run/main.cpp' || echo '$(srcdir)/'`tools/codec-run/main.cpp
 
-tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.obj: tests/test-webrtc-audio-channel.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Tpo -c -o tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.obj `if test -f 'tests/test-webrtc-audio-channel.cc'; then $(CYGPATH_W) 'tests/test-webrtc-audio-channel.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-webrtc-audio-channel.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Tpo tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tests/test-webrtc-audio-channel.cc' object='tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.obj' libtool=no @AMDEPBACKSLASH@
+tools/codec-run/codec_run-main.obj: tools/codec-run/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(codec_run_CXXFLAGS) $(CXXFLAGS) -MT tools/codec-run/codec_run-main.obj -MD -MP -MF tools/codec-run/$(DEPDIR)/codec_run-main.Tpo -c -o tools/codec-run/codec_run-main.obj `if test -f 'tools/codec-run/main.cpp'; then $(CYGPATH_W) 'tools/codec-run/main.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/codec-run/main.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/codec-run/$(DEPDIR)/codec_run-main.Tpo tools/codec-run/$(DEPDIR)/codec_run-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/codec-run/main.cpp' object='tools/codec-run/codec_run-main.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.obj `if test -f 'tests/test-webrtc-audio-channel.cc'; then $(CYGPATH_W) 'tests/test-webrtc-audio-channel.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-webrtc-audio-channel.cc'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(codec_run_CXXFLAGS) $(CXXFLAGS) -c -o tools/codec-run/codec_run-main.obj `if test -f 'tools/codec-run/main.cpp'; then $(CYGPATH_W) 'tools/codec-run/main.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/codec-run/main.cpp'; fi`
 
-src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.o: src/webrtc-audio-channel.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.Tpo -c -o src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.o `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.Tpo src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/webrtc-audio-channel.cpp' object='src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.o' libtool=no @AMDEPBACKSLASH@
+contrib/docopt/codec_run-docopt.o: contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(codec_run_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/codec_run-docopt.o -MD -MP -MF contrib/docopt/$(DEPDIR)/codec_run-docopt.Tpo -c -o contrib/docopt/codec_run-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/codec_run-docopt.Tpo contrib/docopt/$(DEPDIR)/codec_run-docopt.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/codec_run-docopt.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.o `test -f 'src/webrtc-audio-channel.cpp' || echo '$(srcdir)/'`src/webrtc-audio-channel.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(codec_run_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/codec_run-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
 
-src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.obj: src/webrtc-audio-channel.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.Tpo -c -o src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.obj `if test -f 'src/webrtc-audio-channel.cpp'; then $(CYGPATH_W) 'src/webrtc-audio-channel.cpp'; else $(CYGPATH_W) '$(srcdir)/src/webrtc-audio-channel.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.Tpo src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/webrtc-audio-channel.cpp' object='src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.obj' libtool=no @AMDEPBACKSLASH@
+contrib/docopt/codec_run-docopt.obj: contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(codec_run_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/codec_run-docopt.obj -MD -MP -MF contrib/docopt/$(DEPDIR)/codec_run-docopt.Tpo -c -o contrib/docopt/codec_run-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/codec_run-docopt.Tpo contrib/docopt/$(DEPDIR)/codec_run-docopt.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/codec_run-docopt.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.obj `if test -f 'src/webrtc-audio-channel.cpp'; then $(CYGPATH_W) 'src/webrtc-audio-channel.cpp'; else $(CYGPATH_W) '$(srcdir)/src/webrtc-audio-channel.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(codec_run_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/codec_run-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
 
-src/bin_tests_test_webrtc_audio_channel-audio-controller.o: src/audio-controller.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_webrtc_audio_channel-audio-controller.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-audio-controller.Tpo -c -o src/bin_tests_test_webrtc_audio_channel-audio-controller.o `test -f 'src/audio-controller.cpp' || echo '$(srcdir)/'`src/audio-controller.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-audio-controller.Tpo src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-audio-controller.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-controller.cpp' object='src/bin_tests_test_webrtc_audio_channel-audio-controller.o' libtool=no @AMDEPBACKSLASH@
+tools/codec-run/codec_run-tools.o: tools/codec-run/tools.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(codec_run_CXXFLAGS) $(CXXFLAGS) -MT tools/codec-run/codec_run-tools.o -MD -MP -MF tools/codec-run/$(DEPDIR)/codec_run-tools.Tpo -c -o tools/codec-run/codec_run-tools.o `test -f 'tools/codec-run/tools.cpp' || echo '$(srcdir)/'`tools/codec-run/tools.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/codec-run/$(DEPDIR)/codec_run-tools.Tpo tools/codec-run/$(DEPDIR)/codec_run-tools.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/codec-run/tools.cpp' object='tools/codec-run/codec_run-tools.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_webrtc_audio_channel-audio-controller.o `test -f 'src/audio-controller.cpp' || echo '$(srcdir)/'`src/audio-controller.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(codec_run_CXXFLAGS) $(CXXFLAGS) -c -o tools/codec-run/codec_run-tools.o `test -f 'tools/codec-run/tools.cpp' || echo '$(srcdir)/'`tools/codec-run/tools.cpp
 
-src/bin_tests_test_webrtc_audio_channel-audio-controller.obj: src/audio-controller.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_webrtc_audio_channel-audio-controller.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-audio-controller.Tpo -c -o src/bin_tests_test_webrtc_audio_channel-audio-controller.obj `if test -f 'src/audio-controller.cpp'; then $(CYGPATH_W) 'src/audio-controller.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-controller.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-audio-controller.Tpo src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-audio-controller.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/audio-controller.cpp' object='src/bin_tests_test_webrtc_audio_channel-audio-controller.obj' libtool=no @AMDEPBACKSLASH@
+tools/codec-run/codec_run-tools.obj: tools/codec-run/tools.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(codec_run_CXXFLAGS) $(CXXFLAGS) -MT tools/codec-run/codec_run-tools.obj -MD -MP -MF tools/codec-run/$(DEPDIR)/codec_run-tools.Tpo -c -o tools/codec-run/codec_run-tools.obj `if test -f 'tools/codec-run/tools.cpp'; then $(CYGPATH_W) 'tools/codec-run/tools.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/codec-run/tools.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/codec-run/$(DEPDIR)/codec_run-tools.Tpo tools/codec-run/$(DEPDIR)/codec_run-tools.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/codec-run/tools.cpp' object='tools/codec-run/codec_run-tools.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_webrtc_audio_channel-audio-controller.obj `if test -f 'src/audio-controller.cpp'; then $(CYGPATH_W) 'src/audio-controller.cpp'; else $(CYGPATH_W) '$(srcdir)/src/audio-controller.cpp'; fi`
-
-src/bin_tests_test_webrtc_audio_channel-threading-capability.o: src/threading-capability.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_webrtc_audio_channel-threading-capability.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-threading-capability.Tpo -c -o src/bin_tests_test_webrtc_audio_channel-threading-capability.o `test -f 'src/threading-capability.cpp' || echo '$(srcdir)/'`src/threading-capability.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-threading-capability.Tpo src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-threading-capability.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/threading-capability.cpp' object='src/bin_tests_test_webrtc_audio_channel-threading-capability.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_webrtc_audio_channel-threading-capability.o `test -f 'src/threading-capability.cpp' || echo '$(srcdir)/'`src/threading-capability.cpp
-
-src/bin_tests_test_webrtc_audio_channel-threading-capability.obj: src/threading-capability.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_webrtc_audio_channel-threading-capability.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-threading-capability.Tpo -c -o src/bin_tests_test_webrtc_audio_channel-threading-capability.obj `if test -f 'src/threading-capability.cpp'; then $(CYGPATH_W) 'src/threading-capability.cpp'; else $(CYGPATH_W) '$(srcdir)/src/threading-capability.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-threading-capability.Tpo src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-threading-capability.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/threading-capability.cpp' object='src/bin_tests_test_webrtc_audio_channel-threading-capability.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_webrtc_audio_channel-threading-capability.obj `if test -f 'src/threading-capability.cpp'; then $(CYGPATH_W) 'src/threading-capability.cpp'; else $(CYGPATH_W) '$(srcdir)/src/threading-capability.cpp'; fi`
-
-contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gmock-all.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
-
-contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gmock-all.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_webrtc_audio_channel-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
-
-contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gtest-all.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
-
-contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gtest-all.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_webrtc_audio_channel_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_webrtc_audio_channel-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(codec_run_CXXFLAGS) $(CXXFLAGS) -c -o tools/codec-run/codec_run-tools.obj `if test -f 'tools/codec-run/tools.cpp'; then $(CYGPATH_W) 'tools/codec-run/tools.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/codec-run/tools.cpp'; fi`
 
 tools/frame-fetcher/frame_fetcher-main.o: tools/frame-fetcher/main.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(frame_fetcher_CXXFLAGS) $(CXXFLAGS) -MT tools/frame-fetcher/frame_fetcher-main.o -MD -MP -MF tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Tpo -c -o tools/frame-fetcher/frame_fetcher-main.o `test -f 'tools/frame-fetcher/main.cpp' || echo '$(srcdir)/'`tools/frame-fetcher/main.cpp
@@ -15139,6 +14907,34 @@ contrib/docopt/networked_storage-docopt.obj: contrib/docopt/docopt.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/networked_storage-docopt.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(networked_storage_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/networked_storage-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
+
+client/stream/stream-main.o: client/stream/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/stream/stream-main.o -MD -MP -MF client/stream/$(DEPDIR)/stream-main.Tpo -c -o client/stream/stream-main.o `test -f 'client/stream/main.cpp' || echo '$(srcdir)/'`client/stream/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/stream/$(DEPDIR)/stream-main.Tpo client/stream/$(DEPDIR)/stream-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/stream/main.cpp' object='client/stream/stream-main.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/stream/stream-main.o `test -f 'client/stream/main.cpp' || echo '$(srcdir)/'`client/stream/main.cpp
+
+client/stream/stream-main.obj: client/stream/main.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/stream/stream-main.obj -MD -MP -MF client/stream/$(DEPDIR)/stream-main.Tpo -c -o client/stream/stream-main.obj `if test -f 'client/stream/main.cpp'; then $(CYGPATH_W) 'client/stream/main.cpp'; else $(CYGPATH_W) '$(srcdir)/client/stream/main.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/stream/$(DEPDIR)/stream-main.Tpo client/stream/$(DEPDIR)/stream-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/stream/main.cpp' object='client/stream/stream-main.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/stream/stream-main.obj `if test -f 'client/stream/main.cpp'; then $(CYGPATH_W) 'client/stream/main.cpp'; else $(CYGPATH_W) '$(srcdir)/client/stream/main.cpp'; fi`
+
+contrib/docopt/stream-docopt.o: contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/stream-docopt.o -MD -MP -MF contrib/docopt/$(DEPDIR)/stream-docopt.Tpo -c -o contrib/docopt/stream-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/stream-docopt.Tpo contrib/docopt/$(DEPDIR)/stream-docopt.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/stream-docopt.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/stream-docopt.o `test -f 'contrib/docopt/docopt.cpp' || echo '$(srcdir)/'`contrib/docopt/docopt.cpp
+
+contrib/docopt/stream-docopt.obj: contrib/docopt/docopt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/docopt/stream-docopt.obj -MD -MP -MF contrib/docopt/$(DEPDIR)/stream-docopt.Tpo -c -o contrib/docopt/stream-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/docopt/$(DEPDIR)/stream-docopt.Tpo contrib/docopt/$(DEPDIR)/stream-docopt.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/docopt/docopt.cpp' object='contrib/docopt/stream-docopt.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/stream-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
 
 tools/stream-recorder/stream_recorder-main.o: tools/stream-recorder/main.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(stream_recorder_CXXFLAGS) $(CXXFLAGS) -MT tools/stream-recorder/stream_recorder-main.o -MD -MP -MF tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Tpo -c -o tools/stream-recorder/stream_recorder-main.o `test -f 'tools/stream-recorder/main.cpp' || echo '$(srcdir)/'`tools/stream-recorder/main.cpp
@@ -15528,13 +15324,6 @@ bin/tests/test-video-coder.log: bin/tests/test-video-coder$(EXEEXT)
 bin/tests/test-video-decoder.log: bin/tests/test-video-decoder$(EXEEXT)
 	@p='bin/tests/test-video-decoder$(EXEEXT)'; \
 	b='bin/tests/test-video-decoder'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
-bin/tests/test-webrtc-audio-channel.log: bin/tests/test-webrtc-audio-channel$(EXEEXT)
-	@p='bin/tests/test-webrtc-audio-channel$(EXEEXT)'; \
-	b='bin/tests/test-webrtc-audio-channel'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -16003,6 +15792,8 @@ distclean-generic:
 	-rm -f client/nanopipe-adaptor/$(am__dirstamp)
 	-rm -f client/src/$(DEPDIR)/$(am__dirstamp)
 	-rm -f client/src/$(am__dirstamp)
+	-rm -f client/stream/$(DEPDIR)/$(am__dirstamp)
+	-rm -f client/stream/$(am__dirstamp)
 	-rm -f contrib/docopt/$(DEPDIR)/$(am__dirstamp)
 	-rm -f contrib/docopt/$(am__dirstamp)
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -16019,6 +15810,8 @@ distclean-generic:
 	-rm -f src/proto/$(am__dirstamp)
 	-rm -f tests/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tests/$(am__dirstamp)
+	-rm -f tools/codec-run/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tools/codec-run/$(am__dirstamp)
 	-rm -f tools/frame-fetcher/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tools/frame-fetcher/$(am__dirstamp)
 	-rm -f tools/networked-storage/$(DEPDIR)/$(am__dirstamp)
@@ -16112,7 +15905,6 @@ distclean: distclean-am
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-precise-generator.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-video-source.Po
-	-rm -f client/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-client.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-config.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po
@@ -16122,8 +15914,11 @@ distclean: distclean-am
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-renderer.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-video-source.Po
+	-rm -f client/stream/$(DEPDIR)/stream-main.Po
+	-rm -f contrib/docopt/$(DEPDIR)/codec_run-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po
+	-rm -f contrib/docopt/$(DEPDIR)/stream-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po
@@ -16166,7 +15961,6 @@ distclean: distclean-am
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_decoder-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_playout-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_source-gmock-all.Po
-	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gmock-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_async-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_capturer-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_playout-gtest-all.Po
@@ -16207,7 +16001,6 @@ distclean: distclean-am
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_decoder-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_playout-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_source-gtest-all.Po
-	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gtest-all.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_async-async.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-capturer.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-controller.Po
@@ -16569,18 +16362,7 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/bin_tests_test_video_source-clock.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_video_source-estimators.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_video_source-simple-log.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-audio-controller.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-threading-capability.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.Po
 	-rm -f src/$(DEPDIR)/libndnrtc_la-async.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-controller.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-playout-impl.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-playout.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-renderer.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-stream-impl.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-thread.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-av-sync.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-buffer-control.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-c-wrapper.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-clock.Plo
@@ -16610,7 +16392,6 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/libndnrtc_la-playout-control.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-playout-impl.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-playout.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-remote-audio-stream.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-remote-stream-impl.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-remote-stream.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-remote-video-stream.Plo
@@ -16624,13 +16405,13 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/libndnrtc_la-statistics.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-stream-recorder.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo
+	-rm -f src/$(DEPDIR)/libndnrtc_la-video-codec.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-coder.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-playout-impl.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-playout.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-stream-impl.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-thread.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Plo
 	-rm -f src/helpers/$(DEPDIR)/libndnrtc_la-face-processor.Plo
 	-rm -f src/helpers/$(DEPDIR)/libndnrtc_la-key-chain-manager.Plo
 	-rm -f src/persistent-storage/$(DEPDIR)/bin_tests_test_local_media_stream-storage-engine.Po
@@ -16710,7 +16491,8 @@ distclean: distclean-am
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-test-video-playout.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po
-	-rm -f tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po
+	-rm -f tools/codec-run/$(DEPDIR)/codec_run-main.Po
+	-rm -f tools/codec-run/$(DEPDIR)/codec_run-tools.Po
 	-rm -f tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po
 	-rm -f tools/networked-storage/$(DEPDIR)/networked_storage-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
@@ -16838,7 +16620,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-precise-generator.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-video-source.Po
-	-rm -f client/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-client.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-config.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po
@@ -16848,8 +16629,11 @@ maintainer-clean: maintainer-clean-am
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-renderer.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-video-source.Po
+	-rm -f client/stream/$(DEPDIR)/stream-main.Po
+	-rm -f contrib/docopt/$(DEPDIR)/codec_run-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/networked_storage-docopt.Po
+	-rm -f contrib/docopt/$(DEPDIR)/stream-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/stream_recorder-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/stream_scrubber-docopt.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_async-gmock-all.Po
@@ -16892,7 +16676,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_decoder-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_playout-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_source-gmock-all.Po
-	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gmock-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_async-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_capturer-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_playout-gtest-all.Po
@@ -16933,7 +16716,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_decoder-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_playout-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_source-gtest-all.Po
-	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-gtest-all.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_async-async.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-capturer.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-controller.Po
@@ -17295,18 +17077,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/bin_tests_test_video_source-clock.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_video_source-estimators.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_video_source-simple-log.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-audio-controller.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-threading-capability.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-webrtc-audio-channel.Po
 	-rm -f src/$(DEPDIR)/libndnrtc_la-async.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-capturer.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-controller.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-playout-impl.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-playout.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-renderer.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-stream-impl.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-audio-thread.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-av-sync.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-buffer-control.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-c-wrapper.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-clock.Plo
@@ -17336,7 +17107,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/libndnrtc_la-playout-control.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-playout-impl.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-playout.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-remote-audio-stream.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-remote-stream-impl.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-remote-stream.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-remote-video-stream.Plo
@@ -17350,13 +17120,13 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/libndnrtc_la-statistics.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-stream-recorder.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo
+	-rm -f src/$(DEPDIR)/libndnrtc_la-video-codec.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-coder.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-playout-impl.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-playout.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-stream-impl.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-thread.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-webrtc-audio-channel.Plo
 	-rm -f src/helpers/$(DEPDIR)/libndnrtc_la-face-processor.Plo
 	-rm -f src/helpers/$(DEPDIR)/libndnrtc_la-key-chain-manager.Plo
 	-rm -f src/persistent-storage/$(DEPDIR)/bin_tests_test_local_media_stream-storage-engine.Po
@@ -17436,7 +17206,8 @@ maintainer-clean: maintainer-clean-am
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-test-video-playout.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po
-	-rm -f tests/$(DEPDIR)/bin_tests_test_webrtc_audio_channel-test-webrtc-audio-channel.Po
+	-rm -f tools/codec-run/$(DEPDIR)/codec_run-main.Po
+	-rm -f tools/codec-run/$(DEPDIR)/codec_run-tools.Po
 	-rm -f tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po
 	-rm -f tools/networked-storage/$(DEPDIR)/networked_storage-main.Po
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
@@ -17495,18 +17266,6 @@ uninstall-am: uninstall-binPROGRAMS uninstall-helpersincludeHEADERS \
 	else \
 	  $(PROTOC) --proto_path=$(dir $<) --cpp_out=$(dir $<) $< ; \
 	fi
-
-@OS_DARWIN_FALSE@.PHONY: libwebrtc-all.mri libwebrtc-all.a
-
-@OS_DARWIN_FALSE@libwebrtc-all.mri:
-@OS_DARWIN_FALSE@  $(shell echo "create libwebrtc-all.a" > @WEBRTCLIB@/libwebrtc-all.mri && \
-@OS_DARWIN_FALSE@  for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
-@OS_DARWIN_FALSE@  echo "addlib $$lib" >> @WEBRTCLIB@/libwebrtc-all.mri; done && \
-@OS_DARWIN_FALSE@  echo "save" >> @WEBRTCLIB@/libwebrtc-all.mri && \
-@OS_DARWIN_FALSE@  echo "end" >> @WEBRTCLIB@/libwebrtc-all.mri)
-
-@OS_DARWIN_FALSE@libwebrtc-all.a: libwebrtc-all.mri
-@OS_DARWIN_FALSE@  $(shell cd @WEBRTCLIB@ && @AR@ -M <libwebrtc-all.mri)
 @HAVE_NANOMSG_TRUE@ # nanopipe.c ipc-shim.c -std=c++11 -I/usr/local/include -L/usr/local/lib -lnanomsg -onanopipe
 
 res/test-source-1280x720.argb:
