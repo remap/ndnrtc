@@ -84,9 +84,9 @@ libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
   src/persistent-storage/persistent-storage.cpp src/persistent-storage/persistent-storage.hpp \
   src/persistent-storage/storage-engine.cpp include/storage-engine.hpp
 
-libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\"
-libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
-libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB}
+libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -D BASE_FILE_NAME=\"$*\"
+libndnrtc_la_LDFLAGS = ${BOOST_LDFLAGS}
+libndnrtc_la_LIBADD = ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB}
 
 %.pb.cc: %.proto
 	if test "no${PROTOC}" == "no"; then \
@@ -94,30 +94,6 @@ libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB}
 	else \
 	  $(PROTOC) --proto_path=$(dir $<) --cpp_out=$(dir $<) $< ; \
 	fi
-
-# if OS_DARWIN
-
-# libndnrtc_la_LDFLAGS += -flat_namespace -L@WEBRTCDIR@/out/Default/allibs
-# libndnrtc_la_LIBADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
-
-# else
-
-# .PHONY: libwebrtc-all.mri libwebrtc-all.a
-
-# libwebrtc-all.mri:
-#   $(shell echo "create libwebrtc-all.a" > @WEBRTCLIB@/libwebrtc-all.mri && \
-#   for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
-#   echo "addlib $$lib" >> @WEBRTCLIB@/libwebrtc-all.mri; done && \
-#   echo "save" >> @WEBRTCLIB@/libwebrtc-all.mri && \
-#   echo "end" >> @WEBRTCLIB@/libwebrtc-all.mri)
-#
-# libwebrtc-all.a: libwebrtc-all.mri
-#   $(shell cd @WEBRTCLIB@ && @AR@ -M <libwebrtc-all.mri)
-#
-# libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
-# libndnrtc_la_LIBADD += -lwebrtc-all -lX11
-
-# endif
 
 if OS_ANDROID
 
@@ -131,36 +107,32 @@ bin_PROGRAMS = frame-fetcher stream-scrubber
 
 frame_fetcher_SOURCES = tools/frame-fetcher/main.cpp \
     contrib/docopt/docopt.cpp
-frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
-frame_fetcher_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS}
+frame_fetcher_LDFLAGS = ${BOOST_LDFLAGS}
 frame_fetcher_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
 stream_scrubber_SOURCES = tools/stream-scrubber/main.cpp \
     contrib/docopt/docopt.cpp \
     tools/stream-scrubber/renderer.cpp tools/stream-scrubber/renderer.hpp
-stream_scrubber_CXXFLAGS =  -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
-stream_scrubber_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+stream_scrubber_CXXFLAGS =  -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS}
+stream_scrubber_LDFLAGS = ${BOOST_LDFLAGS}
 stream_scrubber_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
 if HAVE_PERSISTENT_STORAGE
-
-libndnrtc_la_CPPFLAGS += -I@PSTORAGEDIR@ -DHAVE_PERSISTENT_STORAGE
-libndnrtc_la_LDFLAGS += -L@PSTORAGELIB@
-libndnrtc_la_LIBADD += ${PSTORAGE_LIB}
 
 bin_PROGRAMS += stream-recorder networked-storage
 
 stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
     include/stream-recorder.hpp \
     contrib/docopt/docopt.cpp
-stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@
-stream_recorder_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS}
+stream_recorder_LDFLAGS =  ${BOOST_LDFLAGS}
 stream_recorder_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
 networked_storage_SOURCES = tools/networked-storage/main.cpp \
     contrib/docopt/docopt.cpp
-networked_storage_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@
-networked_storage_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+networked_storage_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS}
+networked_storage_LDFLAGS =  ${BOOST_LDFLAGS}
 networked_storage_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
 endif
@@ -170,22 +142,19 @@ if HAVE_VPX
 bin_PROGRAMS += ndnrtc-codec
 
 ndnrtc_codec_SOURCES = tools/codec/main.cpp contrib/docopt/docopt.cpp tools/codec/tools.cpp
-ndnrtc_codec_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
-ndnrtc_codec_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+ndnrtc_codec_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS}
+ndnrtc_codec_LDFLAGS = ${BOOST_LDFLAGS}
 ndnrtc_codec_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 
 endif
 
 if HAVE_CNL_CPP
+
 bin_PROGRAMS += ndnrtc-stream
 
-# ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
-# ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
-# ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
-
 ndnrtc_stream_SOURCES = tools/stream/main.cpp tools/stream/publish.cpp tools/stream/fetch.cpp contrib/docopt/docopt.cpp
-ndnrtc_stream_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(includedir) -I$(top_srcdir)/contrib -I@NDNCPPDIR@ -I@CNLCPPDIR@ ${BOOST_CPPFLAGS}
-ndnrtc_stream_LDFLAGS = -L@NDNCPPLIB@ -L@CNLCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
+ndnrtc_stream_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(includedir) -I$(top_srcdir)/contrib ${BOOST_CPPFLAGS}
+ndnrtc_stream_LDFLAGS = ${BOOST_LDFLAGS} -L$(libdir)
 ndnrtc_stream_LDADD = -lcnl-cpp -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
 
 endif
@@ -196,16 +165,13 @@ endif
 #bin_PROGRAMS = ndnrtc-client
 EXTRA_PROGRAMS = ndnrtc-client
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp
-ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
-ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
+ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src ${BOOST_CPPFLAGS} -I$(includedir)
+ndnrtc_client_LDFLAGS = ${BOOST_LDFLAGS} -L$(libdir)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
 noinst_SCRIPTS = client/params.cfg
 
 if HAVE_NANOMSG
 ndnrtc_client_SOURCES += client/src/ipc-shim.c client/src/ipc-shim.h
-ndnrtc_client_CPPFLAGS += -I@NANOMSGDIR@ -DHAVE_NANOMSG
-ndnrtc_client_LDFLAGS += -L@NANOMSGLIB@
-ndnrtc_client_LDADD += -lnanomsg
 endif
 
 if OS_LINUX
@@ -240,8 +206,7 @@ EXTRA_PROGRAMS += nanopipe-adaptor
  # nanopipe.c ipc-shim.c -std=c++11 -I/usr/local/include -L/usr/local/lib -lnanomsg -onanopipe
 nanopipe_adaptor_SOURCES = client/nanopipe-adaptor/nanopipe.cpp client/nanopipe-adaptor/ipc-shim.c
 nanopipe_adaptor_CXXFLAGS = -std=c++11
-nanopipe_adaptor_CPPFLAGS = -I@NANOMSGDIR@ -I$(includedir)
-nanopipe_adaptor_LDFLAGS = -L@NANOMSGLIB@
+nanopipe_adaptor_CPPFLAGS = -I$(includedir)
 nanopipe_adaptor_LDADD = -lnanomsg
 
 endif
@@ -255,13 +220,12 @@ GMOCK_ROOT=$(top_srcdir)/contrib/gtest/googlemock
 UNIT_TESTS_CPPFLAGS_= -I${GTEST_ROOT} -I${GTEST_ROOT}/include -I${GMOCK_ROOT} -I${GMOCK_ROOT}/include \
     -I$(top_srcdir) -I$(top_srcdir)/include -I$(includedir) ${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} @DEFS@
 UNIT_TESTS_LDFLAGS_=${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
-UNIT_TESTS_LDADD_=${libndnrtc_la_LIBADD} -lconfig++
+UNIT_TESTS_LDADD_=${libndnrtc_la_LIBADD}
 UNIT_TESTS_COMMON_SOURCES_ = contrib/gtest/googlemock/src/gmock-all.cc contrib/gtest/googletest/src/gtest-all.cc
 
 if HAVE_NANOMSG
 UNIT_TESTS_COMMON_SOURCES_ += client/src/ipc-shim.c client/src/ipc-shim.h
-UNIT_TESTS_CPPFLAGS_ += -I@NANOMSGDIR@ -DHAVE_NANOMSG
-UNIT_TESTS_LDFLAGS_ += -L@NANOMSGLIB@
+UNIT_TESTS_CPPFLAGS_ += -DHAVE_NANOMSG
 UNIT_TESTS_LDADD_ += -lnanomsg
 endif
 
@@ -501,18 +465,23 @@ bin_tests_test_loop_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} ${BOOST_FILESYSTEM_LIB}
 bin_tests_test_loop_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
 bin_tests_test_persistent_storage_SOURCES = tests/test-persistent-storage.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp  client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/video-thread.cpp src/frame-converter.cpp src/video-coder.cpp src/frame-buffer.cpp src/persistent-storage/fetching-task.cpp src/persistent-storage/storage-engine.cpp src/persistent-storage/frame-fetcher.cpp src/clock.cpp src/video-decoder.cpp src/local-stream.cpp src/video-stream-impl.cpp src/media-stream-base.cpp src/audio-capturer.cpp src/periodic.cpp src/audio-stream-impl.cpp src/estimators.cpp src/audio-controller.cpp src/webrtc-audio-channel.cpp src/async.cpp src/audio-thread.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I@PSTORAGEDIR@
-bin_tests_test_persistent_storage_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} -L@PSTORAGELIB@
+bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_persistent_storage_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_persistent_storage_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem ${PSTORAGE_LIB}
 
 ###
 # new tests
-check_PROGRAMS += bin/tests/test-video-codec
+check_PROGRAMS += bin/tests/test-video-codec bin/tests/test-video-stream
 
-bin_tests_test_video_codec_SOURCES = tests/test-video-codec.cc src/video-codec.cpp src/ndnrtc-object.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_codec_SOURCES = tests/test-video-codec.cc ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_codec_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_codec_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_video_codec_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem
+bin_tests_test_video_codec_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem
+
+bin_tests_test_video_stream_SOURCES = tests/test-video-stream.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_video_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_video_stream_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem
 
 
 TESTS = ${check_PROGRAMS}

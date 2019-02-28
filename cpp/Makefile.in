@@ -91,63 +91,32 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-
-# if OS_DARWIN
-
-# libndnrtc_la_LDFLAGS += -flat_namespace -L@WEBRTCDIR@/out/Default/allibs
-# libndnrtc_la_LIBADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
-
-# else
-
-# .PHONY: libwebrtc-all.mri libwebrtc-all.a
-
-# libwebrtc-all.mri:
-#   $(shell echo "create libwebrtc-all.a" > @WEBRTCLIB@/libwebrtc-all.mri && \
-#   for lib in $$(find @WEBRTCLIB@ -name '*.a'); do \
-#   echo "addlib $$lib" >> @WEBRTCLIB@/libwebrtc-all.mri; done && \
-#   echo "save" >> @WEBRTCLIB@/libwebrtc-all.mri && \
-#   echo "end" >> @WEBRTCLIB@/libwebrtc-all.mri)
-#
-# libwebrtc-all.a: libwebrtc-all.mri
-#   $(shell cd @WEBRTCLIB@ && @AR@ -M <libwebrtc-all.mri)
-#
-# libndnrtc_la_DEPENDENCIES = libwebrtc-all.a
-# libndnrtc_la_LIBADD += -lwebrtc-all -lX11
-
-# endif
 @OS_ANDROID_TRUE@am__append_1 = -fexceptions -frtti
 @OS_ANDROID_TRUE@am__append_2 = -llog -lOpenSLES -lboost_timer -lboost_thread
 bin_PROGRAMS = frame-fetcher$(EXEEXT) stream-scrubber$(EXEEXT) \
 	$(am__EXEEXT_2) $(am__EXEEXT_3) $(am__EXEEXT_4)
-@HAVE_PERSISTENT_STORAGE_TRUE@am__append_3 = -I@PSTORAGEDIR@ -DHAVE_PERSISTENT_STORAGE
-@HAVE_PERSISTENT_STORAGE_TRUE@am__append_4 = -L@PSTORAGELIB@
-@HAVE_PERSISTENT_STORAGE_TRUE@am__append_5 = ${PSTORAGE_LIB}
-@HAVE_PERSISTENT_STORAGE_TRUE@am__append_6 = stream-recorder networked-storage
-@HAVE_VPX_TRUE@am__append_7 = ndnrtc-codec
-@HAVE_CNL_CPP_TRUE@am__append_8 = ndnrtc-stream
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_3 = stream-recorder networked-storage
+@HAVE_VPX_TRUE@am__append_4 = ndnrtc-codec
+@HAVE_CNL_CPP_TRUE@am__append_5 = ndnrtc-stream
 EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1)
-@HAVE_NANOMSG_TRUE@am__append_9 = client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__append_10 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
-@HAVE_NANOMSG_TRUE@am__append_11 = -L@NANOMSGLIB@
-@HAVE_NANOMSG_TRUE@am__append_12 = -lnanomsg
-@OS_LINUX_TRUE@am__append_13 = -pthread
-@OS_LINUX_TRUE@am__append_14 = -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes
+@HAVE_NANOMSG_TRUE@am__append_6 = client/src/ipc-shim.c client/src/ipc-shim.h
+@OS_LINUX_TRUE@am__append_7 = -pthread
+@OS_LINUX_TRUE@am__append_8 = -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes
 #-lXrender -lXcomposite
 # TODO: check ubuntu build after commenting below line (part of LDADD flags)
 #/usr/lib/x86_64-linux-gnu/libboost_system.so
-@OS_DARWIN_TRUE@am__append_15 = -DOS_DARWIN
-@OS_DARWIN_TRUE@am__append_16 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
+@OS_DARWIN_TRUE@am__append_9 = -DOS_DARWIN
+@OS_DARWIN_TRUE@am__append_10 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
 # ndnrtc_client_LDADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
-@OS_ANDROID_TRUE@am__append_17 = -fPIE -fexceptions -frtti
-@OS_ANDROID_TRUE@am__append_18 = -fPIE -pie
-@OS_ANDROID_TRUE@am__append_19 = -llog -lOpenSLES -lboost_timer -lboost_thread
-@HAVE_NANOMSG_TRUE@am__append_20 = nanopipe-adaptor
-@HAVE_NANOMSG_TRUE@am__append_21 = client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__append_22 = -I@NANOMSGDIR@ -DHAVE_NANOMSG
-@HAVE_NANOMSG_TRUE@am__append_23 = -L@NANOMSGLIB@
-@HAVE_NANOMSG_TRUE@am__append_24 = -lnanomsg
-@OS_LINUX_TRUE@am__append_25 = -ldl -lX11
-@OS_DARWIN_TRUE@am__append_26 = -DOS_DARWIN
+@OS_ANDROID_TRUE@am__append_11 = -fPIE -fexceptions -frtti
+@OS_ANDROID_TRUE@am__append_12 = -fPIE -pie
+@OS_ANDROID_TRUE@am__append_13 = -llog -lOpenSLES -lboost_timer -lboost_thread
+@HAVE_NANOMSG_TRUE@am__append_14 = nanopipe-adaptor
+@HAVE_NANOMSG_TRUE@am__append_15 = client/src/ipc-shim.c client/src/ipc-shim.h
+@HAVE_NANOMSG_TRUE@am__append_16 = -DHAVE_NANOMSG
+@HAVE_NANOMSG_TRUE@am__append_17 = -lnanomsg
+@OS_LINUX_TRUE@am__append_18 = -ldl -lX11
+@OS_DARWIN_TRUE@am__append_19 = -DOS_DARWIN
 check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-network-data$(EXEEXT) \
 	bin/tests/test-packet-publisher$(EXEEXT) \
@@ -188,8 +157,9 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-renderer$(EXEEXT) \
 	bin/tests/test-stat-collector$(EXEEXT) \
 	bin/tests/test-client$(EXEEXT) $(am__EXEEXT_5) \
-	bin/tests/test-video-codec$(EXEEXT)
-@HAVE_PERSISTENT_STORAGE_TRUE@am__append_27 = bin/tests/test-persistent-storage
+	bin/tests/test-video-codec$(EXEEXT) \
+	bin/tests/test-video-stream$(EXEEXT)
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_20 = bin/tests/test-persistent-storage
 TESTS = $(check_PROGRAMS)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -256,13 +226,10 @@ am__uninstall_files_from_dir = { \
   }
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-@HAVE_PERSISTENT_STORAGE_TRUE@am__DEPENDENCIES_2 =  \
-@HAVE_PERSISTENT_STORAGE_TRUE@	$(am__DEPENDENCIES_1)
 libndnrtc_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_2)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_libndnrtc_la_OBJECTS = src/proto/libndnrtc_la-ndnrtc.pb.lo \
 	src/libndnrtc_la-async.lo src/libndnrtc_la-buffer-control.lo \
@@ -336,14 +303,14 @@ am_bin_tests_test_async_OBJECTS =  \
 	tests/bin_tests_test_async-test-async.$(OBJEXT) \
 	src/bin_tests_test_async-async.$(OBJEXT) $(am__objects_2)
 bin_tests_test_async_OBJECTS = $(am_bin_tests_test_async_OBJECTS)
-am__DEPENDENCIES_3 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
-am__DEPENDENCIES_4 = $(am__DEPENDENCIES_3) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-bin_tests_test_async_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+bin_tests_test_async_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_async_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_async_LDFLAGS) \
@@ -375,8 +342,8 @@ am_bin_tests_test_audio_capturer_OBJECTS = tests/bin_tests_test_audio_capturer-t
 	$(am__objects_4)
 bin_tests_test_audio_capturer_OBJECTS =  \
 	$(am_bin_tests_test_audio_capturer_OBJECTS)
-bin_tests_test_audio_capturer_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_audio_capturer_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_audio_capturer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -425,8 +392,8 @@ am_bin_tests_test_audio_playout_OBJECTS = tests/bin_tests_test_audio_playout-tes
 	$(am__objects_6)
 bin_tests_test_audio_playout_OBJECTS =  \
 	$(am_bin_tests_test_audio_playout_OBJECTS)
-bin_tests_test_audio_playout_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_audio_playout_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_audio_playout_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -460,8 +427,8 @@ am_bin_tests_test_buffer_control_OBJECTS = tests/bin_tests_test_buffer_control-t
 	$(am__objects_8)
 bin_tests_test_buffer_control_OBJECTS =  \
 	$(am_bin_tests_test_buffer_control_OBJECTS)
-bin_tests_test_buffer_control_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_buffer_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_buffer_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -491,7 +458,7 @@ am_bin_tests_test_client_OBJECTS =  \
 	$(am__objects_10)
 bin_tests_test_client_OBJECTS = $(am_bin_tests_test_client_OBJECTS)
 bin_tests_test_client_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
-	$(am__DEPENDENCIES_4)
+	$(am__DEPENDENCIES_3)
 bin_tests_test_client_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_client_LDFLAGS) \
@@ -513,7 +480,7 @@ am_bin_tests_test_client_params_OBJECTS = tests/bin_tests_test_client_params-tes
 bin_tests_test_client_params_OBJECTS =  \
 	$(am_bin_tests_test_client_params_OBJECTS)
 bin_tests_test_client_params_DEPENDENCIES =  \
-	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_4)
+	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_3)
 bin_tests_test_client_params_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -534,7 +501,7 @@ am_bin_tests_test_config_load_OBJECTS =  \
 	$(am__objects_14)
 bin_tests_test_config_load_OBJECTS =  \
 	$(am_bin_tests_test_config_load_OBJECTS)
-bin_tests_test_config_load_DEPENDENCIES = $(am__DEPENDENCIES_4) \
+bin_tests_test_config_load_DEPENDENCIES = $(am__DEPENDENCIES_3) \
 	$(top_builddir)/libndnrtc.la
 bin_tests_test_config_load_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -555,8 +522,8 @@ am_bin_tests_test_data_validator_OBJECTS = tests/bin_tests_test_data_validator-t
 	$(am__objects_16)
 bin_tests_test_data_validator_OBJECTS =  \
 	$(am_bin_tests_test_data_validator_OBJECTS)
-bin_tests_test_data_validator_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_data_validator_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_data_validator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -583,8 +550,8 @@ am_bin_tests_test_drd_estimator_OBJECTS = tests/bin_tests_test_drd_estimator-tes
 	$(am__objects_18)
 bin_tests_test_drd_estimator_OBJECTS =  \
 	$(am_bin_tests_test_drd_estimator_OBJECTS)
-bin_tests_test_drd_estimator_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_drd_estimator_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_drd_estimator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -607,8 +574,8 @@ am_bin_tests_test_estimators_OBJECTS =  \
 	$(am__objects_20)
 bin_tests_test_estimators_OBJECTS =  \
 	$(am_bin_tests_test_estimators_OBJECTS)
-bin_tests_test_estimators_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_estimators_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_estimators_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -639,8 +606,8 @@ am_bin_tests_test_frame_buffer_OBJECTS =  \
 	$(am__objects_22)
 bin_tests_test_frame_buffer_OBJECTS =  \
 	$(am_bin_tests_test_frame_buffer_OBJECTS)
-bin_tests_test_frame_buffer_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_frame_buffer_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_frame_buffer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -664,8 +631,8 @@ am_bin_tests_test_frame_converter_OBJECTS = tests/bin_tests_test_frame_converter
 	$(am__objects_24)
 bin_tests_test_frame_converter_OBJECTS =  \
 	$(am_bin_tests_test_frame_converter_OBJECTS)
-bin_tests_test_frame_converter_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_frame_converter_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_frame_converter_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -686,7 +653,7 @@ am_bin_tests_test_frame_io_OBJECTS =  \
 bin_tests_test_frame_io_OBJECTS =  \
 	$(am_bin_tests_test_frame_io_OBJECTS)
 bin_tests_test_frame_io_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
-	$(am__DEPENDENCIES_4)
+	$(am__DEPENDENCIES_3)
 bin_tests_test_frame_io_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_frame_io_LDFLAGS) \
@@ -707,7 +674,7 @@ am_bin_tests_test_generator_OBJECTS =  \
 bin_tests_test_generator_OBJECTS =  \
 	$(am_bin_tests_test_generator_OBJECTS)
 bin_tests_test_generator_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
-	$(am__DEPENDENCIES_4)
+	$(am__DEPENDENCIES_3)
 bin_tests_test_generator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_generator_LDFLAGS) \
@@ -739,8 +706,8 @@ am_bin_tests_test_interest_control_OBJECTS = tests/bin_tests_test_interest_contr
 	$(am__objects_30)
 bin_tests_test_interest_control_OBJECTS =  \
 	$(am_bin_tests_test_interest_control_OBJECTS)
-bin_tests_test_interest_control_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_interest_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_interest_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -771,8 +738,8 @@ am_bin_tests_test_interest_queue_OBJECTS = tests/bin_tests_test_interest_queue-t
 	$(am__objects_32)
 bin_tests_test_interest_queue_OBJECTS =  \
 	$(am_bin_tests_test_interest_queue_OBJECTS)
-bin_tests_test_interest_queue_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_interest_queue_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_interest_queue_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -806,8 +773,8 @@ am_bin_tests_test_latency_control_OBJECTS = tests/bin_tests_test_latency_control
 	$(am__objects_34)
 bin_tests_test_latency_control_OBJECTS =  \
 	$(am_bin_tests_test_latency_control_OBJECTS)
-bin_tests_test_latency_control_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_latency_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_latency_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -860,7 +827,7 @@ am_bin_tests_test_local_media_stream_OBJECTS = tests/bin_tests_test_local_media_
 bin_tests_test_local_media_stream_OBJECTS =  \
 	$(am_bin_tests_test_local_media_stream_OBJECTS)
 bin_tests_test_local_media_stream_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4)
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
 bin_tests_test_local_media_stream_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -964,8 +931,8 @@ am_bin_tests_test_loop_OBJECTS =  \
 	src/persistent-storage/bin_tests_test_loop-storage-engine.$(OBJEXT) \
 	$(am__objects_38)
 bin_tests_test_loop_OBJECTS = $(am_bin_tests_test_loop_OBJECTS)
-bin_tests_test_loop_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_loop_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_loop_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_loop_LDFLAGS) \
@@ -1005,8 +972,8 @@ am_bin_tests_test_media_thread_OBJECTS =  \
 	$(am__objects_40)
 bin_tests_test_media_thread_OBJECTS =  \
 	$(am_bin_tests_test_media_thread_OBJECTS)
-bin_tests_test_media_thread_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_media_thread_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_media_thread_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1025,8 +992,8 @@ am_bin_tests_test_name_components_OBJECTS = tests/bin_tests_test_name_components
 	$(am__objects_42)
 bin_tests_test_name_components_OBJECTS =  \
 	$(am_bin_tests_test_name_components_OBJECTS)
-bin_tests_test_name_components_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_name_components_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_name_components_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1050,8 +1017,8 @@ am_bin_tests_test_network_data_OBJECTS =  \
 	$(am__objects_44)
 bin_tests_test_network_data_OBJECTS =  \
 	$(am_bin_tests_test_network_data_OBJECTS)
-bin_tests_test_network_data_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_network_data_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_network_data_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1080,8 +1047,8 @@ am_bin_tests_test_packet_publisher_OBJECTS = tests/bin_tests_test_packet_publish
 	$(am__objects_46)
 bin_tests_test_packet_publisher_OBJECTS =  \
 	$(am_bin_tests_test_packet_publisher_OBJECTS)
-bin_tests_test_packet_publisher_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_packet_publisher_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_packet_publisher_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1103,8 +1070,8 @@ am_bin_tests_test_params_OBJECTS =  \
 	src/bin_tests_test_params-frame-data.$(OBJEXT) \
 	$(am__objects_48)
 bin_tests_test_params_OBJECTS = $(am_bin_tests_test_params_OBJECTS)
-bin_tests_test_params_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_params_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_params_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_params_LDFLAGS) \
@@ -1123,8 +1090,8 @@ am_bin_tests_test_periodic_OBJECTS =  \
 	$(am__objects_50)
 bin_tests_test_periodic_OBJECTS =  \
 	$(am_bin_tests_test_periodic_OBJECTS)
-bin_tests_test_periodic_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_periodic_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_periodic_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_periodic_LDFLAGS) \
@@ -1191,7 +1158,7 @@ am_bin_tests_test_persistent_storage_OBJECTS = tests/bin_tests_test_persistent_s
 bin_tests_test_persistent_storage_OBJECTS =  \
 	$(am_bin_tests_test_persistent_storage_OBJECTS)
 bin_tests_test_persistent_storage_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4) \
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3) \
 	$(am__DEPENDENCIES_1)
 bin_tests_test_persistent_storage_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
@@ -1237,8 +1204,8 @@ am_bin_tests_test_pipeline_control_OBJECTS = tests/bin_tests_test_pipeline_contr
 	$(am__objects_54)
 bin_tests_test_pipeline_control_OBJECTS =  \
 	$(am_bin_tests_test_pipeline_control_OBJECTS)
-bin_tests_test_pipeline_control_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_pipeline_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_pipeline_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1277,7 +1244,7 @@ am_bin_tests_test_pipeline_control_state_machine_OBJECTS = tests/bin_tests_test_
 bin_tests_test_pipeline_control_state_machine_OBJECTS =  \
 	$(am_bin_tests_test_pipeline_control_state_machine_OBJECTS)
 bin_tests_test_pipeline_control_state_machine_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4)
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
 bin_tests_test_pipeline_control_state_machine_LINK = $(LIBTOOL) \
 	$(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1321,8 +1288,8 @@ am_bin_tests_test_pipeliner_OBJECTS =  \
 	$(am__objects_58)
 bin_tests_test_pipeliner_OBJECTS =  \
 	$(am_bin_tests_test_pipeliner_OBJECTS)
-bin_tests_test_pipeliner_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_pipeliner_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_pipeliner_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_pipeliner_LDFLAGS) \
@@ -1398,8 +1365,8 @@ am_bin_tests_test_playout_control_OBJECTS = tests/bin_tests_test_playout_control
 	$(am__objects_62)
 bin_tests_test_playout_control_OBJECTS =  \
 	$(am_bin_tests_test_playout_control_OBJECTS)
-bin_tests_test_playout_control_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_playout_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_playout_control_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1421,7 +1388,7 @@ am_bin_tests_test_renderer_OBJECTS =  \
 bin_tests_test_renderer_OBJECTS =  \
 	$(am_bin_tests_test_renderer_OBJECTS)
 bin_tests_test_renderer_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
-	$(am__DEPENDENCIES_4)
+	$(am__DEPENDENCIES_3)
 bin_tests_test_renderer_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(bin_tests_test_renderer_LDFLAGS) \
@@ -1452,8 +1419,8 @@ am_bin_tests_test_rtx_controller_OBJECTS = tests/bin_tests_test_rtx_controller-t
 	$(am__objects_66)
 bin_tests_test_rtx_controller_OBJECTS =  \
 	$(am_bin_tests_test_rtx_controller_OBJECTS)
-bin_tests_test_rtx_controller_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_rtx_controller_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_rtx_controller_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1481,8 +1448,8 @@ am_bin_tests_test_sample_estimator_OBJECTS = tests/bin_tests_test_sample_estimat
 	$(am__objects_68)
 bin_tests_test_sample_estimator_OBJECTS =  \
 	$(am_bin_tests_test_sample_estimator_OBJECTS)
-bin_tests_test_sample_estimator_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_sample_estimator_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_sample_estimator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1513,7 +1480,7 @@ am_bin_tests_test_segment_controller_OBJECTS = tests/bin_tests_test_segment_cont
 bin_tests_test_segment_controller_OBJECTS =  \
 	$(am_bin_tests_test_segment_controller_OBJECTS)
 bin_tests_test_segment_controller_DEPENDENCIES =  \
-	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_4)
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
 bin_tests_test_segment_controller_LINK = $(LIBTOOL) $(AM_V_lt) \
 	--tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1535,14 +1502,13 @@ am_bin_tests_test_stat_collector_OBJECTS = tests/bin_tests_test_stat_collector-t
 bin_tests_test_stat_collector_OBJECTS =  \
 	$(am_bin_tests_test_stat_collector_OBJECTS)
 bin_tests_test_stat_collector_DEPENDENCIES =  \
-	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_4)
+	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_3)
 bin_tests_test_stat_collector_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_stat_collector_LDFLAGS) $(LDFLAGS) -o $@
 am__bin_tests_test_video_codec_SOURCES_DIST =  \
-	tests/test-video-codec.cc src/video-codec.cpp \
-	src/ndnrtc-object.cpp src/simple-log.cpp \
+	tests/test-video-codec.cc \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
@@ -1552,14 +1518,12 @@ am__objects_74 = contrib/gtest/googlemock/src/bin_tests_test_video_codec-gmock-a
 	$(am__objects_73)
 am_bin_tests_test_video_codec_OBJECTS =  \
 	tests/bin_tests_test_video_codec-test-video-codec.$(OBJEXT) \
-	src/bin_tests_test_video_codec-video-codec.$(OBJEXT) \
-	src/bin_tests_test_video_codec-ndnrtc-object.$(OBJEXT) \
-	src/bin_tests_test_video_codec-simple-log.$(OBJEXT) \
 	$(am__objects_74)
 bin_tests_test_video_codec_OBJECTS =  \
 	$(am_bin_tests_test_video_codec_OBJECTS)
-bin_tests_test_video_codec_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_video_codec_DEPENDENCIES =  \
+	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_video_codec_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1589,8 +1553,8 @@ am_bin_tests_test_video_coder_OBJECTS =  \
 	$(am__objects_76)
 bin_tests_test_video_coder_OBJECTS =  \
 	$(am_bin_tests_test_video_coder_OBJECTS)
-bin_tests_test_video_coder_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_video_coder_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_video_coder_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1622,8 +1586,8 @@ am_bin_tests_test_video_decoder_OBJECTS = tests/bin_tests_test_video_decoder-tes
 	$(am__objects_78)
 bin_tests_test_video_decoder_OBJECTS =  \
 	$(am_bin_tests_test_video_decoder_OBJECTS)
-bin_tests_test_video_decoder_DEPENDENCIES = $(am__DEPENDENCIES_3) \
-	$(am__DEPENDENCIES_4)
+bin_tests_test_video_decoder_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
 bin_tests_test_video_decoder_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1702,6 +1666,27 @@ bin_tests_test_video_source_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_video_source_LDFLAGS) $(LDFLAGS) -o $@
+am__bin_tests_test_video_stream_SOURCES_DIST =  \
+	tests/test-video-stream.cc \
+	contrib/gtest/googlemock/src/gmock-all.cc \
+	contrib/gtest/googletest/src/gtest-all.cc \
+	client/src/ipc-shim.c client/src/ipc-shim.h
+@HAVE_NANOMSG_TRUE@am__objects_83 = client/src/bin_tests_test_video_stream-ipc-shim.$(OBJEXT)
+am__objects_84 = contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.$(OBJEXT) \
+	$(am__objects_83)
+am_bin_tests_test_video_stream_OBJECTS =  \
+	tests/bin_tests_test_video_stream-test-video-stream.$(OBJEXT) \
+	$(am__objects_84)
+bin_tests_test_video_stream_OBJECTS =  \
+	$(am_bin_tests_test_video_stream_OBJECTS)
+bin_tests_test_video_stream_DEPENDENCIES =  \
+	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
+bin_tests_test_video_stream_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(bin_tests_test_video_stream_LDFLAGS) $(LDFLAGS) -o $@
 am_frame_fetcher_OBJECTS =  \
 	tools/frame-fetcher/frame_fetcher-main.$(OBJEXT) \
 	contrib/docopt/frame_fetcher-docopt.$(OBJEXT)
@@ -1722,8 +1707,8 @@ nanopipe_adaptor_OBJECTS = $(am_nanopipe_adaptor_OBJECTS)
 nanopipe_adaptor_DEPENDENCIES =
 nanopipe_adaptor_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) \
-	$(nanopipe_adaptor_LDFLAGS) $(LDFLAGS) -o $@
+	$(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__ndnrtc_client_SOURCES_DIST = client/src/main.cpp \
 	client/src/renderer.hpp client/src/renderer.cpp \
 	client/src/config.cpp client/src/config.hpp \
@@ -1734,7 +1719,7 @@ am__ndnrtc_client_SOURCES_DIST = client/src/main.cpp \
 	client/src/precise-generator.hpp \
 	client/src/precise-generator.cpp client/src/ipc-shim.c \
 	client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_83 = client/src/ndnrtc_client-ipc-shim.$(OBJEXT)
+@HAVE_NANOMSG_TRUE@am__objects_85 = client/src/ndnrtc_client-ipc-shim.$(OBJEXT)
 am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
 	client/src/ndnrtc_client-renderer.$(OBJEXT) \
 	client/src/ndnrtc_client-config.$(OBJEXT) \
@@ -1743,12 +1728,12 @@ am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
 	client/src/ndnrtc_client-frame-io.$(OBJEXT) \
 	client/src/ndnrtc_client-video-source.$(OBJEXT) \
 	client/src/ndnrtc_client-precise-generator.$(OBJEXT) \
-	$(am__objects_83)
+	$(am__objects_85)
 ndnrtc_client_OBJECTS = $(am_ndnrtc_client_OBJECTS)
 ndnrtc_client_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1)
 ndnrtc_client_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(ndnrtc_client_LDFLAGS) $(LDFLAGS) \
@@ -1918,6 +1903,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	client/src/$(DEPDIR)/bin_tests_test_video_source-ipc-shim.Po \
 	client/src/$(DEPDIR)/bin_tests_test_video_source-precise-generator.Po \
 	client/src/$(DEPDIR)/bin_tests_test_video_source-video-source.Po \
+	client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-client.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-config.Po \
 	client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po \
@@ -1974,6 +1960,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_decoder-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_playout-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_source-gmock-all.Po \
+	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_stream-gmock-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_async-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_capturer-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_playout-gtest-all.Po \
@@ -2015,6 +2002,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_decoder-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_playout-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_source-gtest-all.Po \
+	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_stream-gtest-all.Po \
 	src/$(DEPDIR)/bin_tests_test_async-async.Po \
 	src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-capturer.Po \
 	src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-controller.Po \
@@ -2339,9 +2327,6 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	src/$(DEPDIR)/bin_tests_test_segment_controller-segment-controller.Po \
 	src/$(DEPDIR)/bin_tests_test_segment_controller-simple-log.Po \
 	src/$(DEPDIR)/bin_tests_test_segment_controller-statistics.Po \
-	src/$(DEPDIR)/bin_tests_test_video_codec-ndnrtc-object.Po \
-	src/$(DEPDIR)/bin_tests_test_video_codec-simple-log.Po \
-	src/$(DEPDIR)/bin_tests_test_video_codec-video-codec.Po \
 	src/$(DEPDIR)/bin_tests_test_video_coder-fec.Po \
 	src/$(DEPDIR)/bin_tests_test_video_coder-frame-data.Po \
 	src/$(DEPDIR)/bin_tests_test_video_coder-name-components.Po \
@@ -2510,6 +2495,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	tests/$(DEPDIR)/bin_tests_test_video_playout-test-video-playout.Po \
 	tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po \
 	tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po \
+	tests/$(DEPDIR)/bin_tests_test_video_stream-test-video-stream.Po \
 	tools/codec/$(DEPDIR)/ndnrtc_codec-main.Po \
 	tools/codec/$(DEPDIR)/ndnrtc_codec-tools.Po \
 	tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po \
@@ -2598,6 +2584,7 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_video_decoder_SOURCES) \
 	$(bin_tests_test_video_playout_SOURCES) \
 	$(bin_tests_test_video_source_SOURCES) \
+	$(bin_tests_test_video_stream_SOURCES) \
 	$(frame_fetcher_SOURCES) $(nanopipe_adaptor_SOURCES) \
 	$(ndnrtc_client_SOURCES) $(ndnrtc_codec_SOURCES) \
 	$(ndnrtc_stream_SOURCES) $(networked_storage_SOURCES) \
@@ -2644,6 +2631,7 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_video_decoder_SOURCES_DIST) \
 	$(am__bin_tests_test_video_playout_SOURCES_DIST) \
 	$(am__bin_tests_test_video_source_SOURCES_DIST) \
+	$(am__bin_tests_test_video_stream_SOURCES_DIST) \
 	$(frame_fetcher_SOURCES) $(am__nanopipe_adaptor_SOURCES_DIST) \
 	$(am__ndnrtc_client_SOURCES_DIST) \
 	$(am__ndnrtc_codec_SOURCES_DIST) \
@@ -2888,8 +2876,6 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
-BOOSTDIR = @BOOSTDIR@
-BOOSTLIB = @BOOSTLIB@
 BOOST_ASIO_LIB = @BOOST_ASIO_LIB@
 BOOST_CHRONO_LIB = @BOOST_CHRONO_LIB@
 BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
@@ -2903,8 +2889,6 @@ BOOST_TIMER_STATIC_LIB = @BOOST_TIMER_STATIC_LIB@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
-CNLCPPDIR = @CNLCPPDIR@
-CNLCPPLIB = @CNLCPPLIB@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CXX = @CXX@
@@ -2930,8 +2914,6 @@ INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
-LCONFIGDIR = @LCONFIGDIR@
-LCONFIGLIB = @LCONFIGLIB@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
@@ -2945,10 +2927,6 @@ MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
-NANOMSGGDIR = @NANOMSGGDIR@
-NANOMSGLIB = @NANOMSGLIB@
-NDNCPPDIR = @NDNCPPDIR@
-NDNCPPLIB = @NDNCPPLIB@
 NM = @NM@
 NMEDIT = @NMEDIT@
 OBJC = @OBJC@
@@ -2959,9 +2937,6 @@ OBJCXXDEPMODE = @OBJCXXDEPMODE@
 OBJCXXFLAGS = @OBJCXXFLAGS@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
-OPENFECDIR = @OPENFECDIR@
-OPENFECLIB = @OPENFECLIB@
-OPENFECSRC = @OPENFECSRC@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -2973,8 +2948,6 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PROTOC = @PROTOC@
-PSTORAGEDIR = @PSTORAGEDIR@
-PSTORAGELIB = @PSTORAGELIB@
 PSTORAGE_LIB = @PSTORAGE_LIB@
 RANLIB = @RANLIB@
 SED = @SED@
@@ -2983,9 +2956,6 @@ SHELL = @SHELL@
 STRIP = @STRIP@
 TAR = @TAR@
 VERSION = @VERSION@
-WEBRTCDIR = @WEBRTCDIR@
-WEBRTCLIB = @WEBRTCLIB@
-WEBRTCSRC = @WEBRTCSRC@
 WGET = @WGET@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -3128,52 +3098,45 @@ libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
   src/persistent-storage/storage-engine.cpp include/storage-engine.hpp
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include \
-	-I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ \
-	-I@OPENFECSRC@ -D BASE_FILE_NAME=\"$*\" $(am__append_1) \
-	$(am__append_3)
-libndnrtc_la_LDFLAGS = -L@NDNCPPLIB@ -L@OPENFECLIB@ -L@BOOSTLIB@ \
-	${BOOST_LDFLAGS} $(am__append_4)
-libndnrtc_la_LIBADD = -lndn-cpp -lopenfec ${BOOST_SYSTEM_LIB} \
-	${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} \
-	${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB} $(am__append_2) \
-	$(am__append_5)
+	-I$(top_srcdir)/src ${BOOST_CPPFLAGS} -D BASE_FILE_NAME=\"$*\" \
+	$(am__append_1)
+libndnrtc_la_LDFLAGS = ${BOOST_LDFLAGS}
+libndnrtc_la_LIBADD = ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} \
+	${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB} \
+	${BOOST_REGEX_LIB} $(am__append_2)
 frame_fetcher_SOURCES = tools/frame-fetcher/main.cpp \
     contrib/docopt/docopt.cpp
 
-frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
-frame_fetcher_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+frame_fetcher_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS}
+frame_fetcher_LDFLAGS = ${BOOST_LDFLAGS}
 frame_fetcher_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 stream_scrubber_SOURCES = tools/stream-scrubber/main.cpp \
     contrib/docopt/docopt.cpp \
     tools/stream-scrubber/renderer.cpp tools/stream-scrubber/renderer.hpp
 
-stream_scrubber_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
-stream_scrubber_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+stream_scrubber_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS}
+stream_scrubber_LDFLAGS = ${BOOST_LDFLAGS}
 stream_scrubber_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_SOURCES = tools/stream-recorder/main.cpp \
 @HAVE_PERSISTENT_STORAGE_TRUE@    include/stream-recorder.hpp \
 @HAVE_PERSISTENT_STORAGE_TRUE@    contrib/docopt/docopt.cpp
 
-@HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@
-@HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+@HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS}
+@HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_LDFLAGS = ${BOOST_LDFLAGS}
 @HAVE_PERSISTENT_STORAGE_TRUE@stream_recorder_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 @HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_SOURCES = tools/networked-storage/main.cpp \
 @HAVE_PERSISTENT_STORAGE_TRUE@    contrib/docopt/docopt.cpp
 
-@HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@
-@HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+@HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS}
+@HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_LDFLAGS = ${BOOST_LDFLAGS}
 @HAVE_PERSISTENT_STORAGE_TRUE@networked_storage_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
 @HAVE_VPX_TRUE@ndnrtc_codec_SOURCES = tools/codec/main.cpp contrib/docopt/docopt.cpp tools/codec/tools.cpp
-@HAVE_VPX_TRUE@ndnrtc_codec_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
-@HAVE_VPX_TRUE@ndnrtc_codec_LDFLAGS = -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+@HAVE_VPX_TRUE@ndnrtc_codec_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS}
+@HAVE_VPX_TRUE@ndnrtc_codec_LDFLAGS = ${BOOST_LDFLAGS}
 @HAVE_VPX_TRUE@ndnrtc_codec_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
-
-# ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
-# ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
-# ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
 @HAVE_CNL_CPP_TRUE@ndnrtc_stream_SOURCES = tools/stream/main.cpp tools/stream/publish.cpp tools/stream/fetch.cpp contrib/docopt/docopt.cpp
-@HAVE_CNL_CPP_TRUE@ndnrtc_stream_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(includedir) -I$(top_srcdir)/contrib -I@NDNCPPDIR@ -I@CNLCPPDIR@ ${BOOST_CPPFLAGS}
-@HAVE_CNL_CPP_TRUE@ndnrtc_stream_LDFLAGS = -L@NDNCPPLIB@ -L@CNLCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
+@HAVE_CNL_CPP_TRUE@ndnrtc_stream_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(includedir) -I$(top_srcdir)/contrib ${BOOST_CPPFLAGS}
+@HAVE_CNL_CPP_TRUE@ndnrtc_stream_LDFLAGS = ${BOOST_LDFLAGS} -L$(libdir)
 @HAVE_CNL_CPP_TRUE@ndnrtc_stream_LDADD = -lcnl-cpp -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
 ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
 	client/src/renderer.cpp client/src/config.cpp \
@@ -3182,22 +3145,18 @@ ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
 	client/src/client.hpp client/src/frame-io.hpp \
 	client/src/frame-io.cpp client/src/video-source.cpp \
 	client/src/video-source.hpp client/src/precise-generator.hpp \
-	client/src/precise-generator.cpp $(am__append_9)
-ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ \
-	${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@ \
-	$(am__append_10) $(am__append_15) $(am__append_17)
-ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} \
-	-L$(libdir) $(am__append_11) $(am__append_13) $(am__append_16) \
-	$(am__append_18)
+	client/src/precise-generator.cpp $(am__append_6)
+ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src ${BOOST_CPPFLAGS} \
+	-I$(includedir) $(am__append_9) $(am__append_11)
+ndnrtc_client_LDFLAGS = ${BOOST_LDFLAGS} -L$(libdir) $(am__append_7) \
+	$(am__append_10) $(am__append_12)
 ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} \
 	${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} \
-	$(top_builddir)/libndnrtc.la $(am__append_12) $(am__append_14) \
-	$(am__append_19)
+	$(top_builddir)/libndnrtc.la $(am__append_8) $(am__append_13)
 noinst_SCRIPTS = client/params.cfg
 @HAVE_NANOMSG_TRUE@nanopipe_adaptor_SOURCES = client/nanopipe-adaptor/nanopipe.cpp client/nanopipe-adaptor/ipc-shim.c
 @HAVE_NANOMSG_TRUE@nanopipe_adaptor_CXXFLAGS = -std=c++11
-@HAVE_NANOMSG_TRUE@nanopipe_adaptor_CPPFLAGS = -I@NANOMSGDIR@ -I$(includedir)
-@HAVE_NANOMSG_TRUE@nanopipe_adaptor_LDFLAGS = -L@NANOMSGLIB@
+@HAVE_NANOMSG_TRUE@nanopipe_adaptor_CPPFLAGS = -I$(includedir)
 @HAVE_NANOMSG_TRUE@nanopipe_adaptor_LDADD = -lnanomsg
 
 #################
@@ -3209,14 +3168,13 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
 	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} @DEFS@ \
-	$(am__append_22) $(am__append_26)
-UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS} \
-	$(am__append_23)
-UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} -lconfig++ $(am__append_24) \
-	$(am__append_25)
+	$(am__append_16) $(am__append_19)
+UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
+UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} $(am__append_17) \
+	$(am__append_18)
 UNIT_TESTS_COMMON_SOURCES_ =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
-	contrib/gtest/googletest/src/gtest-all.cc $(am__append_21)
+	contrib/gtest/googletest/src/gtest-all.cc $(am__append_15)
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -3413,13 +3371,17 @@ bin_tests_test_loop_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_loop_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} ${BOOST_FILESYSTEM_LIB}
 bin_tests_test_loop_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 bin_tests_test_persistent_storage_SOURCES = tests/test-persistent-storage.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp  client/src/video-source.cpp client/src/precise-generator.cpp client/src/frame-io.cpp src/video-thread.cpp src/frame-converter.cpp src/video-coder.cpp src/frame-buffer.cpp src/persistent-storage/fetching-task.cpp src/persistent-storage/storage-engine.cpp src/persistent-storage/frame-fetcher.cpp src/clock.cpp src/video-decoder.cpp src/local-stream.cpp src/video-stream-impl.cpp src/media-stream-base.cpp src/audio-capturer.cpp src/periodic.cpp src/audio-stream-impl.cpp src/estimators.cpp src/audio-controller.cpp src/webrtc-audio-channel.cpp src/async.cpp src/audio-thread.cpp src/threading-capability.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I@PSTORAGEDIR@
-bin_tests_test_persistent_storage_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} -L@PSTORAGELIB@
+bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_persistent_storage_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_persistent_storage_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem ${PSTORAGE_LIB}
-bin_tests_test_video_codec_SOURCES = tests/test-video-codec.cc src/video-codec.cpp src/ndnrtc-object.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_codec_SOURCES = tests/test-video-codec.cc ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_codec_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_video_codec_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_video_codec_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem
+bin_tests_test_video_codec_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem
+bin_tests_test_video_stream_SOURCES = tests/test-video-stream.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_video_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_video_stream_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem
 all: all-am
 
 .SUFFIXES:
@@ -5057,12 +5019,6 @@ bin/tests/test-stat-collector$(EXEEXT): $(bin_tests_test_stat_collector_OBJECTS)
 	$(AM_V_CXXLD)$(bin_tests_test_stat_collector_LINK) $(bin_tests_test_stat_collector_OBJECTS) $(bin_tests_test_stat_collector_LDADD) $(LIBS)
 tests/bin_tests_test_video_codec-test-video-codec.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
-src/bin_tests_test_video_codec-video-codec.$(OBJEXT):  \
-	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/bin_tests_test_video_codec-ndnrtc-object.$(OBJEXT):  \
-	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/bin_tests_test_video_codec-simple-log.$(OBJEXT):  \
-	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_video_codec-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -5234,6 +5190,21 @@ client/src/bin_tests_test_video_source-ipc-shim.$(OBJEXT):  \
 bin/tests/test-video-source$(EXEEXT): $(bin_tests_test_video_source_OBJECTS) $(bin_tests_test_video_source_DEPENDENCIES) $(EXTRA_bin_tests_test_video_source_DEPENDENCIES) bin/tests/$(am__dirstamp)
 	@rm -f bin/tests/test-video-source$(EXEEXT)
 	$(AM_V_CXXLD)$(bin_tests_test_video_source_LINK) $(bin_tests_test_video_source_OBJECTS) $(bin_tests_test_video_source_LDADD) $(LIBS)
+tests/bin_tests_test_video_stream-test-video-stream.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_video_stream-ipc-shim.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+
+bin/tests/test-video-stream$(EXEEXT): $(bin_tests_test_video_stream_OBJECTS) $(bin_tests_test_video_stream_DEPENDENCIES) $(EXTRA_bin_tests_test_video_stream_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-video-stream$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_video_stream_LINK) $(bin_tests_test_video_stream_OBJECTS) $(bin_tests_test_video_stream_LDADD) $(LIBS)
 tools/frame-fetcher/$(am__dirstamp):
 	@$(MKDIR_P) tools/frame-fetcher
 	@: > tools/frame-fetcher/$(am__dirstamp)
@@ -5492,6 +5463,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_video_source-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_video_source-precise-generator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_video_source-video-source.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-client.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-config.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po@am__quote@ # am--include-marker
@@ -5548,6 +5520,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_decoder-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_playout-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_source-gmock-all.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_stream-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_async-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_capturer-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_playout-gtest-all.Po@am__quote@ # am--include-marker
@@ -5589,6 +5562,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_decoder-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_playout-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_source-gtest-all.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_stream-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_async-async.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-capturer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-controller.Po@am__quote@ # am--include-marker
@@ -5913,9 +5887,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_segment_controller-segment-controller.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_segment_controller-simple-log.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_segment_controller-statistics.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_codec-ndnrtc-object.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_codec-simple-log.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_codec-video-codec.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_coder-fec.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_coder-frame-data.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_video_coder-name-components.Po@am__quote@ # am--include-marker
@@ -6084,6 +6055,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_playout-test-video-playout.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_video_stream-test-video-stream.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/codec/$(DEPDIR)/ndnrtc_codec-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/codec/$(DEPDIR)/ndnrtc_codec-tools.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po@am__quote@ # am--include-marker
@@ -6698,6 +6670,20 @@ client/src/bin_tests_test_video_source-ipc-shim.obj: client/src/ipc-shim.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/src/ipc-shim.c' object='client/src/bin_tests_test_video_source-ipc-shim.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_source_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/bin_tests_test_video_source-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
+
+client/src/bin_tests_test_video_stream-ipc-shim.o: client/src/ipc-shim.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/src/bin_tests_test_video_stream-ipc-shim.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Tpo -c -o client/src/bin_tests_test_video_stream-ipc-shim.o `test -f 'client/src/ipc-shim.c' || echo '$(srcdir)/'`client/src/ipc-shim.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Tpo client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/src/ipc-shim.c' object='client/src/bin_tests_test_video_stream-ipc-shim.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/bin_tests_test_video_stream-ipc-shim.o `test -f 'client/src/ipc-shim.c' || echo '$(srcdir)/'`client/src/ipc-shim.c
+
+client/src/bin_tests_test_video_stream-ipc-shim.obj: client/src/ipc-shim.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/src/bin_tests_test_video_stream-ipc-shim.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Tpo -c -o client/src/bin_tests_test_video_stream-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Tpo client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/src/ipc-shim.c' object='client/src/bin_tests_test_video_stream-ipc-shim.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/bin_tests_test_video_stream-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
 
 client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o: client/nanopipe-adaptor/ipc-shim.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o -MD -MP -MF client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Tpo -c -o client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o `test -f 'client/nanopipe-adaptor/ipc-shim.c' || echo '$(srcdir)/'`client/nanopipe-adaptor/ipc-shim.c
@@ -13989,48 +13975,6 @@ tests/bin_tests_test_video_codec-test-video-codec.obj: tests/test-video-codec.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_video_codec-test-video-codec.obj `if test -f 'tests/test-video-codec.cc'; then $(CYGPATH_W) 'tests/test-video-codec.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-video-codec.cc'; fi`
 
-src/bin_tests_test_video_codec-video-codec.o: src/video-codec.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_video_codec-video-codec.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_video_codec-video-codec.Tpo -c -o src/bin_tests_test_video_codec-video-codec.o `test -f 'src/video-codec.cpp' || echo '$(srcdir)/'`src/video-codec.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_video_codec-video-codec.Tpo src/$(DEPDIR)/bin_tests_test_video_codec-video-codec.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-codec.cpp' object='src/bin_tests_test_video_codec-video-codec.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_video_codec-video-codec.o `test -f 'src/video-codec.cpp' || echo '$(srcdir)/'`src/video-codec.cpp
-
-src/bin_tests_test_video_codec-video-codec.obj: src/video-codec.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_video_codec-video-codec.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_video_codec-video-codec.Tpo -c -o src/bin_tests_test_video_codec-video-codec.obj `if test -f 'src/video-codec.cpp'; then $(CYGPATH_W) 'src/video-codec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-codec.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_video_codec-video-codec.Tpo src/$(DEPDIR)/bin_tests_test_video_codec-video-codec.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-codec.cpp' object='src/bin_tests_test_video_codec-video-codec.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_video_codec-video-codec.obj `if test -f 'src/video-codec.cpp'; then $(CYGPATH_W) 'src/video-codec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/video-codec.cpp'; fi`
-
-src/bin_tests_test_video_codec-ndnrtc-object.o: src/ndnrtc-object.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_video_codec-ndnrtc-object.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_video_codec-ndnrtc-object.Tpo -c -o src/bin_tests_test_video_codec-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_video_codec-ndnrtc-object.Tpo src/$(DEPDIR)/bin_tests_test_video_codec-ndnrtc-object.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/ndnrtc-object.cpp' object='src/bin_tests_test_video_codec-ndnrtc-object.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_video_codec-ndnrtc-object.o `test -f 'src/ndnrtc-object.cpp' || echo '$(srcdir)/'`src/ndnrtc-object.cpp
-
-src/bin_tests_test_video_codec-ndnrtc-object.obj: src/ndnrtc-object.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_video_codec-ndnrtc-object.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_video_codec-ndnrtc-object.Tpo -c -o src/bin_tests_test_video_codec-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_video_codec-ndnrtc-object.Tpo src/$(DEPDIR)/bin_tests_test_video_codec-ndnrtc-object.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/ndnrtc-object.cpp' object='src/bin_tests_test_video_codec-ndnrtc-object.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_video_codec-ndnrtc-object.obj `if test -f 'src/ndnrtc-object.cpp'; then $(CYGPATH_W) 'src/ndnrtc-object.cpp'; else $(CYGPATH_W) '$(srcdir)/src/ndnrtc-object.cpp'; fi`
-
-src/bin_tests_test_video_codec-simple-log.o: src/simple-log.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_video_codec-simple-log.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_video_codec-simple-log.Tpo -c -o src/bin_tests_test_video_codec-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_video_codec-simple-log.Tpo src/$(DEPDIR)/bin_tests_test_video_codec-simple-log.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/simple-log.cpp' object='src/bin_tests_test_video_codec-simple-log.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_video_codec-simple-log.o `test -f 'src/simple-log.cpp' || echo '$(srcdir)/'`src/simple-log.cpp
-
-src/bin_tests_test_video_codec-simple-log.obj: src/simple-log.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_video_codec-simple-log.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_video_codec-simple-log.Tpo -c -o src/bin_tests_test_video_codec-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_video_codec-simple-log.Tpo src/$(DEPDIR)/bin_tests_test_video_codec-simple-log.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/simple-log.cpp' object='src/bin_tests_test_video_codec-simple-log.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_video_codec-simple-log.obj `if test -f 'src/simple-log.cpp'; then $(CYGPATH_W) 'src/simple-log.cpp'; else $(CYGPATH_W) '$(srcdir)/src/simple-log.cpp'; fi`
-
 contrib/gtest/googlemock/src/bin_tests_test_video_codec-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_codec_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_video_codec-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_codec-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_video_codec-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_codec-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_codec-gmock-all.Po
@@ -14870,6 +14814,48 @@ contrib/gtest/googletest/src/bin_tests_test_video_source-gtest-all.obj: contrib/
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_video_source-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_source_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_video_source-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
+tests/bin_tests_test_video_stream-test-video-stream.o: tests/test-video-stream.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_video_stream-test-video-stream.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_video_stream-test-video-stream.Tpo -c -o tests/bin_tests_test_video_stream-test-video-stream.o `test -f 'tests/test-video-stream.cc' || echo '$(srcdir)/'`tests/test-video-stream.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_video_stream-test-video-stream.Tpo tests/$(DEPDIR)/bin_tests_test_video_stream-test-video-stream.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tests/test-video-stream.cc' object='tests/bin_tests_test_video_stream-test-video-stream.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_video_stream-test-video-stream.o `test -f 'tests/test-video-stream.cc' || echo '$(srcdir)/'`tests/test-video-stream.cc
+
+tests/bin_tests_test_video_stream-test-video-stream.obj: tests/test-video-stream.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_video_stream-test-video-stream.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_video_stream-test-video-stream.Tpo -c -o tests/bin_tests_test_video_stream-test-video-stream.obj `if test -f 'tests/test-video-stream.cc'; then $(CYGPATH_W) 'tests/test-video-stream.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-video-stream.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_video_stream-test-video-stream.Tpo tests/$(DEPDIR)/bin_tests_test_video_stream-test-video-stream.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tests/test-video-stream.cc' object='tests/bin_tests_test_video_stream-test-video-stream.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_video_stream-test-video-stream.obj `if test -f 'tests/test-video-stream.cc'; then $(CYGPATH_W) 'tests/test-video-stream.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-video-stream.cc'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_stream-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_stream-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_stream-gmock-all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_stream-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_stream-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_stream-gmock-all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_stream-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_stream-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_stream-gtest-all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_stream-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_stream-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_stream-gtest-all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
 
 tools/frame-fetcher/frame_fetcher-main.o: tools/frame-fetcher/main.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(frame_fetcher_CXXFLAGS) $(CXXFLAGS) -MT tools/frame-fetcher/frame_fetcher-main.o -MD -MP -MF tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Tpo -c -o tools/frame-fetcher/frame_fetcher-main.o `test -f 'tools/frame-fetcher/main.cpp' || echo '$(srcdir)/'`tools/frame-fetcher/main.cpp
@@ -15788,6 +15774,13 @@ bin/tests/test-video-codec.log: bin/tests/test-video-codec$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+bin/tests/test-video-stream.log: bin/tests/test-video-stream$(EXEEXT)
+	@p='bin/tests/test-video-stream$(EXEEXT)'; \
+	b='bin/tests/test-video-stream'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 .test.log:
 	@p='$<'; \
 	$(am__set_b); \
@@ -16128,6 +16121,7 @@ distclean: distclean-am
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-precise-generator.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-video-source.Po
+	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-client.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-config.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po
@@ -16184,6 +16178,7 @@ distclean: distclean-am
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_decoder-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_playout-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_source-gmock-all.Po
+	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_stream-gmock-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_async-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_capturer-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_playout-gtest-all.Po
@@ -16225,6 +16220,7 @@ distclean: distclean-am
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_decoder-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_playout-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_source-gtest-all.Po
+	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_stream-gtest-all.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_async-async.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-capturer.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-controller.Po
@@ -16549,9 +16545,6 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/bin_tests_test_segment_controller-segment-controller.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_segment_controller-simple-log.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_segment_controller-statistics.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_video_codec-ndnrtc-object.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_video_codec-simple-log.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_video_codec-video-codec.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_video_coder-fec.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_video_coder-frame-data.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_video_coder-name-components.Po
@@ -16720,6 +16713,7 @@ distclean: distclean-am
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-test-video-playout.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po
+	-rm -f tests/$(DEPDIR)/bin_tests_test_video_stream-test-video-stream.Po
 	-rm -f tools/codec/$(DEPDIR)/ndnrtc_codec-main.Po
 	-rm -f tools/codec/$(DEPDIR)/ndnrtc_codec-tools.Po
 	-rm -f tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po
@@ -16853,6 +16847,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-precise-generator.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-video-source.Po
+	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-client.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-config.Po
 	-rm -f client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po
@@ -16909,6 +16904,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_decoder-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_playout-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_source-gmock-all.Po
+	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_video_stream-gmock-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_async-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_capturer-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_audio_playout-gtest-all.Po
@@ -16950,6 +16946,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_decoder-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_playout-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_source-gtest-all.Po
+	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_video_stream-gtest-all.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_async-async.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-capturer.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_audio_capturer-audio-controller.Po
@@ -17274,9 +17271,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/bin_tests_test_segment_controller-segment-controller.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_segment_controller-simple-log.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_segment_controller-statistics.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_video_codec-ndnrtc-object.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_video_codec-simple-log.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_video_codec-video-codec.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_video_coder-fec.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_video_coder-frame-data.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_video_coder-name-components.Po
@@ -17445,6 +17439,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-test-video-playout.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_playout-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_video_source-test-video-source.Po
+	-rm -f tests/$(DEPDIR)/bin_tests_test_video_stream-test-video-stream.Po
 	-rm -f tools/codec/$(DEPDIR)/ndnrtc_codec-main.Po
 	-rm -f tools/codec/$(DEPDIR)/ndnrtc_codec-tools.Po
 	-rm -f tools/frame-fetcher/$(DEPDIR)/frame_fetcher-main.Po

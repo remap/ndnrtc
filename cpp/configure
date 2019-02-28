@@ -734,24 +734,6 @@ build_os
 build_vendor
 build_cpu
 build
-CNLCPPLIB
-CNLCPPDIR
-PSTORAGELIB
-PSTORAGEDIR
-NANOMSGLIB
-NANOMSGGDIR
-LCONFIGLIB
-LCONFIGDIR
-WEBRTCLIB
-WEBRTCSRC
-WEBRTCDIR
-OPENFECLIB
-OPENFECSRC
-OPENFECDIR
-NDNCPPLIB
-NDNCPPDIR
-BOOSTLIB
-BOOSTDIR
 MAINT
 MAINTAINER_MODE_FALSE
 MAINTAINER_MODE_TRUE
@@ -850,24 +832,6 @@ with_protoc
       ac_precious_vars='build_alias
 host_alias
 target_alias
-BOOSTDIR
-BOOSTLIB
-NDNCPPDIR
-NDNCPPLIB
-OPENFECDIR
-OPENFECSRC
-OPENFECLIB
-WEBRTCDIR
-WEBRTCSRC
-WEBRTCLIB
-LCONFIGDIR
-LCONFIGLIB
-NANOMSGGDIR
-NANOMSGLIB
-PSTORAGEDIR
-PSTORAGELIB
-CNLCPPDIR
-CNLCPPLIB
 CC
 CFLAGS
 LDFLAGS
@@ -1570,43 +1534,6 @@ Optional Packages:
                           Defaults to looking on path.
 
 Some influential environment variables:
-  BOOSTDIR    Path to the directory which contains Boost library headers
-              folder (default is /usr/local/include)
-  BOOSTLIB    Path to the directory which contains Boost library binaries
-              folder (default is /usr/local/lib)
-  NDNCPPDIR   Path to the directory which contains NDN-CPP library headers
-              folder (default is /usr/local/include)
-  NDNCPPLIB   Path to the directory which contains NDN-CPP library binaries
-              (default is /usr/local/lib)
-  OPENFECDIR  Path to the directory which contains OpenFEC library
-  OPENFECSRC  Path to the directory which contains OpenFEC library header
-              files (default is $OPENFECDIR/src)
-  OPENFECLIB  Path to the directory which contains OpenFEC library binaries
-              (default is $OPENFECDIR/bin/Release)
-  WEBRTCDIR   Path to the directory which contains WebRTC trunk
-  WEBRTCSRC   Path to the directory which contains WebRTC header files
-              (default is $WEBRTCDIR/webrtc)
-  WEBRTCLIB   Path to the directory which contains WebRTC libraries (default
-              is $WEBRTCDIR/out/Release)
-  LCONFIGDIR  Optional (for client demo app): path to the directory which
-              contains libconfig library headers (default is
-              /usr/local/include)
-  LCONFIGLIB  Optional (for client demo app): path to the directory which
-              contains libconfig library binaries (default is /usr/local/lib)
-  NANOMSGGDIR Optional (for client demo app): path to the directory which
-              contains nanomsg library headers (default is /usr/local/include)
-  NANOMSGLIB  Optional (for client demo app): path to the directory which
-              contains nanomsg library binaries (default is /usr/local/lib)
-  PSTORAGEDIR Optional: path to the directory which contains persistent
-              storage library headers (LevelDB for Android or RocksDB
-              otherwise, default is /usr/local/include)
-  PSTORAGELIB Optional: path to the directory which contains persistent
-              storage library binaries (LevelDB for Android or RocksDB
-              otherwise, default is /usr/local/lib)
-  CNLCPPDIR   Path to the directory which contains CNL-CPP library headers
-              folder (default is /usr/local/include)
-  CNLCPPLIB   Path to the directory which contains CNL-CPP library binaries
-              (default is /usr/local/lib)
   CC          C compiler command
   CFLAGS      C compiler flags
   LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
@@ -3567,24 +3494,24 @@ fi
 AM_BACKSLASH='\'
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#AC_ARG_VAR([BOOSTDIR], [Path to the directory which contains Boost library headers folder (default is /usr/local/include)])
+#AC_ARG_VAR([BOOSTLIB], [Path to the directory which contains Boost library binaries folder (default is /usr/local/lib)])
+#AC_ARG_VAR([NDNCPPDIR], [Path to the directory which contains NDN-CPP library headers folder (default is /usr/local/include)])
+#AC_ARG_VAR([NDNCPPLIB], [Path to the directory which contains NDN-CPP library binaries (default is /usr/local/lib)])
+#AC_ARG_VAR([OPENFECDIR], [Path to the directory which contains OpenFEC library])
+#AC_ARG_VAR([OPENFECSRC], [Path to the directory which contains OpenFEC library header files (default is $OPENFECDIR/src)])
+#AC_ARG_VAR([OPENFECLIB], [Path to the directory which contains OpenFEC library binaries (default is $OPENFECDIR/bin/Release)])
+#AC_ARG_VAR([WEBRTCDIR], [Path to the directory which contains WebRTC trunk])
+#AC_ARG_VAR([WEBRTCSRC], [Path to the directory which contains WebRTC header files (default is $WEBRTCDIR/webrtc)])
+#AC_ARG_VAR([WEBRTCLIB], [Path to the directory which contains WebRTC libraries (default is $WEBRTCDIR/out/Release)])
+#AC_ARG_VAR([LCONFIGDIR], [Optional (for client demo app): path to the directory which contains libconfig library headers (default is /usr/local/include)])
+#AC_ARG_VAR([LCONFIGLIB], [Optional (for client demo app): path to the directory which contains libconfig library binaries (default is /usr/local/lib)])
+#AC_ARG_VAR([NANOMSGGDIR], [Optional (for client demo app): path to the directory which contains nanomsg library headers (default is /usr/local/include)])
+#AC_ARG_VAR([NANOMSGLIB], [Optional (for client demo app): path to the directory which contains nanomsg library binaries (default is /usr/local/lib)])
+#AC_ARG_VAR([PSTORAGEDIR], [Optional: path to the directory which contains persistent storage library headers (LevelDB for Android or RocksDB otherwise, default is /usr/local/include)])
+#AC_ARG_VAR([PSTORAGELIB], [Optional: path to the directory which contains persistent storage library binaries (LevelDB for Android or RocksDB otherwise, default is /usr/local/lib)])
+#AC_ARG_VAR([CNLCPPDIR], [Path to the directory which contains CNL-CPP library headers folder (default is /usr/local/include)])
+#AC_ARG_VAR([CNLCPPLIB], [Path to the directory which contains CNL-CPP library binaries (default is /usr/local/lib)])
 
 # Check whether --enable-logging was given.
 if test "${enable_logging+set}" = set; then :
@@ -17385,141 +17312,141 @@ case $host_os in
 		;;
 esac
 
-if test ${BOOSTDIR}; then
-	DIR=$(cd $BOOSTDIR && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $BOOSTDIR" "$LINENO" 5
-	fi
-	BOOSTDIR=$DIR
-else
-	BOOSTDIR="/usr/local/include"
-fi
-
-if test ${BOOSTLIB}; then
-	DIR=$(cd $BOOSTLIB && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $BOOSTLIB" "$LINENO" 5
-	fi
-	BOOSTLIB=$DIR
-else
-	BOOSTLIB="/usr/local/lib"
-fi
-
-if test ${NDNCPPDIR}; then
-	DIR=$(cd $NDNCPPDIR && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $NDNCPPDIR" "$LINENO" 5
-	fi
-	NDNCPPDIR=$DIR
-else
-	NDNCPPDIR="/usr/local/include"
-fi
-
-if test ${NDNCPPLIB}; then
-	DIR=$(cd $NDNCPPLIB && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $NDNCPPLIB" "$LINENO" 5
-	fi
-	NDNCPPLIB=$DIR
-else
-	NDNCPPLIB="/usr/local/lib"
-fi
-
-if test ${OPENFECDIR}; then
-	DIR=$(cd $OPENFECDIR && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $OPENFECDIR" "$LINENO" 5
-	fi
-	OPENFECDIR=$DIR
-fi
-
-if test "x${OPENFECSRC}" = "x"; then
-	OPENFECSRC="$OPENFECDIR/src"
-fi
-
-if test "x${OPENFECLIB}" = "x"; then
-	OPENFECLIB="$OPENFECDIR/bin/Release"
-fi
-
-if test ${WEBRTCDIR}; then
-	DIR=$(cd $WEBRTCDIR && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $W" "$LINENO" 5
-	fi
-	WEBRTCDIR=$DIR
-fi
-
-if test "x${WEBRTCSRC}" = "x"; then
-	WEBRTCSRC="$WEBRTCDIR/webrtc"
-fi
-
-if test "x${WEBRTCLIB}" = "x"; then
-	WEBRTCLIB="$WEBRTCDIR/out/Default/obj/webrtc"
-fi
-
-if test ${LCONFIGDIR}; then
-	LCONFIGDIR=$(cd $LCONFIGDIR; pwd)
-else
-	LCONFIGDIR="/usr/local/include"
-fi
-
-if test ${LCONFIGLIB}; then
-	LCONFIGLIB=$(cd $LCONFIGLIB; pwd)
-else
-	LCONFIGLIB="/usr/local/lib"
-fi
-
-if test ${NANOMSGDIR}; then
-	NANOMSGDIR=$(cd $NANOMSGDIR; pwd)
-else
-	NANOMSGDIR="/usr/local/include"
-fi
-
-if test ${NANOMSGLIB}; then
-	NANOMSGLIB=$(cd $NANOMSGLIB; pwd)
-else
-	NANOMSGLIB="/usr/local/lib"
-fi
-
-if test ${PSTORAGEDIR}; then
-	PSTORAGEDIR=$(cd $PSTORAGEDIR; pwd)
-else
-	PSTORAGEDIR="/usr/local/include"
-fi
-
-if test ${PSTORAGELIB}; then
-	PSTORAGELIB=$(cd $PSTORAGELIB; pwd)
-else
-	PSTORAGELIB="/usr/local/lib"
-fi
-
-if test ${CNLCPPDIR}; then
-	DIR=$(cd $CNLCPPDIR && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $CNLCPPDIR" "$LINENO" 5
-	fi
-	CNLCPPDIR=$DIR
-else
-	CNLCPPDIR="/usr/local/include"
-fi
-
-if test ${CNLCPPLIB}; then
-	DIR=$(cd $CNLCPPLIB && pwd || echo "not found")
-	if [[ "$DIR" = "not found" ]];
-	then
-		as_fn_error $? "directory not found - $CNLCPPLIB" "$LINENO" 5
-	fi
-	CNLCPPLIB=$DIR
-else
-	CNLCPPLIB="/usr/local/lib"
-fi
+#if test ${BOOSTDIR}; then
+#	DIR=$(cd $BOOSTDIR && pwd || echo "not found")
+#	if [[[ "$DIR" = "not found" ]]];
+#	then
+#		AC_MSG_ERROR([directory not found - $BOOSTDIR])
+#	fi
+#	BOOSTDIR=$DIR
+#else
+#	BOOSTDIR="/usr/local/include"
+#fi
+#
+#if test ${BOOSTLIB}; then
+#	DIR=$(cd $BOOSTLIB && pwd || echo "not found")
+#	if [[[ "$DIR" = "not found" ]]];
+#	then
+#		AC_MSG_ERROR([directory not found - $BOOSTLIB])
+#	fi
+#	BOOSTLIB=$DIR
+#else
+#	BOOSTLIB="/usr/local/lib"
+#fi
+#
+#if test ${NDNCPPDIR}; then
+#	DIR=$(cd $NDNCPPDIR && pwd || echo "not found")
+#	if [[[ "$DIR" = "not found" ]]];
+#	then
+#		AC_MSG_ERROR([directory not found - $NDNCPPDIR])
+#	fi
+#	NDNCPPDIR=$DIR
+#else
+#	NDNCPPDIR="/usr/local/include"
+#fi
+#
+#if test ${NDNCPPLIB}; then
+#	DIR=$(cd $NDNCPPLIB && pwd || echo "not found")
+#	if [[[ "$DIR" = "not found" ]]];
+#	then
+#		AC_MSG_ERROR([directory not found - $NDNCPPLIB])
+#	fi
+#	NDNCPPLIB=$DIR
+#else
+#	NDNCPPLIB="/usr/local/lib"
+#fi
+#
+#if test ${OPENFECDIR}; then
+#	DIR=$(cd $OPENFECDIR && pwd || echo "not found")
+#	if [[[ "$DIR" = "not found" ]]];
+#	then
+#		AC_MSG_ERROR([directory not found - $OPENFECDIR])
+#	fi
+#	OPENFECDIR=$DIR
+#fi
+#
+#if test "x${OPENFECSRC}" = "x"; then
+#	OPENFECSRC="$OPENFECDIR/src"
+#fi
+#
+#if test "x${OPENFECLIB}" = "x"; then
+#	OPENFECLIB="$OPENFECDIR/bin/Release"
+#fi
+#
+#if test ${WEBRTCDIR}; then
+#	DIR=$(cd $WEBRTCDIR && pwd || echo "not found")
+#	if [[[ "$DIR" = "not found" ]]];
+#	then
+#		AC_MSG_ERROR([directory not found - $W])
+#	fi
+#	WEBRTCDIR=$DIR
+#fi
+#
+#if test "x${WEBRTCSRC}" = "x"; then
+#	WEBRTCSRC="$WEBRTCDIR/webrtc"
+#fi
+#
+#if test "x${WEBRTCLIB}" = "x"; then
+#	WEBRTCLIB="$WEBRTCDIR/out/Default/obj/webrtc"
+#fi
+#
+#if test ${LCONFIGDIR}; then
+#	LCONFIGDIR=$(cd $LCONFIGDIR; pwd)
+#else
+#	LCONFIGDIR="/usr/local/include"
+#fi
+#
+#if test ${LCONFIGLIB}; then
+#	LCONFIGLIB=$(cd $LCONFIGLIB; pwd)
+#else
+#	LCONFIGLIB="/usr/local/lib"
+#fi
+#
+#if test ${NANOMSGDIR}; then
+#	NANOMSGDIR=$(cd $NANOMSGDIR; pwd)
+#else
+#	NANOMSGDIR="/usr/local/include"
+#fi
+#
+#if test ${NANOMSGLIB}; then
+#	NANOMSGLIB=$(cd $NANOMSGLIB; pwd)
+#else
+#	NANOMSGLIB="/usr/local/lib"
+#fi
+#
+#if test ${PSTORAGEDIR}; then
+#	PSTORAGEDIR=$(cd $PSTORAGEDIR; pwd)
+#else
+#	PSTORAGEDIR="/usr/local/include"
+#fi
+#
+#if test ${PSTORAGELIB}; then
+#	PSTORAGELIB=$(cd $PSTORAGELIB; pwd)
+#else
+#	PSTORAGELIB="/usr/local/lib"
+#fi
+#
+#if test ${CNLCPPDIR}; then
+#	DIR=$(cd $CNLCPPDIR && pwd || echo "not found")
+#	if [[[ "$DIR" = "not found" ]]];
+#	then
+#		AC_MSG_ERROR([directory not found - $CNLCPPDIR])
+#	fi
+#	CNLCPPDIR=$DIR
+#else
+#	CNLCPPDIR="/usr/local/include"
+#fi
+#
+#if test ${CNLCPPLIB}; then
+#	DIR=$(cd $CNLCPPLIB && pwd || echo "not found")
+#	if [[[ "$DIR" = "not found" ]]];
+#	then
+#		AC_MSG_ERROR([directory not found - $CNLCPPLIB])
+#	fi
+#	CNLCPPLIB=$DIR
+#else
+#	CNLCPPLIB="/usr/local/lib"
+#fi
 
 # create links for client config file
 ac_config_links="$ac_config_links client/params.cfg:tests/default.cfg"
@@ -20113,13 +20040,6 @@ fi
 
 ###############################
 # Check for NDN-CPP
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I$NDNCPPDIR -I$BOOSTDIR"
-SAVED_LDFLAGS=$LDFLAGS
-LDFLAGS="$LDFLAGS -L$NDNCPPLIB"
-SAVED_LIBS=$LIBS
-LIBS="$LIBS -lndn-cpp"
-
 for ac_header in ndn-cpp/interest.hpp
 do :
   ac_fn_cxx_check_header_mongrel "$LINENO" "ndn-cpp/interest.hpp" "ac_cv_header_ndn_cpp_interest_hpp" "$ac_includes_default"
@@ -20166,6 +20086,51 @@ rm -f core conftest.err conftest.$ac_objext \
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking if NDN-CPP library was compiled for using boost::shared_ptr" >&5
 $as_echo_n "checking if NDN-CPP library was compiled for using boost::shared_ptr... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ndn_getNowMilliseconds in -lndn-cpp" >&5
+$as_echo_n "checking for ndn_getNowMilliseconds in -lndn-cpp... " >&6; }
+if ${ac_cv_lib_ndn_cpp_ndn_getNowMilliseconds+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lndn-cpp  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ndn_getNowMilliseconds ();
+int
+main ()
+{
+return ndn_getNowMilliseconds ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_ndn_cpp_ndn_getNowMilliseconds=yes
+else
+  ac_cv_lib_ndn_cpp_ndn_getNowMilliseconds=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ndn_cpp_ndn_getNowMilliseconds" >&5
+$as_echo "$ac_cv_lib_ndn_cpp_ndn_getNowMilliseconds" >&6; }
+if test "x$ac_cv_lib_ndn_cpp_ndn_getNowMilliseconds" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBNDN_CPP 1
+_ACEOF
+
+  LIBS="-lndn-cpp $LIBS"
+
+fi
+
 
 if test "$build_os" == "$host_os"; then
 	if test "$cross_compiling" = yes; then :
@@ -20211,18 +20176,54 @@ fi
 
 fi
 
-LIBS=$SAVED_LIBS
-LDFLAGS=$SAVED_LDFLAGS
-CPPFLAGS=$SAVED_CPPFLAGS
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ndntools_getGeneralizedContentMetaComponent in -lndn-cpp-tools" >&5
+$as_echo_n "checking for ndntools_getGeneralizedContentMetaComponent in -lndn-cpp-tools... " >&6; }
+if ${ac_cv_lib_ndn_cpp_tools_ndntools_getGeneralizedContentMetaComponent+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lndn-cpp-tools  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ndntools_getGeneralizedContentMetaComponent ();
+int
+main ()
+{
+return ndntools_getGeneralizedContentMetaComponent ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_ndn_cpp_tools_ndntools_getGeneralizedContentMetaComponent=yes
+else
+  ac_cv_lib_ndn_cpp_tools_ndntools_getGeneralizedContentMetaComponent=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ndn_cpp_tools_ndntools_getGeneralizedContentMetaComponent" >&5
+$as_echo "$ac_cv_lib_ndn_cpp_tools_ndntools_getGeneralizedContentMetaComponent" >&6; }
+if test "x$ac_cv_lib_ndn_cpp_tools_ndntools_getGeneralizedContentMetaComponent" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBNDN_CPP_TOOLS 1
+_ACEOF
+
+  LIBS="-lndn-cpp-tools $LIBS"
+
+fi
+
 
 ###############################
 # Check for OpenFEC library
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I${OPENFECSRC}"
-SAVED_LDFLAGS=$LDFLAGS
-LDFLAGS="$LDLFAGS -L$OPENFECLIB"
-SAVED_LIBS="$LIBS"
-
 for ac_header in lib_common/of_openfec_api.h
 do :
   ac_fn_cxx_check_header_mongrel "$LINENO" "lib_common/of_openfec_api.h" "ac_cv_header_lib_common_of_openfec_api_h" "$ac_includes_default"
@@ -20291,12 +20292,8 @@ See \`config.log' for more details" "$LINENO" 5; }
 fi
 
 
-CPPFLAGS=$SAVED_CPPFLAGS
-LDFLAGS=$SAVED_LDFLAGS
-LIBS=$SAVED_LIBS
-
 ###############################
-# Check for OpenFEC library
+# Check for Protobuf library
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Protobuf" >&5
 $as_echo_n "checking for Protobuf... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -20482,13 +20479,6 @@ fi
 
 ###############################
 # Check for nanomsg
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I$NANOMSGDIR"
-SAVED_LDFLAGS=$LDFLAGS
-LDFLAGS="$LDFLAGS -L$NANOMSGLIB"
-SAVED_LIBS=$LIBS
-LIBS="$LIBS -lnanomsg"
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for nn_socket in -lnanomsg" >&5
 $as_echo_n "checking for nn_socket in -lnanomsg... " >&6; }
 if ${ac_cv_lib_nanomsg_nn_socket+:} false; then :
@@ -20543,16 +20533,8 @@ else
 fi
 
 
-CPPFLAGS=$SAVED_CPPFLAGS
-LDFLAGS=$SAVED_LDFLAGS
-LIBS=$SAVED_LIBS
-
 ###############################
 # Check for persistent storage libs
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I$PSTORAGEDIR"
-SAVED_LDFLAGS=$LDFLAGS
-LDFLAGS="$LDFLAGS -L$PSTORAGELIB"
 SAVED_LIBS=$LIBS
 
 if test "$os_module" != "android"
@@ -20597,6 +20579,8 @@ $as_echo "$ac_cv_lib_rocksdb_rocksdb_restore_options_create" >&6; }
 if test "x$ac_cv_lib_rocksdb_rocksdb_restore_options_create" = xyes; then :
   $as_echo "#define HAVE_PERSISTENT_STORAGE 1" >>confdefs.h
 
+else
+  LIBS=$SAVED_LIBS
 fi
 
      if test "$ac_cv_lib_rocksdb_rocksdb_restore_options_create" = yes; then
@@ -20674,12 +20658,8 @@ fi
 
 ###############################
 # Check for CNL
-SAVED_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I$CNLCPPDIR"
-SAVED_LDFLAGS=$LDFLAGS
-LDFLAGS="$LDFLAGS -L$CNLCPPLIB"
 SAVED_LIBS=$LIBS
-LIBS="$LIBS -lcnl-cpp -lndn-cpp"
+LIBS="$LIBS -lcnl-cpp"
 
 for ac_header in cnl-cpp/namespace.hpp
 do :
@@ -20733,14 +20713,11 @@ else
 
 			{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find CNL-CPP lib" >&5
 $as_echo "$as_me: WARNING: can't find CNL-CPP lib" >&2;}
+			LIBS=$SAVED_LIBS
 
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-
-CPPFLAGS=$SAVED_CPPFLAGS
-LDFLAGS=$SAVED_LDFLAGS
-LIBS=$SAVED_LIBS
 
 ###############################
 # Check for VPX
