@@ -13,6 +13,10 @@ message StreamMeta {
 message LiveMeta {
   google.protobuf.Timestamp timestamp = 1;
   float framerate = 2;
+  float segnum_delta = 3;
+  float segnum_key = 4;
+  float segnum_delta_parity = 5;
+  float segnum_key_parity = 6;
 }
 
 message FrameMeta {
@@ -20,8 +24,7 @@ message FrameMeta {
   int32 gop_position = 2;
   int32 gop_number = 3;
   google.protobuf.Timestamp capture_timestamp = 4;
-  bool complete = 5;
-  int32 generation_delay = 6;
+  int32 generation_delay = 5;
 
   enum FrameType {
     Unknown = 0;
@@ -29,5 +32,5 @@ message FrameMeta {
     Key = 2;
   }
 
-  FrameType type = 7;
+  FrameType type = 6;
 }

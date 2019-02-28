@@ -69,7 +69,7 @@ libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
   src/simple-log.cpp include/simple-log.hpp \
   src/slot-buffer.cpp src/slot-buffer.hpp \
   src/statistics.cpp include/statistics.hpp \
-  src/stream.hpp include/stream.hpp \
+  src/stream.cpp include/stream.hpp \
   src/stream-recorder.cpp src/stream-recorder.hpp \
   src/threading-capability.cpp src/threading-capability.hpp \
   src/video-coder.cpp src/video-coder.hpp \
@@ -167,12 +167,26 @@ endif
 
 if HAVE_VPX
 
-bin_PROGRAMS += codec-run
+bin_PROGRAMS += ndnrtc-codec
 
-codec_run_SOURCES = tools/codec-run/main.cpp contrib/docopt/docopt.cpp tools/codec-run/tools.cpp
-codec_run_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
-codec_run_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
-codec_run_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
+ndnrtc_codec_SOURCES = tools/codec/main.cpp contrib/docopt/docopt.cpp tools/codec/tools.cpp
+ndnrtc_codec_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -I@NDNCPPDIR@ -I@OPENFECSRC@
+ndnrtc_codec_LDFLAGS =  -L@NDNCPPLIB@ -L@BOOSTLIB@ ${BOOST_LDFLAGS}
+ndnrtc_codec_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB}
+
+endif
+
+if HAVE_CNL_CPP
+bin_PROGRAMS += ndnrtc-stream
+
+# ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
+# ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
+# ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
+
+ndnrtc_stream_SOURCES = tools/stream/main.cpp tools/stream/publish.cpp tools/stream/fetch.cpp contrib/docopt/docopt.cpp
+ndnrtc_stream_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(includedir) -I$(top_srcdir)/contrib -I@NDNCPPDIR@ -I@CNLCPPDIR@ ${BOOST_CPPFLAGS}
+ndnrtc_stream_LDFLAGS = -L@NDNCPPLIB@ -L@CNLCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
+ndnrtc_stream_LDADD = -lcnl-cpp -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
 
 endif
 
@@ -229,20 +243,6 @@ nanopipe_adaptor_CXXFLAGS = -std=c++11
 nanopipe_adaptor_CPPFLAGS = -I@NANOMSGDIR@ -I$(includedir)
 nanopipe_adaptor_LDFLAGS = -L@NANOMSGLIB@
 nanopipe_adaptor_LDADD = -lnanomsg
-
-endif
-
-if HAVE_CNL_CPP
-EXTRA_PROGRAMS += stream
-
-# ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src -I@LCONFIGDIR@ ${BOOST_CPPFLAGS} -I$(includedir) -I@NDNCPPDIR@
-# ndnrtc_client_LDFLAGS = -L@LCONFIGLIB@ -L@NDNCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
-# ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
-
-stream_SOURCES = client/stream/main.cpp contrib/docopt/docopt.cpp
-stream_CPPFLAGS = -I$(top_srcdir)/client/src -I$(includedir) -I$(top_srcdir)/contrib -I@NDNCPPDIR@ -I@CNLCPPDIR@ ${BOOST_CPPFLAGS}
-stream_LDFLAGS = -L@NDNCPPLIB@ -L@CNLCPPLIB@ ${BOOST_LDFLAGS} -L$(libdir)
-stream_LDADD = -lcnl-cpp -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
 
 endif
 
@@ -504,6 +504,16 @@ bin_tests_test_persistent_storage_SOURCES = tests/test-persistent-storage.cc tes
 bin_tests_test_persistent_storage_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_} -I@PSTORAGEDIR@
 bin_tests_test_persistent_storage_LDFLAGS = ${UNIT_TESTS_LDFLAGS_} -L@PSTORAGELIB@
 bin_tests_test_persistent_storage_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem ${PSTORAGE_LIB}
+
+###
+# new tests
+check_PROGRAMS += bin/tests/test-video-codec
+
+bin_tests_test_video_codec_SOURCES = tests/test-video-codec.cc src/video-codec.cpp src/ndnrtc-object.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_video_codec_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_video_codec_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_video_codec_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem
+
 
 TESTS = ${check_PROGRAMS}
 

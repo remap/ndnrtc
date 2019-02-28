@@ -60,12 +60,12 @@ namespace ndnrtc {
     };
 
     /**
-     * NamespaceInfo represents information that can be extracted from 
+     * NamespaceInfo represents information that can be extracted from
      * legitimate NDN-RTC name (interest or data).
      */
     class NamespaceInfo {
     public:
-        NamespaceInfo():apiVersion_(0), isMeta_(false), isParity_(false), 
+        NamespaceInfo():apiVersion_(0), isMeta_(false), isParity_(false),
             isDelta_(false), hasSeqNo_(false), class_(SampleClass::Unknown),
             segmentClass_(SegmentClass::Unknown), sampleNo_(0), segNo_(0), segmentVersion_(0){}
 
@@ -97,10 +97,15 @@ namespace ndnrtc {
         static const std::string NameComponentManifest;
         static const std::string NameComponentRdrLatest;
 
-        static std::string 
+        static const std::string Live;
+        static const std::string Gop;
+        static const std::string GopEnd;
+        static const std::string GopStart;
+
+        static std::string
         fullVersion();
 
-        static unsigned int 
+        static unsigned int
         nameApiVersion();
 
         static ndn::Name

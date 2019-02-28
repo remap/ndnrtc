@@ -1,7 +1,7 @@
 //
 // main.cpp
 //
-//  Created by Peter Gusev on 29 October 2018.
+//  Created by Peter Gusev on 23 February 2019.
 //  Copyright 2013-2019 Regents of the University of California
 //
 
@@ -28,10 +28,10 @@
 #include <vpx/vpx_encoder.h>
 // ****
 
-#define TOOL_NAME "Codec Run"
+#define TOOL_NAME "NdnRtc Codec"
 
 static const char USAGE[] =
-R"(Codec Run.
+R"(NdnRtc Codec.
     This app is for testing encoder/decoder of NDN-RTC.
     In encoder mode, it takes raw video (yuv420 as default) as an input and
     encodes it according to the settings. Outputs encoded video in IVF format
@@ -39,8 +39,8 @@ R"(Codec Run.
     input and outputs decoded raw frames.
 
     Usage:
-      codec-run encode <in_file>  --size=<WxH> --bitrate=<bitrate> [--gop=<gop>] [--fps=<fps>] [--no-drop] [--i420] ( <out_file> | - ) [--verbose]
-      codec-run decode (<in_file> | - ) ( - | <out_file>) [--verbose]
+      ndnrtc-codec encode <in_file>  --size=<WxH> --bitrate=<bitrate> [--gop=<gop>] [--fps=<fps>] [--no-drop] [--i420] ( <out_file> | - ) [--verbose]
+      ndnrtc-codec decode (<in_file> | - ) ( - | <out_file>) [--verbose]
 
     Arguments:
       <in_file>     For "encode" mode: input file of raw video or stdin.
@@ -124,8 +124,9 @@ int main(int argc, char **argv)
     try
     {
         VideoCodec codec;
-        VideoCodec::CodecSettings codecSettings;
+        CodecSettings codecSettings;
         codecSettings.numCores_ = thread::hardware_concurrency();
+        codecSettings.rowMt_ = true;
 
         if (args["encode"].asBool())
         {
@@ -163,7 +164,6 @@ int main(int argc, char **argv)
         {
             LogDebug("") << "initializing decoder" << endl;
 
-            codecSettings.spec_.decoder_.rowMt_ = true;
             codec.initDecoder(codecSettings);
             runDecoder(codec, args["<in_file>"].asString(), args["<out_file>"].asString());
         }
@@ -197,12 +197,12 @@ void runEncoder(VideoCodec& codec, string inFile, string outFile)
 
     VideoCodec::Image raw(codec.getSettings().spec_.encoder_.width_,
                           codec.getSettings().spec_.encoder_.height_,
-                          VideoCodec::I420);
+                          ImageFormat::I420);
 
     while (!mustExit && raw.read(f))
     {
         int res = codec.encode(raw, false,
-            [fOut](const VideoCodec::EncodedFrame& frame){
+            [fOut](const EncodedFrame& frame){
                 if (!writeFrame(fOut, frame))
                     throw runtime_error("error writing frame to the output file ("+to_string(errno)+"): "+strerror(errno));
             },
@@ -248,7 +248,7 @@ void runDecoder(VideoCodec& codec, string inFile, string outFile)
     if (!(fOut = fopen(outFile.c_str(), "wb")))
         throw runtime_error("failed to open output video file");
 
-    VideoCodec::EncodedFrame frame;
+    EncodedFrame frame;
     frame.data_ = nullptr;
 
     while (!mustExit && readFrame(frame, f))

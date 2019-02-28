@@ -12,8 +12,8 @@
 
 namespace ndnrtc {
 
-int writeFrame(FILE* file, const VideoCodec::EncodedFrame& frame);
-int readFrame(VideoCodec::EncodedFrame& frame, FILE *file);
+int writeFrame(FILE* file, const EncodedFrame& frame);
+int readFrame(EncodedFrame& frame, FILE *file);
 
 }
 #endif

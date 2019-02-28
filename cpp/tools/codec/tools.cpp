@@ -13,7 +13,7 @@ using namespace std;
 namespace ndnrtc
 {
 
-int writeFrame(FILE* file, const VideoCodec::EncodedFrame& frame)
+int writeFrame(FILE* file, const EncodedFrame& frame)
 {
     // write frames size -- 4 bytes
     uint32_t frameSize = frame.length_;
@@ -35,7 +35,7 @@ int writeFrame(FILE* file, const VideoCodec::EncodedFrame& frame)
     return 1;
 }
 
-int readFrame(VideoCodec::EncodedFrame& frame, FILE* file)
+int readFrame(EncodedFrame& frame, FILE* file)
 {
     uint32_t frameSize;
     int res = 0;
