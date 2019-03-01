@@ -93,6 +93,8 @@ namespace ndnrtc {
 		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 		boost::shared_ptr<StorageEngine> getStorage() const;
 
+		static Settings& defaultSettings();
+
 	private:
 		boost::shared_ptr<VideoStreamImpl2> pimpl_;
 	};

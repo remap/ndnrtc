@@ -131,9 +131,8 @@ int main(int argc, char **argv)
                          true,               // show help if requested
                          (string(TOOL_NAME)+string(PACKAGE_VERSION)).c_str());  // version string
 
-    for(auto const& arg : args) {
-        std::cout << arg.first << " " <<  arg.second << std::endl;
-    }
+    // for(auto const& arg : args)
+    //     std::cout << arg.first << " " <<  arg.second << std::endl;
 
     ndnlog::new_api::Logger::getLogger("").setLogLevel(args["--verbose"].asBool() ?
                         ndnlog::NdnLoggerDetailLevelAll :
@@ -196,7 +195,7 @@ int main(int argc, char **argv)
         LogError("") << "caught exception: " << e.what() << endl;
     }
 
-    LogInfo("") << "Shutting down gracefully..." << endl;
+    LogInfo("") << "shutting down gracefully...	ʕノ•ᴥ•ʔノ" << endl;
     LogInfo("") << "done" << endl;
 }
 

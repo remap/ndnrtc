@@ -97,6 +97,7 @@ TEST(TestCodec, TestCreate)
 
 TEST(TestCodec, TestEncodeDecode)
 {
+    cout << resources_path << endl;
     FILE *fIn = fopen((resources_path+"/eb_samples/eb_dog_1280x720_240.yuv").c_str(), "rb");
     if (!fIn)
         FAIL() << "couldn't open input video file";
@@ -149,6 +150,9 @@ int main(int argc, char **argv)
 
         boost::filesystem::path resPath(testPath);
         #ifndef __ANDROID__
+        if (resPath.leaf() == ".libs")
+            resPath /= boost::filesystem::path("..");
+
         resPath /= boost::filesystem::path("..") /=
                    boost::filesystem::path("..") /=
                    boost::filesystem::path("resources");
