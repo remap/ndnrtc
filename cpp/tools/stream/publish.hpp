@@ -15,6 +15,7 @@ void runPublisher(std::string input,
                   std::string streamName,
                   std::string signingIdentity,
                   const ndnrtc::VideoStream::Settings&,
-                  bool needRvp = false);
+                  bool needRvp = false,
+                  bool isLooped = false);
 
 #endif

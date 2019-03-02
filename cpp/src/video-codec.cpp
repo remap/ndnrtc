@@ -19,16 +19,16 @@ using namespace std;
 
 //------------------------------------------------------------------------------
 VideoCodec::Image::Image(const uint16_t& width, const uint16_t& height,
-    const ImageFormat& format)
+    const ImageFormat& format, uint8_t* data)
     : width_(width)
     , height_(height)
     , format_(format)
     , allocatedSz_(0)
     , isWrapped_(false)
-    , data_(nullptr)
+    , data_(data)
     , uData_(nullptr)
 {
-    allocate();
+    if (!data) allocate();
 }
 
 VideoCodec::Image::Image(const vpx_image_t *img)
@@ -58,7 +58,7 @@ VideoCodec::Image::read(FILE *file)
 {
     uint8_t *buf = data_;
 
-    if (format_ == VideoCodec::I420)
+    if (format_ == ImageFormat::I420)
     {
         // for I420, strides are W W/2 W/2 and W
         for (int plane = 0; plane < 3; ++plane) {
@@ -120,7 +120,7 @@ VideoCodec::Image::wrap(const vpx_image_t *img)
     if (img->fmt == VPX_IMG_FMT_I420)
     {
         isWrapped_ = true;
-        format_ = VideoCodec::I420;
+        format_ = ImageFormat::I420;
         // NOTE: img->w and img->h may not be the resolution we are looking for
         // because VPX internally does memory block alignments,
         // thus we're using display width and height
@@ -145,7 +145,7 @@ VideoCodec::Image::toVpxImage(vpx_image_t **img) const
     if (!isWrapped_)
     {
         // TODO: support other formats
-        vpx_img_fmt_t imgFmt = (format_ == VideoCodec::I420 ? VPX_IMG_FMT_I420 : VPX_IMG_FMT_NONE);
+        vpx_img_fmt_t imgFmt = (format_ == ImageFormat::I420 ? VPX_IMG_FMT_I420 : VPX_IMG_FMT_NONE);
         *img = vpx_img_wrap(*img, imgFmt, width_, height_, 1, data_);
     }
     else
@@ -157,7 +157,7 @@ VideoCodec::Image::toVpxImage(vpx_image_t **img) const
 void
 VideoCodec::Image::allocate()
 {
-    if (format_ == VideoCodec::I420)
+    if (format_ == ImageFormat::I420)
     {
         strides_[0] = strides_[3] = width_;
         strides_[1] = strides_[2] = width_/2;
@@ -175,7 +175,7 @@ VideoCodec::Image::getAllocationSize() const
 {
     switch (format_)
     {
-        case VideoCodec::I420:
+        case ImageFormat::I420:
             {
                 return width_*height_*3/2;
             }
@@ -210,6 +210,8 @@ VideoCodec::Image::vpxImgPlaneHeight(const vpx_image_t *img, int plane) const
 //------------------------------------------------------------------------------
 VideoCodec::VideoCodec():
     raw_(nullptr)
+    , isInit_(false)
+    , incoming_(nullptr)
 {
     memset((void*)&stats_, 0, sizeof(VideoCodec::Stats));
 }
@@ -219,8 +221,11 @@ VideoCodec::~VideoCodec()
     if (raw_) delete raw_;
 }
 
-void VideoCodec::initEncoder(const VideoCodec::CodecSettings &settings)
+void VideoCodec::initEncoder(const CodecSettings &settings)
 {
+    if (isInit_)
+        throw runtime_error("codec is already intialized");
+
     vpx_codec_enc_cfg_t cfg;
     vpx_codec_err_t res;
     vpx_codec_iface_t *codecIface = vpx_codec_vp9_cx();
@@ -262,9 +267,12 @@ void VideoCodec::initEncoder(const VideoCodec::CodecSettings &settings)
     if (res)
         throw runtime_error("error initializing encoder");
 
-    res = vpx_codec_control(&vpxCodec_, VP9E_SET_ROW_MT, 1);
-    if (res)
-        throw runtime_error("codec control error: failed to set row multithreading");
+    if (settings.rowMt_)
+    {
+        res = vpx_codec_control(&vpxCodec_, VP9E_SET_ROW_MT, 1);
+        if (res)
+            throw runtime_error("codec control error: failed to set row multithreading");
+    }
 
     res = vpx_codec_control(&vpxCodec_, VP9E_SET_TILE_COLUMNS, 3);	// TODO: do the same as WebRTC?
     if (res)
@@ -296,11 +304,15 @@ void VideoCodec::initEncoder(const VideoCodec::CodecSettings &settings)
     if (res)
         throw runtime_error("codec control error: failed to set column tiles");
 
-    raw_ = new VideoCodec::Image(cfg.g_w, cfg.g_h, VideoCodec::I420);
+    raw_ = new VideoCodec::Image(cfg.g_w, cfg.g_h, ImageFormat::I420);
+    isInit_ = true;
 }
 
-void VideoCodec::initDecoder(const VideoCodec::CodecSettings &settings)
+void VideoCodec::initDecoder(const CodecSettings &settings)
 {
+    if (isInit_)
+        throw runtime_error("codec is already intialized");
+
     vpx_codec_dec_cfg_t cfg;
     vpx_codec_err_t res;
     memset(&cfg, 0, sizeof(cfg));
@@ -311,15 +323,21 @@ void VideoCodec::initDecoder(const VideoCodec::CodecSettings &settings)
     if (res)
         throw runtime_error("error initializing decoder");
 
-    res = vpx_codec_control(&vpxCodec_, VP9D_SET_ROW_MT, 1);
-    if (res)
-        throw runtime_error("codec control error: failed to set row-wise multithreading: "+to_string(res));
+    if (settings.rowMt_)
+    {
+        res = vpx_codec_control(&vpxCodec_, VP9D_SET_ROW_MT, 1);
+        if (res)
+            throw runtime_error("codec control error: failed to set row-wise multithreading: "+to_string(res));
+    }
+
+    isInit_ = true;
 }
 
 int VideoCodec::encode(const VideoCodec::Image &rawFrame, bool forceIntraFrame,
                        VideoCodec::OnEncodedFrame onEncodedFrame,
                        VideoCodec::OnDroppedImage onDroppedImage)
 {
+    // TODO: implement forceIntraFrame or drop it completely
     rawFrame.toVpxImage(&incoming_);
 
     int got_pkts = 0;
@@ -340,7 +358,7 @@ int VideoCodec::encode(const VideoCodec::Image &rawFrame, bool forceIntraFrame,
         if (pkt->kind == VPX_CODEC_CX_FRAME_PKT)
         {
             const int keyFrame = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
-            encoded_.type_ = keyFrame ? VideoCodec::Key : VideoCodec::Delta;
+            encoded_.type_ = keyFrame ? FrameType::Key : FrameType::Delta;
             encoded_.userData_ = rawFrame.getUserData();
             encoded_.pts_ = pkt->data.frame.pts;
             encoded_.duration_ = pkt->data.frame.duration;
@@ -363,7 +381,7 @@ int VideoCodec::encode(const VideoCodec::Image &rawFrame, bool forceIntraFrame,
     return 0;
 }
 
-int VideoCodec::decode(const VideoCodec::EncodedFrame& encodedFrame,
+int VideoCodec::decode(const EncodedFrame& encodedFrame,
                        VideoCodec::OnDecodedImage onDecodedImage)
 {
     vpx_codec_iter_t iter = NULL;
@@ -383,11 +401,18 @@ int VideoCodec::decode(const VideoCodec::EncodedFrame& encodedFrame,
             raw_->wrap(img);
 
         stats_.nProcessed_++;
-        if (encodedFrame.type_ == VideoCodec::Key)
+        if (encodedFrame.type_ == FrameType::Key)
             stats_.nKey_++;
         stats_.bytesOut_ += raw_->getAllocationSize();
         onDecodedImage(*raw_);
     }
 
     return 0;
+}
+
+CodecSettings&
+VideoCodec::defaultCodecSettings()
+{
+    static CodecSettings s {8, true, 1280, 720, 3000, 30, 30, true};
+    return s;
 }

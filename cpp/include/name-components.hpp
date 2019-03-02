@@ -97,6 +97,7 @@ namespace ndnrtc {
         static const std::string NameComponentManifest;
         static const std::string NameComponentRdrLatest;
 
+        static const std::string Latest;
         static const std::string Live;
         static const std::string Gop;
         static const std::string GopEnd;

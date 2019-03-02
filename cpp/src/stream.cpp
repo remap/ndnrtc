@@ -277,11 +277,12 @@ VideoStreamImpl2::VideoStreamImpl2(string basePrefix, string streamName,
     codec_.initEncoder(settings_.codecSettings_);
 
     freshness_.sample_ = 1000 / settings_.codecSettings_.spec_.encoder_.fps_;
-    freshness_.keySample_ = freshness_.gop_ =
+    freshness_.keySample_ =
         settings_.codecSettings_.spec_.encoder_.gop_ * freshness_.sample_;
+    freshness_.gop_ = freshness_.keySample_;
     freshness_.latest_ = freshness_.sample_;
     freshness_.live_ = freshness_.gop_;
-    freshness_.meta_ = 4000; // default, whatever
+    freshness_.meta_ = 60000; // default, whatever
 
     // init last frame prefix
     lastFramePrefix_ = Name(getPrefix()).appendSequenceNumber((uint64_t)-1);
@@ -289,6 +290,7 @@ VideoStreamImpl2::VideoStreamImpl2(string basePrefix, string streamName,
     // register callbacks for live requests
     if (settings_.memCache_)
     {
+        settings_.memCache_->setInterestFilter(streamPrefix_, settings_.memCache_->getStorePendingInterest());
         settings_.memCache_->setInterestFilter(Name(streamPrefix_).append(NameComponents::Live),
             bind(&VideoStreamImpl2::onLiveMetadataRequest, this, _1, _2, _3, _4, _5));
         settings_.memCache_->setInterestFilter(Name(streamPrefix_).append(NameComponents::Latest),
@@ -301,6 +303,8 @@ VideoStreamImpl2::VideoStreamImpl2(string basePrefix, string streamName,
 VideoStreamImpl2::~VideoStreamImpl2()
 {
     // TODO: unset interest filters callbacks
+    if (settings_.memCache_)
+        settings_.memCache_->unregisterAll();
 }
 
 StatisticsStorage
@@ -385,8 +389,8 @@ VideoStreamImpl2::addMeta()
 
     StreamMeta meta;
     meta.set_width(settings_.codecSettings_.spec_.encoder_.width_);
-    meta.set_width(settings_.codecSettings_.spec_.encoder_.height_);
-    meta.set_description("description is not supported yet");
+    meta.set_height(settings_.codecSettings_.spec_.encoder_.height_);
+    meta.set_description("Streamed by ndnrtc-stream");
 
     string s = meta.SerializeAsString();
     meta_->setContent((uint8_t*)s.data(), s.size());
@@ -579,7 +583,7 @@ VideoStreamImpl2::publishGop(const Name &framePrefix, const Name &prevFramePrefi
 
     LogDebugC << "○ start gop " << d->getName() << " -> " << set.get(0).getName() << endl;
 
-    return gopPrefix.appendSequenceNumber(gopSeq_);
+    return gopPrefix.appendSequenceNumber(gopSeq_+1);
 }
 
 void

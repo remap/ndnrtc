@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#include <string> 
+#include <string>
 #include <sstream>
 #include <algorithm>
 #include <iterator>
@@ -32,6 +32,12 @@ const string NameComponents::NameComponentParity = "_parity";
 const string NameComponents::NameComponentManifest = "_manifest";
 const string NameComponents::NameComponentRdrLatest = "_latest";
 
+const string NameComponents::Latest = "_latest";
+const string NameComponents::Live = "_live";
+const string NameComponents::Gop = "_gop";
+const string NameComponents::GopEnd = "end";
+const string NameComponents::GopStart = "start";
+
 #include <bitset>
 
 Name
@@ -45,12 +51,12 @@ NamespaceInfo::getPrefix(int filter) const
         if (filter&(Library^Base))
             prefix.append(Name(NameComponents::NameComponentApp)).appendVersion(apiVersion_);
         if (filter&(Stream^Library))
-            prefix.append((streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio ? 
+            prefix.append((streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio ?
                 NameComponents::NameComponentAudio : NameComponents::NameComponentVideo)).append(streamName_);
         if (filter&(StreamTS^Stream) && threadName_ != "")
             prefix.appendTimestamp(streamTimestamp_);
-        if (threadName_ != "" && 
-            (filter&(Thread^StreamTS)  || 
+        if (threadName_ != "" &&
+            (filter&(Thread^StreamTS)  ||
             filter&(ThreadNT^StreamTS) & streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo))
         {
             prefix.append(threadName_);
@@ -77,7 +83,7 @@ NamespaceInfo::getPrefix(int filter) const
             if (filter&(Segment^Sample))
             {
                 if (isParity_)
-                    prefix.append(NameComponents::NameComponentParity);                
+                    prefix.append(NameComponents::NameComponentParity);
                 prefix.appendSegment(segNo_);
             }
         }
@@ -98,7 +104,7 @@ NamespaceInfo::getSuffix(int filter) const
             suffix.append(Name(NameComponents::NameComponentApp)).appendVersion(apiVersion_);
         if (filter&(Stream^Thread))
         {
-            suffix.append((streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio ? 
+            suffix.append((streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio ?
                 NameComponents::NameComponentAudio : NameComponents::NameComponentVideo)).append(streamName_);
             if (threadName_ != "")
                 suffix.appendTimestamp(streamTimestamp_);
@@ -168,7 +174,7 @@ NameComponents::streamPrefix(MediaStreamParams::MediaStreamType type, std::strin
 {
     Name n = Name(basePrefix);
     n.append(ndnrtcSuffix());
-    return ((type == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio) ? 
+    return ((type == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio) ?
         n.append(NameComponentAudio) : n.append(NameComponentVideo));
 }
 
@@ -239,7 +245,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
         info.segmentClass_ = SegmentClass::Unknown;
         info.streamTimestamp_ = name[idx-1].toTimestamp();
         info.threadName_ = name[idx++].toEscapedString();
-        
+
         if (name.size() <= idx)
             return true;
 
@@ -260,7 +266,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
             return true;
         }
 
-        if (name[idx-1] == Name::Component(NameComponents::NameComponentDelta) || 
+        if (name[idx-1] == Name::Component(NameComponents::NameComponentDelta) ||
             name[idx-1] == Name::Component(NameComponents::NameComponentKey))
         {
             info.isDelta_ = (name[idx-1] == Name::Component(NameComponents::NameComponentDelta));
@@ -276,7 +282,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
                     info.hasSeqNo_ = false;
                     return true;
                 }
-            
+
                 info.hasSeqNo_ = true;
                 if (name.size() > idx)
                 {
@@ -289,9 +295,9 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
                         info.segNo_ = name[idx+1].toSegment();
                         return true;
                     }
-                    else 
+                    else
                     {
-                        if (info.isParity_) 
+                        if (info.isParity_)
                             return false;
                         else
                         {
@@ -344,7 +350,7 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
     int idx = 0;
     info.streamName_ = name[idx++].toEscapedString();
     info.isMeta_ = (name[idx++] == Name::Component(NameComponents::NameComponentMeta));
-    
+
     if (info.isMeta_)
     {
         info.segmentClass_ = SegmentClass::Meta;
@@ -370,7 +376,7 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
         info.isMeta_ = (name[idx] == Name::Component(NameComponents::NameComponentMeta));
 
         if (info.isMeta_)
-        { 
+        {
             info.segmentClass_ = SegmentClass::Meta;
             if (name.size() > idx+1 && extractMeta(name.getSubName(idx+1), info))
                 return true;
@@ -401,7 +407,7 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
                 else
                     info.sampleNo_ = (PacketNumber)name[idx++].toSequenceNumber();
             }
-            
+
             info.hasSeqNo_ = true;
             if (name.size() > idx)
             {
@@ -456,8 +462,8 @@ NameComponents::extractInfo(const ndn::Name& name, NamespaceInfo& info)
                 (goodName = (subName[2] == Name::Component(NameComponents::NameComponentAudio) ||
                             subName[2] == Name::Component(NameComponents::NameComponentVideo)))  )
             {
-                info.streamType_ = (subName[2] == Name::Component(NameComponents::NameComponentAudio) ? 
-                                MediaStreamParams::MediaStreamType::MediaStreamTypeAudio : 
+                info.streamType_ = (subName[2] == Name::Component(NameComponents::NameComponentAudio) ?
+                                MediaStreamParams::MediaStreamType::MediaStreamTypeAudio :
                                 MediaStreamParams::MediaStreamType::MediaStreamTypeVideo );
 
                 if (info.streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio)

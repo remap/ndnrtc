@@ -56,7 +56,7 @@ R"(NdnRtc Stream.
     See the usage examples below for more info.
 
     Usage:
-      ndnrtc-stream publish <base_prefix> <stream_name> --input=<in_file> --size=<WxH> --signing-identity=<identity> [--bitrate=<bitrate>] [--gop=<gop>] [--fps=<fps>] [--no-drop] [--use-fec] [--i420] [--segment-size=<seg_size>] [--rvp] [--verbose]
+      ndnrtc-stream publish <base_prefix> <stream_name> --input=<in_file> --size=<WxH> --signing-identity=<identity> [--bitrate=<bitrate>] [--gop=<gop>] [--fps=<fps>] [--no-drop] [--use-fec] [--i420] [--segment-size=<seg_size>] [--rvp] [--loop] [--verbose]
       ndnrtc-stream fetch ( <stream_prefix> | ( <base_prefix> --rvp )) --output=<out_file> [--use-fec] [--verbose]
 
     Arguments:
@@ -79,6 +79,7 @@ R"(NdnRtc Stream.
                                 with cnl-cpp), <base_prefix> will be used for setting
                                 up rendez-vous point for multiple app instances
                                 to discover currently published streams.
+      --loop                    Indicates whether source must be looped.
       --size=<WxH>              Size of incoming video frame; must be in "WIDTHxHEIGHT" format
       --bitrate=<bitrate>       Target encoding bitrate in kbps [default: 3000]
       --gop=<gop>               Target group of picture size inframes [default: 30]
@@ -177,7 +178,8 @@ int main(int argc, char **argv)
                              args["<stream_name>"].asString(),
                              args["--signing-identity"].asString(),
                              streamSettings,
-                             args["--rvp"].asBool());
+                             args["--rvp"].asBool(),
+                             args["--loop"].asBool());
             }
             else
             {

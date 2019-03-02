@@ -39,7 +39,8 @@ runPublisher(string input,
              string streamName,
              string signingIdentity,
              const VideoStream::Settings& settings,
-             bool needRvp)
+             bool needRvp,
+             bool isLooped)
 {
     FILE *fIn = fopen(input.c_str(), "rb");
     if (!fIn)
@@ -59,8 +60,17 @@ runPublisher(string input,
     s.memCache_ = memCache;
     s.storeInMemCache_ = true;
 
+    // setup for serving certs
     registerPrefix(face, keyChainManager);
     serveCerts(face, keyChainManager);
+
+    // setup mem cache for serving data
+    // register data prefix if it's different from instance identity
+    memCache->registerPrefix(basePrefix,
+                             [](const boost::shared_ptr<const Name> &prefix) {
+                                 LogError("") << "Prefix registration failure (" << prefix << ")" << std::endl;
+                                 throw std::runtime_error("Prefix registration failed");
+                             });
 
     VideoStream stream(basePrefix, streamName, s,
                        keyChainManager.instanceKeyChain());
@@ -76,17 +86,34 @@ runPublisher(string input,
 
     LogDebug("") << "publishing under " << stream.getPrefix() << endl;
 
-    while (readYUV420(fIn, w, h, &imgData))
+    // while (readYUV420(fIn, w, h, &imgData))
+    int res = 0;
+    do
     {
-        boost::asio::steady_timer timer(io, microseconds(sampleIntervalUsec));
-        vector<boost::shared_ptr<Data>> framePackets = stream.processImage(ImageFormat::I420, imgData);
-        for (auto d:framePackets)
-            LogDebug("") << "packet " << d->getName() << " : " << d->wireEncode().size() << " bytes" << endl;
+        res = readYUV420(fIn, w, h, &imgData);
+        if (res == 0)
+        {
+            if(feof(fIn))
+            {
+                if (isLooped)
+                {
+                    rewind(fIn);
+                    res = readYUV420(fIn, w, h, &imgData);
+                }
+            }
+        }
+        else
+        {
+            boost::asio::steady_timer timer(io, microseconds(sampleIntervalUsec));
+            vector<boost::shared_ptr<Data>> framePackets = stream.processImage(ImageFormat::I420, imgData);
+            for (auto d:framePackets)
+                LogDebug("") << "packet " << d->getName() << " : " << d->wireEncode().size() << " bytes" << endl;
 
-        face->processEvents();
-        printStats(stream, framePackets);
-        timer.wait();
-    }
+            face->processEvents();
+            printStats(stream, framePackets);
+            timer.wait();
+        }
+    } while (res);
 
     // end line after stats
     cout << endl;
