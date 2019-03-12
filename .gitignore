@@ -70,3 +70,6 @@ build
 loopback
 env
 *.pyc
+.libs
+.vscode
+bin
