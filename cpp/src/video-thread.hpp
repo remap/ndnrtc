@@ -8,6 +8,7 @@
 //  Author:  Peter Gusev
 //
 
+#define __ndnrtc__video_thread__
 #ifndef __ndnrtc__video_thread__
 #define __ndnrtc__video_thread__
 

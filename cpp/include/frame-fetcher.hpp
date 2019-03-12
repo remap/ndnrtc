@@ -5,6 +5,7 @@
 //  Copyright 2013-2018 Regents of the University of California
 //
 
+#define __frame_fetcher_hpp__
 #ifndef __frame_fetcher_hpp__
 
 #include <boost/shared_ptr.hpp>
@@ -32,8 +33,8 @@ namespace ndnrtc {
     class FrameFetcherImpl;
     class IFrameFetcher;
 
-    typedef boost::function<uint8_t*(const boost::shared_ptr<IFrameFetcher>&, 
-                                     int width, int height, 
+    typedef boost::function<uint8_t*(const boost::shared_ptr<IFrameFetcher>&,
+                                     int width, int height,
                                      IExternalRenderer::BufferType *bufferType)> OnBufferAllocate;
     typedef boost::function<void(const boost::shared_ptr<IFrameFetcher>&,
                                  const FrameInfo&, int nFramesFetched,
@@ -43,7 +44,7 @@ namespace ndnrtc {
 
     class IFrameFetcher {
     public:
-        virtual void fetch(const ndn::Name& frameName, 
+        virtual void fetch(const ndn::Name& frameName,
                            OnBufferAllocate onBufferAllocate,
                            OnFrameFetched onFrameFetched,
                            OnFetchFailure onFetchFailure) = 0;
@@ -52,17 +53,17 @@ namespace ndnrtc {
     };
 
     /**
-     * Fetches frames from provided persistent storage by names. Once frame is 
+     * Fetches frames from provided persistent storage by names. Once frame is
      * fetched, returns ARGB buffer for this frame through provided callbacks.
-     * Frame fetching involves expressing interests for all segments of a frame 
+     * Frame fetching involves expressing interests for all segments of a frame
      * and segments of all preceding frames in the frame's GOP.
-     * Frame fetcher will figure out number of segments for requested frame once 
+     * Frame fetcher will figure out number of segments for requested frame once
      * it has fetched first segment.
-     * If requested frame is a Delta frame (type of the frame is derived from 
+     * If requested frame is a Delta frame (type of the frame is derived from
      * its' name), frame fetcher will automatically fetch all necessary preceding
      * delta frames and its' corresponding GOP key frame in order to decode frame
-     * correctly. For example, if delta frame #20 is requested, 19 preceding delta 
-     * frames and 1 key frame must be fetched before decoding of #20 can be 
+     * correctly. For example, if delta frame #20 is requested, 19 preceding delta
+     * frames and 1 key frame must be fetched before decoding of #20 can be
      * started.
      * If requested frame is a Key frame, no additional frames will be fetched.
      */
@@ -84,24 +85,24 @@ namespace ndnrtc {
 
         /**
          * Fetches frames by expressing interests on the provided face object.
-         */ 
-        FrameFetcher(const boost::shared_ptr<ndn::Face>&, 
+         */
+        FrameFetcher(const boost::shared_ptr<ndn::Face>&,
                      const boost::shared_ptr<ndn::KeyChain>&);
         ~FrameFetcher(){}
 
         /**
-         * Fetches frame by its' name. Returns contents of the frame in ARGB 
+         * Fetches frame by its' name. Returns contents of the frame in ARGB
          * buffer through the given callback or reports a failure.
          * @param frameName The name of a frame to fetch
-         * @param onBufferAllocate Once frame has been fetched and ready to be 
+         * @param onBufferAllocate Once frame has been fetched and ready to be
          *  decoded, client code needs to allocate a buffer for the deocded data
          *  by returning a byte pointer when this callback is called.
-         * @param onFrameFetched Once frame has been decoded, this callback will 
+         * @param onFrameFetched Once frame has been decoded, this callback will
          *  be called to notify client code of successful fetching.
-         * @param onFetchFailure If frame fetching fails, client code will be 
+         * @param onFetchFailure If frame fetching fails, client code will be
          *  notified using this callback.
          */
-        void fetch(const ndn::Name& frameName, 
+        void fetch(const ndn::Name& frameName,
                    OnBufferAllocate onBufferAllocate,
                    OnFrameFetched onFrameFetched,
                    OnFetchFailure onFetchFailure);
@@ -112,7 +113,7 @@ namespace ndnrtc {
         const ndn::Name& getName() const;
 
         /**
-         * Returns current state of the frame fetching process. 
+         * Returns current state of the frame fetching process.
          */
         State getState() const;
 

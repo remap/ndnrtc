@@ -8,6 +8,7 @@
 //  Author:  Peter Gusev
 //
 
+#if 0
 #include <boost/make_shared.hpp>
 #include <ndn-cpp/data.hpp>
 
@@ -71,3 +72,4 @@ void VideoThread::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
     coder_.setLogger(logger);
     ILoggingObject::setLogger(logger);
 }
+#endif

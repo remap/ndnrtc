@@ -4,7 +4,7 @@
 //  Created by Peter Gusev on 9 October 2018.
 //  Copyright 2013-2018 Regents of the University of California
 //
-
+#if 0
 #include <iostream>
 #include <fstream>
 #include <ctype.h>
@@ -69,7 +69,7 @@ void handler(int sig)
         mustExit = true;
 }
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
     signal(SIGABRT, handler);
     signal(SIGSEGV, handler);
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
         ffetcher.fetch(prefixInfo.getPrefix(prefix_filter::Sample),
                 [](const boost::shared_ptr<IFrameFetcher>&, int width, int height, IExternalRenderer::BufferType *bufferType)
                 {
-                    LogTrace("") << "allocating buffer for " 
+                    LogTrace("") << "allocating buffer for "
                                  << width << "x" << height << " frame" << std::endl;
                     // allocating ARGB buffer
                     frameBuffer = (uint8_t*)malloc(width*height*4);
@@ -170,4 +170,9 @@ int main(int argc, char **argv)
     work.reset();
     t.join();
     io.stop();
+}
+#endif
+int main(int argc, char **argv)
+{
+    return 0;
 }

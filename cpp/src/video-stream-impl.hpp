@@ -5,6 +5,7 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
+#define __video_stream_impl_h__
 #ifndef __video_stream_impl_h__
 #define __video_stream_impl_h__
 
@@ -55,7 +56,7 @@ class VideoStreamImpl : public MediaStreamBase
     int incomingFrame(const ArgbRawFrameWrapper &);
     int incomingFrame(const I420RawFrameWrapper &);
     int incomingFrame(const YUV_NV21FrameWrapper &);
-    
+
     const std::map<std::string, FrameInfo>& getLastPublished() { return lastPublished_; }
     void setLogger(boost::shared_ptr<ndnlog::new_api::Logger>) override;
 
@@ -74,7 +75,7 @@ class VideoStreamImpl : public MediaStreamBase
         VideoThreadMeta getMeta() const;
         double getRate() const;
 
-        void updateMeta(bool isKey, size_t nDataSeg, size_t nParitySeg, 
+        void updateMeta(bool isKey, size_t nDataSeg, size_t nParitySeg,
                         PacketNumber seqNo, PacketNumber pairedSeqNo, unsigned char gopPos);
 
         uint32_t getVersionNumber() const { return versionNumber_; }

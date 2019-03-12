@@ -4,7 +4,7 @@
 //  Created by Peter Gusev on 29 October 2018.
 //  Copyright 2013-2018 Regents of the University of California
 //
-
+#if 0
 #include <iostream>
 #include <ctype.h>
 #include <stdio.h>
@@ -78,7 +78,7 @@ void handler(int sig)
         mustExit = true;
 }
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
     signal(SIGABRT, handler);
     signal(SIGSEGV, handler);
@@ -117,7 +117,7 @@ int main(int argc, char **argv)
     // setup face and keychain
     boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
     // TODO: setup verify/noverify properly
-    boost::shared_ptr<KeyChain> keyChain(boost::make_shared<KeyChain>(boost::make_shared<PibMemory>(), 
+    boost::shared_ptr<KeyChain> keyChain(boost::make_shared<KeyChain>(boost::make_shared<PibMemory>(),
                                          boost::make_shared<TpmBackEndMemory>(),
                                          boost::make_shared<NoVerifyPolicyManager>()));
 
@@ -142,18 +142,18 @@ int main(int argc, char **argv)
     ruleset.speed_ = (float)(args["--speed"].asLong());
     ruleset.pipelineSize_ = args["--pipeline"].asLong();
 
-    LogInfo("") << "will fetch from " 
+    LogInfo("") << "will fetch from "
                 << prefixInfo.getPrefix(prefix_filter::Thread)
                 << " seed key frame #" << ruleset.seedKeyNo_
-                << " pipeline size " << ruleset.pipelineSize_ 
+                << " pipeline size " << ruleset.pipelineSize_
                 << " buffer size " << bufferSize << endl;
 
     {
-        RemoteVideoStream stream(io, face, keyChain, 
-                                 prefixInfo.getPrefix(prefix_filter::Thread).toUri(), 
+        RemoteVideoStream stream(io, face, keyChain,
+                                 prefixInfo.getPrefix(prefix_filter::Thread).toUri(),
                                  bufferSize);
         stream.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
-        
+
         Renderer renderer(args["<out_pipe>"].isString() ? args["<out_pipe>"].asString() : "-");
 
         stream.start(ruleset, &renderer);
@@ -176,4 +176,9 @@ int main(int argc, char **argv)
     io.stop();
 
     LogInfo("") << "done" << endl;
+}
+#endif
+int main(int argc, char **argv)
+{
+    return 0;
 }

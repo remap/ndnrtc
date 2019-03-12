@@ -1,4 +1,4 @@
-// 
+//
 // c-wrapper.cpp
 //
 // Copyright (c) 2017 Regents of the University of California
@@ -7,6 +7,7 @@
 //  Author:  Peter Gusev
 //
 
+#if 0
 #include "c-wrapper.h"
 
 #include <algorithm>
@@ -83,7 +84,7 @@ void ndnrtc_get_identities_list(char*** identities, int* nIdentities)
 
 	*nIdentities = identitiesList.size();
 	*identities = (char**)malloc(sizeof(char*)*identitiesList.size());
-	
+
 	int idx = 0;
 	for (auto identity:identitiesList)
 	{
@@ -93,7 +94,7 @@ void ndnrtc_get_identities_list(char*** identities, int* nIdentities)
 	}
 }
 
-bool ndnrtc_init(const char* hostname, const char* storagePath, 
+bool ndnrtc_init(const char* hostname, const char* storagePath,
 	const char* policyFilePath, const char* signingIdentity,
 	const char * instanceId, LibLog libLog)
 {
@@ -236,7 +237,7 @@ double ndnrtc_getStatistic(ndnrtc::IStream *stream, const char* statName)
 
 static std::map<std::string, boost::shared_ptr<FrameFetcher>> FrameFetchers;
 void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
-                               const char* frameName, 
+                               const char* frameName,
                                BufferAlloc bufferAllocFunc,
                                FrameFetched frameFetchedFunc)
 {
@@ -250,13 +251,13 @@ void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
 
     ff->setLogger(((LocalVideoStream*)stream)->getLogger());
     ff->fetch(Name(frameName),
-              [fkey, bufferAllocFunc](const boost::shared_ptr<IFrameFetcher>& fetcher, 
+              [fkey, bufferAllocFunc](const boost::shared_ptr<IFrameFetcher>& fetcher,
                                       int width, int height,
                                       IExternalRenderer::BufferType *bufferType)->uint8_t*
               {
                   return bufferAllocFunc(fkey.c_str(), width, height);
               },
-              [fkey, frameFetchedFunc](const boost::shared_ptr<IFrameFetcher>& fetcher, 
+              [fkey, frameFetchedFunc](const boost::shared_ptr<IFrameFetcher>& fetcher,
                  const FrameInfo fi, int nFetchedFrames,
                  int width, int height, const uint8_t* buffer){
                     cFrameInfo frameInfo({fi.timestamp_, fi.playbackNo_, (char*)fi.ndnName_.c_str()});
@@ -313,9 +314,9 @@ ndnrtc::IStream* ndnrtc_createRemoteStream(RemoteStreamParams params, LibLog log
 {
 	boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDebug,
 		boost::make_shared<CallbackSink>(loggerSink));
-	callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up Remote Video Stream for " 
+	callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up Remote Video Stream for "
 		<< params.basePrefix << ":" << params.streamName
-		<< " (jitter size " << params.jitterSizeMs 
+		<< " (jitter size " << params.jitterSizeMs
 		<< "ms, lifetime " << params.lifetimeMs << "ms)" << std::endl;
 
 	RemoteVideoStream *stream = new RemoteVideoStream(LibFaceProcessor->getIo(),
@@ -346,7 +347,7 @@ void initKeyChain(const char* storagePath, std::string signingIdentityStr)
 		std::string privateKeysPath = std::string(storagePath) + "/" + std::string(PrivateDb);
 
 		boost::shared_ptr<IdentityStorage> identityStorage = boost::make_shared<BasicIdentityStorage>(databaseFilePath);
-		boost::shared_ptr<IdentityManager> identityManager = boost::make_shared<IdentityManager>(identityStorage, 
+		boost::shared_ptr<IdentityManager> identityManager = boost::make_shared<IdentityManager>(identityStorage,
 			boost::make_shared<FilePrivateKeyStorage>(privateKeysPath));
 		boost::shared_ptr<PolicyManager> policyManager = boost::make_shared<SelfVerifyPolicyManager>(identityStorage.get());
 
@@ -361,14 +362,14 @@ void initKeyChain(const char* storagePath, std::string signingIdentityStr)
 	}
 }
 
-// initializes face and face processing thread 
-void initFace(std::string hostname, boost::shared_ptr<Logger> logger, 
-	std::string configPolicyFilePath, std::string signingIdentityStr, 
+// initializes face and face processing thread
+void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
+	std::string configPolicyFilePath, std::string signingIdentityStr,
 	std::string instanceIdStr)
 {
 	LibFaceProcessor = boost::make_shared<FaceProcessor>(hostname);
 	LibKeyChainManager = boost::make_shared<KeyChainManager>(LibFaceProcessor->getFace(),
-		LibKeyChain, 
+		LibKeyChain,
 		signingIdentityStr,
 		instanceIdStr,
 		configPolicyFilePath,
@@ -376,7 +377,7 @@ void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
 		logger);
 
 	LibFaceProcessor->performSynchronized([logger](boost::shared_ptr<Face> face){
-		logger->log(ndnlog::NdnLoggerLevelInfo) << "Setting command signing info with certificate: " 
+		logger->log(ndnlog::NdnLoggerLevelInfo) << "Setting command signing info with certificate: "
 			<< LibKeyChainManager->signingIdentityCertificate()->getName() << std::endl;
 
 		face->setCommandSigningInfo(*(LibKeyChainManager->defaultKeyChain()),
@@ -400,7 +401,7 @@ void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
 	LibContentCache->add(*(LibKeyChainManager->instanceCertificate()));
 }
 
-void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger) 
+void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger)
 {
 	LibContentCache->registerPrefix(prefix,
 		[logger](const boost::shared_ptr<const Name> &p){
@@ -412,7 +413,7 @@ void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger)
 		[logger](const boost::shared_ptr<const Name>& p,
 			const boost::shared_ptr<const Interest> &i,
 			Face& f, uint64_t, const boost::shared_ptr<const InterestFilter>&){
-			logger->log(ndnlog::NdnLoggerLevelWarning) << "Unexpected interest received " << i->getName() 
+			logger->log(ndnlog::NdnLoggerLevelWarning) << "Unexpected interest received " << i->getName()
 				<< std::endl;
 
 			LibContentCache->storePendingInterest(i, f);
@@ -446,3 +447,4 @@ MediaStreamParams prepareMediaStreamParams(LocalStreamParams params)
 
 	return p;
 }
+#endif

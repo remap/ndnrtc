@@ -11,7 +11,6 @@ pkginclude_HEADERS = include/ndnrtc-common.hpp \
   include/simple-log.hpp \
   include/stream.hpp \
   include/stream-recorder.hpp \
-  include/local-stream.hpp \
   include/remote-stream.hpp \
   include/c-wrapper.h
 
@@ -39,7 +38,7 @@ libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
   src/jitter-timing.cpp src/jitter-timing.hpp \
   src/helpers/key-chain-manager.cpp \
   src/latency-control.cpp src/latency-control.hpp \
-  src/local-stream.cpp include/local-stream.hpp \
+  src/local-stream.hpp src/local-stream.hpp \
   src/media-stream-base.cpp src/media-stream-base.hpp \
   src/meta-fetcher.cpp src/meta-fetcher.hpp \
   src/name-components.cpp include/name-components.hpp \
@@ -72,8 +71,6 @@ libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
   src/stream.cpp include/stream.hpp \
   src/stream-recorder.cpp src/stream-recorder.hpp \
   src/threading-capability.cpp src/threading-capability.hpp \
-  src/video-coder.cpp src/video-coder.hpp \
-  src/video-decoder.cpp src/video-decoder.hpp \
 	src/video-codec.cpp src/video-codec.hpp \
   src/video-playout.cpp src/video-playout.hpp \
   src/video-playout-impl.cpp src/video-playout-impl.hpp \

@@ -247,7 +247,6 @@ am_libndnrtc_la_OBJECTS = src/proto/libndnrtc_la-ndnrtc.pb.lo \
 	src/libndnrtc_la-jitter-timing.lo \
 	src/helpers/libndnrtc_la-key-chain-manager.lo \
 	src/libndnrtc_la-latency-control.lo \
-	src/libndnrtc_la-local-stream.lo \
 	src/libndnrtc_la-media-stream-base.lo \
 	src/libndnrtc_la-meta-fetcher.lo \
 	src/libndnrtc_la-name-components.lo \
@@ -272,8 +271,6 @@ am_libndnrtc_la_OBJECTS = src/proto/libndnrtc_la-ndnrtc.pb.lo \
 	src/libndnrtc_la-statistics.lo src/libndnrtc_la-stream.lo \
 	src/libndnrtc_la-stream-recorder.lo \
 	src/libndnrtc_la-threading-capability.lo \
-	src/libndnrtc_la-video-coder.lo \
-	src/libndnrtc_la-video-decoder.lo \
 	src/libndnrtc_la-video-codec.lo \
 	src/libndnrtc_la-video-playout.lo \
 	src/libndnrtc_la-video-playout-impl.lo \
@@ -2381,7 +2378,6 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	src/$(DEPDIR)/libndnrtc_la-interest-queue.Plo \
 	src/$(DEPDIR)/libndnrtc_la-jitter-timing.Plo \
 	src/$(DEPDIR)/libndnrtc_la-latency-control.Plo \
-	src/$(DEPDIR)/libndnrtc_la-local-stream.Plo \
 	src/$(DEPDIR)/libndnrtc_la-media-stream-base.Plo \
 	src/$(DEPDIR)/libndnrtc_la-meta-fetcher.Plo \
 	src/$(DEPDIR)/libndnrtc_la-name-components.Plo \
@@ -2410,8 +2406,6 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	src/$(DEPDIR)/libndnrtc_la-stream.Plo \
 	src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo \
 	src/$(DEPDIR)/libndnrtc_la-video-codec.Plo \
-	src/$(DEPDIR)/libndnrtc_la-video-coder.Plo \
-	src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo \
 	src/$(DEPDIR)/libndnrtc_la-video-playout-impl.Plo \
 	src/$(DEPDIR)/libndnrtc_la-video-playout.Plo \
 	src/$(DEPDIR)/libndnrtc_la-video-stream-impl.Plo \
@@ -3026,7 +3020,6 @@ pkginclude_HEADERS = include/ndnrtc-common.hpp \
   include/simple-log.hpp \
   include/stream.hpp \
   include/stream-recorder.hpp \
-  include/local-stream.hpp \
   include/remote-stream.hpp \
   include/c-wrapper.h
 
@@ -3054,7 +3047,7 @@ libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
   src/jitter-timing.cpp src/jitter-timing.hpp \
   src/helpers/key-chain-manager.cpp \
   src/latency-control.cpp src/latency-control.hpp \
-  src/local-stream.cpp include/local-stream.hpp \
+  src/local-stream.hpp src/local-stream.hpp \
   src/media-stream-base.cpp src/media-stream-base.hpp \
   src/meta-fetcher.cpp src/meta-fetcher.hpp \
   src/name-components.cpp include/name-components.hpp \
@@ -3087,8 +3080,6 @@ libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
   src/stream.cpp include/stream.hpp \
   src/stream-recorder.cpp src/stream-recorder.hpp \
   src/threading-capability.cpp src/threading-capability.hpp \
-  src/video-coder.cpp src/video-coder.hpp \
-  src/video-decoder.cpp src/video-decoder.hpp \
 	src/video-codec.cpp src/video-codec.hpp \
   src/video-playout.cpp src/video-playout.hpp \
   src/video-playout-impl.cpp src/video-playout-impl.hpp \
@@ -3572,8 +3563,6 @@ src/helpers/libndnrtc_la-key-chain-manager.lo:  \
 	src/helpers/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-latency-control.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-local-stream.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-media-stream-base.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-meta-fetcher.lo: src/$(am__dirstamp) \
@@ -3627,10 +3616,6 @@ src/libndnrtc_la-stream.lo: src/$(am__dirstamp) \
 src/libndnrtc_la-stream-recorder.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-threading-capability.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-video-coder.lo: src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/libndnrtc_la-video-decoder.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
 src/libndnrtc_la-video-codec.lo: src/$(am__dirstamp) \
 	src/$(DEPDIR)/$(am__dirstamp)
@@ -5945,7 +5930,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-interest-queue.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-jitter-timing.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-latency-control.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-local-stream.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-media-stream-base.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-meta-fetcher.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-name-components.Plo@am__quote@ # am--include-marker
@@ -5974,8 +5958,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-stream.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-codec.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-coder.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-playout-impl.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-playout.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/libndnrtc_la-video-stream-impl.Plo@am__quote@ # am--include-marker
@@ -6876,13 +6858,6 @@ src/libndnrtc_la-latency-control.lo: src/latency-control.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-latency-control.lo `test -f 'src/latency-control.cpp' || echo '$(srcdir)/'`src/latency-control.cpp
 
-src/libndnrtc_la-local-stream.lo: src/local-stream.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-local-stream.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-local-stream.Tpo -c -o src/libndnrtc_la-local-stream.lo `test -f 'src/local-stream.cpp' || echo '$(srcdir)/'`src/local-stream.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-local-stream.Tpo src/$(DEPDIR)/libndnrtc_la-local-stream.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/local-stream.cpp' object='src/libndnrtc_la-local-stream.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-local-stream.lo `test -f 'src/local-stream.cpp' || echo '$(srcdir)/'`src/local-stream.cpp
-
 src/libndnrtc_la-media-stream-base.lo: src/media-stream-base.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-media-stream-base.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-media-stream-base.Tpo -c -o src/libndnrtc_la-media-stream-base.lo `test -f 'src/media-stream-base.cpp' || echo '$(srcdir)/'`src/media-stream-base.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-media-stream-base.Tpo src/$(DEPDIR)/libndnrtc_la-media-stream-base.Plo
@@ -7071,20 +7046,6 @@ src/libndnrtc_la-threading-capability.lo: src/threading-capability.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/threading-capability.cpp' object='src/libndnrtc_la-threading-capability.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-threading-capability.lo `test -f 'src/threading-capability.cpp' || echo '$(srcdir)/'`src/threading-capability.cpp
-
-src/libndnrtc_la-video-coder.lo: src/video-coder.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-coder.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-coder.Tpo -c -o src/libndnrtc_la-video-coder.lo `test -f 'src/video-coder.cpp' || echo '$(srcdir)/'`src/video-coder.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-coder.Tpo src/$(DEPDIR)/libndnrtc_la-video-coder.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-coder.cpp' object='src/libndnrtc_la-video-coder.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-coder.lo `test -f 'src/video-coder.cpp' || echo '$(srcdir)/'`src/video-coder.cpp
-
-src/libndnrtc_la-video-decoder.lo: src/video-decoder.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-decoder.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-decoder.Tpo -c -o src/libndnrtc_la-video-decoder.lo `test -f 'src/video-decoder.cpp' || echo '$(srcdir)/'`src/video-decoder.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/libndnrtc_la-video-decoder.Tpo src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/video-decoder.cpp' object='src/libndnrtc_la-video-decoder.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/libndnrtc_la-video-decoder.lo `test -f 'src/video-decoder.cpp' || echo '$(srcdir)/'`src/video-decoder.cpp
 
 src/libndnrtc_la-video-codec.lo: src/video-codec.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libndnrtc_la_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/libndnrtc_la-video-codec.lo -MD -MP -MF src/$(DEPDIR)/libndnrtc_la-video-codec.Tpo -c -o src/libndnrtc_la-video-codec.lo `test -f 'src/video-codec.cpp' || echo '$(srcdir)/'`src/video-codec.cpp
@@ -16618,7 +16579,6 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/libndnrtc_la-interest-queue.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-jitter-timing.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-latency-control.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-local-stream.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-media-stream-base.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-meta-fetcher.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-name-components.Plo
@@ -16647,8 +16607,6 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/libndnrtc_la-stream.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-codec.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-video-coder.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-playout-impl.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-playout.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-stream-impl.Plo
@@ -17345,7 +17303,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/libndnrtc_la-interest-queue.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-jitter-timing.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-latency-control.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-local-stream.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-media-stream-base.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-meta-fetcher.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-name-components.Plo
@@ -17374,8 +17331,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/libndnrtc_la-stream.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-threading-capability.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-codec.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-video-coder.Plo
-	-rm -f src/$(DEPDIR)/libndnrtc_la-video-decoder.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-playout-impl.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-playout.Plo
 	-rm -f src/$(DEPDIR)/libndnrtc_la-video-stream-impl.Plo

@@ -1,4 +1,4 @@
-// 
+//
 // c-wrapper.h
 //
 // Copyright (c) 2017 Regents of the University of California
@@ -6,6 +6,8 @@
 //
 //  Author:  Peter Gusev
 //
+
+#define __c_wrapper_h__
 
 #ifndef __c_wrapper_h__
 #define __c_wrapper_h__
@@ -28,8 +30,8 @@ extern "C" {
 	// creates KeyChain
 	//		optional: local key storage
 	// - runs everything on internal thread
-	bool ndnrtc_init(const char* hostname, const char* storagePath, 
-		const char* policyFilePath, const char* signingIdentity, 
+	bool ndnrtc_init(const char* hostname, const char* storagePath,
+		const char* policyFilePath, const char* signingIdentity,
 		const char * instanceId, LibLog libLog);
 
 	// deinitializes library (removes connection and frees objects)
@@ -46,7 +48,7 @@ extern "C" {
         int frameWidth, frameHeight;
         int startBitrate, maxBitrate, gop, dropFrames;
         const char *streamName, *threadName;
-        const char *storagePath; 
+        const char *storagePath;
     } LocalStreamParams;
 
     typedef struct _FrameInfo {
@@ -55,9 +57,9 @@ extern "C" {
         char* ndnName_;
     } cFrameInfo;
 
-    typedef unsigned char* (*BufferAlloc) (const char* frameName, 
+    typedef unsigned char* (*BufferAlloc) (const char* frameName,
                                            int width, int height);
-    typedef void (*FrameFetched) (const cFrameInfo finfo, int width, int height, 
+    typedef void (*FrameFetched) (const cFrameInfo finfo, int width, int height,
                                   const unsigned char* buffer);
 
 	// params
@@ -130,7 +132,7 @@ extern "C" {
 
     // fetch frame from local storage of the local stream
     void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
-                                   const char* frameName, 
+                                   const char* frameName,
                                    BufferAlloc bufferAllocFunc,
                                    FrameFetched frameFetchedFunc);
 }

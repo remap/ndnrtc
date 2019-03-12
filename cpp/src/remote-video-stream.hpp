@@ -21,7 +21,7 @@ class PipelineControl;
 class ManifestValidator;
 class VideoDecoder;
 class IExternalRenderer;
-class IVideoPlayoutObserver;
+// class IVideoPlayoutObserver;
 class IBufferObserver;
 
 class RemoteVideoStreamImpl : public RemoteStreamImpl
@@ -52,7 +52,7 @@ class RemoteVideoStreamImpl : public RemoteStreamImpl
 
   private:
     bool isPlaybackDriven_;
-    boost::shared_ptr<IVideoPlayoutObserver> playbackObserver_;
+    // boost::shared_ptr<IVideoPlayoutObserver> playbackObserver_;
     boost::shared_ptr<IBufferObserver> bufferObserver_;
     RemoteVideoStream::FetchingRuleSet ruleset_;
 

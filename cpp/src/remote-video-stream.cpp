@@ -7,7 +7,7 @@
 
 #include "remote-video-stream.hpp"
 #include <ndn-cpp/name.hpp>
-#include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
+// #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
 
 #include "interfaces.hpp"
 #include "frame-data.hpp"
@@ -19,7 +19,7 @@
 #include "playout-control.hpp"
 #include "sample-estimator.hpp"
 #include "sample-validator.hpp"
-#include "video-decoder.hpp"
+// #include "video-decoder.hpp"
 #include "clock.hpp"
 
 using namespace ndnrtc;
@@ -29,7 +29,7 @@ using namespace boost;
 class BufferObserver : public IBufferObserver {
     public:
     BufferObserver(boost::shared_ptr<IPipeliner> pipeliner,
-                   boost::shared_ptr<IInterestControl> interestControl) 
+                   boost::shared_ptr<IInterestControl> interestControl)
                    : pipeliner_(pipeliner)
                    , interestControl_(interestControl) {}
     ~BufferObserver(){}
@@ -51,13 +51,13 @@ class BufferObserver : public IBufferObserver {
         boost::shared_ptr<IPipeliner> pipeliner_;
         boost::shared_ptr<IInterestControl> interestControl_;
 };
-
+#if 0
 class PlaybackObserver : public IVideoPlayoutObserver {
-    public: 
-        PlaybackObserver(boost::shared_ptr<IPipeliner> pipeliner, 
+    public:
+        PlaybackObserver(boost::shared_ptr<IPipeliner> pipeliner,
                          boost::shared_ptr<IInterestControl> interestControl,
-                         const Name& threadPrefix) : pipeliner_(pipeliner), 
-                            interestControl_(interestControl), 
+                         const Name& threadPrefix) : pipeliner_(pipeliner),
+                            interestControl_(interestControl),
                             threadPrefix_(threadPrefix)
                         {}
 
@@ -82,11 +82,12 @@ class PlaybackObserver : public IVideoPlayoutObserver {
             pipeliner_->fillUpPipeline(threadPrefix_);
         }
 };
+#endif
 
 RemoteVideoStreamImpl::RemoteVideoStreamImpl(boost::asio::io_service &io,
                                              const boost::shared_ptr<ndn::Face> &face,
                                              const boost::shared_ptr<ndn::KeyChain> &keyChain,
-                                             const std::string &streamPrefix) 
+                                             const std::string &streamPrefix)
     : RemoteStreamImpl(io, face, keyChain, streamPrefix)
     , isPlaybackDriven_(false)
 {
@@ -149,7 +150,7 @@ void RemoteVideoStreamImpl::start(const std::string &threadName,
     RemoteStreamImpl::start(threadName);
 }
 
-void RemoteVideoStreamImpl::start(const RemoteVideoStream::FetchingRuleSet& ruleset, 
+void RemoteVideoStreamImpl::start(const RemoteVideoStream::FetchingRuleSet& ruleset,
                                   IExternalRenderer *renderer)
 {
     if (!isPlaybackDriven_)
@@ -174,10 +175,10 @@ void RemoteVideoStreamImpl::initiateFetching()
 
     if (isPlaybackDriven_)
     {
-        playbackObserver_ = boost::make_shared<PlaybackObserver>(pipeliner_, 
-                                                                 interestControl_, 
-                                                                 getStreamPrefix().append(threadName_));
-        dynamic_pointer_cast<VideoPlayout>(playout_)->attach(playbackObserver_.get());
+        // playbackObserver_ = boost::make_shared<PlaybackObserver>(pipeliner_,
+        //                                                          interestControl_,
+        //                                                          getStreamPrefix().append(threadName_));
+        // dynamic_pointer_cast<VideoPlayout>(playout_)->attach(playbackObserver_.get());
     }
     else
     {
@@ -194,10 +195,10 @@ void RemoteVideoStreamImpl::stopFetching()
 {
     RemoteStreamImpl::stopFetching();
 
-    if (isPlaybackDriven_)
-        dynamic_pointer_cast<VideoPlayout>(playout_)->detach(playbackObserver_.get());
-    else
-        buffer_->detach(bufferObserver_.get());
+    // if (isPlaybackDriven_)
+    //     dynamic_pointer_cast<VideoPlayout>(playout_)->detach(playbackObserver_.get());
+    // else
+    //     buffer_->detach(bufferObserver_.get());
 
     releasePipelineControl();
     releaseDecoder();
@@ -239,14 +240,14 @@ void RemoteVideoStreamImpl::setupDecoder()
 {
     boost::shared_ptr<RemoteVideoStreamImpl> me = boost::dynamic_pointer_cast<RemoteVideoStreamImpl>(shared_from_this());
     VideoThreadMeta meta(threadsMeta_[threadName_]->data());
-    boost::shared_ptr<VideoDecoder> decoder =
-        boost::make_shared<VideoDecoder>(meta.getCoderParams(),
-                                         [this, me](const FrameInfo& finfo, const WebRtcVideoFrame &frame) 
-                                         {
-                                            feedFrame(finfo, frame);
-                                         });
-    boost::dynamic_pointer_cast<VideoPlayout>(playout_)->registerFrameConsumer(decoder.get());
-    decoder_ = decoder;
+    // boost::shared_ptr<VideoDecoder> decoder =
+    //     boost::make_shared<VideoDecoder>(meta.getCoderParams(),
+    //                                      [this, me](const FrameInfo& finfo, const WebRtcVideoFrame &frame)
+    //                                      {
+    //                                         feedFrame(finfo, frame);
+    //                                      });
+    // boost::dynamic_pointer_cast<VideoPlayout>(playout_)->registerFrameConsumer(decoder.get());
+    // decoder_ = decoder;
 }
 
 void RemoteVideoStreamImpl::releaseDecoder()
@@ -262,7 +263,7 @@ void RemoteVideoStreamImpl::setupPipelineControl()
 
     if (isPlaybackDriven_)
         pipelineControl_ = boost::make_shared<PipelineControl>(
-            PipelineControl::seedPipelineControl(ruleset_, 
+            PipelineControl::seedPipelineControl(ruleset_,
                                               threadPrefix.toUri(),
                                               drdEstimator_,
                                               boost::dynamic_pointer_cast<IBuffer>(buffer_),

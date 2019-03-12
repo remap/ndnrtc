@@ -5,6 +5,7 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
+#if 0
 #define BOOST_THREAD_PROVIDES_FUTURE
 #include <boost/thread/future.hpp>
 #include <boost/asio.hpp>
@@ -19,7 +20,7 @@
 #include "video-stream-impl.hpp"
 #include "frame-data.hpp"
 #include "video-thread.hpp"
-#include "video-coder.hpp"
+// #include "video-coder.hpp"
 #include "packet-publisher.hpp"
 #include "name-components.hpp"
 #include "simple-log.hpp"
@@ -479,3 +480,4 @@ VideoStreamImpl::MetaKeeper::getRate() const
 {
     return rateMeter_.value();
 }
+#endif
