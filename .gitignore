@@ -73,3 +73,4 @@ env
 .libs
 .vscode
 bin
+*.egg-info
