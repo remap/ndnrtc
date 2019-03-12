@@ -8,6 +8,8 @@ message StreamMeta {
   uint32 width = 1;
   uint32 height = 2;
   string description = 3;
+  uint32 bitrate = 4;
+  uint32 gop_size = 5;
 }
 
 message LiveMeta {
