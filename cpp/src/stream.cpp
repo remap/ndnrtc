@@ -163,6 +163,7 @@ SegmentsManifest::SegmentsManifest(const Name& name,
         assert(digest.size() == DigestSize);
 
         copy(digest->begin(), digest->end(), ptr);
+        ptr += DigestSize;
     }
 
     setContent(payload);
@@ -323,7 +324,7 @@ VideoStreamImpl2::getStatistics() const
 vector<boost::shared_ptr<Data>>
 VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
 {
-    LogDebugC << "⤹ incoming frame #" << frameSeq_ << std::endl;
+    LogDebugC << "⤹ incoming frame #" << frameSeq_ << endl;
 
     thisCycleMonotonicNs_ = clock::nanosecondTimestamp();
     vector<boost::shared_ptr<Data>> packets;
@@ -352,7 +353,7 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
                 gopSeq_++;
             }
 
-            gopPos_++;
+            gopPos_ = (gopPos_+1) % settings_.codecSettings_.spec_.encoder_.gop_;
             frameSeq_++;
             lastFramePrefix_ = framePrefix;
         },
@@ -390,6 +391,8 @@ VideoStreamImpl2::addMeta()
     StreamMeta meta;
     meta.set_width(settings_.codecSettings_.spec_.encoder_.width_);
     meta.set_height(settings_.codecSettings_.spec_.encoder_.height_);
+    meta.set_bitrate(settings_.codecSettings_.spec_.encoder_.bitrate_);
+    meta.set_bitrate(settings_.codecSettings_.spec_.encoder_.gop_);
     meta.set_description("Streamed by ndnrtc-stream");
 
     string s = meta.SerializeAsString();
@@ -458,7 +461,11 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
     LogTraceC << "▻▻▻ generated " << packets->size() << " segments ("
               << nDataSegments << " data " << nParitySegments << " parity)" << endl;
 
-    packets->push_back(boost::make_shared<SegmentsManifest>(frameName, *packets));
+    boost::shared_ptr<SegmentsManifest> manifest = boost::make_shared<SegmentsManifest>(frameName, *packets);
+    manifest->getMetaInfo().setFreshnessPeriod(sampleFreshness);
+    sign(*manifest);
+
+    packets->push_back(manifest);
     packets->push_back(generateFrameMeta(lastPublishEpochMs_, frameName, frame.type_, nParitySegments));
 
     LogDebugC << "⤷ published GObj-Frame " << frameName << endl;
@@ -651,7 +658,7 @@ VideoStreamImpl2::generateLatestPacket()
 {
     Name packetName = Name(streamPrefix_)
                         .append(NameComponents::Latest)
-                        .appendTimestamp(lastPublishEpochMs_);
+                        .appendVersion(lastPublishEpochMs_);
     boost::shared_ptr<Data> d = boost::make_shared<Data>(packetName);
     d->getMetaInfo().setFreshnessPeriod(freshness_.latest_);
 
@@ -685,7 +692,7 @@ VideoStreamImpl2::generateLivePacket()
 
     Name packetName = Name(streamPrefix_)
                         .append(NameComponents::Live)
-                        .appendTimestamp(lastPublishEpochMs_);
+                        .appendVersion(lastPublishEpochMs_);
     boost::shared_ptr<Data> d = boost::make_shared<Data>(packetName);
     d->getMetaInfo().setFreshnessPeriod(freshness_.live_);
     d->setContent(Blob::fromRawStr(liveMeta.SerializeAsString()));
