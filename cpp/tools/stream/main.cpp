@@ -56,8 +56,8 @@ R"(NdnRtc Stream.
     See the usage examples below for more info.
 
     Usage:
-      ndnrtc-stream publish <base_prefix> <stream_name> --input=<in_file> --size=<WxH> --signing-identity=<identity> [--bitrate=<bitrate>] [--gop=<gop>] [--fps=<fps>] [--no-drop] [--use-fec] [--i420] [--segment-size=<seg_size>] [--rvp] [--loop] [--verbose]
-      ndnrtc-stream fetch ( <stream_prefix> | ( <base_prefix> --rvp )) --output=<out_file> [--use-fec] [--verbose]
+      ndnrtc-stream publish <base_prefix> <stream_name> --input=<in_file> --size=<WxH> --signing-identity=<identity> [--bitrate=<bitrate>] [--gop=<gop>] [--fps=<fps>] [--no-drop] [--use-fec] [--i420] [--segment-size=<seg_size>] [--rvp] [--loop] [(--v | --vv | --vvv)] [--log=<file>]
+      ndnrtc-stream fetch ( <stream_prefix> | ( <base_prefix> --rvp )) --output=<out_file> [--use-fec] [(--v | --vv | --vvv)] [--log=<file>]
 
     Arguments:
       <base_prefix>     Base prefix used to form stream prefix from (see NDN-RTC namespace).
@@ -87,13 +87,17 @@ R"(NdnRtc Stream.
       --no-drop                 Tells encoder not to drop frames
       --use-fec                 Use Forward Error Correction data
       --i420                    I420 raw frame format
-      -v --verbose              Verbose (debug) output
+      --v                       Verbose mode: debug
+      --vv                      Verbose mode: trace
+      --vvv                     Verbose mode: all
+      --log=<filename>          Log file, by default logs to stdout [default: ]
 )";
 
 using namespace std;
 using namespace ndnrtc;
 
 static bool mustExit = false;
+std::string AppLog = "";
 
 void handler(int sig)
 {
@@ -135,15 +139,20 @@ int main(int argc, char **argv)
     // for(auto const& arg : args)
     //     std::cout << arg.first << " " <<  arg.second << std::endl;
 
-    ndnlog::new_api::Logger::getLogger("").setLogLevel(args["--verbose"].asBool() ?
-                        ndnlog::NdnLoggerDetailLevelAll :
-                        ndnlog::NdnLoggerDetailLevelDefault);
+    AppLog = args["--log"].asString();
+
+    if (args["--v"].asBool())
+        ndnlog::new_api::Logger::getLogger(AppLog).setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
+    else if (args["--vv"].asBool())
+        ndnlog::new_api::Logger::getLogger(AppLog).setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
+    else if (args["--vvv"].asBool())
+           ndnlog::new_api::Logger::getLogger(AppLog).setLogLevel(ndnlog::NdnLoggerDetailLevelAll);
 
     try
     {
         if (args["publish"].asBool())
         {
-            LogDebug("") << "initializing publisher" << endl;
+            LogDebug(AppLog) << "initializing publisher" << endl;
             VideoStream::Settings streamSettings;
 
             streamSettings.codecSettings_ = VideoCodec::defaultCodecSettings();
@@ -162,7 +171,7 @@ int main(int argc, char **argv)
                 streamSettings.codecSettings_.spec_.encoder_.fps_ = args["--fps"].asLong();
                 streamSettings.codecSettings_.spec_.encoder_.dropFrames_ = !args["--no-drop"].asBool();
 
-                LogDebug("") << "publish settings:"
+                LogDebug(AppLog) << "publish settings:"
                              << "\n\tsegment size " << streamSettings.segmentSize_
                              << "\n\tcodec:"
                              << "\n\t\twidth " << streamSettings.codecSettings_.spec_.encoder_.width_
@@ -183,22 +192,22 @@ int main(int argc, char **argv)
             }
             else
             {
-                LogError("") << "bad frame size specified: " << args["--size"] << endl;
+                LogError(AppLog) << "bad frame size specified: " << args["--size"] << endl;
             }
 
         }
         else if (args["fetch"].asBool())
         {
-            LogDebug("") << "initializing fetching" << endl;
+            LogDebug(AppLog) << "initializing fetching" << endl;
         }
     }
     catch (std::exception &e)
     {
-        LogError("") << "caught exception: " << e.what() << endl;
+        LogError(AppLog) << "caught exception: " << e.what() << endl;
     }
 
-    LogInfo("") << "shutting down gracefully...	ʕノ•ᴥ•ʔノ" << endl;
-    LogInfo("") << "done" << endl;
+    LogInfo(AppLog) << "shutting down gracefully...	ʕノ•ᴥ•ʔノ" << endl;
+    LogInfo(AppLog) << "done" << endl;
 }
 
 int getSize(string sizeStr, uint16_t& w, uint16_t& h)
