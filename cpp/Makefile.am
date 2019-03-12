@@ -152,7 +152,7 @@ if HAVE_CNL_CPP
 
 bin_PROGRAMS += ndnrtc-stream
 
-ndnrtc_stream_SOURCES = tools/stream/main.cpp tools/stream/publish.cpp tools/stream/fetch.cpp contrib/docopt/docopt.cpp
+ndnrtc_stream_SOURCES = tools/stream/main.cpp tools/stream/publish.cpp tools/stream/fetch.cpp tools/stream/precise-generator.cpp contrib/docopt/docopt.cpp
 ndnrtc_stream_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(includedir) -I$(top_srcdir)/contrib ${BOOST_CPPFLAGS}
 ndnrtc_stream_LDFLAGS = ${BOOST_LDFLAGS} -L$(libdir)
 ndnrtc_stream_LDADD = -lcnl-cpp -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
