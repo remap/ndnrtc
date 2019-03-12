@@ -1,4 +1,4 @@
-// 
+//
 // clock.cpp
 //
 //  Created by Peter Gusev on 19 April 2016.
@@ -48,6 +48,18 @@ namespace ndnrtc {
 		{
 			milliseconds msec = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
 			return msec.count();
+		}
+
+		google::protobuf::Timestamp protobufMillisecondTimestamp()
+		{
+			milliseconds now = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+			int64_t seconds = now.count() / 1000;
+			int32_t nanosec = (now.count() % 1000) * 1000;
+
+			google::protobuf::Timestamp unixTimestamp;
+			unixTimestamp.set_seconds(seconds);
+			unixTimestamp.set_nanos(nanosec);
+			return unixTimestamp;
 		}
 	}
 }

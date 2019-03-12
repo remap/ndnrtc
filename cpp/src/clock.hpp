@@ -1,4 +1,4 @@
-// 
+//
 // clock.hpp
 //
 //  Created by Peter Gusev on 19 April 2016.
@@ -9,6 +9,7 @@
 #define __clock_h__
 
 #include <stdlib.h>
+#include "proto/ndnrtc.pb.h"
 
 namespace ndnrtc {
 	namespace clock {
@@ -36,6 +37,11 @@ namespace ndnrtc {
 		 * Returns unix timestamp in milliseconds since epoch (system clock)
 		 */
 		int64_t millisecSinceEpoch();
+
+		/**
+		 * Returns Unix Timestamp as a google::protobuf::Timestamp object
+		 */
+		google::protobuf::Timestamp protobufMillisecondTimestamp();
 	}
 }
 
