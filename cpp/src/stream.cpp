@@ -392,7 +392,7 @@ VideoStreamImpl2::addMeta()
     meta.set_width(settings_.codecSettings_.spec_.encoder_.width_);
     meta.set_height(settings_.codecSettings_.spec_.encoder_.height_);
     meta.set_bitrate(settings_.codecSettings_.spec_.encoder_.bitrate_);
-    meta.set_bitrate(settings_.codecSettings_.spec_.encoder_.gop_);
+    meta.set_gop_size(settings_.codecSettings_.spec_.encoder_.gop_);
     meta.set_description("Streamed by ndnrtc-stream");
 
     string s = meta.SerializeAsString();
