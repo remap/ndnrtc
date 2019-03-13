@@ -10,14 +10,19 @@
 #include <chrono>
 #include <mutex>
 #include <boost/chrono.hpp>
+#include <execinfo.h>
 
-#include <ndn-cpp/face.hpp>
+#include <ndn-cpp/threadsafe-face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/util/memory-content-cache.hpp>
 
 #include "../../include/simple-log.hpp"
 #include "../../include/helpers/key-chain-manager.hpp"
 #include "../../include/statistics.hpp"
+
+#include "precise-generator.hpp"
+
+static bool mustTerminate = false;
 
 using namespace std;
 using namespace std::chrono;
@@ -32,6 +37,31 @@ int readYUV420(FILE *f, int width, int height, uint8_t **buf);
 void registerPrefix(boost::shared_ptr<Face> &face, const KeyChainManager &keyChainManager);
 void serveCerts(boost::shared_ptr<Face> &face, KeyChainManager &keyManager);
 void printStats(const VideoStream&, const vector<boost::shared_ptr<Data>>&);
+
+
+
+void terminate(boost::asio::io_service &ioService,
+               const boost::system::error_code &error,
+               int signalNo,
+               boost::asio::signal_set &signalSet)
+{
+    if (error)
+        return;
+
+    std::cerr << "caught signal '" << strsignal(signalNo) << "', exiting..." << std::endl;
+    ioService.stop();
+
+    if (signalNo == SIGABRT || signalNo == SIGSEGV)
+    {
+        void *array[10];
+        size_t size;
+        size = backtrace(array, 10);
+        // print out all the frames to stderr
+        backtrace_symbols_fd(array, size, STDERR_FILENO);
+    }
+
+    mustTerminate = true;
+}
 
 void
 runPublisher(string input,
@@ -49,13 +79,28 @@ runPublisher(string input,
     stringstream instanceId;
     instanceId << duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 
-    boost::shared_ptr<Face> face = boost::make_shared<Face>();
+    boost::asio::io_context io;
+
+    boost::asio::signal_set signalSet(io);
+    signalSet.add(SIGINT);
+    signalSet.add(SIGTERM);
+    signalSet.add(SIGABRT);
+    signalSet.add(SIGSEGV);
+    signalSet.add(SIGHUP);
+    signalSet.add(SIGUSR1);
+    signalSet.add(SIGUSR2);
+    signalSet.async_wait(bind(static_cast<void(*)(boost::asio::io_service&,const boost::system::error_code&,int,boost::asio::signal_set&)>(&terminate),
+                              ref(io),
+                              _1, _2,
+                              ref(signalSet)));
+
+    boost::shared_ptr<Face> face = boost::make_shared<ThreadsafeFace>(io);
     helpers::KeyChainManager keyChainManager(face, boost::make_shared<KeyChain>(),
         signingIdentity, instanceId.str(), "", 3600,
-        Logger::getLoggerPtr(""));
+        Logger::getLoggerPtr(AppLog));
 
-    // NOTE: 0 cleanup inerval is important for high-frequency data like frames
-    boost::shared_ptr<MemoryContentCache> memCache = boost::make_shared<MemoryContentCache>(face.get(),0);
+    boost::shared_ptr<MemoryContentCache> memCache = boost::make_shared<MemoryContentCache>(face.get());
+    memCache->setMinimumCacheLifetime(5000); // keep last 5 seconds of datandnr
     VideoStream::Settings s(settings);
     s.memCache_ = memCache;
     s.storeInMemCache_ = true;
@@ -68,52 +113,57 @@ runPublisher(string input,
     // register data prefix if it's different from instance identity
     memCache->registerPrefix(basePrefix,
                              [](const boost::shared_ptr<const Name> &prefix) {
-                                 LogError("") << "Prefix registration failure (" << prefix << ")" << std::endl;
+                                 LogError(AppLog) << "Prefix registration failure (" << prefix << ")" << std::endl;
                                  throw std::runtime_error("Prefix registration failed");
                              });
 
     VideoStream stream(basePrefix, streamName, s,
                        keyChainManager.instanceKeyChain());
-
-    stream.setLogger(Logger::getLoggerPtr(""));
+    stream.setLogger(Logger::getLoggerPtr(AppLog));
 
     int w = settings.codecSettings_.spec_.encoder_.width_;
     int h = settings.codecSettings_.spec_.encoder_.height_;
     uint32_t sampleIntervalUsec = 1000000 / settings.codecSettings_.spec_.encoder_.fps_;
     size_t imgDataLen = 3*w*h/2;
     uint8_t *imgData = (uint8_t*)malloc(imgDataLen);
-    boost::asio::io_context io;
 
-    LogDebug("") << "publishing under " << stream.getPrefix() << endl;
+    LogDebug(AppLog) << "publishing under " << stream.getPrefix()
+                 << " sample interval " << sampleIntervalUsec << "us" << endl;
 
-    // while (readYUV420(fIn, w, h, &imgData))
     int res = 0;
+
     do
     {
-        res = readYUV420(fIn, w, h, &imgData);
-        if (res == 0)
-        {
-            if(feof(fIn))
+        function<void()> publish = [&](){
+            res = readYUV420(fIn, w, h, &imgData);
+            if (res == 0)
             {
-                if (isLooped)
+                if(feof(fIn))
                 {
-                    rewind(fIn);
-                    res = readYUV420(fIn, w, h, &imgData);
+                    if (isLooped)
+                    {
+                        rewind(fIn);
+                        res = readYUV420(fIn, w, h, &imgData);
+                    }
                 }
+                else
+                    return; // error
             }
-        }
-        else
-        {
-            boost::asio::steady_timer timer(io, microseconds(sampleIntervalUsec));
-            vector<boost::shared_ptr<Data>> framePackets = stream.processImage(ImageFormat::I420, imgData);
-            for (auto d:framePackets)
-                LogDebug("") << "packet " << d->getName() << " : " << d->wireEncode().size() << " bytes" << endl;
 
-            face->processEvents();
-            printStats(stream, framePackets);
-            timer.wait();
-        }
-    } while (res);
+            vector<boost::shared_ptr<Data>> framePackets = stream.processImage(ImageFormat::I420, imgData);
+            // for (auto d:framePackets)
+            //     LogDebug(AppLog) << "packet " << d->getName() << " : " << d->wireEncode().size() << " bytes" << endl;
+            if (AppLog != "")
+                printStats(stream, framePackets);
+        };
+
+        PreciseGenerator gen(io,
+                            settings.codecSettings_.spec_.encoder_.fps_,
+                            publish);
+        gen.start();
+        io.run();
+        gen.stop();
+    } while (res && !mustTerminate);
 
     // end line after stats
     cout << endl;
@@ -150,14 +200,14 @@ registerPrefix(boost::shared_ptr<Face> &face,
                          [](const boost::shared_ptr<const Name> &prefix,
                             const boost::shared_ptr<const Interest> &interest,
                             Face &face, uint64_t, const boost::shared_ptr<const InterestFilter> &) {
-                             LogTrace("") << "Unexpected incoming interest " << interest->getName() << std::endl;
+                             LogTrace(AppLog) << "Unexpected incoming interest " << interest->getName() << std::endl;
                          },
                          [](const boost::shared_ptr<const Name> &prefix) {
-                             LogError("") << "Prefix registration failure (" << prefix << ")" << std::endl;
+                             LogError(AppLog) << "Prefix registration failure (" << prefix << ")" << std::endl;
                              throw std::runtime_error("Prefix registration failed");
                          },
                          [](const boost::shared_ptr<const Name> &p, uint64_t) {
-                             LogDebug("") << "Successfully registered prefix " << *p << std::endl;
+                             LogDebug(AppLog) << "Successfully registered prefix " << *p << std::endl;
                          });
 }
 
@@ -172,7 +222,7 @@ serveCerts(boost::shared_ptr<Face> &face, KeyChainManager &keyManager)
     else
         filter = keyManager.instanceCertificate()->getName().getPrefix(keyManager.instanceCertificate()->getName().size() - 2);
 
-    LogDebug("") << "setting interest filter for instance certificate: " << filter << std::endl;
+    LogDebug(AppLog) << "setting interest filter for instance certificate: " << filter << std::endl;
 
     cache.setInterestFilter(filter);
     cache.add(*(keyManager.instanceCertificate().get()));

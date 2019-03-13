@@ -10,6 +10,8 @@
 
 #include "../include/stream.hpp"
 
+extern std::string AppLog;
+
 void runPublisher(std::string input,
                   std::string basePrefix,
                   std::string streamName,

@@ -140,6 +140,9 @@ int main(int argc, char **argv)
     //     std::cout << arg.first << " " <<  arg.second << std::endl;
 
     AppLog = args["--log"].asString();
+    cout << AppLog << endl;
+
+    ndnlog::new_api::Logger::getLogger(AppLog).setLogLevel(ndnlog::NdnLoggerDetailLevelDefault);
 
     if (args["--v"].asBool())
         ndnlog::new_api::Logger::getLogger(AppLog).setLogLevel(ndnlog::NdnLoggerDetailLevelDebug);
