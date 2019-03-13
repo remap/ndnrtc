@@ -97,7 +97,6 @@ TEST(TestCodec, TestCreate)
 
 TEST(TestCodec, TestEncodeDecode)
 {
-    cout << resources_path << endl;
     FILE *fIn = fopen((resources_path+"/eb_samples/eb_dog_1280x720_240.yuv").c_str(), "rb");
     if (!fIn)
         FAIL() << "couldn't open input video file";
