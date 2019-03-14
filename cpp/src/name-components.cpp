@@ -11,10 +11,13 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <bitset>
 #include <iterator>
+#include <boost/assign.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string.hpp>
+#include <ndn-cpp/interest-filter.hpp>
 
 #include "name-components.hpp"
 #include "clock.hpp"
@@ -22,6 +25,7 @@
 using namespace std;
 using namespace ndnrtc;
 using namespace ndn;
+using namespace boost::assign;
 
 const string NameComponents::NameComponentApp = "ndnrtc";
 const string NameComponents::NameComponentAudio = "audio";
@@ -43,7 +47,19 @@ const string NameComponents::GopStart = "start";
 const string NameComponents::Manifest = "_manifest";
 const string NameComponents::Parity = "_parity";
 
-#include <bitset>
+static map<NameComponents::Filter, InterestFilter> NameFilters =
+map_list_of
+(NameComponents::Filter::Stream,    InterestFilter("/", "(<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)<>{,3}"))
+(NameComponents::Filter::Meta,      InterestFilter("/", "(<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)<_meta>$"))
+(NameComponents::Filter::Live,      InterestFilter("/", "(<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)<_live>(<%FD[\\w%\+\-\.]+>)?$"))
+(NameComponents::Filter::Latest,    InterestFilter("/", "(<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)<_latest>(<%FD[\\w%\+\-\.]+>)?$"))
+(NameComponents::Filter::GopStart,  InterestFilter("/", "(<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)<_gop>(<%FE[\\w%\+\-\.]+>)<start>$"))
+(NameComponents::Filter::GopEnd,    InterestFilter("/", "(<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)<_gop>(<%FE[\\w%\+\-\.]+>)<end>$"))
+(NameComponents::Filter::Frame,    InterestFilter("/", "(<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)(<%FE[\\w%\+\-\.]+>)<>{,2}"))
+(NameComponents::Filter::FrameMeta, InterestFilter("/", "(<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)(<%FE[\\w%\+\-\.]+>)<_meta>$"))
+(NameComponents::Filter::Manifest,  InterestFilter("/", "(<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)(<%FE[\\w%\+\-\.]+>)<_manifest>$"))
+(NameComponents::Filter::Payload,   InterestFilter("/", "(<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)(<%FE[\\w%\+\-\.]+>)(<%00[\\w%\+\-\.]+>)$"))
+(NameComponents::Filter::Parity,    InterestFilter("/", "(<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)(<%FE[\\w%\+\-\.]+>)<_parity>(<%00[\\w%\+\-\.]+>)?$"));
 
 void
 NamespaceInfo::reset()
@@ -52,10 +68,11 @@ NamespaceInfo::reset()
     apiVersion_ = 0;
     streamName_ = "";
     streamTimestamp_ = 0;
-    hasSeqNo_ = hasSegNo_ = false;
+    hasSeqNo_ = hasSegNo_ = isGopStart_ = isGopEnd_ = hasVersion_ = false;
     segmentClass_ = SegmentClass::Unknown;
     sampleNo_ = 0;
     segNo_ = 0;
+    version_ = 0;
 }
 
 bool
@@ -171,6 +188,39 @@ NamespaceInfo::getSuffix(int filter) const
 }
 
 //******************************************************************************
+#if 0
+void initFilters()
+{
+    // (<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)
+    string base =  "(<>+)<"+
+                    NameComponents::App + "><" +
+                    Name::Component::fromVersion(NameComponents::nameApiVersion()) + ">" +
+                    "(<%FC[%\\w\+\-\.]+>)(<>)";
+    // (<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)<>{,3}
+    NameFilters[NameComponents::Filter::Stream] = InterestFilter("/", base+"<>{,3}");
+    // (<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)<_meta>$
+    NameFilters[NameComponents::Filter::Meta] = InterestFilter("/", base+"<_meta>$");
+    // (<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)<_live>(<%FD[\\w%\+\-\.]+>)?$
+    NameFilters[NameComponents::Filter::Live] = InterestFilter("/", base+"<_live>(<%FD[\\w%\+\-\.]+>)?$");
+    // (<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)<_latest>(<%FD[\\w%\+\-\.]+>)?$
+    NameFilters[NameComponents::Filter::Latest] = InterestFilter("/", base+"<_latest>(<%FD[\\w%\+\-\.]+>)?$");
+    // (<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)<_gop>(<%FE[\\w%\+\-\.]+>)<start>$
+    NameFilters[NameComponents::Filter::GopStart] = InterestFilter("/", base+"<_gop>(<%FE[\\w%\+\-\.]+>)<start>$");
+    // (<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)<_gop>(<%FE[\\w%\+\-\.]+>)<end>$
+    NameFilters[NameComponents::Filter::GopEnd] = InterestFilter("/", base+"<_gop>(<%FE[\\w%\+\-\.]+>)<end>$");
+    // (<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)(<%FE[\\w%\+\-\.]+>)<>{,2}
+    NameFilters[NameComponents::Filter::Frame] = InterestFilter("/", base+"<>{,2}");
+    // (<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)(<%FE[\\w%\+\-\.]+>)<_meta>$
+    NameFilters[NameComponents::Filter::FrameMeta] = InterestFilter("/", base+"<_meta>$");
+    // (<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)(<%FE[\\w%\+\-\.]+>)<_manifest>$
+    NameFilters[NameComponents::Filter::Manifest] = InterestFilter("/", base+"<_manifest>$");
+    // (<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)(<%FE[\\w%\+\-\.]+>)(<%00[\\w%\+\-\.]+>)$
+    NameFilters[NameComponents::Filter::Payload] = InterestFilter("/", base+"(<%00[\\w%\+\-\.]+>)$");
+    // (<>+)<ndnrtc><%FD%04>(<%FC[%\\w\+\-\.]+>)(<>)(<%FE[\\w%\+\-\.]+>)<_parity>(<%00[\\w%\+\-\.]+>)?$
+    NameFilters[NameComponents::Filter::Parity] = InterestFilter("/", base+"<_parity>(<%00[\\w%\+\-\.]+>)?$");
+}
+#endif
+
 vector<string> ndnrtcVersionComponents()
 {
     string version = NameComponents::fullVersion();
@@ -230,287 +280,118 @@ NameComponents::videoStreamPrefix(string basePrefix)
 }
 
 //******************************************************************************
-bool extractMeta(const ndn::Name& name, NamespaceInfo& info)
-{
-    // example: name == %FD%05/%00%00
-    if (name.size() >= 1 && name[0].isVersion())
-    {
-        info.segmentVersion_ = name[0].toVersion();
-        if (name.size() >= 2)
-        {
-            info.segNo_ = name[1].toSegment();
-            info.hasSegNo_ = true;
-        }
-        else
-            info.hasSegNo_ = false;
-        return true;
-    }
-
-    return false;
-}
-
-bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
-{
-    if (name.size() == 1)
-    {
-        info.streamName_ = name[0].toEscapedString();
-        return true;
-    }
-
-    if (name.size() == 2 && name[1].isTimestamp())
-    {
-        info.streamName_ = name[0].toEscapedString();
-        info.streamTimestamp_ = name[1].toTimestamp();
-        return true;
-    }
-
-    if (name.size() < 3)
-        return false;
-
-    int idx = 0;
-    info.streamName_ = name[idx++].toEscapedString();
-    info.isMeta_ = (name[idx++] == Name::Component(NameComponents::NameComponentMeta));
-
-    if (info.isMeta_)
-    {   // example: name == camera/_meta/%FD%05/%00%00
-        info.segmentClass_ = SegmentClass::Meta;
-        info.threadName_ = "";
-        return extractMeta(name.getSubName(idx), info);
-    }
-    else
-    {   // example: name == camera/%FC%00%00%01c_%27%DE%D6/hi/d/%FE%07/%00%00
-
-        info.class_ = SampleClass::Unknown;
-        info.segmentClass_ = SegmentClass::Unknown;
-        info.streamTimestamp_ = name[idx-1].toTimestamp();
-        info.threadName_ = name[idx++].toEscapedString();
-
-        if (name.size() <= idx)
-            return true;
-
-        info.isMeta_ = (name[idx++] == Name::Component(NameComponents::NameComponentMeta));
-
-        if (info.isMeta_)
-        {   // example: camera/%FC%00%00%01c_%27%DE%D6/hi/_meta/%FD%05/%00%00
-            info.segmentClass_ = SegmentClass::Meta;
-            if(name.size() > idx-1 && extractMeta(name.getSubName(idx), info))
-                return true;
-            return false;
-        }
-        else if (name[idx-1] == Name::Component(NameComponents::NameComponentRdrLatest))
-        {
-            info.segmentClass_ = SegmentClass::Pointer;
-            if (idx < name.size())
-                info.segmentVersion_ = name[idx].toVersion();
-            return true;
-        }
-
-        if (name[idx-1] == Name::Component(NameComponents::NameComponentDelta) ||
-            name[idx-1] == Name::Component(NameComponents::NameComponentKey))
-        {
-            info.isDelta_ = (name[idx-1] == Name::Component(NameComponents::NameComponentDelta));
-            info.class_ = (info.isDelta_ ? SampleClass::Delta : SampleClass::Key);
-
-            try{
-                if (name.size() > idx)
-                {
-                    info.sampleNo_ = (PacketNumber)name[idx++].toSequenceNumber();
-                }
-                else
-                {
-                    info.hasSeqNo_ = false;
-                    return true;
-                }
-
-                info.hasSeqNo_ = true;
-                if (name.size() > idx)
-                {
-                    info.isParity_ = (name[idx] == Name::Component(NameComponents::NameComponentParity));
-                    info.hasSegNo_ = true;
-
-                    if (info.isParity_ && name.size() > idx+1)
-                    {
-                        info.segmentClass_ = SegmentClass::Parity;
-                        info.segNo_ = name[idx+1].toSegment();
-                        return true;
-                    }
-                    else
-                    {
-                        if (info.isParity_)
-                            return false;
-                        else
-                        {
-                            if (name[idx] == Name::Component(NameComponents::NameComponentManifest))
-                                info.segmentClass_ = SegmentClass::Manifest;
-                            else
-                            {
-                                info.segmentClass_ = SegmentClass::Data;
-                                info.segNo_ = name[idx].toSegment();
-                            }
-                        }
-                        return true;
-                    }
-                }
-                else
-                {
-                    info.segmentClass_ = SegmentClass::Unknown;
-                    info.hasSegNo_ = false;
-                    return true;
-                }
-            }
-            catch (std::runtime_error& e)
-            {
-                return false;
-            }
-        }
-    }
-
-    return false;
-}
-
-bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
-{
-    if (name.size() == 1)
-    {
-        info.streamName_ = name[0].toEscapedString();
-        return true;
-    }
-
-    if (name.size() == 2 && name[1].isTimestamp())
-    {
-        info.streamName_ = name[0].toEscapedString();
-        info.streamTimestamp_ = name[1].toTimestamp();
-        return true;
-    }
-
-    if (name.size() < 2)
-        return false;
-
-    int idx = 0;
-    info.streamName_ = name[idx++].toEscapedString();
-    info.isMeta_ = (name[idx++] == Name::Component(NameComponents::NameComponentMeta));
-
-    if (info.isMeta_)
-    {
-        info.segmentClass_ = SegmentClass::Meta;
-        if (name.size() < idx+1)
-            return false;
-
-        info.threadName_ = "";
-        return extractMeta(name.getSubName(idx), info);;
-    }
-    else
-    {
-        info.class_ = SampleClass::Unknown;
-        info.segmentClass_ = SegmentClass::Unknown;
-        info.streamTimestamp_ = name[idx-1].toTimestamp();
-        info.threadName_ = name[idx++].toEscapedString();
-
-        if (name.size() == 3)
-        {
-            info.hasSeqNo_ = false;
-            return true;
-        }
-
-        info.isMeta_ = (name[idx] == Name::Component(NameComponents::NameComponentMeta));
-
-        if (info.isMeta_)
-        {
-            info.segmentClass_ = SegmentClass::Meta;
-            if (name.size() > idx+1 && extractMeta(name.getSubName(idx+1), info))
-                return true;
-            return false;
-        }
-        else if (name[idx-1] == Name::Component(NameComponents::NameComponentRdrLatest))
-        {
-            info.segmentClass_ = SegmentClass::Pointer;
-            if (idx < name.size())
-                info.segmentVersion_ = name[idx].toVersion();
-            return true;
-        }
-
-        info.isDelta_ = true;
-        info.class_ = SampleClass::Delta;
-
-        try
-        {
-            if (name.size() > 3)
-            {
-                if (name[idx] == Name::Component(NameComponents::NameComponentRdrLatest))
-                {
-                    info.segmentClass_ = SegmentClass::Pointer;
-                    if (idx+1 < name.size())
-                        info.segmentVersion_ = name[idx+1].toVersion();
-                    return true;
-                }
-                else
-                    info.sampleNo_ = (PacketNumber)name[idx++].toSequenceNumber();
-            }
-
-            info.hasSeqNo_ = true;
-            if (name.size() > idx)
-            {
-                if (name[idx] == Name::Component(NameComponents::NameComponentManifest))
-                    info.segmentClass_ = SegmentClass::Manifest;
-                else
-                {
-                    info.hasSegNo_ = true;
-                    info.segmentClass_ = SegmentClass::Data;
-                    info.segNo_ = name[idx].toSegment();
-                }
-                return true;
-            }
-            else
-            {
-                info.hasSegNo_ = false;
-                return true;
-            }
-        }
-        catch (std::runtime_error& e)
-        {
-            return false;
-        }
-    }
-
-    return false;
-}
-
 bool
 NameComponents::extractInfo(const ndn::Name& name, NamespaceInfo& info)
 {
     bool goodName = false;
-    static Name ndnrtcSubName(NameComponents::NameComponentApp);
-    Name subName;
-    int i;
+    set<NameComponents::Filter> matches;
 
-    for (i = name.size()-2; i > 0 && !goodName; --i)
+    for (auto &it : NameFilters)
+        if (it.second.doesMatch(name))
+            matches.insert(it.first);
+
+    if (matches.size())
     {
-        subName = name.getSubName(i);
-        goodName = ndnrtcSubName.match(subName);
-    }
+        int idx = name.size()-1;
+        while (name[idx].toEscapedString() != App && idx > 0)
+            idx --;
 
-    if (goodName)
-    {
-        info.basePrefix_ = name.getSubName(0, i+1);
+        info.basePrefix_ = name.getPrefix(idx);
+        info.apiVersion_ = name[idx+1].toVersion();
+        info.streamTimestamp_ = name[idx+2].toTimestamp();
+        info.streamName_ = name[idx+3].toEscapedString();
 
-        if ((goodName = subName[1].isVersion()))
+        info.hasSeqNo_ = info.hasSegNo_ =
+            info.isGopStart_ = info.isGopEnd_ = info.hasVersion_ = false;
+        info.segmentClass_ = SegmentClass::Unknown;
+        info.sampleNo_ = 0;
+        info.segNo_ = 0;
+        info.version_ = 0;
+
+        Name suffix;
+        if (idx + 4 < name.size())
+            suffix = name.getSubName(idx+4);
+
+        for (auto &m:matches)
         {
-            info.apiVersion_ = subName[1].toVersion();
+            switch (m) {
+                case Filter::Stream : {
+                    // nothing
+                }break;
 
-            if (subName.size() > 2 &&
-                (goodName = (subName[2] == Name::Component(NameComponents::NameComponentAudio) ||
-                            subName[2] == Name::Component(NameComponents::NameComponentVideo)))  )
-            {
-                info.streamType_ = (subName[2] == Name::Component(NameComponents::NameComponentAudio) ?
-                                MediaStreamParams::MediaStreamType::MediaStreamTypeAudio :
-                                MediaStreamParams::MediaStreamType::MediaStreamTypeVideo );
+                case Filter::Meta : {
+                    info.segmentClass_ = SegmentClass::Meta;
+                } break;
 
-                if (info.streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio)
-                    return extractAudioStreamInfo(subName.getSubName(3), info);
-                else
-                    return extractVideoStreamInfo(subName.getSubName(3), info);
+                case Filter::Live : {
+                    info.segmentClass_ = SegmentClass::Meta;
+                    if (suffix[-1].isVersion())
+                    {
+                        info.version_ = suffix[-1].toVersion();
+                        info.hasVersion_ = true;
+                    }
+                } break;
+
+                case Filter::Latest : {
+                    info.segmentClass_ = SegmentClass::Pointer;
+                    if (suffix[-1].isVersion())
+                    {
+                        info.version_ = suffix[-1].toVersion();
+                        info.hasVersion_ = true;
+                    }
+                } break;
+
+                case Filter::GopStart : {
+                    info.segmentClass_ = SegmentClass::Pointer;
+                    info.isGopStart_ = true;
+                    info.hasSeqNo_ = true;
+                    info.sampleNo_ = suffix[-2].toSequenceNumber();
+                } break;
+
+                case Filter::GopEnd : {
+                    info.segmentClass_ = SegmentClass::Pointer;
+                    info.isGopEnd_ = true;
+                    info.hasSeqNo_ = true;
+                    info.sampleNo_ = suffix[-2].toSequenceNumber();
+                } break;
+
+                case Filter::Frame : {
+                    info.hasSeqNo_ = true;
+                    info.sampleNo_ = suffix[0].toSequenceNumber();
+                } break;
+
+                case Filter::FrameMeta : {
+                    info.segmentClass_ = SegmentClass::Meta;
+                } break;
+
+                case Filter::Manifest : {
+                    info.segmentClass_ = SegmentClass::Manifest;
+                } break;
+
+                case Filter::Payload : {
+                    info.segmentClass_ = SegmentClass::Data;
+                    if (suffix[-1].isSegment())
+                    {
+                        info.hasSegNo_ = true;
+                        info.segNo_ = suffix[-1].toSegment();
+                    }
+                } break;
+
+                case Filter::Parity : {
+                    info.segmentClass_ = SegmentClass::Parity;
+                    if (suffix[-1].isSegment())
+                    {
+                        info.hasSegNo_ = true;
+                        info.segNo_ = suffix[-1].toSegment();
+                    }
+                } break;
+
+                default : {
+                    return false;
+                }
             }
         }
+        return true;
     }
 
     return false;

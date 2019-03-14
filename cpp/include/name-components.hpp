@@ -74,10 +74,11 @@ namespace ndnrtc {
         std::string streamName_;
         uint64_t streamTimestamp_;
 
-        bool hasSeqNo_, hasSegNo_;
+        bool hasSeqNo_, hasSegNo_, isGopStart_, isGopEnd_, hasVersion_;
         SegmentClass segmentClass_;
         PacketNumber sampleNo_;
         unsigned int segNo_;
+        unsigned int version_;
 
         void reset();
 
@@ -99,6 +100,20 @@ namespace ndnrtc {
 
     class NameComponents {
     public:
+        enum class Filter {
+            Stream,
+            Meta,
+            Live,
+            Latest,
+            GopStart,
+            GopEnd,
+            Frame,
+            FrameMeta,
+            Manifest,
+            Payload,
+            Parity
+        };
+
         static const std::string App;
         static const std::string Meta;
         static const std::string Latest;
