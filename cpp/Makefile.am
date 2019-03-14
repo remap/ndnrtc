@@ -47,6 +47,7 @@ libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
   src/ndnrtc-endian.hpp \
   src/ndnrtc-object.cpp src/ndnrtc-object.hpp \
   src/ndnrtc-testing.hpp \
+  src/packets.cpp src/packets.hpp \
   src/packet-publisher.cpp src/packet-publisher.hpp \
   src/periodic.cpp src/periodic.hpp \
   src/pipeline.cpp src/pipeline.hpp \
@@ -463,7 +464,8 @@ check_PROGRAMS += bin/tests/test-video-codec \
 	bin/tests/test-pipeline-control \
 	bin/tests/test-video-stream \
 	bin/tests/test-pipeline \
-	bin/tests/test-name-components
+	bin/tests/test-name-components \
+	bin/tests/test-packets
 
 bin_tests_test_video_codec_SOURCES = tests/test-video-codec.cc ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_codec_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -489,6 +491,11 @@ bin_tests_test_name_components_SOURCES = tests/test-name-components.cc ${UNIT_TE
 bin_tests_test_name_components_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_name_components_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_name_components_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_packets_SOURCES = tests/test-packets.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_packets_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_packets_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_packets_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
 TESTS = ${check_PROGRAMS}
 

@@ -26,6 +26,10 @@ class Data;
 namespace ndnrtc
 {
 
+namespace packets {
+    class BasePacket;
+}
+
 struct Mutable
 {
     typedef std::vector<uint8_t> storage;
@@ -43,12 +47,12 @@ struct Immutable
 
 //******************************************************************************
 /**
-     * Network data class is a base class for network data used to transfer binary 
+     * Network data class is a base class for network data used to transfer binary
      * data over the (NDN) network.
      * NetworkDataT is a template class, which can be instantiated in two flavors - mutable
      * data and immutable data. The former can be used for preparing data packets to be
      * sent over the network. For example, one creates empty packet and then adds necessary
-     * payload(s) to it. (One should rather use derived classes, rather than this class 
+     * payload(s) to it. (One should rather use derived classes, rather than this class
      * directly). The payload is stored as a vector of bytes and copied/moved according to
      * the constructor used.
      * The latter (immutable network data) is used for packets, received from the network.
@@ -202,9 +206,9 @@ class DataPacketT : public NetworkDataT<T>
     /**
      * Blob provides read-only interface for immutable data. It is a helper
      * class which makes manipulation of data packet internals easier (such
-     * manipulations as counting number of headers in data packet, their 
-     * sizes, ordering, etc). Blob's constructor takes two const iterators 
-     * or another Blob object. No payload copying is performed during 
+     * manipulations as counting number of headers in data packet, their
+     * sizes, ordering, etc). Blob's constructor takes two const iterators
+     * or another Blob object. No payload copying is performed during
      * construction.
      */
     class Blob
@@ -295,7 +299,7 @@ class DataPacketT : public NetworkDataT<T>
     }
 
     /**
-     * This calculates total wire length for a packet with given 
+     * This calculates total wire length for a packet with given
      * payloadLength and one blob (header) of length blobLength
      */
     static size_t wireLength(size_t payloadLength, size_t blobLength)
@@ -309,7 +313,7 @@ class DataPacketT : public NetworkDataT<T>
     /**
      * This calculates total wire length for a packet with given
      * payloadLength and arbitrary number of blobs (headers), lengths
-     * of which are given in vector blobLengths 
+     * of which are given in vector blobLengths
      */
     static size_t wireLength(size_t payloadLength, std::vector<size_t> blobLengths)
     {
@@ -332,7 +336,7 @@ class DataPacketT : public NetworkDataT<T>
 
     /**
      * This calculates length of byte overhead for adding arbitrary number
-     * of blobs (headers) to a data packet, lenghts of which are given 
+     * of blobs (headers) to a data packet, lenghts of which are given
      * in vector blobLengths
      */
     static size_t wireLength(std::vector<size_t> blobLengths)
@@ -410,11 +414,11 @@ typedef DataPacketT<> DataPacket;
 
 //******************************************************************************
 /**
- * HeaderPacket extends DataPacket class by adding functionality for a header 
+ * HeaderPacket extends DataPacket class by adding functionality for a header
  * which is usually a structure.
  * Header is appended as the last blob to the packet and one can not set header
  * several times - an exception will be raised. Typically, one whould add header
- * to the packet as the very last step in preparing data to be transfered over 
+ * to the packet as the very last step in preparing data to be transfered over
  * the network.
  */
 template <typename Header, typename T>
@@ -542,7 +546,7 @@ typedef struct _VideoFrameSegmentHeader : public DataSegmentHeader // goes into 
 
 //******************************************************************************
 /**
- * This is a manifest data packet for (video) samples but can be used for an 
+ * This is a manifest data packet for (video) samples but can be used for an
  * arbitrary array of ndn::Data objects.
  * It stores digests of given data objects and provides methods to check whether
  * a data object is a part of this manifest.
@@ -619,12 +623,75 @@ class MediaStreamMeta : public DataPacket
     uint64_t getStreamTimestamp() const;
 };
 
+//******************************************************************************
+/**
+ * DataRequest class is an abstraction for interest-data exchange.
+ */
+class SegmentsManifest {
+public:
+    static size_t DigestSize;
+
+    static boost::shared_ptr<ndn::Data>
+        packManifest(const ndn::Name&,
+                     const std::vector<boost::shared_ptr<ndn::Data>>& segments);
+    static bool hasData(const ndn::Data& manifest, const ndn::Data& d);
+};
 
 /**
- * WireSegment acts as a wrapper for shared_ptr<ndn:Data> object which is app- 
- * and namespace-aware. I.e. it provides handy methods for retrieving variaous 
- * infomration from the packet and/or it's name. For example, class of sample 
- * can be retrieved from its' name by examining specific component to be either 
+ * DataRequest class is an abstraction for interest-data exchange.
+ */
+class DataRequest {
+public:
+    enum class Status {
+        Created,
+        Sent,
+        ResponseTimeout,
+        ResponseAppNack,
+        ResponseNetworkNack,
+        RepsonseData
+    };
+
+    DataRequest(const boost::shared_ptr<const ndn::Interest> &interest);
+    DataRequest(const boost::shared_ptr<ndn::Data> &data,
+                const boost::shared_ptr<const ndn::Interest> &interest);
+
+
+    Status getStatus() const { return status_; }
+    const NamespaceInfo& getNamespaceInfo() const { return namespaceInfo_; }
+
+    boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
+    boost::shared_ptr<const ndn::Data> getData() const { return data_; }
+
+    int64_t getDrdUsec() const { (replyTsUsec_ ? replyTsUsec_ - requestTsUsec_ : -1); }
+    uint64_t getRequestTimestampUsec() const { requestTsUsec_; }
+    uint64_t getReplyTimestampUsec() const { replyTsUsec_; }
+
+    uint8_t getRtxNum() const { return rtxNum_; }
+
+    const boost::shared_ptr<packets::BasePacket>& getNdnrtcPacket() const;
+
+protected:
+    // friend InterestQueue;
+
+    uint8_t setRtxNum(uint8_t rtxNum) { rtxNum_ = rtxNum; }
+    void timestampRequest();
+    void timestampReply();
+
+private:
+    uint64_t requestTsUsec_, replyTsUsec_;
+    uint8_t rtxNum_;
+    Status status_;
+    NamespaceInfo namespaceInfo_;
+    boost::shared_ptr<const ndn::Interest> &interest_;
+    boost::shared_ptr<const ndn::Data> data_;
+    // boost::shared_ptr<ndn::Data> data_;
+};
+
+/**
+ * WireSegment acts as a wrapper for shared_ptr<ndn:Data> object which is app-
+ * and namespace-aware. I.e. it provides handy methods for retrieving variaous
+ * infomration from the packet and/or it's name. For example, class of sample
+ * can be retrieved from its' name by examining specific component to be either
  * "delta" or "key" or "meta", etc.
  */
 class WireSegment
@@ -661,7 +728,7 @@ class WireSegment
 
     /**
      * This returns a percentage of how much does this segment contributes to
-     * the whole packet. For normal data it will be 1/number_of_slices. For 
+     * the whole packet. For normal data it will be 1/number_of_slices. For
      * parity data it corresponds to parityWeight().
      * @see fec::parityWeight()
      */
@@ -678,7 +745,7 @@ class WireSegment
     const DataSegmentHeader header() const;
 
     /**
-     * Retrieves packet header from data only if it's a segment 0 
+     * Retrieves packet header from data only if it's a segment 0
      * (getSegNo() == 0) because only segment 0 contains packet header.
      * Operation is expensive as it copies data into temporary storage.
      * One may prefer to extract this information after the whole packet

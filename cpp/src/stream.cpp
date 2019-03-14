@@ -20,6 +20,7 @@
 #include "estimators.hpp"
 #include "fec.hpp"
 #include "name-components.hpp"
+#include "network-data.hpp"
 #include "proto/ndnrtc.pb.h"
 #include "video-codec.hpp"
 
@@ -32,15 +33,6 @@ using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
 namespace ndnrtc {
-
-    // TODO: move it into a separate file
-    class SegmentsManifest : public Data {
-    public:
-        SegmentsManifest(const Name&, const vector<boost::shared_ptr<Data>>& segments);
-
-        bool hasData(Data& d);
-    };
-
     class LiveMetadata
     {
       public:
@@ -146,44 +138,6 @@ namespace ndnrtc {
         boost::shared_ptr<Data> generateLatestPacket();
         boost::shared_ptr<Data> generateLivePacket();
     };
-}
-
-//******************************************************************************
-SegmentsManifest::SegmentsManifest(const Name& name,
-                                   const vector<boost::shared_ptr<Data>>& segments)
-   : Data(Name(name).append(NameComponents::NameComponentManifest))
-{
-    const size_t DigestSize = 32;
-    vector<uint8_t> payload(DigestSize*segments.size(), 0);
-    uint8_t *ptr = payload.data();
-
-    for (auto &d : segments)
-    {
-        Blob digest = (*d->getFullName())[-1].getValue();
-        assert(digest.size() == DigestSize);
-
-        copy(digest->begin(), digest->end(), ptr);
-        ptr += DigestSize;
-    }
-
-    setContent(payload);
-}
-
-bool
-SegmentsManifest::hasData(Data& d)
-{
-    Blob digest = (*d.getFullName())[-1].getValue();
-    const uint8_t *ptr = getContent().buf();
-
-    while (ptr - getContent().buf() < getContent().size())
-    {
-        Blob b(ptr, digest.size());
-        if (b.equals(digest))
-            return true;
-        ptr += digest.size();
-    }
-
-    return false;
 }
 
 //******************************************************************************
@@ -385,7 +339,7 @@ VideoStreamImpl2::addMeta()
     // only one meta per stream
     assert(!meta_);
 
-    meta_ = boost::make_shared<Data>(Name(getPrefix()).append(NameComponents::NameComponentMeta));
+    meta_ = boost::make_shared<Data>(Name(getPrefix()).append(NameComponents::Meta));
     meta_->getMetaInfo().setFreshnessPeriod(freshness_.meta_);
 
     StreamMeta meta;
@@ -448,7 +402,7 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
     for (int seg = 0; seg < nParitySegments; ++seg)
     {
         boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(frameName)
-            .append(NameComponents::NameComponentParity).appendSegment(seg));
+            .append(NameComponents::Parity).appendSegment(seg));
         d->getMetaInfo().setFreshnessPeriod(sampleFreshness);
         d->getMetaInfo().setFinalBlockId(parityFinalBlockId);
         d->setContent(slice, payloadSegmentSize);
@@ -461,7 +415,8 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
     LogTraceC << "▻▻▻ generated " << packets->size() << " segments ("
               << nDataSegments << " data " << nParitySegments << " parity)" << endl;
 
-    boost::shared_ptr<SegmentsManifest> manifest = boost::make_shared<SegmentsManifest>(frameName, *packets);
+    boost::shared_ptr<Data> manifest = SegmentsManifest::packManifest(Name(frameName).append(NameComponents::Manifest),
+                                                                     *packets);
     manifest->getMetaInfo().setFreshnessPeriod(sampleFreshness);
     sign(*manifest);
 
@@ -521,7 +476,7 @@ VideoStreamImpl2::generateFrameMeta(uint64_t nowMs,
     meta.set_type(ft == FrameType::Key ? FrameMeta_FrameType_Key : FrameMeta_FrameType_Delta);
     meta.set_generation_delay(0);
 
-    boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(frameName).append(NameComponents::NameComponentMeta));
+    boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(frameName).append(NameComponents::Meta));
 
     if (settings_.memCache_)
     {

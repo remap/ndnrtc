@@ -7,13 +7,60 @@
 
 #include "network-data.hpp"
 
+#include <ndn-cpp/c/common.h>
 #include <ndn-cpp/data.hpp>
 #include <ndn-cpp/interest.hpp>
 #include "fec.hpp"
 
-using namespace ndnrtc;
 using namespace std;
+using namespace ndn;
+using namespace ndnrtc;
 
+//******************************************************************************
+
+size_t SegmentsManifest::DigestSize = ndn_SHA256_DIGEST_SIZE;
+
+boost::shared_ptr<ndn::Data>
+SegmentsManifest::packManifest(const Name& n, const vector<boost::shared_ptr<Data>>& segments)
+{
+    boost::shared_ptr<Data> manifest = boost::make_shared<Data>(n);
+
+    vector<uint8_t> payload(DigestSize*segments.size(), 0);
+    uint8_t *ptr = payload.data();
+
+    for (auto &d : segments)
+    {
+        Blob digest = (*d->getFullName())[-1].getValue();
+        assert(digest.size() == DigestSize);
+
+        copy(digest->begin(), digest->end(), ptr);
+        ptr += DigestSize;
+    }
+
+    manifest->setContent(payload);
+    return manifest;
+}
+
+bool
+SegmentsManifest::hasData(const Data& manifest, const Data& d)
+{
+    Blob digest = (*d.getFullName())[-1].getValue();
+    const uint8_t *ptr = manifest.getContent().buf();
+
+    while (ptr - manifest.getContent().buf() < manifest.getContent().size())
+    {
+        Blob b(ptr, digest.size());
+        if (b.equals(digest))
+            return true;
+        ptr += digest.size();
+    }
+
+    return false;
+}
+
+
+//******************************************************************************
+// CODE BELOW IS DEPRECATED
 //******************************************************************************
 Manifest::Manifest(const std::vector<boost::shared_ptr<const ndn::Data>> &dataObjects)
     : DataPacket(std::vector<uint8_t>())
@@ -205,7 +252,7 @@ WireSegment::WireSegment(const boost::shared_ptr<ndn::Data> &data,
     {
         std::stringstream ss;
         ss << "Attempt to create wired data object with "
-           << "unsupported namespace API version: " << dataNameInfo_.apiVersion_ 
+           << "unsupported namespace API version: " << dataNameInfo_.apiVersion_
            << " (current version is " << NameComponents::nameApiVersion() << ")"
            << std::endl;
         throw std::runtime_error(ss.str());
@@ -266,13 +313,13 @@ bool WireSegment::isOriginal() const
     return header().interestNonce_ == *(uint32_t *)(interest_->getNonce().buf());
 }
 
-double 
+double
 WireSegment::getShareSize(unsigned int nDataSlices) const
 {
     return (dataNameInfo_.isParity_ ? fec::parityWeight() / (double)nDataSlices : 1 / (double)nDataSlices);
 }
 
-double 
+double
 WireSegment::getSegmentWeight() const
 {
     return (dataNameInfo_.isParity_ ? fec::parityWeight() : 1);
