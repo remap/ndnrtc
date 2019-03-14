@@ -153,7 +153,8 @@ runPublisher(string input,
             vector<boost::shared_ptr<Data>> framePackets = stream.processImage(ImageFormat::I420, imgData);
             // for (auto d:framePackets)
             //     LogDebug(AppLog) << "packet " << d->getName() << " : " << d->wireEncode().size() << " bytes" << endl;
-            if (AppLog != "")
+            if (AppLog != "" ||
+                (AppLog == "" && Logger::getLoggerPtr(AppLog)->getLogLevel() <= ndnlog::NdnLoggerDetailLevelDefault))
                 printStats(stream, framePackets);
         };
 
