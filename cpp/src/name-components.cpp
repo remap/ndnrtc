@@ -68,7 +68,8 @@ NamespaceInfo::reset()
     apiVersion_ = 0;
     streamName_ = "";
     streamTimestamp_ = 0;
-    hasSeqNo_ = hasSegNo_ = isGopStart_ = isGopEnd_ = hasVersion_ = false;
+    hasSeqNo_ = hasSegNo_ = isGopStart_ =
+        isGopEnd_ = hasVersion_ = isLiveMeta_ = isLatestPtr_ = false;
     segmentClass_ = SegmentClass::Unknown;
     sampleNo_ = 0;
     segNo_ = 0;
@@ -85,6 +86,73 @@ bool
 NamespaceInfo::isValidDataPrefix() const
 {
     return false;
+}
+
+Name
+NamespaceInfo::getPrefix(uint8_t filter) const
+{
+    // cout << bitset<8>(filter) << endl;
+    Name prefix;
+
+    if (filter & NameFilter::Base)
+        prefix.append(basePrefix_);
+    if (filter & (NameFilter::Library ^ NameFilter::Base))
+        prefix.append(NameComponents::App).appendVersion(apiVersion_);
+    if (filter & (NameFilter::Timestamp ^ NameFilter::Library))
+        prefix.appendTimestamp(streamTimestamp_);
+    if (filter & (NameFilter::Stream ^ NameFilter::Timestamp))
+        prefix.append(streamName_);
+
+    if (filter & (NameFilter::Sample ^ NameFilter::Stream))
+    {
+        if (hasSeqNo_)
+        {
+            if (isGopStart_ || isGopEnd_)
+                prefix.append(NameComponents::Gop);
+
+            prefix.appendSequenceNumber(sampleNo_);
+        }
+    }
+
+    if (filter & (NameFilter::Segment ^ NameFilter::Sample))
+    {
+        if (hasSegNo_)
+        {
+            if (segmentClass_ == SegmentClass::Parity)
+                prefix.append(NameComponents::Parity);
+            prefix.appendSegment(segNo_);
+        }
+        else
+        {
+            if (segmentClass_ == SegmentClass::Meta)
+                prefix.append(isLiveMeta_ ? NameComponents::Live : NameComponents::Meta);
+            if (segmentClass_ == SegmentClass::Manifest)
+                prefix.append(NameComponents::Manifest);
+            if (isLatestPtr_)
+                prefix.append(NameComponents::Latest);
+
+            if (hasVersion_)
+                prefix.appendVersion(version_);
+            if (isGopStart_)
+                prefix.append(NameComponents::GopStart);
+            if (isGopEnd_)
+                prefix.append(NameComponents::GopEnd);
+        }
+    }
+
+    return prefix;
+}
+
+Name
+NamespaceInfo::getPrefix(NameFilter filter) const
+{
+    return getPrefix(static_cast<uint8_t>(filter));
+}
+
+Name
+NamespaceInfo::getSuffix(NameFilter filter) const
+{
+    return getPrefix((uint8_t)(~static_cast<uint8_t>(filter) >> 1));
 }
 
 Name
@@ -301,8 +369,8 @@ NameComponents::extractInfo(const ndn::Name& name, NamespaceInfo& info)
         info.streamTimestamp_ = name[idx+2].toTimestamp();
         info.streamName_ = name[idx+3].toEscapedString();
 
-        info.hasSeqNo_ = info.hasSegNo_ =
-            info.isGopStart_ = info.isGopEnd_ = info.hasVersion_ = false;
+        info.hasSeqNo_ = info.hasSegNo_ = info.isLiveMeta_ = info.isGopStart_ =
+            info.isGopEnd_ = info.hasVersion_ = info.isLatestPtr_ = false;
         info.segmentClass_ = SegmentClass::Unknown;
         info.sampleNo_ = 0;
         info.segNo_ = 0;
@@ -324,6 +392,7 @@ NameComponents::extractInfo(const ndn::Name& name, NamespaceInfo& info)
                 } break;
 
                 case Filter::Live : {
+                    info.isLiveMeta_ = true;
                     info.segmentClass_ = SegmentClass::Meta;
                     if (suffix[-1].isVersion())
                     {
@@ -333,6 +402,7 @@ NameComponents::extractInfo(const ndn::Name& name, NamespaceInfo& info)
                 } break;
 
                 case Filter::Latest : {
+                    info.isLatestPtr_ = true;
                     info.segmentClass_ = SegmentClass::Pointer;
                     if (suffix[-1].isVersion())
                     {

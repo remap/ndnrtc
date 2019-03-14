@@ -12,6 +12,7 @@
 #define libndnrtc_ndnrtc_name_components_h
 
 #include <string>
+#include <type_traits>
 #include <ndn-cpp/name.hpp>
 
 #include "params.hpp"
@@ -44,6 +45,45 @@ namespace ndnrtc {
         } SuffixFilter;
     }
 
+    enum class NameFilter : uint8_t {
+        Base = 1<<0,
+        Library = 1<<1|Base,
+        Timestamp = 1<<2|Library,
+        Stream = 1<<3|Timestamp,
+        Sample = 1<<4|Stream,
+        Segment = 1<<5|Sample
+    };
+
+    inline uint8_t operator & (NameFilter f1, NameFilter f2)
+    {
+        using T = std::underlying_type <NameFilter>::type;
+        return static_cast<uint8_t>(static_cast<T>(f1) & static_cast<T>(f2));
+    }
+
+    inline uint8_t operator & (NameFilter f1, uint8_t f2)
+    {
+        using T = std::underlying_type <NameFilter>::type;
+        return static_cast<uint8_t>(static_cast<T>(f1) & f2);
+    }
+
+    inline uint8_t operator & (uint8_t f2, NameFilter f1)
+    {
+        using T = std::underlying_type <NameFilter>::type;
+        return static_cast<uint8_t>(static_cast<T>(f1) & f2);
+    }
+
+    inline uint8_t operator ^ (NameFilter f1, NameFilter f2)
+    {
+        using T = std::underlying_type <NameFilter>::type;
+        return static_cast<uint8_t>(static_cast<T>(f1) ^ static_cast<T>(f2));
+    }
+
+    inline NameFilter operator | (NameFilter f1, NameFilter f2)
+    {
+        using T = std::underlying_type <NameFilter>::type;
+        return static_cast<NameFilter>(static_cast<T>(f1) | static_cast<T>(f2));
+    }
+
     enum class SampleClass {
         Unknown,
         Key,
@@ -74,7 +114,8 @@ namespace ndnrtc {
         std::string streamName_;
         uint64_t streamTimestamp_;
 
-        bool hasSeqNo_, hasSegNo_, isGopStart_, isGopEnd_, hasVersion_;
+        bool hasSeqNo_, hasSegNo_, isGopStart_, isGopEnd_,
+            hasVersion_, isLiveMeta_, isLatestPtr_;
         SegmentClass segmentClass_;
         PacketNumber sampleNo_;
         unsigned int segNo_;
@@ -82,11 +123,9 @@ namespace ndnrtc {
 
         void reset();
 
-        ndn::Name getPrefix(int filter = (prefix_filter::Segment)) const;
-        ndn::Name getSuffix(int filter = (suffix_filter::Segment)) const;
+        ndn::Name getPrefix(NameFilter filter = NameFilter::Segment) const;
+        ndn::Name getSuffix(NameFilter filter = NameFilter::Base) const;
 
-        bool isValidInterestPrefix() const;
-        bool isValidDataPrefix() const;
 
         // BELOW ARE DEPRECATED MEMBERS
         bool isMeta_ DEPRECATED;
@@ -96,6 +135,14 @@ namespace ndnrtc {
         bool isDelta_ DEPRECATED;
         SampleClass class_ DEPRECATED;
         unsigned int segmentVersion_ DEPRECATED;
+
+        ndn::Name getPrefix(int filter = (prefix_filter::Segment)) const DEPRECATED;
+        ndn::Name getSuffix(int filter = (suffix_filter::Segment)) const DEPRECATED;
+        bool isValidInterestPrefix() const DEPRECATED;
+        bool isValidDataPrefix() const DEPRECATED;
+
+    private:
+        ndn::Name getPrefix(uint8_t filter) const;
     };
 
     class NameComponents {
