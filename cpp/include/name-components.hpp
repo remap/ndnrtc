@@ -65,43 +65,49 @@ namespace ndnrtc {
      */
     class NamespaceInfo {
     public:
-        NamespaceInfo():apiVersion_(0), isMeta_(false), isParity_(false),
+        NamespaceInfo() : apiVersion_(0), isMeta_(false), isParity_(false),
             isDelta_(false), hasSeqNo_(false), class_(SampleClass::Unknown),
             segmentClass_(SegmentClass::Unknown), sampleNo_(0), segNo_(0), segmentVersion_(0){}
 
         ndn::Name basePrefix_;
         unsigned int apiVersion_;
-        MediaStreamParams::MediaStreamType streamType_;
-        std::string streamName_, threadName_;
-        bool isMeta_, isParity_, isDelta_, hasSeqNo_, hasSegNo_;
-        SampleClass class_;
+        std::string streamName_;
+        uint64_t streamTimestamp_;
+
+        bool hasSeqNo_, hasSegNo_;
         SegmentClass segmentClass_;
         PacketNumber sampleNo_;
         unsigned int segNo_;
-        unsigned int segmentVersion_;
-        uint64_t streamTimestamp_;
+
+        void reset();
 
         ndn::Name getPrefix(int filter = (prefix_filter::Segment)) const;
         ndn::Name getSuffix(int filter = (suffix_filter::Segment)) const;
+
+        bool isValidInterestPrefix() const;
+        bool isValidDataPrefix() const;
+
+        // BELOW ARE DEPRECATED MEMBERS
+        bool isMeta_ DEPRECATED;
+        bool isParity_ DEPRECATED;
+        MediaStreamParams::MediaStreamType streamType_ DEPRECATED;
+        std::string threadName_ DEPRECATED;
+        bool isDelta_ DEPRECATED;
+        SampleClass class_ DEPRECATED;
+        unsigned int segmentVersion_ DEPRECATED;
     };
 
     class NameComponents {
     public:
-        static const std::string NameComponentApp;
-        static const std::string NameComponentAudio;
-        static const std::string NameComponentVideo;
-        static const std::string NameComponentMeta;
-        static const std::string NameComponentDelta;
-        static const std::string NameComponentKey;
-        static const std::string NameComponentParity;
-        static const std::string NameComponentManifest;
-        static const std::string NameComponentRdrLatest;
-
+        static const std::string App;
+        static const std::string Meta;
         static const std::string Latest;
         static const std::string Live;
         static const std::string Gop;
         static const std::string GopEnd;
         static const std::string GopStart;
+        static const std::string Manifest;
+        static const std::string Parity;
 
         static std::string
         fullVersion();
@@ -113,15 +119,30 @@ namespace ndnrtc {
         ndnrtcSuffix();
 
         static ndn::Name
-        streamPrefix(MediaStreamParams::MediaStreamType type, std::string basePrefix);
-
-        static ndn::Name
-        audioStreamPrefix(std::string basePrefix);
-
-        static ndn::Name
-        videoStreamPrefix(std::string basePrefix);
+        streamPrefix(std::string basePrefix, std::string streamName);
 
         static bool extractInfo(const ndn::Name& name, NamespaceInfo& info);
+
+        // BELOW ARE DEPRECATED MEMBERS
+        static const std::string NameComponentApp DEPRECATED;
+        static const std::string NameComponentAudio DEPRECATED;
+        static const std::string NameComponentVideo DEPRECATED;
+        static const std::string NameComponentMeta DEPRECATED;
+        static const std::string NameComponentDelta DEPRECATED;
+        static const std::string NameComponentKey DEPRECATED;
+        static const std::string NameComponentParity DEPRECATED;
+        static const std::string NameComponentManifest DEPRECATED;
+        static const std::string NameComponentRdrLatest DEPRECATED;
+
+        static ndn::Name
+        streamPrefix(MediaStreamParams::MediaStreamType type, std::string basePrefix) DEPRECATED;
+
+        static ndn::Name
+        audioStreamPrefix(std::string basePrefix) DEPRECATED;
+
+        static ndn::Name
+        videoStreamPrefix(std::string basePrefix) DEPRECATED;
+
     };
 }
 

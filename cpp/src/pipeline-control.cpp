@@ -6,14 +6,65 @@
 //
 
 #include "pipeline-control.hpp"
+
 #include <boost/assign.hpp>
 
 #include "interest-control.hpp"
 #include "pipeline-control-state-machine.hpp"
 #include "frame-data.hpp"
 
+using namespace std;
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
+
+namespace ndnrtc {
+namespace v4 {
+
+PipelineControl::PipelineControl(uint32_t w)
+    : wSize_(w)
+    , pulseCount_(0)
+    , nOutstanding_(0)
+{
+    description_ = "pipeline-control";
+}
+
+PipelineControl::~PipelineControl()
+{
+
+}
+
+void
+PipelineControl::reset()
+{
+    pulseCount_ = 0;
+    nOutstanding_ = 0;
+}
+
+void
+PipelineControl::pulse()
+{
+    if (pulseCount_ != 0) nOutstanding_ --;
+
+    bool skip = true;
+    while (nOutstanding_ < wSize_)
+    {
+        skip = false;
+        nOutstanding_++;
+        onNewRequest();
+    }
+
+    if (skip) onSkipPulse();
+    pulseCount_++;
+}
+
+uint32_t
+PipelineControl::getNumOutstanding() const
+{
+    return nOutstanding_;
+}
+
+}
+}
 
 //******************************************************************************
 PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name &threadPrefix,
@@ -134,7 +185,7 @@ void PipelineControl::segmentArrived(const boost::shared_ptr<WireSegment> &s)
     }
 }
 
-void PipelineControl::segmentRequestTimeout(const NamespaceInfo &n, 
+void PipelineControl::segmentRequestTimeout(const NamespaceInfo &n,
                                             const boost::shared_ptr<const ndn::Interest> &interest)
 {
     machine_.dispatch(boost::make_shared<EventTimeout>(n, interest));

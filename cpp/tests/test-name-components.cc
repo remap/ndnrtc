@@ -1,4 +1,4 @@
-// 
+//
 // test-name-components.cc
 //
 //  Created by Peter Gusev on 22 April 2016.
@@ -15,7 +15,52 @@ using namespace ndnrtc;
 using namespace std;
 using namespace ndn;
 
-#if 1
+TEST(TestNameComponents, TestStaticMethods)
+{
+	EXPECT_EQ(NameComponents::fullVersion(), "v4.0.0");
+	EXPECT_EQ(NameComponents::nameApiVersion(), 4);
+	EXPECT_EQ(NameComponents::ndnrtcSuffix(), Name("ndnrtc/%FD%04"));
+
+	Name streamPrefix = NameComponents::streamPrefix("/my/base/prefix", "mystream");
+	EXPECT_EQ(streamPrefix[-1].toEscapedString(), "mystream");
+	EXPECT_EQ(streamPrefix.getPrefix(-4).toUri(), "/my/base/prefix");
+	EXPECT_EQ(streamPrefix.getSubName(-4, 2), Name("ndnrtc/%FD%04"));
+	EXPECT_TRUE(streamPrefix[-2].isTimestamp());
+}
+
+TEST(TestNameComponents, TestNamespaceInfoExtraction)
+{
+	Name basePrefix("/my/base/prefix");
+	string streamName = "mystream";
+	NamespaceInfo ninfo;
+
+	// stream prefix
+	Name n1 = Name(basePrefix).append("ndnrtc").appendVersion(4).appendTimestamp(0).append(streamName);
+	EXPECT_TRUE(NameComponents::extractInfo(n1, ninfo));
+
+	ninfo.reset();
+	// stream meta
+	Name n2 = Name(n1).append("_meta");
+	// stream live meta
+	Name n3 = Name(n1).append("_live").appendVersion(0);
+	// stream latest pointer
+	Name n4 = Name(n1).append("_latest").appendVersion(0);
+	// stream gop
+	Name n5 = Name(n1).append("_gop").appendSequenceNumber(0).append("start");
+	Name n6 = Name(n1).append("_gop").appendSequenceNumber(0).append("end");
+	// frame
+	Name n7 = Name(n1).appendSequenceNumber(0);
+	// frame meta
+	Name n8 = Name(n7).append("_meta");
+	// frame manifest
+	Name n9 = Name(n7).append("_manifest");
+	// frame data
+	Name n10 = Name(n7).appendSegment(0);
+	// frame parity
+	Name n11 = Name(n7).append("_parity").appendSegment(0);
+}
+
+#if 0
 TEST(TestNameComponents, TestNameFiltering)
 {
 	{
@@ -260,7 +305,7 @@ TEST(TestNameComponents, TestNameFiltering)
     }
 }
 #endif
-#if 1
+#if 0
 TEST(TestNameComponents, TestPrefixFiltering)
 {
 	using namespace prefix_filter;
@@ -373,7 +418,7 @@ TEST(TestNameComponents, TestPrefixFiltering)
 	}
 }
 #endif
-#if 1
+#if 0
 TEST(TestNameComponents, TestSuffixFiltering)
 {
 	using namespace suffix_filter;

@@ -1,4 +1,4 @@
-// 
+//
 // validator.hpp
 //
 //  Created by Peter Gusev on 05 April 2016.
@@ -24,39 +24,40 @@ namespace ndnrtc {
 
     class ValidationErrorInfo {
     public:
-        ValidationErrorInfo(const boost::shared_ptr<const ndn::Data>& data, 
+        ValidationErrorInfo(const boost::shared_ptr<const ndn::Data>& data,
                             const std::string reason = ""):
             failedData_(data), reason_(reason){}
-    
-        boost::shared_ptr<const ndn::Data> getData() const 
+
+        boost::shared_ptr<const ndn::Data> getData() const
         { return failedData_; }
-        const std::string& getReason() const 
+        const std::string& getReason() const
         { return reason_; }
-    
+
     private:
         std::string reason_;
         boost::shared_ptr<const ndn::Data> failedData_;
     };
-
+#if 0
     template<typename KeyChainType>
     class DataValidator : public ndnlog::new_api::ILoggingObject
     {
     public:
         DataValidator(KeyChainType* keyChain, ISlotBuffer* buffer);
         ~DataValidator();
-        
+
         void validate(const boost::shared_ptr<ndn::Data>& data);
-        
+
     private:
         KeyChainType* keyChain_;
         ISlotBuffer* buffer_;
 
         void onVerifySuccess(const boost::shared_ptr<ndn::Data>& data);
-        void onVerifyFailure(const boost::shared_ptr<ndn::Data>& data, 
+        void onVerifyFailure(const boost::shared_ptr<ndn::Data>& data,
             const std::string& reason);
-        
+
         void markBufferData(const boost::shared_ptr<ndn::Data>& data, bool verified);
 	};
+#endif
 };
 
 #endif

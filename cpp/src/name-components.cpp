@@ -17,6 +17,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "name-components.hpp"
+#include "clock.hpp"
 
 using namespace std;
 using namespace ndnrtc;
@@ -32,13 +33,42 @@ const string NameComponents::NameComponentParity = "_parity";
 const string NameComponents::NameComponentManifest = "_manifest";
 const string NameComponents::NameComponentRdrLatest = "_latest";
 
+const string NameComponents::App = "ndnrtc";
+const string NameComponents::Meta = "_meta";
 const string NameComponents::Latest = "_latest";
 const string NameComponents::Live = "_live";
 const string NameComponents::Gop = "_gop";
 const string NameComponents::GopEnd = "end";
 const string NameComponents::GopStart = "start";
+const string NameComponents::Manifest = "_manifest";
+const string NameComponents::Parity = "_parity";
 
 #include <bitset>
+
+void
+NamespaceInfo::reset()
+{
+    basePrefix_ = Name();
+    apiVersion_ = 0;
+    streamName_ = "";
+    streamTimestamp_ = 0;
+    hasSeqNo_ = hasSegNo_ = false;
+    segmentClass_ = SegmentClass::Unknown;
+    sampleNo_ = 0;
+    segNo_ = 0;
+}
+
+bool
+NamespaceInfo::isValidInterestPrefix() const
+{
+    return false;
+}
+
+bool
+NamespaceInfo::isValidDataPrefix() const
+{
+    return false;
+}
 
 Name
 NamespaceInfo::getPrefix(int filter) const
@@ -167,6 +197,15 @@ Name
 NameComponents::ndnrtcSuffix()
 {
     return Name(NameComponentApp).appendVersion(nameApiVersion());
+}
+
+Name
+NameComponents::streamPrefix(string basePrefix, string streamName)
+{
+    return Name(basePrefix)
+            .append(ndnrtcSuffix())
+            .appendTimestamp(clock::millisecondTimestamp())
+            .append(streamName);
 }
 
 Name

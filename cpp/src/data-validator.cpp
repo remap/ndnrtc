@@ -1,10 +1,10 @@
-// 
+//
 // validator.cpp
 //
 //  Created by Peter Gusev on 05 April 2016.
 //  Copyright 2013-2016 Regents of the University of California
 //
-
+#if 0
 #include "data-validator.hpp"
 
 #include <ndn-cpp/data.hpp>
@@ -49,7 +49,7 @@ template<typename KeyChainType>
 void DataValidator<KeyChainType>::onVerifyFailure(const boost::shared_ptr<ndn::Data>& data,
     const std::string& reason)
 {
-    LogDebugC << "failed to verify data() " << data->getName().toUri() << "): " 
+    LogDebugC << "failed to verify data() " << data->getName().toUri() << "): "
         << reason << std::endl;
     markBufferData(data, false);
 }
@@ -70,3 +70,4 @@ void DataValidator<KeyChainType>::markBufferData(const boost::shared_ptr<ndn::Da
 
 // template instantiation for ndn::KeyChain
 template class ndnrtc::DataValidator<KeyChain>;
+#endif
