@@ -19,6 +19,9 @@
 #include <string.h>
 #include <iomanip>
 
+#define GTEST_CLASS(test_case_name, test_name)\
+test_case_name##_##test_name##_Test
+
 namespace ndnrtc {
     namespace test {
         /**

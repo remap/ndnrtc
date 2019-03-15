@@ -12,11 +12,15 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
+#include <boost/signals2.hpp>
 #include <ndn-cpp/data.hpp>
 
+#include "ndnrtc-debug.hpp"
 #include "ndnrtc-common.hpp"
 #include "name-components.hpp"
 #include "params.hpp"
+
+class GTEST_CLASS(TestNewtorkData, TestDataRequest);
 
 namespace ndn
 {
@@ -26,10 +30,100 @@ class Data;
 namespace ndnrtc
 {
 
+class InterestQueue;
+
 namespace packets {
     class BasePacket;
 }
 
+/**
+ * DataRequest class is an abstraction for interest-data exchange.
+ */
+class SegmentsManifest {
+public:
+    static size_t DigestSize;
+
+    static boost::shared_ptr<ndn::Data>
+        packManifest(const ndn::Name&,
+                     const std::vector<boost::shared_ptr<ndn::Data>>& segments);
+    static bool hasData(const ndn::Data& manifest, const ndn::Data& d);
+};
+
+class DataRequest;
+typedef std::function<void(const DataRequest&)> OnRequestUpdate;
+typedef boost::signals2::signal<void(const DataRequest&)> RequestTrigger;
+typedef boost::signals2::connection RequestTriggerConnection;
+
+/**
+ * DataRequest class is an abstraction for interest-data exchange.
+ */
+class DataRequest {
+public:
+    enum class Status {
+        Created,
+        Expressed,
+        Timeout,
+        AppNack,
+        NetworkNack,
+        Data
+    };
+
+    DataRequest(const boost::shared_ptr<const ndn::Interest> &interest);
+    // DataRequest(const boost::shared_ptr<ndn::Data> &data,
+    //             const boost::shared_ptr<const ndn::Interest> &interest);
+
+    Status getStatus() const { return status_; }
+    const NamespaceInfo& getNamespaceInfo() const { return namespaceInfo_; }
+
+    boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
+    boost::shared_ptr<const ndn::Data> getData() const { return data_; }
+
+    int64_t getDrdUsec() const { (replyTsUsec_ ? replyTsUsec_ - requestTsUsec_ : -1); }
+    uint64_t getRequestTimestampUsec() const { requestTsUsec_; }
+    uint64_t getReplyTimestampUsec() const { replyTsUsec_; }
+
+    size_t getRtxNum() const { return rtxNum_; }
+    size_t getTimeoutNum() const { return timeoutNum_; }
+    size_t getNetworkNackNum() const { return netwNackNum_; }
+    size_t getAppNackNum() const { return appNackNum_; }
+
+    const boost::shared_ptr<const packets::BasePacket>& getNdnrtcPacket() const
+        { return packet_; }
+
+    RequestTriggerConnection subscribe(Status, OnRequestUpdate);
+
+protected:
+    friend InterestQueue;
+    friend class ::GTEST_CLASS(TestNewtorkData, TestDataRequest);
+
+    size_t rtxNum_, timeoutNum_, netwNackNum_, appNackNum_;
+
+    void setStatus(Status s) { status_ = s; }
+    void triggerEvent(Status s);
+    void timestampRequest();
+    void timestampReply();
+
+    void setData(const boost::shared_ptr<const ndn::Data>& data);
+
+    RequestTrigger onExpressed_;
+    RequestTrigger onData_;
+    RequestTrigger onTimeout_;
+    RequestTrigger onNetworkNack_;
+    RequestTrigger onAppNack_;
+
+private:
+    uint64_t requestTsUsec_, replyTsUsec_;
+
+    Status status_;
+    NamespaceInfo namespaceInfo_;
+    boost::shared_ptr<const ndn::Interest> interest_;
+    boost::shared_ptr<const ndn::Data> data_;
+    boost::shared_ptr<const packets::BasePacket> packet_;
+};
+
+//*****************************************************************************
+// CODE BELOW IS DEPRECATED
+//*****************************************************************************
 struct Mutable
 {
     typedef std::vector<uint8_t> storage;
@@ -621,70 +715,6 @@ class MediaStreamMeta : public DataPacket
     std::vector<std::string> getSyncStreams() const;
     std::vector<std::string> getThreads() const;
     uint64_t getStreamTimestamp() const;
-};
-
-//******************************************************************************
-/**
- * DataRequest class is an abstraction for interest-data exchange.
- */
-class SegmentsManifest {
-public:
-    static size_t DigestSize;
-
-    static boost::shared_ptr<ndn::Data>
-        packManifest(const ndn::Name&,
-                     const std::vector<boost::shared_ptr<ndn::Data>>& segments);
-    static bool hasData(const ndn::Data& manifest, const ndn::Data& d);
-};
-
-/**
- * DataRequest class is an abstraction for interest-data exchange.
- */
-class DataRequest {
-public:
-    enum class Status {
-        Created,
-        Sent,
-        ResponseTimeout,
-        ResponseAppNack,
-        ResponseNetworkNack,
-        RepsonseData
-    };
-
-    DataRequest(const boost::shared_ptr<const ndn::Interest> &interest);
-    DataRequest(const boost::shared_ptr<ndn::Data> &data,
-                const boost::shared_ptr<const ndn::Interest> &interest);
-
-
-    Status getStatus() const { return status_; }
-    const NamespaceInfo& getNamespaceInfo() const { return namespaceInfo_; }
-
-    boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
-    boost::shared_ptr<const ndn::Data> getData() const { return data_; }
-
-    int64_t getDrdUsec() const { (replyTsUsec_ ? replyTsUsec_ - requestTsUsec_ : -1); }
-    uint64_t getRequestTimestampUsec() const { requestTsUsec_; }
-    uint64_t getReplyTimestampUsec() const { replyTsUsec_; }
-
-    uint8_t getRtxNum() const { return rtxNum_; }
-
-    const boost::shared_ptr<packets::BasePacket>& getNdnrtcPacket() const;
-
-protected:
-    // friend InterestQueue;
-
-    uint8_t setRtxNum(uint8_t rtxNum) { rtxNum_ = rtxNum; }
-    void timestampRequest();
-    void timestampReply();
-
-private:
-    uint64_t requestTsUsec_, replyTsUsec_;
-    uint8_t rtxNum_;
-    Status status_;
-    NamespaceInfo namespaceInfo_;
-    boost::shared_ptr<const ndn::Interest> &interest_;
-    boost::shared_ptr<const ndn::Data> data_;
-    // boost::shared_ptr<ndn::Data> data_;
 };
 
 /**

@@ -10,13 +10,14 @@
 #include <ndn-cpp/c/common.h>
 #include <ndn-cpp/data.hpp>
 #include <ndn-cpp/interest.hpp>
+
 #include "fec.hpp"
+#include "clock.hpp"
+#include "packets.hpp"
 
 using namespace std;
 using namespace ndn;
 using namespace ndnrtc;
-
-//******************************************************************************
 
 size_t SegmentsManifest::DigestSize = ndn_SHA256_DIGEST_SIZE;
 
@@ -58,6 +59,86 @@ SegmentsManifest::hasData(const Data& manifest, const Data& d)
     return false;
 }
 
+DataRequest::DataRequest(const boost::shared_ptr<const Interest>& interest)
+: interest_(interest)
+, requestTsUsec_(0)
+, replyTsUsec_(0)
+, rtxNum_(0)
+, status_(Status::Created)
+{
+    if (!NameComponents::extractInfo(interest->getName(), namespaceInfo_))
+        throw runtime_error("error creating DataRequest: failed to extract"
+                            " NamespaceInfo from interest name");
+}
+
+RequestTriggerConnection
+DataRequest::subscribe(Status s, OnRequestUpdate onRequestUpdate)
+{
+    RequestTriggerConnection c;
+
+    switch (s) {
+        case Status::Expressed: c = onExpressed_.connect(onRequestUpdate); break;
+        case Status::Timeout: c = onTimeout_.connect(onRequestUpdate); break;
+        case Status::AppNack: c = onAppNack_.connect(onRequestUpdate); break;
+        case Status::NetworkNack: c = onNetworkNack_.connect(onRequestUpdate); break;
+        case Status::Data: c = onData_.connect(onRequestUpdate); break;
+        default: break;
+    }
+
+    return c;
+}
+
+void
+DataRequest::triggerEvent(Status s)
+{
+    switch (s) {
+        case Status::Expressed: {
+            onExpressed_(*this);
+        } break;
+
+        case Status::Timeout: {
+            onTimeout_(*this);
+        } break;
+
+        case Status::NetworkNack: {
+            onNetworkNack_(*this);
+        } break;
+
+        case Status::AppNack : {
+            onAppNack_(*this);
+        } break;
+
+        case Status::Data : {
+            onData_(*this);
+        } break;
+
+        default : break;
+    }
+}
+
+void
+DataRequest::timestampRequest()
+{
+    requestTsUsec_ = clock::microsecondTimestamp();
+}
+
+void
+DataRequest::timestampReply()
+{
+    replyTsUsec_ = clock::microsecondTimestamp();
+}
+
+void
+DataRequest::setData(const boost::shared_ptr<const Data>& data)
+{
+    if (!interest_->getName().isPrefixOf(data->getName()))
+        throw runtime_error("DataRequest::setData: interest name is not a "
+                            "prefix of data name");
+
+    data_ = data;
+    NameComponents::extractInfo(data->getName(), namespaceInfo_);
+    packet_ = packets::BasePacket::ndnrtcPacketFromRequest(*this);
+}
 
 //******************************************************************************
 // CODE BELOW IS DEPRECATED

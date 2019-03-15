@@ -264,7 +264,7 @@ ClientParams sampleProducerParams()
 
     return cp;
 }
-
+#if 0
 WebRtcVideoFrame getFrame(int w, int h, bool randomNoise)
 {
     int width = w, height = h;
@@ -330,7 +330,7 @@ bool checkVideoFrame(const webrtc::EncodedImage &image)
 {
     bool identical = true;
     uint8_t *buf;
-    webrtc::EncodedImage ref = encodedImage(image._length, buf, (image._frameType == webrtc::kVideoFrameDelta));
+    webrtc::EncodedImage ref; // = encodedImage(image._length, buf, (image._frameType == webrtc::kVideoFrameDelta));
 
     identical = (image._encodedWidth == ref._encodedWidth) &&
                 (image._encodedHeight == ref._encodedHeight) &&
@@ -346,6 +346,7 @@ bool checkVideoFrame(const webrtc::EncodedImage &image)
     free(buf);
     return identical;
 }
+#endif
 
 VideoFramePacket getVideoFramePacket(size_t frameLen, double rate, int64_t pubTs,
                                      int64_t pubUts)
@@ -357,7 +358,7 @@ VideoFramePacket getVideoFramePacket(size_t frameLen, double rate, int64_t pubTs
 
     uint8_t *buffer;
 
-    webrtc::EncodedImage frame = encodedImage(frameLen, buffer);
+    webrtc::EncodedImage frame; // = encodedImage(frameLen, buffer);
 
     VideoFramePacket vp(frame);
     std::map<std::string, PacketNumber> syncList = boost::assign::map_list_of("hi", 341)("mid", 433)("low", 432);

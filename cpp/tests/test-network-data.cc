@@ -9,15 +9,179 @@
 #include <ctime>
 #include <boost/move/move.hpp>
 #include <boost/assign.hpp>
-#include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
+
+#include <ndn-cpp/face.hpp>
 #include <ndn-cpp/digest-sha256-signature.hpp>
 #include <ndn-cpp/name.hpp>
 
+#include <gtest/gtest.h>
+#include <gtest/gtest_prod.h>
+#include <gmock/gmock.h>
 #include "tests-helpers.hpp"
-#include "gtest/gtest.h"
-#include "src/frame-data.hpp"
 
+#include "src/proto/ndnrtc.pb.h"
+#include "src/network-data.hpp"
+#include "src/clock.hpp"
+#include "src/packets.hpp"
+
+using namespace std;
+using namespace ndn;
 using namespace ndnrtc;
+
+using ::testing::Invoke;
+using ::testing::_;
+
+class FaceStub {
+public:
+    MOCK_METHOD2(onData, void(const boost::shared_ptr<const Interest>& interest,
+                 const boost::shared_ptr<Data>& data));
+    MOCK_METHOD1(onTimeout, void(const boost::shared_ptr<const Interest>& interest));
+    MOCK_METHOD2(onNack, void(const boost::shared_ptr<const Interest>& interest,
+                 const boost::shared_ptr<NetworkNack>& networkNack));
+    MOCK_METHOD5(onInterest, void(const boost::shared_ptr<const Name>& prefix,
+                 const boost::shared_ptr<const Interest>& interest, Face& face,
+                 uint64_t interestFilterId,
+                 const boost::shared_ptr<const InterestFilter>& filter));
+    MOCK_METHOD1(onRegisterFailure, void(const boost::shared_ptr<const Name>& prefix));
+    MOCK_METHOD2(onRegisterSuccess, void(const boost::shared_ptr<const Name>& prefix,
+                 uint64_t registeredPrefixId));
+};
+
+class DataRequestObserver {
+public:
+    MOCK_METHOD1(onUpdate, void(const DataRequest&));
+};
+
+StreamMeta sampleStreamMeta()
+{
+    StreamMeta meta;
+    meta.set_bitrate(2000);
+    meta.set_description("stream description");
+    meta.set_gop_size(30);
+    meta.set_width(1920);
+    meta.set_height(1080);
+    return meta;
+}
+
+boost::shared_ptr<Data> sampleStreamMetaData(const Name& streamPrefix)
+{
+    boost::shared_ptr<Data> data = boost::make_shared<Data>(Name(streamPrefix).append(NameComponents::Meta));
+    StreamMeta meta = sampleStreamMeta();
+    string s = meta.SerializeAsString();
+    data->setContent(Blob::fromRawStr(s));
+    return data;
+}
+
+TEST(TestNewtorkData, TestDataRequest)
+{
+    if (!checkNfd()) return;
+
+    string basePrefix("/my/base/prefix");
+    Name stream = NameComponents::streamPrefix(basePrefix, "mystream");
+    KeyChain kc;
+    Face pFace;
+    Face cFace;
+    FaceStub faceStub;
+    boost::shared_ptr<Data> dataReply = sampleStreamMetaData(stream);
+
+    // --------------------------------------------------------------------------------------------
+    // MOCK PRODUCER SIDE
+    pFace.setCommandSigningInfo(kc, kc.getDefaultCertificateName());
+    pFace.registerPrefix(basePrefix,
+        bind(&FaceStub::onInterest, &faceStub, _1, _2, _3, _4, _5),
+        bind(&FaceStub::onRegisterFailure, &faceStub, _1),
+        bind(&FaceStub::onRegisterSuccess, &faceStub, _1, _2));
+
+    bool prefixRegistered = false;
+    EXPECT_CALL(faceStub, onRegisterSuccess(_,_))
+    .Times(1)
+    .WillOnce(Invoke([&](const boost::shared_ptr<const Name>&,
+                         uint64_t){
+        prefixRegistered = true;
+    }));
+    EXPECT_CALL(faceStub, onRegisterFailure(_))
+        .Times(0);
+    EXPECT_CALL(faceStub, onInterest(_,_,_,_,_))
+        .WillRepeatedly(Invoke([&](const boost::shared_ptr<const Name>& prefix,
+                               const boost::shared_ptr<const Interest>& interest, Face& face,
+                               uint64_t interestFilterId,
+                               const boost::shared_ptr<const InterestFilter>& filter)
+                           {
+                               face.putData(*dataReply);
+                           }));
+    
+    int delay = 3000;
+    int64_t start = clock::millisecondTimestamp();
+    while (!prefixRegistered && clock::millisecondTimestamp() - start < delay)
+    {
+        pFace.processEvents();
+        usleep(10);
+    }
+    
+    // --------------------------------------------------------------------------------------------
+    // 1/2: MOCK CONSUMER REQUEST PROCESSING MODULE (DataRequestQ or InterestQueue)
+    bool expressedRequest = false;
+    // express request routine
+    auto expressRequest = [&expressedRequest, &faceStub](Face& f, DataRequest& dr){
+        f.expressInterest(*dr.getInterest(),
+                          bind(&FaceStub::onData, &faceStub, _1, _2),
+                          bind(&FaceStub::onTimeout, &faceStub, _1),
+                          bind(&FaceStub::onNack, &faceStub, _1, _2)
+                          );
+        dr.timestampRequest();
+        dr.setStatus(DataRequest::Status::Expressed);
+        dr.triggerEvent(DataRequest::Status::Expressed);
+        expressedRequest = true;
+    };
+    
+    // --------------------------------------------------------------------------------------------
+    // TEST DataRequest
+    boost::shared_ptr<Interest> i = boost::make_shared<Interest>(Name(stream).append(NameComponents::Meta));
+    DataRequest dr(i);
+    DataRequestObserver dro;
+    bool receivedReply = false;
+    
+    dr.subscribe(DataRequest::Status::Expressed, bind(&DataRequestObserver::onUpdate, &dro, _1));
+    dr.subscribe(DataRequest::Status::Data, bind(&DataRequestObserver::onUpdate, &dro, _1));
+
+    EXPECT_CALL(dro, onUpdate(_))
+        .Times(2)
+        .WillOnce(Invoke([](const DataRequest& dr){
+            EXPECT_EQ(dr.getStatus(), DataRequest::Status::Expressed);
+        }))
+        .WillOnce(Invoke([](const DataRequest& dr){
+            EXPECT_EQ(dr.getStatus(), DataRequest::Status::Data);
+            EXPECT_TRUE(dr.getData());
+            EXPECT_TRUE(boost::dynamic_pointer_cast<const packets::Meta>(dr.getNdnrtcPacket()));
+        }));
+    EXPECT_CALL(faceStub, onNack(_,_))
+        .Times(0);
+    EXPECT_CALL(faceStub, onTimeout(_))
+        .Times(0);
+    EXPECT_CALL(faceStub, onData(_,_))
+        .Times(1)
+        .WillOnce(Invoke([&](const boost::shared_ptr<const Interest>& interest,
+                     const boost::shared_ptr<Data>& data)
+        {
+            dr.timestampReply();
+            dr.setData(data);
+            dr.setStatus(DataRequest::Status::Data);
+            dr.triggerEvent(DataRequest::Status::Data);
+            receivedReply = true;
+        }));
+    
+    // --------------------------------------------------------------------------------------------
+    // 2/2: MOCK CONSUMER REQUEST PROCESSING MODULE
+    expressRequest(cFace, dr);
+    start = clock::millisecondTimestamp();
+    do {
+        pFace.processEvents();
+        cFace.processEvents();
+        usleep(10);
+    } while (clock::millisecondTimestamp() - start < delay && !receivedReply);
+}
+
+#if 0
 
 class DataPacketTest : public DataPacket
 {
@@ -1301,7 +1465,7 @@ TEST(TestWireData, TestVideoFrameSegment)
             ds->setContent(s.getNetworkData()->getData(), s.size());
             dataSegments.push_back(ds);
         }
-    
+
         idx = 0;
         for (auto d:dataSegments)
             EXPECT_ANY_THROW(WireData<VideoFrameSegmentHeader> wd(d, interests[idx++]));
@@ -1617,6 +1781,7 @@ TEST(TestManifest, TestWithDummySignature)
     for (auto &o : allObjects)
         EXPECT_TRUE(im.hasData(*o));
 }
+#endif
 
 //******************************************************************************
 int main(int argc, char **argv)

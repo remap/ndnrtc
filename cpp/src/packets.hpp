@@ -27,11 +27,13 @@ namespace ndnrtc
 class NamespaceInfo;
 class DataRequest;
 
-namespace packets {
+namespace packets
+{
 
 class BasePacket {
 public:
     static boost::shared_ptr<BasePacket> ndnrtcPacketFromRequest(const DataRequest& request);
+    virtual ~BasePacket(){}
 
 protected:
     boost::shared_ptr<const ndn::Data> data_;

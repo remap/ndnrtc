@@ -26,7 +26,6 @@
 #include "client/src/config.hpp"
 #include <include/interfaces.hpp>
 #include <include/statistics.hpp>
-#include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
 
 #include "src/frame-data.hpp"
 #include "name-components.hpp"
@@ -45,13 +44,13 @@ sampleConsumerParams();
 ClientParams
 sampleProducerParams();
 
-WebRtcVideoFrame getFrame(int w, int h, bool randomNoise = false);
-std::vector<WebRtcVideoFrame> getFrameSequence(int w, int h, int len);
+// WebRtcVideoFrame getFrame(int w, int h, bool randomNoise = false);
+// std::vector<WebRtcVideoFrame> getFrameSequence(int w, int h, int len);
 
-webrtc::EncodedImage
-encodedImage(size_t frameLen, uint8_t *&buffer, bool delta = true);
-
-bool checkVideoFrame(const webrtc::EncodedImage &image);
+// webrtc::EncodedImage
+// encodedImage(size_t frameLen, uint8_t *&buffer, bool delta = true);
+//
+// bool checkVideoFrame(const webrtc::EncodedImage &image);
 
 ndnrtc::VideoFramePacket
 getVideoFramePacket(size_t frameLen = 4300, double rate = 24.7, int64_t pubTs = 488589553,
