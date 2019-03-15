@@ -15,6 +15,7 @@
 
 #include "clock.hpp"
 #include "async.hpp"
+#include "network-data.hpp"
 
 using namespace ndn;
 using namespace ndnrtc;
@@ -26,12 +27,14 @@ InterestQueue::QueueEntry::QueueEntry(const boost::shared_ptr<const ndn::Interes
                                       const boost::shared_ptr<IPriority>& priority,
                                       OnData onData,
                                       OnTimeout onTimeout,
-                                      OnNetworkNack onNetworkNack):
+                                      OnNetworkNack onNetworkNack,
+                                      OnExpressInterest onExpressInterest):
 interest_(interest),
 priority_(priority),
 onDataCallback_(onData),
 onTimeoutCallback_(onTimeout),
-onNetworkNack_(onNetworkNack)
+onNetworkNack_(onNetworkNack),
+onExpressInterest_(onExpressInterest)
 {
 }
 
@@ -91,33 +94,53 @@ InterestQueue::enqueueInterest(const boost::shared_ptr<const Interest>& interest
     assert(interest.get());
 
     QueueEntry entry(interest, priority, onData, onTimeout, onNetworkNack);
-    priority->setEnqueueTimestamp(clock::millisecondTimestamp());
-    
-    {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
-        queue_.push(entry);
-    
-        if (!isDrainingQueue_)
-        {
-            isDrainingQueue_ = true;
-            async::dispatchAsync(faceIo_, boost::bind(&InterestQueue::safeDrain, this));
-        }
-        else 
-          if (queue_.size() > 10)
-            // async::dispatchSync(faceIo_, boost::bind(&InterestQueue::drainQueue, this));
-            drainQueue();   // this is a hack and it will break everything if enqueueInterest
-                            // is called from other than faceIo_ thread. however, the code 
-                            // above locks and I don't know how to avoid growing queues in 
-                            // io_service other than draining them forcibly
-    }
+    enqueue(entry, priority);
+}
 
-    // LogTraceC
-    // << "enqueue\t" << entry.interest_->getName()
-    // << "\texclude: " << entry.interest_->getExclude().toUri()
-    // << "\tpri: "
-    // << entry.getValue() << "\tlifetime: "
-    // << entry.interest_->getInterestLifetimeMilliseconds()
-    // << "\tqsize: " << queue_.size() << std::endl;
+void
+InterestQueue::enqueueRequest(boost::shared_ptr<DataRequest> &request,
+                              boost::shared_ptr<DeadlinePriority> priority)
+{
+    assert(request.get());
+    
+    QueueEntry entry(request->getInterest(), priority,
+                     [request](const boost::shared_ptr<const Interest>&,
+                               const boost::shared_ptr<Data>& d){
+                         request->timestampReply();
+                         request->setData(d);
+                         
+                         if (d->getMetaInfo().getType() == ndn_ContentType_NACK)
+                         {
+                             request->setStatus(DataRequest::Status::AppNack);
+                             request->triggerEvent(DataRequest::Status::AppNack);
+                         }
+                         else
+                         {
+                             request->setStatus(DataRequest::Status::Data);
+                             request->triggerEvent(DataRequest::Status::Data);
+                         }
+                     },
+                     [request](const boost::shared_ptr<const Interest>&){
+                         request->timestampReply();
+                         request->setTimeout();
+                         request->setStatus(DataRequest::Status::Timeout);
+                         request->triggerEvent(DataRequest::Status::Timeout);
+                     },
+                     [request](const boost::shared_ptr<const ndn::Interest>& interest,
+                               const boost::shared_ptr<ndn::NetworkNack>& networkNack){
+                         request->timestampReply();
+                         request->setNack(networkNack);
+                         request->setStatus(DataRequest::Status::NetworkNack);
+                         request->triggerEvent(DataRequest::Status::NetworkNack);
+                     },
+                     [request](const boost::shared_ptr<const Interest>&){
+                         if (request->getStatus() != DataRequest::Status::Created)
+                             request->setRtx();
+                         request->timestampRequest();
+                         request->setStatus(DataRequest::Status::Expressed);
+                         request->triggerEvent(DataRequest::Status::Expressed);
+                     });
+    enqueue(entry, priority);
 }
 
 void
@@ -133,6 +156,38 @@ InterestQueue::reset()
 
 //******************************************************************************
 #pragma mark - private
+void
+InterestQueue::enqueue(QueueEntry &qe, boost::shared_ptr<DeadlinePriority> priority)
+{
+    priority->setEnqueueTimestamp(clock::millisecondTimestamp());
+    
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
+        queue_.push(qe);
+        
+        if (!isDrainingQueue_)
+        {
+            isDrainingQueue_ = true;
+            async::dispatchAsync(faceIo_, boost::bind(&InterestQueue::safeDrain, this));
+        }
+        else
+            if (queue_.size() > 10)
+                // async::dispatchSync(faceIo_, boost::bind(&InterestQueue::drainQueue, this));
+                drainQueue();   // this is a hack and it will break everything if enqueueInterest
+        // is called from other than faceIo_ thread. however, the code
+        // above locks and I don't know how to avoid growing queues in
+        // io_service other than draining them forcibly
+    }
+    
+    // LogTraceC
+    // << "enqueue\t" << entry.interest_->getName()
+    // << "\texclude: " << entry.interest_->getExclude().toUri()
+    // << "\tpri: "
+    // << entry.getValue() << "\tlifetime: "
+    // << entry.interest_->getInterestLifetimeMilliseconds()
+    // << "\tqsize: " << queue_.size() << std::endl;
+}
+
 void
 InterestQueue::safeDrain()
 {
@@ -174,6 +229,9 @@ InterestQueue::processEntry(const InterestQueue::QueueEntry &entry)
 
     face_->expressInterest(*(entry.interest_), entry.onDataCallback_, 
         entry.onTimeoutCallback_, entry.onNetworkNack_);
+    
+    if (entry.onExpressInterest_)
+        entry.onExpressInterest_(entry.interest_);
     
     (*statStorage_)[Indicator::QueueSize] = queue_.size();
     (*statStorage_)[Indicator::InterestsSentNum]++;

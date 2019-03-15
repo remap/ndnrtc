@@ -25,6 +25,7 @@ class GTEST_CLASS(TestNewtorkData, TestDataRequest);
 namespace ndn
 {
 class Data;
+class NetworkNack;
 };
 
 namespace ndnrtc
@@ -77,10 +78,11 @@ public:
 
     boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
     boost::shared_ptr<const ndn::Data> getData() const { return data_; }
+    boost::shared_ptr<const ndn::NetworkNack> getNack() const { return nack_; }
 
-    int64_t getDrdUsec() const { (replyTsUsec_ ? replyTsUsec_ - requestTsUsec_ : -1); }
-    uint64_t getRequestTimestampUsec() const { requestTsUsec_; }
-    uint64_t getReplyTimestampUsec() const { replyTsUsec_; }
+    int64_t getDrdUsec() const { return (replyTsUsec_ ? replyTsUsec_ - requestTsUsec_ : -1); }
+    uint64_t getRequestTimestampUsec() const { return requestTsUsec_; }
+    uint64_t getReplyTimestampUsec() const { return replyTsUsec_; }
 
     size_t getRtxNum() const { return rtxNum_; }
     size_t getTimeoutNum() const { return timeoutNum_; }
@@ -96,14 +98,15 @@ protected:
     friend InterestQueue;
     friend class ::GTEST_CLASS(TestNewtorkData, TestDataRequest);
 
-    size_t rtxNum_, timeoutNum_, netwNackNum_, appNackNum_;
-
     void setStatus(Status s) { status_ = s; }
+    void setRtx() { rtxNum_++; }
     void triggerEvent(Status s);
     void timestampRequest();
     void timestampReply();
 
     void setData(const boost::shared_ptr<const ndn::Data>& data);
+    void setNack(const boost::shared_ptr<const ndn::NetworkNack>& nack);
+    void setTimeout();
 
     RequestTrigger onExpressed_;
     RequestTrigger onData_;
@@ -113,11 +116,13 @@ protected:
 
 private:
     uint64_t requestTsUsec_, replyTsUsec_;
-
+    size_t rtxNum_, timeoutNum_, netwNackNum_, appNackNum_;
+    
     Status status_;
     NamespaceInfo namespaceInfo_;
     boost::shared_ptr<const ndn::Interest> interest_;
     boost::shared_ptr<const ndn::Data> data_;
+    boost::shared_ptr<const ndn::NetworkNack> nack_;
     boost::shared_ptr<const packets::BasePacket> packet_;
 };
 

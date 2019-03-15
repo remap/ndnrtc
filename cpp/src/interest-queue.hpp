@@ -28,6 +28,7 @@ namespace ndn {
 
 namespace ndnrtc {
     class DeadlinePriority;
+    class DataRequest;
 
     typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&,
                                     const boost::shared_ptr<ndn::Data>&)> OnData;
@@ -35,6 +36,8 @@ namespace ndnrtc {
             OnTimeout;
     typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>& interest,
         const boost::shared_ptr<ndn::NetworkNack>& networkNack)> OnNetworkNack;
+    typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&)>
+            OnExpressInterest;
 
     class IInterestQueueObserver {
     public:
@@ -86,6 +89,15 @@ namespace ndnrtc {
                         OnData onData,
                         OnTimeout onTimeout,
                         OnNetworkNack = OnNetworkNack());
+        /**
+         * Enqueues DataRequest in the queue.
+         * All callbacks will be dispatched through the DataRequest object's status update events.
+         * @param request DataRequest to be processed
+         * @param priority DataRequest priority
+         */
+        void
+        enqueueRequest(boost::shared_ptr<DataRequest>& request,
+                       boost::shared_ptr<DeadlinePriority> priority);
         
         /**
          * Flushes current interest queue
@@ -118,7 +130,8 @@ namespace ndnrtc {
                        const boost::shared_ptr<IPriority>& priority,
                        OnData onData,
                        OnTimeout onTimeout,
-                       OnNetworkNack onNetworkNack);
+                       OnNetworkNack onNetworkNack,
+                       OnExpressInterest onExpressInterest = OnExpressInterest());
 
             int64_t
             getValue() const { return priority_->getValue(); }
@@ -141,6 +154,7 @@ namespace ndnrtc {
             OnData onDataCallback_;
             OnTimeout onTimeoutCallback_;
             OnNetworkNack onNetworkNack_;
+            OnExpressInterest onExpressInterest_;
         };
         
         typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>, 
@@ -153,11 +167,14 @@ namespace ndnrtc {
         IInterestQueueObserver *observer_;
         bool isDrainingQueue_;
         
+        void enqueue(QueueEntry&, boost::shared_ptr<DeadlinePriority> priority);
         void safeDrain();
         void drainQueue();
         void stopQueueWatching();
         void processEntry(const QueueEntry &entry);
     };
+    
+    typedef InterestQueue RequestQueue;
     
     /**
      * DeadlinePriority class implements IPriority interface for assigning 

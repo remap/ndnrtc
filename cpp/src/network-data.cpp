@@ -64,6 +64,9 @@ DataRequest::DataRequest(const boost::shared_ptr<const Interest>& interest)
 , requestTsUsec_(0)
 , replyTsUsec_(0)
 , rtxNum_(0)
+, timeoutNum_(0)
+, netwNackNum_(0)
+, appNackNum_(0)
 , status_(Status::Created)
 {
     if (!NameComponents::extractInfo(interest->getName(), namespaceInfo_))
@@ -120,6 +123,7 @@ void
 DataRequest::timestampRequest()
 {
     requestTsUsec_ = clock::microsecondTimestamp();
+    replyTsUsec_ = 0;
 }
 
 void
@@ -135,9 +139,25 @@ DataRequest::setData(const boost::shared_ptr<const Data>& data)
         throw runtime_error("DataRequest::setData: interest name is not a "
                             "prefix of data name");
 
+    if (data->getMetaInfo().getType() == ndn_ContentType_NACK)
+        appNackNum_++;
+
     data_ = data;
     NameComponents::extractInfo(data->getName(), namespaceInfo_);
     packet_ = packets::BasePacket::ndnrtcPacketFromRequest(*this);
+}
+
+void
+DataRequest::setNack(const boost::shared_ptr<const ndn::NetworkNack> &nack)
+{
+    netwNackNum_++;
+    nack_ = nack;
+}
+
+void
+DataRequest::setTimeout()
+{
+    timeoutNum_++;
 }
 
 //******************************************************************************
