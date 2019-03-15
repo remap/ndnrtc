@@ -1,4 +1,6 @@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
+GTEST_ROOT=$(top_srcdir)/contrib/gtest/googletest
+GMOCK_ROOT=$(top_srcdir)/contrib/gtest/googlemock
 
 pkginclude_HEADERS = include/ndnrtc-common.hpp \
   include/params.hpp \
@@ -83,7 +85,7 @@ libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
   src/persistent-storage/persistent-storage.cpp src/persistent-storage/persistent-storage.hpp \
   src/persistent-storage/storage-engine.cpp include/storage-engine.hpp
 
-libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -D BASE_FILE_NAME=\"$*\"
+libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include -I$(top_srcdir)/src ${BOOST_CPPFLAGS} -D BASE_FILE_NAME=\"$*\" -I${GTEST_ROOT}/include -I${GMOCK_ROOT}/include
 libndnrtc_la_LDFLAGS = ${BOOST_LDFLAGS}
 libndnrtc_la_LIBADD = ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} ${BOOST_CHRONO_LIB} ${BOOST_ASIO_LIB} ${BOOST_THREAD_LIB} ${BOOST_REGEX_LIB}
 
@@ -214,8 +216,6 @@ endif
 # unit tests    #
 #################
 
-GTEST_ROOT=$(top_srcdir)/contrib/gtest/googletest
-GMOCK_ROOT=$(top_srcdir)/contrib/gtest/googlemock
 UNIT_TESTS_CPPFLAGS_= -I${GTEST_ROOT} -I${GTEST_ROOT}/include -I${GMOCK_ROOT} -I${GMOCK_ROOT}/include \
     -I$(top_srcdir) -I$(top_srcdir)/include -I$(includedir) ${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} @DEFS@
 UNIT_TESTS_LDFLAGS_=${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
@@ -250,7 +250,7 @@ res/test-source-320x240.argb:
 	$(WGET) https://s3.amazonaws.com/ndnrtc-test-files/raw/test-source-320x240.argb.tar.gz
 	$(TAR) -xf test-source-320x240.argb.tar.gz -C $(top_builddir)/res/
 
-check_PROGRAMS = bin/tests/test-params bin/tests/test-network-data bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-video-decoder bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-local-media-stream bin/tests/test-frame-buffer bin/tests/test-rtx-controller bin/tests/test-playout bin/tests/test-video-playout bin/tests/test-audio-playout bin/tests/test-segment-controller bin/tests/test-periodic bin/tests/test-sample-estimator bin/tests/test-drd-estimator bin/tests/test-latency-control bin/tests/test-buffer-control bin/tests/test-interest-control bin/tests/test-pipeliner bin/tests/test-pipeline-control-state-machine bin/tests/test-interest-queue bin/tests/test-playout-control bin/tests/test-loop bin/tests/test-video-source bin/tests/test-config-load bin/tests/test-client-params bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client
+check_PROGRAMS = bin/tests/test-params bin/tests/test-packet-publisher bin/tests/test-data-validator bin/tests/test-video-coder bin/tests/test-video-decoder bin/tests/test-media-thread bin/tests/test-audio-capturer bin/tests/test-frame-converter bin/tests/test-estimators bin/tests/test-async bin/tests/test-local-media-stream bin/tests/test-frame-buffer bin/tests/test-rtx-controller bin/tests/test-playout bin/tests/test-video-playout bin/tests/test-audio-playout bin/tests/test-segment-controller bin/tests/test-periodic bin/tests/test-sample-estimator bin/tests/test-drd-estimator bin/tests/test-latency-control bin/tests/test-buffer-control bin/tests/test-interest-control bin/tests/test-pipeliner bin/tests/test-pipeline-control-state-machine bin/tests/test-interest-queue bin/tests/test-playout-control bin/tests/test-loop bin/tests/test-video-source bin/tests/test-config-load bin/tests/test-client-params bin/tests/test-frame-io bin/tests/test-generator bin/tests/test-video-source bin/tests/test-renderer bin/tests/test-stat-collector bin/tests/test-client
 
 if HAVE_PERSISTENT_STORAGE
     check_PROGRAMS += bin/tests/test-persistent-storage
@@ -309,11 +309,6 @@ bin_tests_test_data_validator_SOURCES = tests/test-data-validator.cc src/data-va
 bin_tests_test_data_validator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_data_validator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_data_validator_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
-
-bin_tests_test_network_data_SOURCES = tests/test-network-data.cc tests/tests-helpers.cc src/frame-data.cpp src/fec.cpp src/name-components.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_network_data_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
 bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -465,7 +460,8 @@ check_PROGRAMS += bin/tests/test-video-codec \
 	bin/tests/test-video-stream \
 	bin/tests/test-pipeline \
 	bin/tests/test-name-components \
-	bin/tests/test-packets
+	bin/tests/test-packets \
+	bin/tests/test-network-data
 
 bin_tests_test_video_codec_SOURCES = tests/test-video-codec.cc ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_codec_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -496,6 +492,11 @@ bin_tests_test_packets_SOURCES = tests/test-packets.cc ${UNIT_TESTS_COMMON_SOURC
 bin_tests_test_packets_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_packets_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_packets_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_network_data_SOURCES = tests/test-network-data.cc tests/tests-helpers.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_network_data_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
 TESTS = ${check_PROGRAMS}
 

@@ -118,7 +118,6 @@ EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1)
 @OS_LINUX_TRUE@am__append_18 = -ldl -lX11
 @OS_DARWIN_TRUE@am__append_19 = -DOS_DARWIN
 check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
-	bin/tests/test-network-data$(EXEEXT) \
 	bin/tests/test-packet-publisher$(EXEEXT) \
 	bin/tests/test-data-validator$(EXEEXT) \
 	bin/tests/test-video-coder$(EXEEXT) \
@@ -160,7 +159,8 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-video-stream$(EXEEXT) \
 	bin/tests/test-pipeline$(EXEEXT) \
 	bin/tests/test-name-components$(EXEEXT) \
-	bin/tests/test-packets$(EXEEXT)
+	bin/tests/test-packets$(EXEEXT) \
+	bin/tests/test-network-data$(EXEEXT)
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_20 = bin/tests/test-persistent-storage
 TESTS = $(check_PROGRAMS)
 subdir = .
@@ -999,7 +999,6 @@ bin_tests_test_name_components_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(bin_tests_test_name_components_LDFLAGS) $(LDFLAGS) -o $@
 am__bin_tests_test_network_data_SOURCES_DIST =  \
 	tests/test-network-data.cc tests/tests-helpers.cc \
-	src/frame-data.cpp src/fec.cpp src/name-components.cpp \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
@@ -1010,13 +1009,11 @@ am__objects_44 = contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-
 am_bin_tests_test_network_data_OBJECTS =  \
 	tests/bin_tests_test_network_data-test-network-data.$(OBJEXT) \
 	tests/bin_tests_test_network_data-tests-helpers.$(OBJEXT) \
-	src/bin_tests_test_network_data-frame-data.$(OBJEXT) \
-	src/bin_tests_test_network_data-fec.$(OBJEXT) \
-	src/bin_tests_test_network_data-name-components.$(OBJEXT) \
 	$(am__objects_44)
 bin_tests_test_network_data_OBJECTS =  \
 	$(am_bin_tests_test_network_data_OBJECTS)
-bin_tests_test_network_data_DEPENDENCIES = $(am__DEPENDENCIES_2) \
+bin_tests_test_network_data_DEPENDENCIES =  \
+	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_3)
 bin_tests_test_network_data_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -2204,9 +2201,6 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	src/$(DEPDIR)/bin_tests_test_media_thread-video-coder.Po \
 	src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Po \
 	src/$(DEPDIR)/bin_tests_test_media_thread-webrtc-audio-channel.Po \
-	src/$(DEPDIR)/bin_tests_test_network_data-fec.Po \
-	src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Po \
-	src/$(DEPDIR)/bin_tests_test_network_data-name-components.Po \
 	src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Po \
 	src/$(DEPDIR)/bin_tests_test_packet_publisher-frame-data.Po \
 	src/$(DEPDIR)/bin_tests_test_packet_publisher-name-components.Po \
@@ -3015,6 +3009,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
+GTEST_ROOT = $(top_srcdir)/contrib/gtest/googletest
+GMOCK_ROOT = $(top_srcdir)/contrib/gtest/googlemock
 pkginclude_HEADERS = include/ndnrtc-common.hpp \
   include/params.hpp \
   include/statistics.hpp \
@@ -3100,6 +3096,7 @@ libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
 
 libndnrtc_la_CPPFLAGS = -fPIC -I$(top_srcdir)/include \
 	-I$(top_srcdir)/src ${BOOST_CPPFLAGS} -D BASE_FILE_NAME=\"$*\" \
+	-I${GTEST_ROOT}/include -I${GMOCK_ROOT}/include \
 	$(am__append_1)
 libndnrtc_la_LDFLAGS = ${BOOST_LDFLAGS}
 libndnrtc_la_LIBADD = ${BOOST_SYSTEM_LIB} ${BOOST_TIMER_LIB} \
@@ -3163,8 +3160,6 @@ noinst_SCRIPTS = client/params.cfg
 #################
 # unit tests    #
 #################
-GTEST_ROOT = $(top_srcdir)/contrib/gtest/googletest
-GMOCK_ROOT = $(top_srcdir)/contrib/gtest/googlemock
 UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
@@ -3219,10 +3214,6 @@ bin_tests_test_data_validator_SOURCES = tests/test-data-validator.cc src/data-va
 bin_tests_test_data_validator_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_data_validator_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_data_validator_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
-bin_tests_test_network_data_SOURCES = tests/test-network-data.cc tests/tests-helpers.cc src/frame-data.cpp src/fec.cpp src/name-components.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_network_data_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 bin_tests_test_packet_publisher_SOURCES = tests/test-packet-publisher.cc tests/tests-helpers.cc src/packet-publisher.cpp src/frame-data.cpp src/fec.cpp src/ndnrtc-object.cpp src/simple-log.cpp src/name-components.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_packet_publisher_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_packet_publisher_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -3391,6 +3382,10 @@ bin_tests_test_packets_SOURCES = tests/test-packets.cc ${UNIT_TESTS_COMMON_SOURC
 bin_tests_test_packets_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_packets_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_packets_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
+bin_tests_test_network_data_SOURCES = tests/test-network-data.cc tests/tests-helpers.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_network_data_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 all: all-am
 
 .SUFFIXES:
@@ -4464,12 +4459,6 @@ tests/bin_tests_test_network_data-test-network-data.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 tests/bin_tests_test_network_data-tests-helpers.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
-src/bin_tests_test_network_data-frame-data.$(OBJEXT):  \
-	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/bin_tests_test_network_data-fec.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-src/bin_tests_test_network_data-name-components.$(OBJEXT):  \
-	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -5751,9 +5740,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-video-coder.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_media_thread-webrtc-audio-channel.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_network_data-fec.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_network_data-name-components.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_packet_publisher-frame-data.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_packet_publisher-name-components.Po@am__quote@ # am--include-marker
@@ -11083,48 +11069,6 @@ tests/bin_tests_test_network_data-tests-helpers.obj: tests/tests-helpers.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_network_data-tests-helpers.obj `if test -f 'tests/tests-helpers.cc'; then $(CYGPATH_W) 'tests/tests-helpers.cc'; else $(CYGPATH_W) '$(srcdir)/tests/tests-helpers.cc'; fi`
 
-src/bin_tests_test_network_data-frame-data.o: src/frame-data.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-frame-data.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Tpo -c -o src/bin_tests_test_network_data-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Tpo src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/frame-data.cpp' object='src/bin_tests_test_network_data-frame-data.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-frame-data.o `test -f 'src/frame-data.cpp' || echo '$(srcdir)/'`src/frame-data.cpp
-
-src/bin_tests_test_network_data-frame-data.obj: src/frame-data.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-frame-data.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Tpo -c -o src/bin_tests_test_network_data-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Tpo src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/frame-data.cpp' object='src/bin_tests_test_network_data-frame-data.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-frame-data.obj `if test -f 'src/frame-data.cpp'; then $(CYGPATH_W) 'src/frame-data.cpp'; else $(CYGPATH_W) '$(srcdir)/src/frame-data.cpp'; fi`
-
-src/bin_tests_test_network_data-fec.o: src/fec.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-fec.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-fec.Tpo -c -o src/bin_tests_test_network_data-fec.o `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_network_data-fec.Tpo src/$(DEPDIR)/bin_tests_test_network_data-fec.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/fec.cpp' object='src/bin_tests_test_network_data-fec.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-fec.o `test -f 'src/fec.cpp' || echo '$(srcdir)/'`src/fec.cpp
-
-src/bin_tests_test_network_data-fec.obj: src/fec.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-fec.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-fec.Tpo -c -o src/bin_tests_test_network_data-fec.obj `if test -f 'src/fec.cpp'; then $(CYGPATH_W) 'src/fec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/fec.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_network_data-fec.Tpo src/$(DEPDIR)/bin_tests_test_network_data-fec.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/fec.cpp' object='src/bin_tests_test_network_data-fec.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-fec.obj `if test -f 'src/fec.cpp'; then $(CYGPATH_W) 'src/fec.cpp'; else $(CYGPATH_W) '$(srcdir)/src/fec.cpp'; fi`
-
-src/bin_tests_test_network_data-name-components.o: src/name-components.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-name-components.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-name-components.Tpo -c -o src/bin_tests_test_network_data-name-components.o `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_network_data-name-components.Tpo src/$(DEPDIR)/bin_tests_test_network_data-name-components.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/name-components.cpp' object='src/bin_tests_test_network_data-name-components.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-name-components.o `test -f 'src/name-components.cpp' || echo '$(srcdir)/'`src/name-components.cpp
-
-src/bin_tests_test_network_data-name-components.obj: src/name-components.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_network_data-name-components.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_network_data-name-components.Tpo -c -o src/bin_tests_test_network_data-name-components.obj `if test -f 'src/name-components.cpp'; then $(CYGPATH_W) 'src/name-components.cpp'; else $(CYGPATH_W) '$(srcdir)/src/name-components.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_network_data-name-components.Tpo src/$(DEPDIR)/bin_tests_test_network_data-name-components.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/name-components.cpp' object='src/bin_tests_test_network_data-name-components.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_network_data-name-components.obj `if test -f 'src/name-components.cpp'; then $(CYGPATH_W) 'src/name-components.cpp'; else $(CYGPATH_W) '$(srcdir)/src/name-components.cpp'; fi`
-
 contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_network_data_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_network_data-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_network_data-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_network_data-gmock-all.Po
@@ -15304,13 +15248,6 @@ bin/tests/test-params.log: bin/tests/test-params$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
-bin/tests/test-network-data.log: bin/tests/test-network-data$(EXEEXT)
-	@p='bin/tests/test-network-data$(EXEEXT)'; \
-	b='bin/tests/test-network-data'; \
-	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
-	--log-file $$b.log --trs-file $$b.trs \
-	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
-	"$$tst" $(AM_TESTS_FD_REDIRECT)
 bin/tests/test-packet-publisher.log: bin/tests/test-packet-publisher$(EXEEXT)
 	@p='bin/tests/test-packet-publisher$(EXEEXT)'; \
 	b='bin/tests/test-packet-publisher'; \
@@ -15601,6 +15538,13 @@ bin/tests/test-name-components.log: bin/tests/test-name-components$(EXEEXT)
 bin/tests/test-packets.log: bin/tests/test-packets$(EXEEXT)
 	@p='bin/tests/test-packets$(EXEEXT)'; \
 	b='bin/tests/test-packets'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+bin/tests/test-network-data.log: bin/tests/test-network-data$(EXEEXT)
+	@p='bin/tests/test-network-data$(EXEEXT)'; \
+	b='bin/tests/test-network-data'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
@@ -16235,9 +16179,6 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/bin_tests_test_media_thread-video-coder.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_media_thread-webrtc-audio-channel.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_network_data-fec.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_network_data-name-components.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_packet_publisher-frame-data.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_packet_publisher-name-components.Po
@@ -16948,9 +16889,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/bin_tests_test_media_thread-video-coder.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_media_thread-video-thread.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_media_thread-webrtc-audio-channel.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_network_data-fec.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_network_data-frame-data.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_network_data-name-components.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_packet_publisher-fec.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_packet_publisher-frame-data.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_packet_publisher-name-components.Po
