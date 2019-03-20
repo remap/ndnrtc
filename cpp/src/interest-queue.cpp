@@ -313,36 +313,21 @@ void
 RequestQueueImpl::enqueue(QueueEntry &qe, boost::shared_ptr<DeadlinePriority> priority)
 {
     priority->setEnqueueTimestamp(clock::millisecondTimestamp());
-    
-    LogTraceC << "will enqueue " << qe.interest_->getName() << endl;
-    
     {
         boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
         queue_.push(qe);
         
-        if (!isDrainingQueue_)
-        {
-            isDrainingQueue_ = true;
-            boost::shared_ptr<RequestQueueImpl> me =
-                boost::dynamic_pointer_cast<RequestQueueImpl>(shared_from_this());
-            async::dispatchAsync(faceIo_, boost::bind(&RequestQueueImpl::drainQueueSafe, me));
-        }
-        else
-            if (queue_.size() > 10)
-                // async::dispatchSync(faceIo_, boost::bind(&RequestQueueImpl::drainQueue, this));
-                drainQueue();   // this is a hack and it will break everything if enqueueInterest
-        // is called from other than faceIo_ thread. however, the code
-        // above locks and I don't know how to avoid growing queues in
-        // io_service other than draining them forcibly
+        boost::shared_ptr<RequestQueueImpl> me =
+            boost::dynamic_pointer_cast<RequestQueueImpl>(shared_from_this());
+        async::dispatchAsync(faceIo_, boost::bind(&RequestQueueImpl::drainQueueSafe, me));
     }
     
-    // LogTraceC
-    // << "enqueue\t" << entry.interest_->getName()
-    // << "\texclude: " << entry.interest_->getExclude().toUri()
-    // << "\tpri: "
-    // << entry.getValue() << "\tlifetime: "
-    // << entry.interest_->getInterestLifetimeMilliseconds()
-    // << "\tqsize: " << queue_.size() << std::endl;
+    LogTraceC << " pri " << qe.getValue()
+    << " " << qe.interest_->getInterestLifetimeMilliseconds()
+    << "ms qsz " << queue_.size()
+    << " mbf " << qe.interest_->getMustBeFresh()
+    << " " << qe.interest_->getName()
+    << std::endl;
 }
 
 void
@@ -368,11 +353,11 @@ RequestQueueImpl::drainQueue()
 void
 RequestQueueImpl::processEntry(const RequestQueueImpl::QueueEntry &entry)
 {    
-    LogTraceC << "express\t" << entry.interest_->getName()
-              << "\tpri: " << entry.getValue() 
-              << "\tlifetime: " << entry.interest_->getInterestLifetimeMilliseconds()
-              << "\tqsize: " << queue_.size()
-              << "\tmustBeFresh: " << entry.interest_->getMustBeFresh()
+    LogTraceC << " pri " << entry.getValue()
+              << " " << entry.interest_->getInterestLifetimeMilliseconds()
+              << "ms qsz " << queue_.size()
+              << " mbf " << entry.interest_->getMustBeFresh()
+              << " " << entry.interest_->getName()
               << std::endl;
 
     face_->expressInterest(*(entry.interest_), entry.onDataCallback_,

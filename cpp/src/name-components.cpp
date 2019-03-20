@@ -351,118 +351,129 @@ NameComponents::videoStreamPrefix(string basePrefix)
 bool
 NameComponents::extractInfo(const ndn::Name& name, NamespaceInfo& info)
 {
-    bool goodName = false;
-    set<NameComponents::Filter> matches;
+    static Name::Component appComp(App);
+    static Name::Component metaComp(Meta);
+    static Name::Component latestComp(Latest);
+    static Name::Component liveComp(Live);
+    static Name::Component gopComp(Gop);
+    static Name::Component gopStartComp(GopStart);
+    static Name::Component gopEndComp(GopEnd);
+    static Name::Component parityComp(Parity);
+    static Name::Component manifestComp(Manifest);
+    
+    int idx = (int)name.size()-1;
+    while (name[idx] != appComp && idx > 0)
+        idx--;
+    
+    if (idx == 0)
+        return false;
 
-    for (auto &it : NameFilters)
-        if (it.second.doesMatch(name))
-            matches.insert(it.first);
-
-    if (matches.size())
+    if (idx > 0 && name.size() - idx >= 4)
     {
-        int idx = name.size()-1;
-        while (name[idx].toEscapedString() != App && idx > 0)
-            idx --;
-
+        if (!name[idx+1].isVersion() || !name[idx+2].isTimestamp())
+            return false;
+        
         info.basePrefix_ = name.getPrefix(idx);
         info.apiVersion_ = name[idx+1].toVersion();
         info.streamTimestamp_ = name[idx+2].toTimestamp();
         info.streamName_ = name[idx+3].toEscapedString();
-
+        
+        // clear all flags
         info.hasSeqNo_ = info.hasSegNo_ = info.isLiveMeta_ = info.isGopStart_ =
-            info.isGopEnd_ = info.hasVersion_ = info.isLatestPtr_ = false;
+        info.isGopEnd_ = info.hasVersion_ = info.isLatestPtr_ = false;
         info.segmentClass_ = SegmentClass::Unknown;
         info.sampleNo_ = 0;
         info.segNo_ = 0;
         info.version_ = 0;
-
+        
         Name suffix;
         if (idx + 4 < name.size())
             suffix = name.getSubName(idx+4);
-
-        for (auto &m:matches)
+        else
+            return true;
+        
+        if (suffix[0] == metaComp &&
+            suffix.size() == 1)
         {
-            switch (m) {
-                case Filter::Stream : {
-                    // nothing
-                }break;
-
-                case Filter::Meta : {
-                    info.segmentClass_ = SegmentClass::Meta;
-                } break;
-
-                case Filter::Live : {
-                    info.isLiveMeta_ = true;
-                    info.segmentClass_ = SegmentClass::Meta;
-                    if (suffix[-1].isVersion())
-                    {
-                        info.version_ = suffix[-1].toVersion();
-                        info.hasVersion_ = true;
-                    }
-                } break;
-
-                case Filter::Latest : {
-                    info.isLatestPtr_ = true;
-                    info.segmentClass_ = SegmentClass::Pointer;
-                    if (suffix[-1].isVersion())
-                    {
-                        info.version_ = suffix[-1].toVersion();
-                        info.hasVersion_ = true;
-                    }
-                } break;
-
-                case Filter::GopStart : {
-                    info.segmentClass_ = SegmentClass::Pointer;
-                    info.isGopStart_ = true;
-                    info.hasSeqNo_ = true;
-                    info.sampleNo_ = suffix[-2].toSequenceNumber();
-                } break;
-
-                case Filter::GopEnd : {
-                    info.segmentClass_ = SegmentClass::Pointer;
-                    info.isGopEnd_ = true;
-                    info.hasSeqNo_ = true;
-                    info.sampleNo_ = suffix[-2].toSequenceNumber();
-                } break;
-
-                case Filter::Frame : {
-                    info.hasSeqNo_ = true;
-                    info.sampleNo_ = suffix[0].toSequenceNumber();
-                } break;
-
-                case Filter::FrameMeta : {
-                    info.segmentClass_ = SegmentClass::Meta;
-                } break;
-
-                case Filter::Manifest : {
-                    info.segmentClass_ = SegmentClass::Manifest;
-                } break;
-
-                case Filter::Payload : {
-                    info.segmentClass_ = SegmentClass::Data;
-                    if (suffix[-1].isSegment())
-                    {
-                        info.hasSegNo_ = true;
-                        info.segNo_ = suffix[-1].toSegment();
-                    }
-                } break;
-
-                case Filter::Parity : {
-                    info.segmentClass_ = SegmentClass::Parity;
-                    if (suffix[-1].isSegment())
-                    {
-                        info.hasSegNo_ = true;
-                        info.segNo_ = suffix[-1].toSegment();
-                    }
-                } break;
-
-                default : {
-                    return false;
-                }
+            info.segmentClass_ = SegmentClass::Meta;
+        }
+        
+        if (suffix[0] == liveComp)
+        {
+            info.segmentClass_ = SegmentClass::Meta;
+            info.isLiveMeta_ = true;
+            if (suffix.size() == 2 && suffix[-1].isVersion())
+            {
+                info.version_ = suffix[-1].toVersion();
+                info.hasVersion_ = true;
             }
         }
+        
+        if (suffix[0] == latestComp &&
+            suffix.size() == 2)
+        {
+            info.segmentClass_ = SegmentClass::Pointer;
+            info.isLatestPtr_ = true;
+            if (suffix.size() == 2 && suffix[-1].isVersion())
+            {
+                info.version_ = suffix[-1].toVersion();
+                info.hasVersion_ = true;
+            }
+        }
+        
+        if (suffix[0] == gopComp &&
+            suffix.size() == 3)
+        {
+            info.segmentClass_ = SegmentClass::Pointer;
+            
+            if (suffix[1].isSequenceNumber())
+            {
+                info.hasSeqNo_ = true;
+                info.sampleNo_ = suffix[1].toSequenceNumber();
+            }
+            else
+                return false;
+            
+            if (suffix[-1] == gopStartComp)
+                info.isGopStart_ = true;
+            else if (suffix[-1] == gopEndComp)
+                info.isGopEnd_ = true;
+            else
+                return false;
+        }
+        
+        if (suffix[0].isSequenceNumber())
+        {
+            info.hasSeqNo_ = true;
+            info.sampleNo_ = suffix[0].toSequenceNumber();
+            
+            if (suffix.size() == 2)
+            {
+                if (suffix[1].isSegment())
+                {
+                    info.segmentClass_ = SegmentClass::Data;
+                    info.hasSegNo_ = true;
+                    info.segNo_ = suffix[1].toSegment();
+                }
+                else if (suffix[1] == metaComp)
+                    info.segmentClass_ = SegmentClass::Meta;
+                else if (suffix[1] == manifestComp)
+                    info.segmentClass_ = SegmentClass::Manifest;
+                else
+                    return false;
+            }
+            if (suffix.size() == 3 &&
+                suffix[1] == parityComp &&
+                suffix[-1].isSegment())
+            {
+                info.segmentClass_ = SegmentClass::Parity;
+                info.hasSegNo_ = true;
+                info.segNo_ = suffix[-1].toSegment();
+            }
+        }
+        
         return true;
     }
-
+    
     return false;
 }

@@ -34,7 +34,7 @@ using namespace std;
 using namespace ndn;
 using namespace ndnrtc;
 
-#define ENABLE_LOGGING
+//#define ENABLE_LOGGING
 
 class InterestQueueStub : public IInterestQueue {
 public:
@@ -193,7 +193,7 @@ TEST(TestPipeline, TestIntegrationFullCycle)
     FaceStub faceStub;
     
     map<Name, boost::shared_ptr<Data>> framePackets;
-    uint64_t startSeqNo = 0, nFrames = 5;
+    uint64_t startSeqNo = 0, nFrames = 5000;
     for (uint64_t f = startSeqNo; f < nFrames; ++f)
     {
         Name frameName = Name(stream).appendSequenceNumber(f);
@@ -232,7 +232,7 @@ TEST(TestPipeline, TestIntegrationFullCycle)
                                    face.putData(*framePackets[interest->getName()]);
                            }));
     
-    int delay = 3000;
+    int delay = 100000;
     int64_t start = clock::millisecondTimestamp();
     while (!prefixRegistered && clock::millisecondTimestamp() - start < delay)
     {
@@ -242,7 +242,7 @@ TEST(TestPipeline, TestIntegrationFullCycle)
     
     // --------------------------------------------------------------------------------------------
     // MOCK CONSUMER SIDE
-    bool useParity = false;
+    bool useParity = true;
     boost::asio::io_context io;
     boost::shared_ptr<InterestQueue> interestQ = boost::make_shared<InterestQueue>(io, &cFace);
     Pool<BufferSlot> slotPool(500);
@@ -251,7 +251,9 @@ TEST(TestPipeline, TestIntegrationFullCycle)
         nPending ++ ;
         boost::shared_ptr<IPipelineSlot> slot = slotPool.pop();
         slot->subscribe(PipelineSlotState::Pending, [](const IPipelineSlot* slot, const DataRequest &dr){
-            LogTrace("") << "expressed requests for slot " << slot->getPrefix() << endl;
+#ifdef ENABLE_LOGGING
+            LogTrace("") << "slot pending " << slot->getPrefix() << endl;
+#endif
         });
         return slot;
     };
@@ -267,11 +269,29 @@ TEST(TestPipeline, TestIntegrationFullCycle)
 #endif
 
     int nNewSlots = 0, nReadySlots = 0, nSlotsWithMissing = 0;
+    vector<boost::shared_ptr<IPipelineSlot>> slotBuffer;
+    
     auto onSlotReady = [&](const IPipelineSlot* slot, const DataRequest& dr){
         nReadySlots++;
+#ifdef ENABLE_LOGGING
         LogTrace("") << "slot " << slot->getPrefix() << " is ready" << endl;
+#endif
         // pulse pipeline whenever slot is ready
         pp.pulse();
+        vector<boost::shared_ptr<IPipelineSlot>>::iterator it = slotBuffer.begin();
+        while (it != slotBuffer.end())
+        {
+            if ((*it)->getPrefix() == slot->getPrefix())
+            {
+                boost::shared_ptr<BufferSlot> s = boost::dynamic_pointer_cast<BufferSlot>(*it);
+                
+                slotPool.push(s);
+                slotBuffer.erase(it);
+                
+                break;
+            }
+            ++it;
+        }
     };
     auto onSlotUnfetchable = [&](const IPipelineSlot* slot, const DataRequest& dr){
         FAIL() << "Slot " << slot->getPrefix() << " is unfetchable";
@@ -279,8 +299,9 @@ TEST(TestPipeline, TestIntegrationFullCycle)
     auto onMissingSlotRequests = [&](IPipelineSlot *slot,
                                      std::vector<boost::shared_ptr<DataRequest>> requests)
     {
+#ifdef ENABLE_LOGGING
         LogTrace("") << "slot " << slot->getPrefix() << " needs " << requests.size() << " more segment(s)" << endl;
-
+#endif
         vector<boost::shared_ptr<DataRequest>> expressedRequests;
         
         nSlotsWithMissing++;
@@ -304,15 +325,15 @@ TEST(TestPipeline, TestIntegrationFullCycle)
         
         slot->setRequests(expressedRequests);
     };
-
-    vector<boost::shared_ptr<IPipelineSlot>> slotBuffer;
     
     pp.onNewSlot.connect([&](boost::shared_ptr<IPipelineSlot> slot){
         nNewSlots++;
         slotBuffer.push_back(slot);
-//        EXPECT_EQ(slot->getState)
         slot->subscribe(PipelineSlotState::Ready, onSlotReady);
         slot->subscribe(PipelineSlotState::Unfetchable, onSlotUnfetchable);
+        
+        boost::shared_ptr<BufferSlot> s = boost::dynamic_pointer_cast<BufferSlot>(slot);
+        s->onMissing_.connect(onMissingSlotRequests);
     });
     
     start = clock::millisecondTimestamp();
@@ -321,15 +342,16 @@ TEST(TestPipeline, TestIntegrationFullCycle)
     {
         pFace.processEvents();
         cFace.processEvents();
-        io.run_one();
+        io.run();
+        if (io.stopped())
+            io.restart();
         usleep(1);
     } while (clock::millisecondTimestamp() - start < delay && nReadySlots < nFrames);
     
     
-    EXPECT_EQ(nPending, nFrames);
-    EXPECT_EQ(nNewSlots, nFrames);
+    EXPECT_EQ(nPending, nFrames+1);
+    EXPECT_EQ(nNewSlots, nFrames+1);
     EXPECT_EQ(nReadySlots, nFrames);
-    EXPECT_EQ(slotBuffer.size(), nFrames);
 }
 
 int main(int argc, char **argv)

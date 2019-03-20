@@ -140,6 +140,8 @@ BufferSlot::setRequests(const std::vector<boost::shared_ptr<DataRequest> > &requ
         {
             nameInfo_ = r->getNamespaceInfo();
             name_ = nameInfo_.getPrefix(NameFilter::Sample);
+            nameInfo_.segmentClass_ = SegmentClass::Unknown;
+            
             if (slotState_ == PipelineSlotState::Free)
                 slotState_ = PipelineSlotState::New;
         }
@@ -520,28 +522,35 @@ BufferSlot::dump(bool showLastSegment) const
 
     dump << "[ "
     // << (nameInfo_.class_ == SampleClass::Delta?"D":((nameInfo_.class_ == SampleClass::Key)?"K":"U")) << ", "
+    << nameInfo_.getSuffix(NameFilter::Sample).toUri()
     << std::setw(5) 
     << nameInfo_.sampleNo_
     << (verified_ == Verification::Verified ? "☆" : (verified_ == Verification::Unknown? "?" : "✕")) << ", "
-    << toString(getConsistencyState()) << ", "
+    << (metaIsFetched_ ? "+m " : "-m ")
+    << (manifestIsFetched_ ? "+f " : "-f ")
+    << getFetchedDataSegmentsNum() << "/" << getDataSegmentsNum() << " "
+    << getFetchedParitySegmentsNum() << "/" << getParitySegmentsNum() << " "
+    << getFetchedBytesData() << "b " << getFetchedBytesParity() << "b "
+//    << toString(getConsistencyState()) << ", "
     // << std::setw(7) << getPlaybackNumber() << ", "
     // << std::setw(10) << getProducerTimestamp() << ", "
-    << std::setw(3) << asmLevel_*100 << "% "//"("
+    << std::setw(3) << fetchProgress_*100 << "% "//"("
     // << ((double)nSegmentsParityReady_/(double)nSegmentsParity_)*100 << "%), "
     // << std::setw(5) << getPairedFrameNumber() << ", "
     // << std::setw(3) << getPlaybackDeadline() << ", "
-    << std::setw(3) << nRtx_ << ", "
+//    << std::setw(3) << nRtx_ << " "
     // << (isRecovered_ ? "R" : "I") << ", "
     // << std::setw(2) << nSegmentsTotal_ << "/" << nSegmentsReady_
     // << "/" << nSegmentsPending_ << "/" << nSegmentsMissing_
     // << "/" << nSegmentsParity_ << " "
     // << getLifetime() << " "
-    << std::setw(5) << assembledSize_ << " "
-    << (showLastSegment ? lastFetched_->getInfo().getSuffix(suffix_filter::Thread) : nameInfo_.getSuffix(suffix_filter::Thread))
-    << " " << (lastFetched_ && lastFetched_->isOriginal() ? "ORIG" : "CACH")
-    << " dgen " << (showLastSegment ? lastFetched_->getDgen() : -1)
-    << " rtt " << (showLastSegment ? lastFetched_->getRoundTripDelayUsec()/1000 : -1)
-    << " " << std::setw(5) << (getConsistencyState() & BufferSlot::HeaderMeta ? getHeader().publishTimestampMs_ : 0)
+//    << std::setw(5) << assembledSize_ << " "
+//    << (showLastSegment ? lastFetched_->getInfo().getSuffix(suffix_filter::Thread) : nameInfo_.getSuffix(suffix_filter::Thread))
+//    << " " << (lastFetched_ && lastFetched_->isOriginal() ? "ORIG" : "CACH")
+//    << " dgen " << (showLastSegment ? lastFetched_->getDgen() : -1)
+//    << " rtt " << (showLastSegment ? lastFetched_->getRoundTripDelayUsec()/1000 : -1)
+//    << " " << std::setw(5) << (getConsistencyState() & BufferSlot::HeaderMeta ? getHeader().publishTimestampMs_ : 0)
+    << (isDecodable() ? "+dec" : "-dec")
     << "]";
 
     return dump.str();

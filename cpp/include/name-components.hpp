@@ -119,7 +119,7 @@ namespace ndnrtc {
         SegmentClass segmentClass_;
         PacketNumber sampleNo_;
         unsigned int segNo_;
-        unsigned int version_;
+        uint64_t version_;
 
         void reset();
 
