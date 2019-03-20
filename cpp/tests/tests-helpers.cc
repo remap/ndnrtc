@@ -8,12 +8,24 @@
 #include <boost/assign.hpp>
 #include <ndn-cpp/interest.hpp>
 #include <ndn-cpp/threadsafe-face.hpp>
+#include <ndn-cpp-tools/usersync/content-meta-info.hpp>
+
+#include <ctime>
+#include <random>
+#include <climits>
+#include <algorithm>
+#include <functional>
 
 #include "tests-helpers.hpp"
+#include "src/proto/ndnrtc.pb.h"
+#include "src/clock.hpp"
 
 using namespace std;
 using namespace ndnrtc;
 using namespace ndn;
+
+// for generating buffers of random bits
+using random_bytes_engine = independent_bits_engine<default_random_engine, CHAR_BIT, unsigned char>;
 
 static uint8_t DEFAULT_RSA_PUBLIC_KEY_DER[] = {
     0x30, 0x82, 0x01, 0x22, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01,
@@ -113,6 +125,117 @@ static uint8_t DEFAULT_RSA_PRIVATE_KEY_DER[] = {
     0x84, 0x50, 0x1b, 0x3e, 0x47, 0x6d, 0x74, 0xfb, 0xd1, 0xa6, 0x10, 0x20, 0x6c, 0x6e, 0xbe, 0x44,
     0x3f, 0xb9, 0xfe, 0xbc, 0x8d, 0xda, 0xcb, 0xea, 0x8f};
 
+
+StreamMeta sampleStreamMeta()
+{
+    StreamMeta meta;
+    meta.set_bitrate(2000);
+    meta.set_description("stream description");
+    meta.set_gop_size(30);
+    meta.set_width(1920);
+    meta.set_height(1080);
+    return meta;
+}
+
+boost::shared_ptr<Data> sampleStreamMetaData(const Name& streamPrefix)
+{
+    boost::shared_ptr<Data> data = boost::make_shared<Data>(Name(streamPrefix).append(NameComponents::Meta));
+    StreamMeta meta = sampleStreamMeta();
+    string s = meta.SerializeAsString();
+    data->setContent(Blob::fromRawStr(s));
+    return data;
+}
+
+vector<boost::shared_ptr<Data>>
+getSampleFrameData(Name prefix)
+{
+    srand(time(nullptr));
+    
+    int nData = std::rand() % 10+10, nParity = int(0.2*(float)nData);
+    int gopNo = std::rand();
+    int gopPos = std::rand() % 30;
+    int genD = std::rand()%500;
+    
+    google::protobuf::Timestamp *ts = new google::protobuf::Timestamp(clock::protobufMillisecondTimestamp());
+    FrameMeta meta;
+    
+    meta.set_allocated_capture_timestamp(ts);
+    meta.set_parity_size(nParity);
+    meta.set_dataseg_num(nData);
+    meta.set_type(gopPos == 0 ? FrameMeta_FrameType_Key : FrameMeta_FrameType_Delta);
+    meta.set_gop_number(gopNo);
+    meta.set_gop_position(gopPos);
+    meta.set_generation_delay(genD);
+    
+    ndntools::ContentMetaInfo metaInfo;
+    metaInfo.setTimestamp(ndn_getNowMilliseconds());
+    metaInfo.setHasSegments(true);
+    
+    string s = meta.SerializeAsString();
+    metaInfo.setOther(Blob::fromRawStr(s));
+    
+    vector<boost::shared_ptr<Data>> packets;
+    random_bytes_engine rbe;
+    std::vector<unsigned char> data(8000);
+    
+    // publish data
+    for (int seg = 0; seg < nData; ++seg)
+    {
+        Name segName = Name(prefix).appendSegment(seg);
+        boost::shared_ptr<Data> d = boost::make_shared<Data>(segName);
+        std::generate(begin(data), end(data), std::ref(rbe));
+        
+        d->setContent(data);
+        d->getMetaInfo().setFinalBlockId(Name::Component::fromSegment(nData - 1));
+        d->getMetaInfo().setFreshnessPeriod(30);
+        
+        packets.push_back(d);
+    }
+    
+    // publish parity
+    for (int seg = 0; seg < nParity; ++seg)
+    {
+        Name segName = Name(prefix).append(NameComponents::Parity).appendSegment(seg);
+        boost::shared_ptr<Data> d = boost::make_shared<Data>(segName);
+        std::generate(begin(data), end(data), std::ref(rbe));
+        
+        d->setContent(data);
+        d->getMetaInfo().setFinalBlockId(Name::Component::fromSegment(nParity-1));
+        d->getMetaInfo().setFreshnessPeriod(30);
+        
+        packets.push_back(d);
+    }
+    
+    // publish _manifest
+    {
+        boost::shared_ptr<Data> m = boost::make_shared<Data>(Name(prefix).append(NameComponents::Manifest));
+        size_t DigestSize = 32;
+        vector<uint8_t> payload(DigestSize*packets.size(), 0);
+        uint8_t *ptr = payload.data();
+        
+        for (auto &d : packets)
+        {
+            Blob digest = (*d->getFullName())[-1].getValue();
+            copy(digest->begin(), digest->end(), ptr);
+            ptr += DigestSize;
+        }
+        
+        m->setContent(payload);
+        packets.push_back(m);
+    }
+    
+    // publish _meta
+    {
+        boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(prefix).append(NameComponents::Meta));
+        d->setContent(metaInfo.wireEncode());
+        
+        packets.push_back(d);
+    }
+    
+    return packets;
+}
+
+// ------------------------------------------------------------------------------------------------
 VideoCoderParams sampleVideoCoderParams()
 {
     VideoCoderParams vcp;

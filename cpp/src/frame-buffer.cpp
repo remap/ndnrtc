@@ -13,10 +13,12 @@
 #include <ndn-cpp/interest.hpp>
 #include <ndn-cpp/data.hpp>
 
-#include "fec.hpp"
 #include "clock.hpp"
+#include "fec.hpp"
 #include "frame-data.hpp"
 #include "name-components.hpp"
+#include "proto/ndnrtc.pb.h"
+#include "packets.hpp"
 #include "simple-log.hpp"
 #include "statistics.hpp"
 
@@ -109,38 +111,63 @@ toString(int consistency)
 
 BufferSlot::BufferSlot(){ clear(); }
 
-void
-BufferSlot::segmentsRequested(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests)
+SlotTriggerConnection
+BufferSlot::subscribe(PipelineSlotState slotState, OnSlotStateUpdate onSlotStateUpdate)
 {
-    if (state_ == Ready || state_ == Locked) 
-        throw std::runtime_error("Can't add more segments because slot is ready or locked");
+    SlotTriggerConnection c;
+    
+    switch (slotState) {
+        case PipelineSlotState::Pending: c = onPending_.connect(onSlotStateUpdate); break;
+        case PipelineSlotState::Ready: c = onReady_.connect(onSlotStateUpdate); break;
+        case PipelineSlotState::Unfetchable: c = onUnfetchable_.connect(onSlotStateUpdate); break;
+        default:
+            throw runtime_error("This slot state update is not supported");
+            break;
+    }
+    
+    return c;
+}
 
-    for (auto i:interests)
+void
+BufferSlot::setRequests(const std::vector<boost::shared_ptr<DataRequest> > &requests)
+{
+    if (slotState_ == PipelineSlotState::Ready)
+        throw std::runtime_error("Can't add more segments because slot is ready");
+    
+    for (auto& r:requests)
     {
-        boost::shared_ptr<SlotSegment> segment(boost::make_shared<SlotSegment>(i));
-        
-        if (!segment->getInfo().hasSeqNo_ || !segment->getInfo().hasSegNo_)
-            throw std::runtime_error("No rightmost interests allowed: Interest should have segment-level info");
-        
-        if (name_.size() == 0) 
+        if (name_.size() == 0)
         {
-            nameInfo_ = segment->getInfo();
-            name_ = nameInfo_.getPrefix(prefix_filter::Sample);
-            requestTimeUsec_ = segment->getRequestTimeUsec();
+            nameInfo_ = r->getNamespaceInfo();
+            name_ = nameInfo_.getPrefix(NameFilter::Sample);
+            if (slotState_ == PipelineSlotState::Free)
+                slotState_ = PipelineSlotState::New;
         }
-        else if (!name_.match(i->getName()))
-            throw std::runtime_error("Interest names should differ only after sample sequence number");
-
-        Name segmentKey = segment->getInfo().getSuffix(suffix_filter::Segment);
         
-        if (requested_.find(segmentKey) != requested_.end())
-        {
-            nRtx_++;
-            requested_[segmentKey]->incrementRequestNum();
-        }
-        else requested_[segmentKey] = segment;
-
-        if (state_ == Free) state_ = New;
+        if (r->getNamespaceInfo().segmentClass_ == SegmentClass::Data &&
+            r->getNamespaceInfo().segNo_ > maxDataSegNo_)
+            maxDataSegNo_ = r->getNamespaceInfo().segNo_;
+        
+        if (r->getNamespaceInfo().segmentClass_ == SegmentClass::Parity &&
+            r->getNamespaceInfo().segNo_ > maxParitySegNo_)
+            maxParitySegNo_ = r->getNamespaceInfo().segNo_;
+        
+        boost::shared_ptr<BufferSlot> me = shared_from_this();
+        r->subscribe(DataRequest::Status::Expressed, [this, me](const DataRequest& dr){
+            if (firstRequestTsUsec_ == 0)
+                firstRequestTsUsec_ = dr.getRequestTimestampUsec();
+            if (slotState_ == PipelineSlotState::New)
+            {
+                slotState_ = PipelineSlotState::Pending;
+                triggerEvent(PipelineSlotState::Pending, dr);
+            }
+        });
+        r->subscribe(DataRequest::Status::Data, boost::bind(&BufferSlot::onReply, me, _1));
+        r->subscribe(DataRequest::Status::Timeout, boost::bind(&BufferSlot::onError, me, _1));
+        r->subscribe(DataRequest::Status::AppNack, boost::bind(&BufferSlot::onError, me, _1));
+        r->subscribe(DataRequest::Status::NetworkNack, boost::bind(&BufferSlot::onError, me, _1));
+        
+        requests_.push_back(r);
     }
 }
 
@@ -148,7 +175,24 @@ void
 BufferSlot::clear()
 {
     name_.clear();
+    slotState_ = PipelineSlotState::Free;
     nameInfo_ = NamespaceInfo();
+    requests_.clear();
+    onReady_.disconnect_all_slots();
+    onUnfetchable_.disconnect_all_slots();
+    onMissing_.disconnect_all_slots();
+    metaIsFetched_ = manifestIsFetched_ = false;
+    meta_.reset();
+    manifest_.reset();
+    maxDataSegNo_ = 0;
+    maxParitySegNo_ = 0;
+    firstRequestTsUsec_ = firstDataTsUsec_ = lastDataTsUsec_ = 0;
+    nDataSegments_ = nParitySegments_ = 0;
+    nDataSegmentsFetched_ = nParitySegmentsFetched_ = 0;
+    fetchedBytesData_ = fetchedBytesParity_ = fetchedBytesTotal_ = 0;
+    fetchProgress_ = 0;
+    
+    // code below is deprecated
     requested_.clear();
     fetched_.clear();
     consistency_ = Inconsistent;
@@ -166,7 +210,219 @@ BufferSlot::clear()
     nDataSegments_ = 0;
     nParitySegments_ = 0;
     verified_ = Verification::Unknown;
-    manifest_.reset();
+//    manifest_.reset();
+}
+
+bool
+BufferSlot::isDecodable() const
+{
+    return nDataSegments_ > 0 &&
+           (nDataSegmentsFetched_ + nParitySegmentsFetched_/2 >= nDataSegments_);
+}
+
+// private
+void
+BufferSlot::onReply(const DataRequest& dr)
+{
+    if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Meta &&
+        !metaIsFetched_)
+    {
+        metaIsFetched_ = true;
+        meta_ = boost::dynamic_pointer_cast<const packets::Meta>(dr.getNdnrtcPacket());
+        checkForMissingSegments(dr);
+    }
+    
+    if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Manifest &&
+        !manifestIsFetched_)
+    {
+        manifestIsFetched_ = true;
+        manifest_ = boost::dynamic_pointer_cast<const packets::Manifest>(dr.getNdnrtcPacket());
+        // TODO -- verification
+    }
+    
+    if (!metaIsFetched_ &&
+        (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Data ||
+         dr.getNamespaceInfo().segmentClass_ == SegmentClass::Parity))
+        checkForMissingSegments(dr);
+    
+    updateAssemblingProgress(dr);
+}
+
+void
+BufferSlot::onError(const DataRequest& dr)
+{
+    if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Meta ||
+        (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Data && dr.getNamespaceInfo().segNo_ < nDataSegments_))
+    {
+        if (slotState_ != PipelineSlotState::Unfetchable)
+        {
+            slotState_ = PipelineSlotState::Unfetchable;
+            triggerEvent(PipelineSlotState::Unfetchable, dr);
+        }
+    }
+}
+
+void
+BufferSlot::checkForMissingSegments(const DataRequest& dr)
+{
+    int nParityMissing = 0;
+    int nDataMissing = 0;
+    
+    if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Meta)
+    {
+        boost::shared_ptr<const packets::Meta> meta = meta_;
+        
+        nParityMissing = meta->getFrameMeta().parity_size() - maxParitySegNo_ - 1;
+        nDataMissing = meta->getFrameMeta().dataseg_num() - maxDataSegNo_ - 1;
+    }
+    
+    if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Data ||
+        dr.getNamespaceInfo().segmentClass_ == SegmentClass::Parity)
+    {
+        boost::shared_ptr<const packets::Segment> seg =
+            boost::dynamic_pointer_cast<const packets::Segment>(dr.getNdnrtcPacket());
+        
+        if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Parity)
+            nParityMissing  = (int)seg->getTotalSegmentsNum() - maxParitySegNo_ - 1;
+        if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Data)
+            nDataMissing  = (int)seg->getTotalSegmentsNum() - maxDataSegNo_ - 1;
+    }
+    
+    vector<boost::shared_ptr<DataRequest>> requests;
+    if (nParityMissing > 0)
+        for (int seg = maxParitySegNo_+1; seg <= maxParitySegNo_+nParityMissing; ++seg)
+        {
+            boost::shared_ptr<Interest> i = boost::make_shared<Interest>(*dr.getInterest());
+            i->setName(Name(name_).append(NameComponents::Parity).appendSegment(seg));
+            
+            boost::shared_ptr<DataRequest> r = boost::make_shared<DataRequest>(i);
+            requests.push_back(r);
+        }
+    
+    if (nDataMissing > 0)
+        for (int seg = maxDataSegNo_+1; seg <= maxDataSegNo_+nDataMissing; ++seg){
+            boost::shared_ptr<Interest> i = boost::make_shared<Interest>(*dr.getInterest());
+            i->setName(Name(name_).appendSegment(seg));
+            
+            boost::shared_ptr<DataRequest> r = boost::make_shared<DataRequest>(i);
+            requests.push_back(r);
+        }
+    
+    if (requests.size())
+        onMissing_(this, requests);
+}
+
+void
+BufferSlot::updateAssemblingProgress(const DataRequest &dr)
+{
+    if (slotState_ == PipelineSlotState::Pending)
+        firstDataTsUsec_ = dr.getReplyTimestampUsec();
+
+    lastDataTsUsec_ = dr.getReplyTimestampUsec();
+    
+    if (nDataSegments_ == 0)
+    {
+        if (meta_)
+            nDataSegments_ = meta_->getFrameMeta().dataseg_num();
+        else if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Data)
+        {
+            boost::shared_ptr<const packets::Segment> seg =
+                boost::dynamic_pointer_cast<const packets::Segment>(dr.getNdnrtcPacket());
+            nDataSegments_ = seg->getTotalSegmentsNum();
+        }
+    }
+    
+    if (nParitySegments_ == 0)
+    {
+        if (meta_)
+            nParitySegments_ = meta_->getFrameMeta().parity_size();
+        else if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Parity)
+        {
+            boost::shared_ptr<const packets::Segment> seg =
+                boost::dynamic_pointer_cast<const packets::Segment>(dr.getNdnrtcPacket());
+            nParitySegments_ = seg->getTotalSegmentsNum();
+        }
+    }
+    
+    size_t dataSize = dr.getData()->getContent().size();
+    fetchedBytesTotal_ += dataSize;
+    if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Data)
+    {
+        fetchedBytesData_ += dataSize;
+        nDataSegmentsFetched_++;
+    }
+    if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Parity)
+    {
+        fetchedBytesParity_ += dataSize;
+        nParitySegmentsFetched_++;
+    }
+    
+    if (nDataSegments_ > 0)
+        fetchProgress_ = double(nDataSegmentsFetched_+nParitySegmentsFetched_+2) / double(nDataSegments_+nParitySegments_+2);
+    
+    if (isDecodable() && slotState_ == PipelineSlotState::Assembling)
+    {
+        slotState_ = PipelineSlotState::Ready;
+        triggerEvent(PipelineSlotState::Ready, dr);
+    }
+    else
+        if (slotState_ == PipelineSlotState::Pending)
+            slotState_ = PipelineSlotState::Assembling;
+}
+
+void
+BufferSlot::triggerEvent(PipelineSlotState s, const DataRequest& dr)
+{
+    switch (s) {
+        case PipelineSlotState::Unfetchable:
+            onUnfetchable_(this, dr);
+            break;
+        case PipelineSlotState::Ready:
+            onReady_(this, dr);
+            break;
+        case PipelineSlotState::Pending:
+            onPending_(this, dr);
+            break;
+        default:
+            break;
+    }
+}
+
+// ----------------------------------------------------------------------------------------
+// CODE BELOW IS DEPRECATED
+void
+BufferSlot::segmentsRequested(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests)
+{
+    if (state_ == Ready || state_ == Locked)
+        throw std::runtime_error("Can't add more segments because slot is ready or locked");
+    
+    for (auto i:interests)
+    {
+        boost::shared_ptr<SlotSegment> segment(boost::make_shared<SlotSegment>(i));
+        
+        if (!segment->getInfo().hasSeqNo_ || !segment->getInfo().hasSegNo_)
+            throw std::runtime_error("No rightmost interests allowed: Interest should have segment-level info");
+        
+        if (name_.size() == 0)
+        {
+            nameInfo_ = segment->getInfo();
+            name_ = nameInfo_.getPrefix(prefix_filter::Sample);
+            requestTimeUsec_ = segment->getRequestTimeUsec();
+        }
+        else if (!name_.match(i->getName()))
+            throw std::runtime_error("Interest names should differ only after sample sequence number");
+        
+        Name segmentKey = segment->getInfo().getSuffix(suffix_filter::Segment);
+        
+        if (requested_.find(segmentKey) != requested_.end())
+        {
+            nRtx_++;
+            requested_[segmentKey]->incrementRequestNum();
+        }
+        else requested_[segmentKey] = segment;
+        
+        if (state_ == Free) state_ = New;
+    }
 }
 
 const boost::shared_ptr<SlotSegment>
@@ -640,12 +896,13 @@ Buffer::received(const boost::shared_ptr<WireSegment>& segment)
         throw std::runtime_error(ss.str());
     }
     
-    BufferSlot::State oldState = activeSlots_[key]->getState();
+    BufferSlot::State oldState = BufferSlot::Free; // activeSlots_[key]->getState();
     receipt.segment_ = activeSlots_[key]->segmentReceived(segment);
     receipt.slot_ = activeSlots_[key];
     receipt.oldState_ = oldState;
     
-    if (receipt.slot_->getState() == BufferSlot::Ready)
+//    if (receipt.slot_->getState() == BufferSlot::Ready)
+    if (true)
     {
         if (oldState != BufferSlot::Ready)
         {
@@ -696,7 +953,7 @@ Buffer::getSlotsNum(const ndn::Name& prefix, int stateMask) const
     unsigned int nSlots = 0;
 
     for (auto it:activeSlots_)
-        if (prefix.match(it.first) && it.second->getState()&stateMask)
+//        if (prefix.match(it.first) && it.second->getState()&stateMask)
             nSlots++;
 
     return nSlots;
@@ -733,12 +990,12 @@ Buffer::invalidate(const Name& slotPrefix)
     activeSlots_.erase(activeSlots_.find(slotPrefix));
     
     (*sstorage_)[Indicator::DroppedNum]++;
-    if (slot->getState() <= BufferSlot::Assembling)
+//    if (slot->getState() <= BufferSlot::Assembling)
         (*sstorage_)[Indicator::IncompleteNum]++;
     if (slot->getNameInfo().class_ == SampleClass::Key)
     {
         (*sstorage_)[Indicator::DroppedKeyNum]++;
-        if (slot->getState() <= BufferSlot::Assembling)
+//        if (slot->getState() <= BufferSlot::Assembling)
             (*sstorage_)[Indicator::IncompleteKeyNum]++;
     }
     
@@ -758,12 +1015,12 @@ Buffer::invalidatePrevious(const Name& slotPrefix)
         boost::shared_ptr<BufferSlot> slot = activeSlots_.begin()->second;
         
         (*sstorage_)[Indicator::DroppedNum]++;
-        if (slot->getState() <= BufferSlot::Assembling)
+//        if (slot->getState() <= BufferSlot::Assembling)
             (*sstorage_)[Indicator::IncompleteNum]++;
         if (slot->getNameInfo().class_ == SampleClass::Key)
         {
             (*sstorage_)[Indicator::DroppedKeyNum]++;
-            if (slot->getState() <= BufferSlot::Assembling)
+//            if (slot->getState() <= BufferSlot::Assembling)
                 (*sstorage_)[Indicator::IncompleteKeyNum]++;
         }
         
@@ -982,7 +1239,7 @@ PlaybackQueue::onNewRequest(const boost::shared_ptr<BufferSlot>&)
 void 
 PlaybackQueue::onNewData(const BufferReceipt& receipt)
 {
-    if (receipt.slot_->getState() == BufferSlot::Ready &&
+    if (//receipt.slot_->getState() == BufferSlot::Ready &&
         streamPrefix_.match(receipt.slot_->getPrefix()))
     {
         boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);

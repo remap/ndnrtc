@@ -93,14 +93,14 @@ void FrameFetchingTask::requestSegment(const shared_ptr<const Interest>& interes
                 NamespaceInfo info;
                 NameComponents::extractInfo(data->getName(), info);
                 boost::shared_ptr<WireSegment> segment = WireSegment::createSegment(info, data, interest);
-                BufferSlot::State s = slot_->getState();
+                BufferSlot::State s = BufferSlot::New; //slot_->getState();
                 shared_ptr<SlotSegment> seg = slot_->segmentReceived(segment);
                 taskProgress_ += (settings_.nRtx_+1) - seg->getRequestNum();
 
                 LogTraceC << "received " << data->getName() 
                           << ". progress " << taskProgress_ << "/" << taskCompletion_ << std::endl;
 
-                if (s == BufferSlot::New && slot_->getState() >= BufferSlot::New)
+                if (s == BufferSlot::New) // && slot_->getState() >= BufferSlot::New)
                     if (onFirstSegment_) onFirstSegment_(self, seg);
                 if (seg->getInfo().segNo_ == 0)
                     if (onZeroSegment_) onZeroSegment_(self, seg);
@@ -178,7 +178,7 @@ FrameFetchingTask::checkMissingSegments()
 void
 FrameFetchingTask::checkCompletion()
 {
-    if (slot_->getState() == BufferSlot::Ready)
+    if (true) //slot_->getState() == BufferSlot::Ready)
     {
         if (state_ == Fetching)
         {

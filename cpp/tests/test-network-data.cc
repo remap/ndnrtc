@@ -31,46 +31,11 @@ using namespace ndnrtc;
 using ::testing::Invoke;
 using ::testing::_;
 
-class FaceStub {
-public:
-    MOCK_METHOD2(onData, void(const boost::shared_ptr<const Interest>& interest,
-                 const boost::shared_ptr<Data>& data));
-    MOCK_METHOD1(onTimeout, void(const boost::shared_ptr<const Interest>& interest));
-    MOCK_METHOD2(onNack, void(const boost::shared_ptr<const Interest>& interest,
-                 const boost::shared_ptr<NetworkNack>& networkNack));
-    MOCK_METHOD5(onInterest, void(const boost::shared_ptr<const Name>& prefix,
-                 const boost::shared_ptr<const Interest>& interest, Face& face,
-                 uint64_t interestFilterId,
-                 const boost::shared_ptr<const InterestFilter>& filter));
-    MOCK_METHOD1(onRegisterFailure, void(const boost::shared_ptr<const Name>& prefix));
-    MOCK_METHOD2(onRegisterSuccess, void(const boost::shared_ptr<const Name>& prefix,
-                 uint64_t registeredPrefixId));
-};
-
 class DataRequestObserver {
 public:
     MOCK_METHOD1(onUpdate, void(const DataRequest&));
 };
 
-StreamMeta sampleStreamMeta()
-{
-    StreamMeta meta;
-    meta.set_bitrate(2000);
-    meta.set_description("stream description");
-    meta.set_gop_size(30);
-    meta.set_width(1920);
-    meta.set_height(1080);
-    return meta;
-}
-
-boost::shared_ptr<Data> sampleStreamMetaData(const Name& streamPrefix)
-{
-    boost::shared_ptr<Data> data = boost::make_shared<Data>(Name(streamPrefix).append(NameComponents::Meta));
-    StreamMeta meta = sampleStreamMeta();
-    string s = meta.SerializeAsString();
-    data->setContent(Blob::fromRawStr(s));
-    return data;
-}
 
 TEST(TestNewtorkData, TestDataRequest)
 {

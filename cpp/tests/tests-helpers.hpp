@@ -28,6 +28,7 @@
 #include <include/statistics.hpp>
 
 #include "src/frame-data.hpp"
+#include "src/proto/ndnrtc.pb.h"
 #include "name-components.hpp"
 
 #define GT_PRINTF(...)                                                                     \
@@ -37,6 +38,29 @@
         testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, __VA_ARGS__);    \
     } while (0)
 
+
+
+class FaceStub {
+public:
+    MOCK_METHOD2(onData, void(const boost::shared_ptr<const ndn::Interest>& interest,
+                              const boost::shared_ptr<ndn::Data>& data));
+    MOCK_METHOD1(onTimeout, void(const boost::shared_ptr<const ndn::Interest>& interest));
+    MOCK_METHOD2(onNack, void(const boost::shared_ptr<const ndn::Interest>& interest,
+                              const boost::shared_ptr<ndn::NetworkNack>& networkNack));
+    MOCK_METHOD5(onInterest, void(const boost::shared_ptr<const ndn::Name>& prefix,
+                                  const boost::shared_ptr<const ndn::Interest>& interest, ndn::Face& face,
+                                  uint64_t interestFilterId,
+                                  const boost::shared_ptr<const ndn::InterestFilter>& filter));
+    MOCK_METHOD1(onRegisterFailure, void(const boost::shared_ptr<const ndn::Name>& prefix));
+    MOCK_METHOD2(onRegisterSuccess, void(const boost::shared_ptr<const ndn::Name>& prefix,
+                                         uint64_t registeredPrefixId));
+};
+
+ndnrtc::StreamMeta sampleStreamMeta();
+boost::shared_ptr<ndn::Data> sampleStreamMetaData(const ndn::Name& streamPrefix);
+std::vector<boost::shared_ptr<ndn::Data>> getSampleFrameData(ndn::Name prefix);
+
+// ------------------------------------------------------------------------------------------------
 ndnrtc::VideoCoderParams
 sampleVideoCoderParams();
 ClientParams

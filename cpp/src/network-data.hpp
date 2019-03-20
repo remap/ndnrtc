@@ -21,6 +21,7 @@
 #include "params.hpp"
 
 class GTEST_CLASS(TestNewtorkData, TestDataRequest);
+class UnitTestDataRequestProxy;
 
 namespace ndn
 {
@@ -31,7 +32,7 @@ class NetworkNack;
 namespace ndnrtc
 {
 
-class InterestQueue;
+class RequestQueueImpl;
 
 namespace packets {
     class BasePacket;
@@ -95,9 +96,10 @@ public:
     RequestTriggerConnection subscribe(Status, OnRequestUpdate);
 
 protected:
-    friend InterestQueue;
+    friend RequestQueueImpl;
     friend class ::GTEST_CLASS(TestNewtorkData, TestDataRequest);
-
+    friend class ::UnitTestDataRequestProxy;
+    
     void setStatus(Status s) { status_ = s; }
     void setRtx() { rtxNum_++; }
     void triggerEvent(Status s);

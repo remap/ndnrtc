@@ -35,4 +35,5 @@ message FrameMeta {
   }
 
   FrameType type = 6;
+  int32 dataseg_num = 7;
 }

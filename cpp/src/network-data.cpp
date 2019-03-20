@@ -139,12 +139,13 @@ DataRequest::setData(const boost::shared_ptr<const Data>& data)
         throw runtime_error("DataRequest::setData: interest name is not a "
                             "prefix of data name");
 
-    if (data->getMetaInfo().getType() == ndn_ContentType_NACK)
-        appNackNum_++;
-
     data_ = data;
     NameComponents::extractInfo(data->getName(), namespaceInfo_);
-    packet_ = packets::BasePacket::ndnrtcPacketFromRequest(*this);
+    
+    if (data->getMetaInfo().getType() == ndn_ContentType_NACK)
+        appNackNum_++;
+    else
+        packet_ = packets::BasePacket::ndnrtcPacketFromRequest(*this);
 }
 
 void

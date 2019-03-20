@@ -90,7 +90,7 @@ void RetransmissionController::checkRetransmissions()
         boost::shared_ptr<BufferSlot> slot = it->second.slot_;
         int64_t playbackDeadline = it->second.deadlineTimestamp_;
         bool needRtx = (playbackDeadline - now < drdEstimator_->getOriginalAverage().latestValue());
-        bool assembledOrCleared = (slot->getState() >= BufferSlot::State::Ready || slot->getState() == BufferSlot::State::Free);
+        bool assembledOrCleared = true; //(slot->getState() >= BufferSlot::State::Ready || slot->getState() == BufferSlot::State::Free);
 
         if (needRtx || assembledOrCleared)
         {

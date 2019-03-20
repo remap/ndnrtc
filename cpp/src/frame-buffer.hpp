@@ -13,12 +13,15 @@
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
+#include <boost/signals2.hpp>
 #include <ndn-cpp/name.hpp>
 
+#include "ndnrtc-common.hpp"
 #include "name-components.hpp"
 
 #include "slot-buffer.hpp"
 #include "ndnrtc-object.hpp"
+#include "pipeline.hpp"
 
 namespace ndn {
     class Interest;
@@ -32,9 +35,14 @@ namespace ndnrtc
         class StatisticsStorage;
     }
     
+    namespace packets {
+        class Meta;
+        class Manifest;
+    }
+    
     struct _CommonHeader;
     class WireSegment;
-
+    
     class SlotSegment {
     public:
 
@@ -86,7 +94,7 @@ namespace ndnrtc
         int64_t requestTimeUsec_, arrivalTimeUsec_;
         size_t requestNo_;
         bool isVerified_;
-    };
+    } DEPRECATED;
 
     //******************************************************************************
     class VideoFrameSlot;
@@ -95,8 +103,10 @@ namespace ndnrtc
     class Manifest;
     class SampleValidator;
     class ManifestValidator;
-
-    class BufferSlot
+    
+    class BufferSlot : public IPoolObject
+                     , public IPipelineSlot
+                     , public boost::enable_shared_from_this<BufferSlot>
     {
     public:
         enum State {
@@ -124,9 +134,55 @@ namespace ndnrtc
                                   // header, provided by producer
             Consistent = SegmentMeta|HeaderMeta // all meta data is ready
         } Consistency;
-
+        
         BufferSlot();
         ~BufferSlot(){}
+        
+        PipelineSlotState getState() const override { return slotState_; }
+        void setRequests(const std::vector<boost::shared_ptr<DataRequest>>&) override;
+//        std::vector<boost::shared_ptr<const DataRequest>> getAllRequests() const override;
+        const ndn::Name& getPrefix() const override  { return name_; }
+        SlotTriggerConnection subscribe(PipelineSlotState, OnSlotStateUpdate) override;
+        
+        /**
+         * Clears all internal structures of this slot and returns to Free state
+         * as if slot has just been created. No memory deallocation/reallocation is
+         * performed, thus operation is not expensive.
+         */
+        void clear() override;
+        bool isDecodable() const;
+
+        int64_t getAssemblingTime() const
+        { return ( slotState_ >= PipelineSlotState::Assembling ? lastDataTsUsec_ - firstDataTsUsec_ : 0); }
+        int64_t getShortestDrd() const
+        { return (slotState_ >= PipelineSlotState::Assembling ? firstDataTsUsec_-firstRequestTsUsec_ : 0); }
+        int64_t getLongestDrd() const
+        { return (slotState_ == PipelineSlotState::Ready ? lastDataTsUsec_ - firstRequestTsUsec_ : 0); }
+        
+        Verification getVerificationStatus() const { return verified_; }
+        const NamespaceInfo& getNameInfo() const { return nameInfo_; }
+        double getFetchProgress() const { return fetchProgress_; }
+        
+        
+        std::string
+        dump(bool showLastSegment = false) const;
+        
+        boost::signals2::signal<void(IPipelineSlot*,
+                                     std::vector<boost::shared_ptr<DataRequest>>)> onMissing_;
+        
+        size_t getDataSegmentsNum() const { return nDataSegments_; }
+        size_t getFetchedDataSegmentsNum() const { return nDataSegmentsFetched_; }
+        size_t getParitySegmentsNum() const { return nParitySegments_; }
+        size_t getFetchedParitySegmentsNum() const { return nParitySegmentsFetched_; }
+        size_t getFetchedBytesTotal() const { return fetchedBytesTotal_; }
+        size_t getFetchedBytesData() const { return fetchedBytesData_; }
+        size_t getFetchedBytesParity() const { return fetchedBytesParity_; }
+        
+        // ----------------------------------------------------------------------------------------
+        // CODE BELOW IS DEPRECATED
+        
+        int getConsistencyState() const { return consistency_; }
+        double getAssembledLevel() const { return fetchProgress_; }
         
         /**
          * Adds issued Interests to this slot.
@@ -138,15 +194,7 @@ namespace ndnrtc
          * @see clear()
          */
         void 
-        segmentsRequested(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests);
-        
-        /**
-         * Clears all internal structures of this slot and returns to Free state
-         * as if slot has just been created. No memory deallocation/reallocation is
-         * performed, thus operation is not expensive.
-         */
-        void
-        clear();
+        segmentsRequested(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests) DEPRECATED;
 
         /**
          * Adds received segment to this slot.
@@ -159,47 +207,32 @@ namespace ndnrtc
          * like Data Retrieval Delays, etc.
          */
         const boost::shared_ptr<SlotSegment>
-        segmentReceived(const boost::shared_ptr<WireSegment>& segment);
+        segmentReceived(const boost::shared_ptr<WireSegment>& segment) DEPRECATED;
         
         /**
          * Returns an array of names of missing segments
          */
-        std::vector<ndn::Name> getMissingSegments() const;
+        std::vector<ndn::Name> getMissingSegments() const DEPRECATED;
 
         /**
          * Returns an array of pending Interests for this slot
          */
-        const std::vector<boost::shared_ptr<const ndn::Interest>> getPendingInterests() const;
+        const std::vector<boost::shared_ptr<const ndn::Interest>> getPendingInterests() const DEPRECATED;
 
         /**
          * 
          */
-        const std::vector<boost::shared_ptr<const SlotSegment>> getFetchedSegments() const;
-
-        /**
-         * Returns boolean value on whether slot is verified
-         */
-        Verification getVerificationStatus() const { return verified_; }
-
-        State getState() const { return state_; }
+        const std::vector<boost::shared_ptr<const SlotSegment>> getFetchedSegments() const DEPRECATED;
         
-        double getAssembledLevel() const { return asmLevel_; }
-
-        const ndn::Name& getPrefix() const { return name_; }
-        const NamespaceInfo& getNameInfo() const { return nameInfo_; }
-        int getConsistencyState() const { return consistency_; }
-        unsigned int getRtxNum() const { return nRtx_; }
-        int getRtxNum(const ndn::Name& segmentName);
-        bool hasOriginalSegments() const { return hasOriginalSegments_; }
-        size_t getFetchedNum() const { return fetched_.size(); }
-        void toggleLock();
+        
+//        State getState(int phony = 0) const DEPRECATED { return state_; }
+        
+        unsigned int getRtxNum() const DEPRECATED { return nRtx_; }
+        int getRtxNum(const ndn::Name& segmentName) DEPRECATED;
+        bool hasOriginalSegments() const DEPRECATED { return hasOriginalSegments_; }
+        size_t getFetchedNum() const DEPRECATED { return fetched_.size(); }
+        void toggleLock() DEPRECATED;
         bool hasAllSegmentsFetched() const { return nDataSegments_+nParitySegments_ == fetched_.size(); }
-        int64_t getAssemblingTime() const
-        { return ( state_ >= Ready ? assembledTimeUsec_-firstSegmentTimeUsec_ : 0); }
-        int64_t getShortestDrd() const
-        { return (state_ >= Assembling ? firstSegmentTimeUsec_-requestTimeUsec_ : 0); }
-        int64_t getLongestDrd() const
-        { return (state_ >= Ready ? assembledTimeUsec_ - requestTimeUsec_ : 0); }
         
         /**
          * Returns common packet header if it's available (HeaderMeta consistency),
@@ -207,12 +240,43 @@ namespace ndnrtc
          * @return CommonHeader structure
          * @see CommonSamplePacket
          */
-        const _CommonHeader getHeader() const;
-
-        std::string
-        dump(bool showLastSegment = false) const;
+        const _CommonHeader getHeader() const DEPRECATED;
 
     private:
+        PipelineSlotState slotState_;
+        std::vector<boost::shared_ptr<DataRequest>> requests_;
+        SlotTrigger onPending_, onReady_, onUnfetchable_;
+        bool metaIsFetched_, manifestIsFetched_;
+        boost::shared_ptr<const packets::Meta> meta_;
+        boost::shared_ptr<const packets::Manifest> manifest_;
+        SegmentNumber maxDataSegNo_, maxParitySegNo_;
+        
+        int64_t firstRequestTsUsec_, firstDataTsUsec_, lastDataTsUsec_;
+        size_t nDataSegments_, nParitySegments_;
+        size_t nDataSegmentsFetched_, nParitySegmentsFetched_;
+        size_t fetchedBytesData_, fetchedBytesParity_, fetchedBytesTotal_;
+        double fetchProgress_;
+        
+        void onReply(const DataRequest&);
+        void onError(const DataRequest&);
+        
+        void checkForMissingSegments(const DataRequest&);
+        void updateAssemblingProgress(const DataRequest&);
+        void triggerEvent(PipelineSlotState, const DataRequest&);
+        
+        
+        // ???
+//        std::map<ndn::Name, boost::shared_ptr<DataRequest>> expressed_;
+//        std::map<ndn::Name, boost::shared_ptr<DataRequest>> fetched_;
+//        std::map<ndn::Name, boost::shared_ptr<DataRequest>> nacked_;
+//        std::map<ndn::Name, boost::shared_ptr<DataRequest>> appNacked_;
+//        std::map<ndn::Name, boost::shared_ptr<DataRequest>> timedout_;
+        
+        // ----------------------------------------------------------------------------------------
+        // CODE BELOW IS DEPRECATED
+        size_t assembledBytes_;
+        double assembledPct_, asmLevel_;
+        
         friend VideoFrameSlot;
         friend AudioBundleSlot;
         friend SampleValidator;
@@ -224,16 +288,22 @@ namespace ndnrtc
         std::map<ndn::Name, boost::shared_ptr<SlotSegment>> requested_, fetched_;
         boost::shared_ptr<SlotSegment> lastFetched_;
         unsigned int consistency_, nRtx_, assembledSize_;
-        unsigned int nDataSegments_, nParitySegments_;
+        
         bool hasOriginalSegments_;
+        double assembled_;
+        
         State state_;
+        
+        
         int64_t requestTimeUsec_, firstSegmentTimeUsec_, assembledTimeUsec_;
-        double assembled_, asmLevel_;
-        mutable boost::shared_ptr<Manifest> manifest_;
+//        double assembled_, asmLevel_;
+//        mutable boost::shared_ptr<Manifest> manifest_;
         mutable Verification verified_;
 
         virtual void updateConsistencyState(const boost::shared_ptr<SlotSegment>& segment);
         void updateAssembledLevel();
+        
+        
     };
 
     //******************************************************************************

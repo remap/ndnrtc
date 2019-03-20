@@ -26,9 +26,18 @@ namespace ndn {
     class NetworkNack;
 }
 
+namespace ndnlog {
+namespace new_api {
+
+    class Logger;
+
+}
+}
+
 namespace ndnrtc {
     class DeadlinePriority;
     class DataRequest;
+    class RequestQueueImpl;
 
     typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&,
                                     const boost::shared_ptr<ndn::Data>&)> OnData;
@@ -52,6 +61,11 @@ namespace ndnrtc {
                         OnData onData,
                         OnTimeout onTimeout,
                         OnNetworkNack onNetworkNack) = 0;
+
+        virtual void
+        enqueueRequest(boost::shared_ptr<DataRequest>& request,
+                       boost::shared_ptr<DeadlinePriority> priority) = 0;
+
         virtual void reset() = 0;
     };
 
@@ -59,9 +73,7 @@ namespace ndnrtc {
      * Interst queue class implements functionality for priority Interest queue.
      * Interests are expressed according to their priorities on Face thread.
      */
-    class InterestQueue : public NdnRtcComponent,
-                          public IInterestQueue,
-                          public statistics::StatObject
+    class RequestQueue : public IInterestQueue
     {
     public:
 
@@ -71,10 +83,17 @@ namespace ndnrtc {
             virtual int64_t getValue() const = 0;
         };
 
-        InterestQueue(boost::asio::io_service& io,
-                      const boost::shared_ptr<ndn::Face> &face,
-                      const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
-        ~InterestQueue();
+        RequestQueue(boost::asio::io_service& io,
+                     const boost::shared_ptr<ndn::Face> &face,
+                     const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
+        RequestQueue(boost::asio::io_context& io,
+                     ndn::Face *face,
+                     const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
+        RequestQueue(boost::asio::io_context& io,
+                     ndn::Face *face);
+//        InterestQueue(const ndn::Face &face,
+//                      const boost::shared_ptr<statistics::StatisticsStorage>& statStorage){}
+        ~RequestQueue();
         
         /**
          * Enqueues Interest in the queue.
@@ -88,7 +107,7 @@ namespace ndnrtc {
                         boost::shared_ptr<DeadlinePriority> priority,
                         OnData onData,
                         OnTimeout onTimeout,
-                        OnNetworkNack = OnNetworkNack());
+                        OnNetworkNack = OnNetworkNack()) DEPRECATED;
         /**
          * Enqueues DataRequest in the queue.
          * All callbacks will be dispatched through the DataRequest object's status update events.
@@ -100,88 +119,34 @@ namespace ndnrtc {
                        boost::shared_ptr<DeadlinePriority> priority);
         
         /**
+         * Only call that if interest queue was not initialized using io_context
+         */
+//        void
+//        process();
+        
+        /**
          * Flushes current interest queue
          */
         void reset();
-        void registerObserver(IInterestQueueObserver *observer) { observer_ = observer; }
-        void unregisterObserver() { observer_ = nullptr; }
-        size_t size() const { return queue_.size(); }
+        void registerObserver(IInterestQueueObserver *observer) DEPRECATED;
+        void unregisterObserver() DEPRECATED;
+        size_t size() const;
+        
+        virtual void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+
         
     private:
-        class QueueEntry
-        {
-        public:
-            class Comparator
-            {
-            public:
-                Comparator(bool inverted):inverted_(inverted){}
-                
-                bool operator() (const QueueEntry& q1,
-                                 const QueueEntry& q2) const
-                {
-                    return inverted_^(q1.getValue() < q2.getValue());
-                }
-                
-            private:
-                bool inverted_;
-            };
-
-            QueueEntry(const boost::shared_ptr<const ndn::Interest>& interest,
-                       const boost::shared_ptr<IPriority>& priority,
-                       OnData onData,
-                       OnTimeout onTimeout,
-                       OnNetworkNack onNetworkNack,
-                       OnExpressInterest onExpressInterest = OnExpressInterest());
-
-            int64_t
-            getValue() const { return priority_->getValue(); }
-            
-            QueueEntry& operator=(const QueueEntry& entry)
-            {
-                interest_ = entry.interest_; // we just copy the pointer, since it's a pointer to a const
-                priority_  = entry.priority_;
-                onDataCallback_ = entry.onDataCallback_;
-                onTimeoutCallback_ = entry.onTimeoutCallback_;
-                onNetworkNack_ = entry.onNetworkNack_;
-                return *this;
-            }
-
-        private:
-            friend InterestQueue;
-
-            boost::shared_ptr<const ndn::Interest> interest_;
-            boost::shared_ptr<IPriority> priority_;
-            OnData onDataCallback_;
-            OnTimeout onTimeoutCallback_;
-            OnNetworkNack onNetworkNack_;
-            OnExpressInterest onExpressInterest_;
-        };
-        
-        typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>, 
-                    QueueEntry::Comparator> PriorityQueue;
-        
-        boost::shared_ptr<ndn::Face> face_;
-        boost::asio::io_service& faceIo_;
-        boost::recursive_mutex queueAccess_;
-        PriorityQueue queue_;
-        IInterestQueueObserver *observer_;
-        bool isDrainingQueue_;
-        
-        void enqueue(QueueEntry&, boost::shared_ptr<DeadlinePriority> priority);
-        void safeDrain();
-        void drainQueue();
-        void stopQueueWatching();
-        void processEntry(const QueueEntry &entry);
+        boost::shared_ptr<RequestQueueImpl> pimpl_;
     };
     
-    typedef InterestQueue RequestQueue;
+    typedef RequestQueue InterestQueue;
     
     /**
      * DeadlinePriority class implements IPriority interface for assigning 
      * priorities for Interests based on expected data arrival deadlines.
      * The farther the arrival deadline is, the lower the priority.
      */
-    class DeadlinePriority : public InterestQueue::IPriority
+    class DeadlinePriority : public RequestQueue::IPriority
     {
     public:
         DeadlinePriority(int64_t arrivalDelay);

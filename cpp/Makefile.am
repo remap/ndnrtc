@@ -59,6 +59,7 @@ libndnrtc_la_SOURCES = src/proto/ndnrtc.pb.cc \
   src/playout-control.cpp src/playout-control.hpp \
   src/playout.cpp src/playout.hpp \
   src/playout-impl.cpp src/playout-impl.hpp \
+  src/pool.cpp src/pool.hpp \
   src/rate-adaptation-module.hpp \
   src/remote-stream-impl.cpp src/remote-stream-impl.hpp \
   src/remote-stream.cpp include/remote-stream.hpp \
@@ -360,11 +361,6 @@ bin_tests_test_local_media_stream_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_local_media_stream_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_local_media_stream_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
-bin_tests_test_frame_buffer_SOURCES = tests/test-frame-buffer.cc tests/tests-helpers.cc src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_frame_buffer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-bin_tests_test_frame_buffer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_frame_buffer_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
-
 bin_tests_test_rtx_controller_SOURCES = tests/test-rtx-controller.cc tests/tests-helpers.cc src/rtx-controller.cpp src/frame-buffer.cpp src/name-components.cpp src/frame-data.cpp src/fec.cpp src/clock.cpp src/simple-log.cpp src/ndnrtc-object.cpp src/statistics.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_rtx_controller_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_rtx_controller_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -478,7 +474,7 @@ bin_tests_test_pipeline_control_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_pipeline_control_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_pipeline_control_LDADD =  $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
-bin_tests_test_pipeline_SOURCES = tests/test-pipeline.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_pipeline_SOURCES = tests/test-pipeline.cc tests/tests-helpers.cc ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_pipeline_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_pipeline_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_pipeline_LDADD =  $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
@@ -497,6 +493,11 @@ bin_tests_test_network_data_SOURCES = tests/test-network-data.cc tests/tests-hel
 bin_tests_test_network_data_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_network_data_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_network_data_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_frame_buffer_SOURCES = tests/test-frame-buffer.cc tests/tests-helpers.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_frame_buffer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_frame_buffer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_frame_buffer_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
 TESTS = ${check_PROGRAMS}
 
