@@ -36,12 +36,63 @@ public:
     MOCK_METHOD1(onUpdate, void(const DataRequest&));
 };
 
+TEST(TestNetworkData, TestDataRequestMasks)
+{
+    {
+        uint8_t statusMask = DataRequest::Status::Expressed | DataRequest::Status::Timeout;
+
+        vector<DataRequest::Status> statuses = fromMask(statusMask);
+        EXPECT_FALSE(statusMask&DataRequest::Status::Data);
+        EXPECT_TRUE(statusMask&DataRequest::Status::Timeout);
+        EXPECT_TRUE(statusMask&DataRequest::Status::Expressed);
+        EXPECT_EQ(statuses.size(), 2);
+        EXPECT_EQ(statuses[0], DataRequest::Status::Expressed);
+        EXPECT_EQ(statuses[1], DataRequest::Status::Timeout);
+    }
+    {
+        uint8_t statusMask = -1;
+        
+        vector<DataRequest::Status> statuses = fromMask(statusMask);
+        EXPECT_TRUE(DataRequest::Status::Created&statusMask);
+        EXPECT_TRUE(DataRequest::Status::Expressed&statusMask);
+        EXPECT_TRUE(DataRequest::Status::Timeout&statusMask);
+        EXPECT_TRUE(DataRequest::Status::NetworkNack&statusMask);
+        EXPECT_TRUE(DataRequest::Status::AppNack&statusMask);
+        EXPECT_TRUE(DataRequest::Status::Data&statusMask);
+        EXPECT_EQ(statuses.size(), 6);
+    }
+    {
+        uint8_t statusMask = 0;
+        
+        vector<DataRequest::Status> statuses = fromMask(statusMask);
+        EXPECT_FALSE(DataRequest::Status::Created&statusMask);
+        EXPECT_FALSE(DataRequest::Status::Expressed&statusMask);
+        EXPECT_FALSE(DataRequest::Status::Timeout&statusMask);
+        EXPECT_FALSE(DataRequest::Status::NetworkNack&statusMask);
+        EXPECT_FALSE(DataRequest::Status::AppNack&statusMask);
+        EXPECT_FALSE(DataRequest::Status::Data&statusMask);
+        EXPECT_EQ(statuses.size(), 0);
+    }
+    {
+        uint8_t statusMask = -1 << 6;
+        EXPECT_TRUE(statusMask > 0);
+        
+        vector<DataRequest::Status> statuses = fromMask(statusMask);
+        EXPECT_FALSE(DataRequest::Status::Created&statusMask);
+        EXPECT_FALSE(DataRequest::Status::Expressed&statusMask);
+        EXPECT_FALSE(DataRequest::Status::Timeout&statusMask);
+        EXPECT_FALSE(DataRequest::Status::NetworkNack&statusMask);
+        EXPECT_FALSE(DataRequest::Status::AppNack&statusMask);
+        EXPECT_EQ(statuses.size(), 0);
+    }
+}
 
 TEST(TestNewtorkData, TestDataRequest)
 {
     if (!checkNfd()) return;
 
-    string basePrefix("/my/base/prefix");
+    string testName(::testing::UnitTest::GetInstance()->current_test_info()->name());
+    string basePrefix("/my/base/prefix/"+testName);
     Name stream = NameComponents::streamPrefix(basePrefix, "mystream");
     KeyChain kc;
     Face pFace;
@@ -93,9 +144,10 @@ TEST(TestNewtorkData, TestDataRequest)
                           bind(&FaceStub::onTimeout, &faceStub, _1),
                           bind(&FaceStub::onNack, &faceStub, _1, _2)
                           );
-        dr.timestampRequest();
-        dr.setStatus(DataRequest::Status::Expressed);
-        dr.triggerEvent(DataRequest::Status::Expressed);
+        UnitTestDataRequestProxy p;
+        p.timestampRequest(dr);
+        p.setStatus(DataRequest::Status::Expressed, dr);
+        p.triggerEvent(DataRequest::Status::Expressed, dr);
         expressedRequest = true;
     };
     
@@ -128,10 +180,11 @@ TEST(TestNewtorkData, TestDataRequest)
         .WillOnce(Invoke([&](const boost::shared_ptr<const Interest>& interest,
                      const boost::shared_ptr<Data>& data)
         {
-            dr.timestampReply();
-            dr.setData(data);
-            dr.setStatus(DataRequest::Status::Data);
-            dr.triggerEvent(DataRequest::Status::Data);
+            UnitTestDataRequestProxy p;
+            p.timestampReply(dr);
+            p.setData(data, dr);
+            p.setStatus(DataRequest::Status::Data, dr);
+            p.triggerEvent(DataRequest::Status::Data, dr);
             receivedReply = true;
         }));
     
@@ -144,6 +197,341 @@ TEST(TestNewtorkData, TestDataRequest)
         cFace.processEvents();
         usleep(10);
     } while (clock::millisecondTimestamp() - start < delay && !receivedReply);
+}
+
+class MultipleRequestsStub {
+public:
+    MOCK_METHOD1(onRequestsReady, void(vector<boost::shared_ptr<DataRequest>>));
+};
+
+TEST(TestNewtorkData, TestMultipleRequestsAll)
+{
+    if (!checkNfd()) return;
+    
+    string testName(::testing::UnitTest::GetInstance()->current_test_info()->name());
+    string basePrefix("/my/base/prefix/"+testName);
+    Name stream = NameComponents::streamPrefix(basePrefix, "mystream");
+    KeyChain kc;
+    Face pFace;
+    Face cFace;
+    FaceStub faceStub;
+    int nReplies = 0;
+    
+    // --------------------------------------------------------------------------------------------
+    // MOCK PRODUCER SIDE
+    pFace.setCommandSigningInfo(kc, kc.getDefaultCertificateName());
+    pFace.registerPrefix(basePrefix,
+                         bind(&FaceStub::onInterest, &faceStub, _1, _2, _3, _4, _5),
+                         bind(&FaceStub::onRegisterFailure, &faceStub, _1),
+                         bind(&FaceStub::onRegisterSuccess, &faceStub, _1, _2));
+    
+    bool prefixRegistered = false;
+    EXPECT_CALL(faceStub, onRegisterSuccess(_,_))
+    .Times(1)
+    .WillOnce(Invoke([&](const boost::shared_ptr<const Name>&,
+                         uint64_t){
+        prefixRegistered = true;
+    }));
+    EXPECT_CALL(faceStub, onRegisterFailure(_))
+    .Times(0);
+    EXPECT_CALL(faceStub, onInterest(_,_,_,_,_))
+    .WillRepeatedly(Invoke([&](const boost::shared_ptr<const Name>& prefix,
+                               const boost::shared_ptr<const Interest>& interest, Face& face,
+                               uint64_t interestFilterId,
+                               const boost::shared_ptr<const InterestFilter>& filter)
+                           {
+                               boost::shared_ptr<Data> d = getRandomData();
+                               d->setName(interest->getName());
+                               d->getMetaInfo().setFreshnessPeriod(100);
+                               face.putData(*d);
+                               nReplies++;
+                           }));
+    
+    int delay = 3000;
+    int64_t start = clock::millisecondTimestamp();
+    while (!prefixRegistered && clock::millisecondTimestamp() - start < delay)
+    {
+        pFace.processEvents();
+        usleep(10);
+    }
+    
+    // --------------------------------------------------------------------------------------------
+    // 1/2: MOCK CONSUMER REQUEST PROCESSING MODULE (DataRequestQ or InterestQueue)
+    int nExpressed = 0;
+    // express request routine
+    auto expressRequests = [&nExpressed, &faceStub](Face& f, vector<boost::shared_ptr<DataRequest>>& requests)
+    {
+        for (auto &r:requests)
+        {
+            f.expressInterest(*r->getInterest(),
+                              [r, &faceStub](const boost::shared_ptr<const Interest>& interest,
+                                             const boost::shared_ptr<Data>& data)
+                              {
+                                  UnitTestDataRequestProxy p;
+                                  p.timestampReply(*r);
+                                  p.setData(data, *r);
+                                  p.setStatus(DataRequest::Status::Data, *r);
+                                  p.triggerEvent(DataRequest::Status::Data, *r);
+                                  faceStub.onData(interest, data);
+                              },
+                              [r, &faceStub](const boost::shared_ptr<const Interest>& interest)
+                              {
+                                  UnitTestDataRequestProxy p;
+                                  p.timestampReply(*r);
+                                  p.setTimeout(*r);
+                                  p.setStatus(DataRequest::Status::Timeout, *r);
+                                  p.triggerEvent(DataRequest::Status::Timeout, *r);
+                                  faceStub.onTimeout(interest);
+                              },
+                              [r, &faceStub](const boost::shared_ptr<const Interest>& interest,
+                                             const boost::shared_ptr<NetworkNack>& nack)
+                              {
+                                  UnitTestDataRequestProxy p;
+                                  p.timestampReply(*r);
+                                  p.setNack(nack, *r);
+                                  p.setStatus(DataRequest::Status::NetworkNack, *r);
+                                  p.triggerEvent(DataRequest::Status::NetworkNack, *r);
+                                  faceStub.onNack(interest, nack);
+                              });
+            
+            UnitTestDataRequestProxy p;
+            p.timestampRequest(*r);
+            p.setStatus(DataRequest::Status::Expressed, *r);
+            p.triggerEvent(DataRequest::Status::Expressed, *r);
+            nExpressed++;
+        }
+    };
+    
+    // --------------------------------------------------------------------------------------------
+    // TEST DataRequest
+    vector<boost::shared_ptr<DataRequest>> requests;
+    int nReq = 3;
+    for( int rNo = 0; rNo < nReq; ++rNo)
+    {
+        boost::shared_ptr<Interest> i = boost::make_shared<Interest>(Name(stream).appendSequenceNumber(rNo));
+        i->setInterestLifetimeMilliseconds(50 + 50*rNo);
+        requests.push_back(boost::make_shared<DataRequest>(i));
+    }
+    
+    bool receivedCallback = false;
+    MultipleRequestsStub callbackStub;
+    
+    DataRequest::invokeWhenAll(requests, DataRequest::Status::Data,
+                               bind(&MultipleRequestsStub::onRequestsReady, &callbackStub, _1));
+    
+    
+    EXPECT_CALL(callbackStub, onRequestsReady(_))
+    .Times(1)
+    .WillOnce(Invoke([&](vector<boost::shared_ptr<DataRequest>> rs)
+                     {
+                         EXPECT_EQ(rs.size(), requests.size());
+                         int seq = 0;
+                         for (auto &r:rs)
+                         {
+                             EXPECT_EQ(r->getData()->getName()[-1].toSequenceNumber(), seq++);
+                             EXPECT_EQ(r->getStatus(), DataRequest::Status::Data);
+                             EXPECT_TRUE(r->getData());
+                         }
+                         receivedCallback = true;
+                     }));
+    
+    EXPECT_CALL(faceStub, onNack(_,_))
+    .Times(0);
+    EXPECT_CALL(faceStub, onTimeout(_))
+    .Times(0);
+    EXPECT_CALL(faceStub, onData(_,_))
+    .Times(nReq);
+
+    // --------------------------------------------------------------------------------------------
+    // 2/2: MOCK CONSUMER REQUEST PROCESSING MODULE
+    expressRequests(cFace, requests);
+    start = clock::millisecondTimestamp();
+    do {
+        pFace.processEvents();
+        cFace.processEvents();
+        usleep(10);
+    } while (clock::millisecondTimestamp() - start < delay && !receivedCallback);
+}
+
+TEST(TestNewtorkData, TestMultipleRequestsAny)
+{
+    if (!checkNfd()) return;
+    
+    string testName(::testing::UnitTest::GetInstance()->current_test_info()->name());
+    string basePrefix("/my/base/prefix/"+testName);
+    Name stream = NameComponents::streamPrefix(basePrefix, "mystream");
+    KeyChain kc;
+    Face pFace;
+    Face cFace;
+    FaceStub faceStub;
+    int nReplies = 0;
+    
+    // --------------------------------------------------------------------------------------------
+    // MOCK PRODUCER SIDE -- for every 3d packet replies data, app nack or timeout (no reply)
+    pFace.setCommandSigningInfo(kc, kc.getDefaultCertificateName());
+    pFace.registerPrefix(basePrefix,
+                         bind(&FaceStub::onInterest, &faceStub, _1, _2, _3, _4, _5),
+                         bind(&FaceStub::onRegisterFailure, &faceStub, _1),
+                         bind(&FaceStub::onRegisterSuccess, &faceStub, _1, _2));
+    
+    bool prefixRegistered = false;
+    EXPECT_CALL(faceStub, onRegisterSuccess(_,_))
+    .Times(1)
+    .WillOnce(Invoke([&](const boost::shared_ptr<const Name>&,
+                         uint64_t){
+        prefixRegistered = true;
+    }));
+    EXPECT_CALL(faceStub, onRegisterFailure(_))
+    .Times(0);
+    EXPECT_CALL(faceStub, onInterest(_,_,_,_,_))
+    .WillRepeatedly(Invoke([&](const boost::shared_ptr<const Name>& prefix,
+                               const boost::shared_ptr<const Interest>& interest, Face& face,
+                               uint64_t interestFilterId,
+                               const boost::shared_ptr<const InterestFilter>& filter)
+                           {
+                               if (interest->getName()[-1].toSequenceNumber() % 3 == 0)
+                               {
+                                   boost::shared_ptr<Data> d = getRandomData();
+                                   d->setName(interest->getName());
+                                   d->getMetaInfo().setFreshnessPeriod(100);
+                                   face.putData(*d);
+                                   nReplies++;
+                               }
+                               else if (interest->getName()[-1].toSequenceNumber() % 3 == 1)
+                               {
+                                   boost::shared_ptr<Data> d = getRandomData();
+                                   d->setName(interest->getName());
+                                   d->getMetaInfo().setFreshnessPeriod(100);
+                                   d->getMetaInfo().setType(ndn_ContentType_NACK);
+                                   face.putData(*d);
+                                   nReplies++;
+                               }
+                           }));
+    
+    int delay = 3000;
+    int64_t start = clock::millisecondTimestamp();
+    while (!prefixRegistered && clock::millisecondTimestamp() - start < delay)
+    {
+        pFace.processEvents();
+        usleep(10);
+    }
+    
+    // --------------------------------------------------------------------------------------------
+    // 1/2: MOCK CONSUMER REQUEST PROCESSING MODULE (DataRequestQ or InterestQueue)
+    int nExpressed = 0;
+    // express request routine
+    auto expressRequests = [&nExpressed, &faceStub](Face& f, vector<boost::shared_ptr<DataRequest>>& requests)
+    {
+        for (auto &r:requests)
+        {
+            f.expressInterest(*r->getInterest(),
+                              [r, &faceStub](const boost::shared_ptr<const Interest>& interest,
+                                             const boost::shared_ptr<Data>& data)
+                              {
+                                  UnitTestDataRequestProxy p;
+                                  p.timestampReply(*r);
+                                  p.setData(data, *r);
+                                  if (data->getMetaInfo().getType() == ndn_ContentType_NACK)
+                                  {
+                                      p.setStatus(DataRequest::Status::AppNack, *r);
+                                      p.triggerEvent(DataRequest::Status::AppNack, *r);
+                                  }
+                                  else
+                                  {
+                                      p.setStatus(DataRequest::Status::Data, *r);
+                                      p.triggerEvent(DataRequest::Status::Data, *r);
+                                  }
+                                  faceStub.onData(interest, data);
+                              },
+                              [r, &faceStub](const boost::shared_ptr<const Interest>& interest)
+                              {
+                                  UnitTestDataRequestProxy p;
+                                  p.timestampReply(*r);
+                                  p.setTimeout(*r);
+                                  p.setStatus(DataRequest::Status::Timeout, *r);
+                                  p.triggerEvent(DataRequest::Status::Timeout, *r);
+                                  faceStub.onTimeout(interest);
+                              },
+                              [r, &faceStub](const boost::shared_ptr<const Interest>& interest,
+                                             const boost::shared_ptr<NetworkNack>& nack)
+                              {
+                                  UnitTestDataRequestProxy p;
+                                  p.timestampReply(*r);
+                                  p.setNack(nack, *r);
+                                  p.setStatus(DataRequest::Status::NetworkNack, *r);
+                                  p.triggerEvent(DataRequest::Status::NetworkNack, *r);
+                                  faceStub.onNack(interest, nack);
+                              });
+            
+            UnitTestDataRequestProxy p;
+            p.timestampRequest(*r);
+            p.setStatus(DataRequest::Status::Expressed, *r);
+            p.triggerEvent(DataRequest::Status::Expressed, *r);
+            nExpressed++;
+        }
+    };
+    
+    // --------------------------------------------------------------------------------------------
+    // TEST DataRequest
+    vector<boost::shared_ptr<DataRequest>> requests;
+    int nReq = 9;
+    for( int rNo = 0; rNo < nReq; ++rNo)
+    {
+        boost::shared_ptr<Interest> i = boost::make_shared<Interest>(Name(stream).appendSequenceNumber(rNo));
+        i->setInterestLifetimeMilliseconds(50 + 10*rNo);
+        requests.push_back(boost::make_shared<DataRequest>(i));
+    }
+    
+    MultipleRequestsStub callbackStub;
+    
+    DataRequest::invokeIfAny(requests, toMask(DataRequest::Status::Data),
+                               bind(&MultipleRequestsStub::onRequestsReady, &callbackStub, _1));
+    DataRequest::invokeIfAny(requests, DataRequest::Status::Timeout | DataRequest::Status::AppNack,
+                               bind(&MultipleRequestsStub::onRequestsReady, &callbackStub, _1));
+    
+    int nDataReceived = 0, nErrorsReceived = 0;
+    EXPECT_CALL(callbackStub, onRequestsReady(_))
+    .Times(nReq)
+    .WillRepeatedly(Invoke([&](vector<boost::shared_ptr<DataRequest>> rs)
+                     {
+                         DataRequest::Status s = rs[0]->getStatus();
+                         switch (s) {
+                             case DataRequest::Status::Data:
+                             {
+                                 for (auto &r:rs)
+                                     EXPECT_EQ(r->getStatus(), s);
+                                 nDataReceived++;
+                             }
+                                 break;
+                             case DataRequest::Status::Timeout:
+                             case DataRequest::Status::AppNack:
+                                 nErrorsReceived++;
+                                 break;
+                             default:
+                                 break;
+                         }
+                     }));
+    
+    EXPECT_CALL(faceStub, onNack(_,_))
+    .Times(0);
+    EXPECT_CALL(faceStub, onTimeout(_))
+    .Times(nReq/3);
+    EXPECT_CALL(faceStub, onData(_,_))
+    .Times(nReq/3*2);
+    
+    // --------------------------------------------------------------------------------------------
+    // 2/2: MOCK CONSUMER REQUEST PROCESSING MODULE
+    expressRequests(cFace, requests);
+    start = clock::millisecondTimestamp();
+    do {
+        pFace.processEvents();
+        cFace.processEvents();
+        usleep(10);
+    } while (clock::millisecondTimestamp() - start < delay &&
+             (nDataReceived + nErrorsReceived < nReq));
+    EXPECT_EQ(nDataReceived, nReq/3);
+    EXPECT_EQ(nErrorsReceived, nReq/3*2);
+    EXPECT_EQ(nDataReceived+nErrorsReceived/2, nReplies);
 }
 
 #if 0

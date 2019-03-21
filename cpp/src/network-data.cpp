@@ -7,6 +7,8 @@
 
 #include "network-data.hpp"
 
+#include <bitset>
+
 #include <ndn-cpp/c/common.h>
 #include <ndn-cpp/data.hpp>
 #include <ndn-cpp/interest.hpp>
@@ -20,6 +22,53 @@ using namespace ndn;
 using namespace ndnrtc;
 
 size_t SegmentsManifest::DigestSize = ndn_SHA256_DIGEST_SIZE;
+
+namespace ndnrtc {
+
+ostream& operator<<(ostream& out, const DataRequest::Status v)
+{
+    static map<DataRequest::Status, string> Labels = {
+        {DataRequest::Status::Created, "Created"},
+        {DataRequest::Status::Expressed, "Expressed"},
+        {DataRequest::Status::Timeout, "Timeout"},
+        {DataRequest::Status::AppNack, "AppNack"},
+        {DataRequest::Status::NetworkNack, "NetworkNack"},
+        {DataRequest::Status::Data, "Data"},
+    };
+    
+    out << Labels[v];
+    return out;
+}
+
+vector<DataRequest::Status> fromMask(uint8_t statusMask)
+{
+    vector<DataRequest::Status> statuses = {
+        DataRequest::Status::Created,
+        DataRequest::Status::Expressed,
+        DataRequest::Status::Timeout,
+        DataRequest::Status::AppNack,
+        DataRequest::Status::NetworkNack,
+        DataRequest::Status::Data
+    };
+    vector<DataRequest::Status>::iterator it = statuses.begin();
+    
+    while (it != statuses.end())
+    {
+        if (! (*it & statusMask))
+            statuses.erase(it);
+        else
+            ++it;
+    }
+
+    return statuses;
+}
+
+uint8_t toMask(DataRequest::Status s)
+{
+    return static_cast<uint8_t>(s);
+}
+    
+}
 
 boost::shared_ptr<ndn::Data>
 SegmentsManifest::packManifest(const Name& n, const vector<boost::shared_ptr<Data>>& segments)
@@ -159,6 +208,71 @@ void
 DataRequest::setTimeout()
 {
     timeoutNum_++;
+}
+
+void
+DataRequest::invokeWhenAll(vector<boost::shared_ptr<DataRequest> > requests,
+                           DataRequest::Status status,
+                           OnRequestsReady onRequestsReady)
+{
+    // up to 64 requests is supported
+    uint64_t unusedBitMask = (~0) << requests.size();
+    boost::shared_ptr<bitset<64>> rBitset = boost::make_shared<bitset<64>>(unusedBitMask);
+    auto onStatusUpdate = [rBitset, requests, onRequestsReady](const DataRequest& r){
+        bool gotResult = false;
+        int rPos = 0;
+        
+        for (auto &dr:requests)
+        {
+            if ((gotResult = (dr.get() == &r)))
+                break;
+            rPos++;
+        }
+        assert(gotResult);
+        rBitset->set(rPos);
+        
+        // check if all requests are ready
+        if (rBitset->all())
+            onRequestsReady(requests);
+    };
+    
+    for (auto &r:requests)
+        r->subscribe(status, onStatusUpdate);
+}
+
+void
+DataRequest::invokeIfAny(std::vector<boost::shared_ptr<DataRequest> > requests,
+                         uint8_t statusMask,
+                         OnRequestsReady onRequestsReady)
+{
+    // up to 64 requests is supported
+    boost::shared_ptr<bitset<64>> rBitset = boost::make_shared<bitset<64>>(0);
+    vector<DataRequest::Status> statuses = fromMask(statusMask);
+    auto completed = boost::make_shared<vector<boost::shared_ptr<DataRequest>>>();
+    auto onStatusUpdate = [rBitset, requests, onRequestsReady, completed](const DataRequest& r){
+        bool gotResult = false;
+        int rPos = 0;
+        
+        for (auto &dr:requests)
+        {
+            if ((gotResult = (dr.get() == &r)))
+                break;
+            rPos++;
+        }
+        assert(gotResult);
+        rBitset->set(rPos);
+        
+        if (rBitset->any())
+        {
+            // invoke with array of completed requests
+            completed->push_back(requests[rPos]);
+            onRequestsReady(*completed);
+        }
+    };
+    
+    for (auto &s:statuses)
+        for (auto &r:requests)
+            r->subscribe(s, onStatusUpdate);
 }
 
 //******************************************************************************

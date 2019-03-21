@@ -159,6 +159,14 @@ RequestQueue::enqueueRequest(boost::shared_ptr<DataRequest> &request,
     pimpl_->enqueueRequest(request, priority);
 }
 
+void
+RequestQueue::enqueueRequests(vector<boost::shared_ptr<DataRequest>>& requests,
+                boost::shared_ptr<DeadlinePriority> priority)
+{
+    for (auto &r:requests)
+        pimpl_->enqueueRequest(r, priority);
+}
+
 void RequestQueue::reset() { pimpl_->reset(); }
 void RequestQueue::registerObserver(IInterestQueueObserver *observer) { pimpl_->registerObserver(observer); }
 void RequestQueue::unregisterObserver() { pimpl_->unregisterObserver(); }

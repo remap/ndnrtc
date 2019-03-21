@@ -49,12 +49,10 @@ Pipeline::pulse()
         boost::shared_ptr<IPipelineSlot> slot = dispatchSlot_();
         slot->setRequests(frameRequests);
         
-        LogTraceC << "dispatched slot " << slot->getPrefix()
+        LogDebugC << "dispatched slot " << slot->getPrefix()
                   << " " << frameRequests.size() << " requests total" << endl;
         
-        for (auto &r:frameRequests)
-            interestQ_->enqueueRequest(r, boost::make_shared<DeadlinePriority>(REQ_DL_PRI_DEFAULT));
-        
+        interestQ_->enqueueRequests(frameRequests, boost::make_shared<DeadlinePriority>(REQ_DL_PRI_DEFAULT));
         nextSeqNo_ += step_;
         pulseCount_++;
         onNewSlot(slot);

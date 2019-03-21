@@ -51,6 +51,8 @@ PipelineControl::pulse()
         skip = false;
         nOutstanding_++;
         onNewRequest();
+        
+        LogDebugC << "outstanding " << nOutstanding_ << "/" << wSize_ << endl;
     }
 
     if (skip) onSkipPulse();

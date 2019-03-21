@@ -11,13 +11,21 @@
 #include "../include/stream.hpp"
 
 extern std::string AppLog;
+extern bool MustTerminate;
 
-void runPublisher(std::string input,
-                  std::string basePrefix,
-                  std::string streamName,
-                  std::string signingIdentity,
-                  const ndnrtc::VideoStream::Settings&,
-                  bool needRvp = false,
-                  bool isLooped = false);
+namespace boost {
+    namespace asio {
+        class io_context;
+    }
+}
+
+void runPublishing(boost::asio::io_context &io,
+                   std::string input,
+                   std::string basePrefix,
+                   std::string streamName,
+                   std::string signingIdentity,
+                   const ndnrtc::VideoStream::Settings&,
+                   bool needRvp = false,
+                   bool isLooped = false);
 
 #endif

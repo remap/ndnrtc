@@ -7,6 +7,8 @@
 #ifndef __network_data_hpp__
 #define __network_data_hpp__
 
+#include <type_traits>
+
 #include <boost/crc.hpp>
 #include <boost/move/move.hpp>
 #include <boost/shared_ptr.hpp>
@@ -20,7 +22,7 @@
 #include "name-components.hpp"
 #include "params.hpp"
 
-class GTEST_CLASS(TestNewtorkData, TestDataRequest);
+// TODO: enabble for Unit tests only
 class UnitTestDataRequestProxy;
 
 namespace ndn
@@ -61,15 +63,15 @@ typedef boost::signals2::connection RequestTriggerConnection;
  */
 class DataRequest {
 public:
-    enum class Status {
-        Created,
-        Expressed,
-        Timeout,
-        AppNack,
-        NetworkNack,
-        Data
+    enum class Status : uint8_t {
+        Created = 1<<0,
+        Expressed = 1<<1,
+        Timeout = 1<<2,
+        AppNack = 1<<3,
+        NetworkNack = 1<<4,
+        Data = 1<<5
     };
-
+    
     DataRequest(const boost::shared_ptr<const ndn::Interest> &interest);
     // DataRequest(const boost::shared_ptr<ndn::Data> &data,
     //             const boost::shared_ptr<const ndn::Interest> &interest);
@@ -94,10 +96,20 @@ public:
         { return packet_; }
 
     RequestTriggerConnection subscribe(Status, OnRequestUpdate);
+    
+    // helpers for handling results from multiple requests
+    typedef std::function<void(std::vector<boost::shared_ptr<DataRequest>>)>
+        OnRequestsReady;
+    
+    static void invokeWhenAll(std::vector<boost::shared_ptr<DataRequest>> requests,
+                              DataRequest::Status status,
+                              OnRequestsReady onRequestsReady);
+    static void invokeIfAny(std::vector<boost::shared_ptr<DataRequest>> requests,
+                            uint8_t statusMask,
+                            OnRequestsReady onRequestsReady);
 
 protected:
     friend RequestQueueImpl;
-    friend class ::GTEST_CLASS(TestNewtorkData, TestDataRequest);
     friend class ::UnitTestDataRequestProxy;
     
     void setStatus(Status s) { status_ = s; }
@@ -127,6 +139,34 @@ private:
     boost::shared_ptr<const ndn::NetworkNack> nack_;
     boost::shared_ptr<const packets::BasePacket> packet_;
 };
+
+std::ostream& operator<<(std::ostream& out, const DataRequest::Status v);
+std::vector<DataRequest::Status> fromMask(uint8_t);
+uint8_t toMask(DataRequest::Status s);
+
+inline bool operator & (DataRequest::Status s, uint8_t mask)
+{
+    return (static_cast<uint8_t>(s) & mask) != 0;
+}
+inline bool operator & (uint8_t mask, DataRequest::Status s)
+{
+    return s & mask;
+}
+inline uint8_t operator | (DataRequest::Status s1, DataRequest::Status s2)
+{
+    using T = std::underlying_type <DataRequest::Status>::type;
+    return static_cast<uint8_t>(static_cast<T>(s1) | static_cast<T>(s2));
+}
+inline uint8_t operator | (DataRequest::Status s1, uint8_t m)
+{
+    using T = std::underlying_type <DataRequest::Status>::type;
+    return static_cast<uint8_t>(static_cast<T>(s1) | m);
+}
+inline uint8_t operator | (uint8_t m, DataRequest::Status s1)
+{
+    using T = std::underlying_type <DataRequest::Status>::type;
+    return s1 | m;
+}
 
 //*****************************************************************************
 // CODE BELOW IS DEPRECATED
@@ -856,6 +896,6 @@ class WireData : public WireSegment
         return segment().getHeader().playbackNo_;
     }
 };
-
+    
 }
 #endif

@@ -58,21 +58,17 @@ namespace ndnrtc {
                          boost::shared_ptr<KeyChain> kc);
         ~VideoStreamImpl2();
 
-        string getBasePrefix() const { return basePrefix_; }
-        string getStreamName() const { return streamName_; }
-        string getPrefix() const {
-            return Name(basePrefix_).appendTimestamp(timestamp_).append(streamName_).toUri();
-        }
+        string getBasePrefix() const { return prefixInfo_.basePrefix_.toUri(); }
+        string getStreamName() const { return prefixInfo_.streamName_; }
+        string getPrefix() const { return prefixInfo_.getPrefix(NameFilter::Stream).toUri(); }
+        NamespaceInfo getPrefixInfo() const { return prefixInfo_; }
         StatisticsStorage getStatistics() const;
 
         vector<boost::shared_ptr<Data>> processImage(const ImageFormat&, uint8_t *imgData);
 
 
     private:
-        string basePrefix_;
-        string streamName_;
-        uint64_t timestamp_;
-        Name streamPrefix_;
+        NamespaceInfo prefixInfo_;
 
         struct _Freshness {
             uint32_t sample_,
@@ -114,7 +110,7 @@ namespace ndnrtc {
         vector<uint8_t> generateFecData(const EncodedFrame&, size_t, size_t, size_t);
         boost::shared_ptr<Data> generateFrameMeta(uint64_t,
                                                   const Name&, const FrameType &,
-                                                  size_t);
+                                                  size_t, size_t);
         Name publishGop(const Name&, const Name&,
                         vector<boost::shared_ptr<Data>>&);
 
@@ -216,19 +212,21 @@ VideoStream::defaultSettings()
 VideoStreamImpl2::VideoStreamImpl2(string basePrefix, string streamName,
     VideoStream::Settings settings, boost::shared_ptr<KeyChain> kc)
     : StatObject(boost::shared_ptr<StatisticsStorage>(StatisticsStorage::createProducerStatistics()))
-    , basePrefix_(basePrefix)
-    , streamName_(streamName)
+//    , basePrefix_(basePrefix)
+//    , streamName_(streamName)
     , settings_(settings)
     , keyChain_(kc)
-    , timestamp_(clock::millisecondTimestamp())
+//    , timestamp_(clock::millisecondTimestamp())
     , lastCycleMonotonicNs_(0)
     , thisCycleMonotonicNs_(0)
     , frameSeq_(0)
     , gopPos_(0)
     , gopSeq_(0)
 {
-    description_ = "video-stream-"+streamName_;
-    streamPrefix_ = Name(getPrefix());
+    NameComponents::extractInfo(NameComponents::streamPrefix(basePrefix, streamName),
+                                prefixInfo_);
+    description_ = "video-stream-"+prefixInfo_.streamName_;
+//    streamPrefix_ = Name(getPrefix());
     codec_.initEncoder(settings_.codecSettings_);
 
     freshness_.sample_ = 1000 / settings_.codecSettings_.spec_.encoder_.fps_;
@@ -245,10 +243,10 @@ VideoStreamImpl2::VideoStreamImpl2(string basePrefix, string streamName,
     // register callbacks for live requests
     if (settings_.memCache_)
     {
-        settings_.memCache_->setInterestFilter(streamPrefix_, settings_.memCache_->getStorePendingInterest());
-        settings_.memCache_->setInterestFilter(Name(streamPrefix_).append(NameComponents::Live),
+        settings_.memCache_->setInterestFilter(prefixInfo_.getPrefix(NameFilter::Stream), settings_.memCache_->getStorePendingInterest());
+        settings_.memCache_->setInterestFilter(prefixInfo_.getPrefix(NameFilter::Stream).append(NameComponents::Live),
             bind(&VideoStreamImpl2::onLiveMetadataRequest, this, _1, _2, _3, _4, _5));
-        settings_.memCache_->setInterestFilter(Name(streamPrefix_).append(NameComponents::Latest),
+        settings_.memCache_->setInterestFilter(prefixInfo_.getPrefix(NameFilter::Stream).append(NameComponents::Latest),
             bind(&VideoStreamImpl2::onLatestMetaRequest, this, _1, _2, _3, _4, _5));
     }
 
@@ -421,7 +419,7 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
     sign(*manifest);
 
     packets->push_back(manifest);
-    packets->push_back(generateFrameMeta(lastPublishEpochMs_, frameName, frame.type_, nParitySegments));
+    packets->push_back(generateFrameMeta(lastPublishEpochMs_, frameName, frame.type_, nDataSegments, nParitySegments));
 
     LogDebugC << "⤷ published GObj-Frame " << frameName << endl;
 
@@ -459,6 +457,7 @@ VideoStreamImpl2::generateFecData(const EncodedFrame &frame,
 boost::shared_ptr<Data>
 VideoStreamImpl2::generateFrameMeta(uint64_t nowMs,
                                     const Name &frameName, const FrameType &ft,
+                                    size_t nDataSegments,
                                     size_t nParitySegments)
 {
     // add packets for EncodedFrame as GObj
@@ -470,6 +469,7 @@ VideoStreamImpl2::generateFrameMeta(uint64_t nowMs,
 
     FrameMeta meta;
     meta.set_allocated_capture_timestamp(captureTimestamp);
+    meta.set_dataseg_num(nDataSegments);
     meta.set_parity_size(nParitySegments);
     meta.set_gop_number(gopSeq_);
     meta.set_gop_position(gopPos_);
@@ -611,7 +611,7 @@ VideoStreamImpl2::onLatestMetaRequest(const boost::shared_ptr<const Name>& prefi
 boost::shared_ptr<Data>
 VideoStreamImpl2::generateLatestPacket()
 {
-    Name packetName = Name(streamPrefix_)
+    Name packetName = prefixInfo_.getPrefix(NameFilter::Stream)
                         .append(NameComponents::Latest)
                         .appendVersion(lastPublishEpochMs_);
     boost::shared_ptr<Data> d = boost::make_shared<Data>(packetName);
@@ -645,7 +645,7 @@ VideoStreamImpl2::generateLivePacket()
     liveMeta.set_segnum_key(liveMetadata_.getSegmentsNumEstimate(FrameType::Key, SegmentClass::Data));
     liveMeta.set_segnum_key_parity(liveMetadata_.getSegmentsNumEstimate(FrameType::Key, SegmentClass::Parity));
 
-    Name packetName = Name(streamPrefix_)
+    Name packetName = prefixInfo_.getPrefix(NameFilter::Stream)
                         .append(NameComponents::Live)
                         .appendVersion(lastPublishEpochMs_);
     boost::shared_ptr<Data> d = boost::make_shared<Data>(packetName);

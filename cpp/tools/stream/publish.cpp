@@ -22,8 +22,6 @@
 
 #include "precise-generator.hpp"
 
-static bool mustTerminate = false;
-
 using namespace std;
 using namespace std::chrono;
 using namespace ndnrtc;
@@ -38,39 +36,15 @@ void registerPrefix(boost::shared_ptr<Face> &face, const KeyChainManager &keyCha
 void serveCerts(boost::shared_ptr<Face> &face, KeyChainManager &keyManager);
 void printStats(const VideoStream&, const vector<boost::shared_ptr<Data>>&);
 
-
-
-void terminate(boost::asio::io_service &ioService,
-               const boost::system::error_code &error,
-               int signalNo,
-               boost::asio::signal_set &signalSet)
-{
-    if (error)
-        return;
-
-    std::cerr << "caught signal '" << strsignal(signalNo) << "', exiting..." << std::endl;
-    ioService.stop();
-
-    if (signalNo == SIGABRT || signalNo == SIGSEGV)
-    {
-        void *array[10];
-        size_t size;
-        size = backtrace(array, 10);
-        // print out all the frames to stderr
-        backtrace_symbols_fd(array, size, STDERR_FILENO);
-    }
-
-    mustTerminate = true;
-}
-
 void
-runPublisher(string input,
-             string basePrefix,
-             string streamName,
-             string signingIdentity,
-             const VideoStream::Settings& settings,
-             bool needRvp,
-             bool isLooped)
+runPublishing(boost::asio::io_context &io,
+              string input,
+              string basePrefix,
+              string streamName,
+              string signingIdentity,
+              const VideoStream::Settings& settings,
+              bool needRvp,
+              bool isLooped)
 {
     FILE *fIn = fopen(input.c_str(), "rb");
     if (!fIn)
@@ -78,21 +52,6 @@ runPublisher(string input,
 
     stringstream instanceId;
     instanceId << duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-
-    boost::asio::io_context io;
-
-    boost::asio::signal_set signalSet(io);
-    signalSet.add(SIGINT);
-    signalSet.add(SIGTERM);
-    signalSet.add(SIGABRT);
-    signalSet.add(SIGSEGV);
-    signalSet.add(SIGHUP);
-    signalSet.add(SIGUSR1);
-    signalSet.add(SIGUSR2);
-    signalSet.async_wait(bind(static_cast<void(*)(boost::asio::io_service&,const boost::system::error_code&,int,boost::asio::signal_set&)>(&terminate),
-                              ref(io),
-                              _1, _2,
-                              ref(signalSet)));
 
     boost::shared_ptr<Face> face = boost::make_shared<ThreadsafeFace>(io);
     helpers::KeyChainManager keyChainManager(face, boost::make_shared<KeyChain>(),
@@ -134,7 +93,7 @@ runPublisher(string input,
 
     do
     {
-        function<void()> publish = [&](){
+        auto publish = [&](){
             res = readYUV420(fIn, w, h, &imgData);
             if (res == 0)
             {
@@ -151,8 +110,7 @@ runPublisher(string input,
             }
 
             vector<boost::shared_ptr<Data>> framePackets = stream.processImage(ImageFormat::I420, imgData);
-            // for (auto d:framePackets)
-            //     LogDebug(AppLog) << "packet " << d->getName() << " : " << d->wireEncode().size() << " bytes" << endl;
+
             if (AppLog != "" ||
                 (AppLog == "" && Logger::getLoggerPtr(AppLog)->getLogLevel() <= ndnlog::NdnLoggerDetailLevelDefault))
                 printStats(stream, framePackets);
@@ -164,7 +122,7 @@ runPublisher(string input,
         gen.start();
         io.run();
         gen.stop();
-    } while (res && !mustTerminate);
+    } while (res && !MustTerminate);
 
     // end line after stats
     cout << endl;

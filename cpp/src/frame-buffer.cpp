@@ -155,19 +155,35 @@ BufferSlot::setRequests(const std::vector<boost::shared_ptr<DataRequest> > &requ
             maxParitySegNo_ = r->getNamespaceInfo().segNo_;
         
         boost::shared_ptr<BufferSlot> me = shared_from_this();
-        r->subscribe(DataRequest::Status::Expressed, [this, me](const DataRequest& dr){
-            if (firstRequestTsUsec_ == 0)
-                firstRequestTsUsec_ = dr.getRequestTimestampUsec();
-            if (slotState_ == PipelineSlotState::New)
-            {
-                slotState_ = PipelineSlotState::Pending;
-                triggerEvent(PipelineSlotState::Pending, dr);
-            }
-        });
-        r->subscribe(DataRequest::Status::Data, boost::bind(&BufferSlot::onReply, me, _1));
-        r->subscribe(DataRequest::Status::Timeout, boost::bind(&BufferSlot::onError, me, _1));
-        r->subscribe(DataRequest::Status::AppNack, boost::bind(&BufferSlot::onError, me, _1));
-        r->subscribe(DataRequest::Status::NetworkNack, boost::bind(&BufferSlot::onError, me, _1));
+        {
+            auto c =
+                r->subscribe(DataRequest::Status::Expressed, [this, me](const DataRequest& dr){
+                    if (firstRequestTsUsec_ == 0)
+                        firstRequestTsUsec_ = dr.getRequestTimestampUsec();
+                    if (slotState_ == PipelineSlotState::New)
+                    {
+                        slotState_ = PipelineSlotState::Pending;
+                        triggerEvent(PipelineSlotState::Pending, dr);
+                    }
+                });
+            requestConnections_.push_back(c);
+        }
+        {
+            auto c = r->subscribe(DataRequest::Status::Data, boost::bind(&BufferSlot::onReply, me, _1));
+            requestConnections_.push_back(c);
+        }
+        {
+            auto c = r->subscribe(DataRequest::Status::Timeout, boost::bind(&BufferSlot::onError, me, _1));
+            requestConnections_.push_back(c);
+        }
+        {
+            auto c = r->subscribe(DataRequest::Status::AppNack, boost::bind(&BufferSlot::onError, me, _1));
+            requestConnections_.push_back(c);
+        }
+        {
+            auto c = r->subscribe(DataRequest::Status::NetworkNack, boost::bind(&BufferSlot::onError, me, _1));
+            requestConnections_.push_back(c);
+        }
         
         requests_.push_back(r);
     }
@@ -180,6 +196,8 @@ BufferSlot::clear()
     slotState_ = PipelineSlotState::Free;
     nameInfo_ = NamespaceInfo();
     requests_.clear();
+    for (auto &c:requestConnections_) c.disconnect();
+    requestConnections_.clear();
     onReady_.disconnect_all_slots();
     onUnfetchable_.disconnect_all_slots();
     onMissing_.disconnect_all_slots();
@@ -253,9 +271,12 @@ BufferSlot::onReply(const DataRequest& dr)
 void
 BufferSlot::onError(const DataRequest& dr)
 {
+    assert(dr.getNamespaceInfo().getPrefix(NameFilter::Sample) == getPrefix());
+    
     if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Meta ||
         (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Data && dr.getNamespaceInfo().segNo_ < nDataSegments_))
     {
+        assert(slotState_ != PipelineSlotState::Ready);
         if (slotState_ != PipelineSlotState::Unfetchable)
         {
             slotState_ = PipelineSlotState::Unfetchable;
@@ -348,7 +369,7 @@ BufferSlot::updateAssemblingProgress(const DataRequest &dr)
     
     size_t dataSize = dr.getData()->getContent().size();
     fetchedBytesTotal_ += dataSize;
-    if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Data)
+    if (dr. getNamespaceInfo().segmentClass_ == SegmentClass::Data)
     {
         fetchedBytesData_ += dataSize;
         nDataSegmentsFetched_++;
@@ -368,7 +389,7 @@ BufferSlot::updateAssemblingProgress(const DataRequest &dr)
         triggerEvent(PipelineSlotState::Ready, dr);
     }
     else
-        if (slotState_ == PipelineSlotState::Pending)
+        if (slotState_ < PipelineSlotState::Assembling)
             slotState_ = PipelineSlotState::Assembling;
 }
 

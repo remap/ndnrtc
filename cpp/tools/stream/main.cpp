@@ -15,6 +15,7 @@
 #include <thread>
 
 #include <boost/asio.hpp>
+#include <boost/chrono.hpp>
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/thread/mutex.hpp>
 // #include <boost/thread.hpp>
@@ -22,6 +23,7 @@
 #include "../../contrib/docopt/docopt.h"
 #include "../../include/simple-log.hpp"
 #include "../../include/stream.hpp"
+#include "../../include/name-components.hpp"
 #include "../../src/video-codec.hpp"
 
 #include "fetch.hpp"
@@ -57,7 +59,7 @@ R"(NdnRtc Stream.
 
     Usage:
       ndnrtc-stream publish <base_prefix> <stream_name> --input=<in_file> --size=<WxH> --signing-identity=<identity> [--bitrate=<bitrate>] [--gop=<gop>] [--fps=<fps>] [--no-drop] [--use-fec] [--i420] [--segment-size=<seg_size>] [--rvp] [--loop] [(--v | --vv | --vvv)] [--log=<file>]
-      ndnrtc-stream fetch ( <stream_prefix> | ( <base_prefix> --rvp )) --output=<out_file> [--use-fec] [(--v | --vv | --vvv)] [--log=<file>]
+      ndnrtc-stream fetch (<prefix> | (<base_prefix> --rvp)) --output=<out_file> [--use-fec] [--verify-policy=<file>] [--pp-size=<pp_size>] [--pp-step=<step>] [--pbc-rate=<rate>] [(--v | --vv | --vvv)] [--log=<file>]
 
     Arguments:
       <base_prefix>     Base prefix used to form stream prefix from (see NDN-RTC namespace).
@@ -65,6 +67,7 @@ R"(NdnRtc Stream.
       <stream_prefix>   Full stream prefix of NDN-RTC stream to fetch from. This
                         is normally your output from "ndnrtc-stream publish ..."
                         command.
+      <prefix>          Stream or Frame prefix used for initiating fetching.
 
     Options:
       -i --input=<in_file>      Input raw video file (YUV 420 format by default).
@@ -87,6 +90,15 @@ R"(NdnRtc Stream.
       --no-drop                 Tells encoder not to drop frames
       --use-fec                 Use Forward Error Correction data
       --i420                    I420 raw frame format
+      --verify-policy=<file>    Trust schema file for data verification, if empty -- uses NoVerify
+                                   policy [default: ]
+      --pp-size=<pp_size>       Pipeline size, if 0 -- pipeline size is determined automatically
+                                   based on estimated DRD [default: 0]
+      --pp-step=<step>          Pipeline step increment defines next frame sequence number that will
+                                   be requested, can be negative [default: 1]
+      --pbc-rate=<rate>         PlayBack Clock: external -- creates external clock for playback
+                                   based on provided FPS rate. If 0, uses internal clock --
+                                   based on frame timestamps set by producer [default: 0]
       --v                       Verbose mode: debug
       --vv                      Verbose mode: trace
       --vvv                     Verbose mode: all
@@ -96,37 +108,49 @@ R"(NdnRtc Stream.
 using namespace std;
 using namespace ndnrtc;
 
-static bool mustExit = false;
+bool MustTerminate = false;
 std::string AppLog = "";
 
-void handler(int sig)
-{
-    void *array[10];
-    size_t size;
+int getSize(string sizeStr, uint16_t& w, uint16_t& h);
 
-    if (sig == SIGABRT || sig == SIGSEGV)
+void terminate(boost::asio::io_service &ioService,
+               const boost::system::error_code &error,
+               int signalNo,
+               boost::asio::signal_set &signalSet)
+{
+    if (error)
+        return;
+    
+    cerr << "caught signal '" << strsignal(signalNo) << "', exiting..." << endl;
+    ioService.stop();
+    
+    if (signalNo == SIGABRT || signalNo == SIGSEGV)
     {
-        fprintf(stderr, "Received signal %d:\n", sig);
-        // get void*'s for all entries on the stack
+        void *array[10];
+        size_t size;
         size = backtrace(array, 10);
         // print out all the frames to stderr
         backtrace_symbols_fd(array, size, STDERR_FILENO);
-        exit(1);
     }
-    else
-        mustExit = true;
+    
+    MustTerminate = true;
 }
-
-int getSize(string sizeStr, uint16_t& w, uint16_t& h);
-void runEncoder(VideoCodec& codec, string inFile, string outFile);
-void runDecoder(VideoCodec& codec, string inFile, string outFile);
 
 int main(int argc, char **argv)
 {
-    signal(SIGABRT, handler);
-    signal(SIGSEGV, handler);
-    signal(SIGINT, handler);
-    signal(SIGUSR1, handler);
+    boost::asio::io_context io;
+    boost::asio::signal_set signalSet(io);
+    signalSet.add(SIGINT);
+    signalSet.add(SIGTERM);
+    signalSet.add(SIGABRT);
+    signalSet.add(SIGSEGV);
+    signalSet.add(SIGHUP);
+    signalSet.add(SIGUSR1);
+    signalSet.add(SIGUSR2);
+    signalSet.async_wait(bind(static_cast<void(*)(boost::asio::io_service&,const boost::system::error_code&,int,boost::asio::signal_set&)>(&terminate),
+                              ref(io),
+                              _1, _2,
+                              ref(signalSet)));
 
     ndnlog::new_api::Logger::initAsyncLogging();
 
@@ -136,8 +160,8 @@ int main(int argc, char **argv)
                          true,               // show help if requested
                          (string(TOOL_NAME)+string(PACKAGE_VERSION)).c_str());  // version string
 
-    // for(auto const& arg : args)
-    //     std::cout << arg.first << " " <<  arg.second << std::endl;
+     for(auto const& arg : args)
+         std::cout << arg.first << " " <<  arg.second << std::endl;
 
     AppLog = args["--log"].asString();
     cout << AppLog << endl;
@@ -185,7 +209,8 @@ int main(int argc, char **argv)
                              << " drop frames " << streamSettings.codecSettings_.spec_.encoder_.dropFrames_
                              << endl;
 
-                runPublisher(args["--input"].asString(),
+                runPublishing(io,
+                             args["--input"].asString(),
                              args["<base_prefix>"].asString(),
                              args["<stream_name>"].asString(),
                              args["--signing-identity"].asString(),
@@ -202,6 +227,26 @@ int main(int argc, char **argv)
         else if (args["fetch"].asBool())
         {
             LogDebug(AppLog) << "initializing fetching" << endl;
+            
+            if (args["<prefix>"].isString())
+            {
+                NamespaceInfo prefixInfo;
+                
+                if (NameComponents::extractInfo(args["<prefix>"].asString(), prefixInfo))
+                {
+                    runFetching(io,
+                                args["--output"].asString(),
+                                prefixInfo,
+                                args["--pp-size"].asLong(),
+                                args["--pp-step"].asLong(),
+                                args["--pbc-rate"].asLong(),
+                                args["--use-fec"].asBool(),
+                                args["--rvp"].asBool(),
+                                args["--verify-policy"].asString());
+                }
+                else
+                    LogError(AppLog) << "bad stream or frame prefix provided" << endl;
+            }
         }
     }
     catch (std::exception &e)

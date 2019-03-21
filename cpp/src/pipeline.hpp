@@ -40,13 +40,13 @@ typedef std::function<void(const IPipelineSlot*, const DataRequest&)> OnSlotStat
 typedef boost::signals2::signal<void(const IPipelineSlot*, const DataRequest&)> SlotTrigger;
 typedef boost::signals2::connection SlotTriggerConnection;
 
-enum class PipelineSlotState {
-    Free,
-    New,
-    Pending,
-    Assembling,
-    Ready,
-    Unfetchable
+enum class PipelineSlotState : int {
+    Free = 1,
+    New = 2,
+    Pending = 3,
+    Assembling = 4,
+    Ready = 5,
+    Unfetchable = 6
 };
     
 class IPipelineSlot {

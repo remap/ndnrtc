@@ -89,7 +89,7 @@ namespace v4 {
 
     private:
         uint32_t wSize_;
-        uint32_t nOutstanding_;
+        int32_t nOutstanding_;
         uint64_t pulseCount_;
     };
 }

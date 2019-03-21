@@ -245,6 +245,7 @@ namespace ndnrtc
     private:
         PipelineSlotState slotState_;
         std::vector<boost::shared_ptr<DataRequest>> requests_;
+        std::vector<RequestTriggerConnection> requestConnections_;
         SlotTrigger onPending_, onReady_, onUnfetchable_;
         bool metaIsFetched_, manifestIsFetched_;
         boost::shared_ptr<const packets::Meta> meta_;

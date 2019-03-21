@@ -21,18 +21,6 @@ using namespace ndnrtc::statistics;
 using namespace ndn;
 using namespace testing;
 
-class UnitTestDataRequestProxy {
-public:
-    void setStatus(DataRequest::Status s, DataRequest &r) { r.setStatus(s); }
-    void setRtx(DataRequest &r) { r.setRtx(); }
-    void triggerEvent(DataRequest::Status s, DataRequest &r) { r.triggerEvent(s); }
-    void timestampRequest(DataRequest &r) { r.timestampRequest(); }
-    void timestampReply(DataRequest &r) { r.timestampReply(); }
-    void setData(const boost::shared_ptr<const Data> &d, DataRequest &r) { r.setData(d); }
-    void setNack(const boost::shared_ptr<const ndn::NetworkNack> &n, DataRequest &r) { r.setNack(n); }
-    void setTimeout(DataRequest &r) { r.setTimeout(); }
-};
-
 class SlotCallbacksStub {
 public:
     MOCK_METHOD2(onPending, void(const IPipelineSlot*, const DataRequest&));
@@ -398,6 +386,68 @@ TEST(TestBufferSlot, TestFrameAssembling)
         EXPECT_EQ(slot->getState(), PipelineSlotState::Ready);
     }
     
+    { // TEST SLOT READY WHEN EXPRESS MORE THAN NEEDED REQUESTS
+        SlotCallbacksStub callbackStub;
+        
+        boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
+        
+        slot->onMissing_.connect(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
+        
+        slot->subscribe(PipelineSlotState::Pending,
+                        bind(&SlotCallbacksStub::onPending, &callbackStub, _1, _2));
+        slot->subscribe(PipelineSlotState::Ready,
+                        bind(&SlotCallbacksStub::onReady, &callbackStub, _1, _2));
+        slot->subscribe(PipelineSlotState::Unfetchable,
+                        bind(&SlotCallbacksStub::onUnfetchable, &callbackStub, _1, _2));
+        
+        // set requests
+        int nParity = 0, nData = 0;
+        for_each(packets.begin(), packets.end(), [&](boost::shared_ptr<Data> d){
+            if (d->getName()[-2] == NameComponents::Parity) nParity++;
+            if (d->getName()[-1].isSegment() && d->getName()[-2].isSequenceNumber()) nData++;
+        });
+        vector<boost::shared_ptr<DataRequest>> moreRequests(requests.begin(), requests.end());
+        for (int i = 0; i < requests.size(); ++i)
+        {
+            if (requests[i]->getNamespaceInfo().segmentClass_ == SegmentClass::Data ||
+                requests[i]->getNamespaceInfo().segmentClass_ == SegmentClass::Parity)
+            {
+                int startSeg = (requests[i]->getNamespaceInfo().segmentClass_ == SegmentClass::Data ? nData : nParity);
+                Name segPrefix = Name(frame);
+                if (requests[i]->getNamespaceInfo().segmentClass_ == SegmentClass::Parity)
+                    segPrefix.append(NameComponents::Parity);
+
+                // add two more requests
+                for (int seg = 1; seg < startSeg + 2; ++seg)
+                {
+                    auto itrst = boost::make_shared<Interest>(Name(segPrefix).appendSegment(seg), lifetime);
+                    itrst->setMustBeFresh(false);
+                    moreRequests.push_back(boost::make_shared<DataRequest>(itrst));
+                }
+            }
+        }
+        
+        slot->setRequests(moreRequests);
+        
+        EXPECT_CALL(callbackStub, onMissing(_,_))
+        .Times(0);
+        EXPECT_CALL(callbackStub, onPending(_,_))
+        .Times(1);
+        EXPECT_CALL(callbackStub, onReady(_,_))
+        .Times(1);
+        EXPECT_CALL(callbackStub, onUnfetchable(_,_))
+        .Times(0);
+        
+        // express initial requests
+        expressRequests(moreRequests);
+        EXPECT_EQ(slot->getState(), PipelineSlotState::Pending);
+        
+        // reply data
+        replyData(moreRequests);
+        
+        EXPECT_EQ(slot->getState(), PipelineSlotState::Ready);
+    }
+
     {   // TEST SLOT UNFETCHABLE - TIMEOUT
         missing.clear();
         SlotCallbacksStub callbackStub;
@@ -537,6 +587,108 @@ TEST(TestBufferSlot, TestFrameAssembling)
         }
         
         EXPECT_EQ(slot->getState(), PipelineSlotState::Unfetchable);
+    }
+}
+
+TEST(TestBufferSlot, TestFrameAssemblingEdgeCase1)
+{
+    string basePrefix = "/my/base/prefix";
+    Name stream = NameComponents::streamPrefix(basePrefix, "mystream");
+    Name frame = Name(stream).appendSequenceNumber(0);
+    int lifetime = 30;
+    vector<boost::shared_ptr<Data>> packets = getSampleFrameData(frame, 1, 1);
+    auto expressRequests = [](vector<boost::shared_ptr<DataRequest>> requests){
+        UnitTestDataRequestProxy p;
+        for (auto &r:requests)
+        {
+            p.timestampRequest(*r);
+            p.setStatus(DataRequest::Status::Expressed, *r);
+            p.triggerEvent(DataRequest::Status::Expressed, *r);
+        }
+    };
+    auto replyData = [packets](vector<boost::shared_ptr<DataRequest>> requests){
+        UnitTestDataRequestProxy p;
+        for (auto &d:packets)
+        {
+            for (auto &r:requests)
+            {
+                if (d->getName().match(r->getInterest()->getName()))
+                {
+                    p.timestampReply(*r);
+                    p.setData(d, *r);
+                    p.setStatus(DataRequest::Status::Data, *r);
+                    p.triggerEvent(DataRequest::Status::Data, *r);
+                }
+            }
+        }
+    };
+    
+    vector<boost::shared_ptr<DataRequest>> requests;
+    { // data
+        // request more than 1 segment
+        for (int seg = 0; seg < 3; ++seg)
+        {
+            auto i =
+                boost::make_shared<Interest>(Name(frame).appendSegment(seg), lifetime);
+            i->setMustBeFresh(false);
+            requests.push_back(boost::make_shared<DataRequest>(i));
+        }
+    }
+    { // parity
+        for (int seg = 0; seg < 2; ++seg)
+        {
+            auto i = boost::make_shared<Interest>(Name(frame).append(NameComponents::Parity).appendSegment(seg), lifetime);            i->setMustBeFresh(false);
+            requests.push_back(boost::make_shared<DataRequest>(i));
+        }
+    }
+    { // meta
+        boost::shared_ptr<Interest> i =
+        boost::make_shared<Interest>(Name(frame).append(NameComponents::Meta), lifetime);
+        i->setMustBeFresh(false);
+        requests.push_back(boost::make_shared<DataRequest>(i));
+    }
+    { // manifest
+        boost::shared_ptr<Interest> i =
+        boost::make_shared<Interest>(Name(frame).append(NameComponents::Manifest), lifetime);
+        i->setMustBeFresh(false);
+        requests.push_back(boost::make_shared<DataRequest>(i));
+    }
+    
+    { // TEST SLOT READY WHEN EXPRESS MORE THAN NEEDED REQUESTS
+        SlotCallbacksStub callbackStub;
+        boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
+        slot->onMissing_.connect(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
+        
+        slot->subscribe(PipelineSlotState::Pending,
+                        bind(&SlotCallbacksStub::onPending, &callbackStub, _1, _2));
+        slot->subscribe(PipelineSlotState::Ready,
+                        bind(&SlotCallbacksStub::onReady, &callbackStub, _1, _2));
+        slot->subscribe(PipelineSlotState::Unfetchable,
+                        bind(&SlotCallbacksStub::onUnfetchable, &callbackStub, _1, _2));
+        
+        cout << requests.size() << endl;
+        for (auto &r:requests)
+            cout << r->getInterest()->getName() << endl;
+        
+        slot->setRequests(requests);
+        
+        EXPECT_CALL(callbackStub, onMissing(_,_))
+        .Times(0);
+        EXPECT_CALL(callbackStub, onPending(_,_))
+        .Times(1);
+        EXPECT_CALL(callbackStub, onReady(_,_))
+        .Times(1);
+        EXPECT_CALL(callbackStub, onUnfetchable(_,_))
+        .Times(0);
+        
+        // express initial requests
+        expressRequests(requests);
+        EXPECT_EQ(slot->getState(), PipelineSlotState::Pending);
+        
+        // reply data
+        replyData(requests);
+        
+        EXPECT_EQ(slot->getState(), PipelineSlotState::Ready);
     }
 }
 

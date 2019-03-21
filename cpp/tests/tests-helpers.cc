@@ -147,11 +147,12 @@ boost::shared_ptr<Data> sampleStreamMetaData(const Name& streamPrefix)
 }
 
 vector<boost::shared_ptr<Data>>
-getSampleFrameData(Name prefix)
+getSampleFrameData(Name prefix, int nData, int nParity)
 {
     srand(time(nullptr));
     
-    int nData = std::rand() % 10+10, nParity = int(0.2*(float)nData);
+    nData = (nData == 0 ? std::rand() % 10+10 : nData);
+    nParity = (nParity == 0 ?  int(0.2*(float)nData) : nParity);
     int gopNo = std::rand();
     int gopPos = std::rand() % 30;
     int genD = std::rand()%500;
@@ -233,6 +234,20 @@ getSampleFrameData(Name prefix)
     }
     
     return packets;
+}
+
+boost::shared_ptr<ndn::Data> getRandomData(size_t size)
+{
+    srand(time(nullptr));
+    random_bytes_engine rbe;
+    
+    std::vector<unsigned char> data(size);
+    boost::shared_ptr<Data> d = boost::make_shared<Data>();
+    std::generate(begin(data), end(data), std::ref(rbe));
+    
+    d->setContent(data);
+    
+    return d;
 }
 
 // ------------------------------------------------------------------------------------------------

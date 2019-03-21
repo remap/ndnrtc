@@ -38,7 +38,17 @@
         testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, __VA_ARGS__);    \
     } while (0)
 
-
+class UnitTestDataRequestProxy {
+public:
+    void setStatus(ndnrtc::DataRequest::Status s, ndnrtc::DataRequest &r) { r.setStatus(s); }
+    void setRtx(ndnrtc::DataRequest &r) { r.setRtx(); }
+    void triggerEvent(ndnrtc::DataRequest::Status s, ndnrtc::DataRequest &r) { r.triggerEvent(s); }
+    void timestampRequest(ndnrtc::DataRequest &r) { r.timestampRequest(); }
+    void timestampReply(ndnrtc::DataRequest &r) { r.timestampReply(); }
+    void setData(const boost::shared_ptr<const ndn::Data> &d, ndnrtc::DataRequest &r) { r.setData(d); }
+    void setNack(const boost::shared_ptr<const ndn::NetworkNack> &n, ndnrtc::DataRequest &r) { r.setNack(n); }
+    void setTimeout(ndnrtc::DataRequest &r) { r.setTimeout(); }
+};
 
 class FaceStub {
 public:
@@ -58,7 +68,8 @@ public:
 
 ndnrtc::StreamMeta sampleStreamMeta();
 boost::shared_ptr<ndn::Data> sampleStreamMetaData(const ndn::Name& streamPrefix);
-std::vector<boost::shared_ptr<ndn::Data>> getSampleFrameData(ndn::Name prefix);
+std::vector<boost::shared_ptr<ndn::Data>> getSampleFrameData(ndn::Name prefix, int nData = 0, int nParity = 0);
+boost::shared_ptr<ndn::Data> getRandomData(size_t size = 8000);
 
 // ------------------------------------------------------------------------------------------------
 ndnrtc::VideoCoderParams

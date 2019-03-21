@@ -65,6 +65,10 @@ namespace ndnrtc {
         virtual void
         enqueueRequest(boost::shared_ptr<DataRequest>& request,
                        boost::shared_ptr<DeadlinePriority> priority) = 0;
+        
+        virtual void
+        enqueueRequests(std::vector<boost::shared_ptr<DataRequest>>& requests,
+                        boost::shared_ptr<DeadlinePriority> priority) = 0;
 
         virtual void reset() = 0;
     };
@@ -118,6 +122,9 @@ namespace ndnrtc {
         enqueueRequest(boost::shared_ptr<DataRequest>& request,
                        boost::shared_ptr<DeadlinePriority> priority);
         
+        void
+        enqueueRequests(std::vector<boost::shared_ptr<DataRequest>>& requests,
+                        boost::shared_ptr<DeadlinePriority> priority);
         /**
          * Only call that if interest queue was not initialized using io_context
          */
