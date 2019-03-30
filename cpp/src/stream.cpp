@@ -26,6 +26,7 @@
 
 #define PARITY_RATIO 0.2
 #define NDNRTC_FRAME_TYPE "ndnrtcv4"
+#define EST_TIME_WINDOW 30000
 
 using namespace std;
 using namespace ndn;
@@ -89,6 +90,7 @@ namespace ndnrtc {
         uint64_t lastCycleMonotonicNs_, thisCycleMonotonicNs_;
         uint64_t lastPublishEpochMs_;
         uint64_t frameSeq_, gopPos_, gopSeq_;
+        estimators::Average encodingDelay_, publishingDelay_;
 
         // these are the packets that were generated outside of "processImage"
         // call and will be added to the output of the next  "processImage" call
@@ -212,16 +214,15 @@ VideoStream::defaultSettings()
 VideoStreamImpl2::VideoStreamImpl2(string basePrefix, string streamName,
     VideoStream::Settings settings, boost::shared_ptr<KeyChain> kc)
     : StatObject(boost::shared_ptr<StatisticsStorage>(StatisticsStorage::createProducerStatistics()))
-//    , basePrefix_(basePrefix)
-//    , streamName_(streamName)
     , settings_(settings)
     , keyChain_(kc)
-//    , timestamp_(clock::millisecondTimestamp())
     , lastCycleMonotonicNs_(0)
     , thisCycleMonotonicNs_(0)
     , frameSeq_(0)
     , gopPos_(0)
     , gopSeq_(0)
+    , encodingDelay_(boost::make_shared<estimators::TimeWindow>(EST_TIME_WINDOW))
+    , publishingDelay_(boost::make_shared<estimators::TimeWindow>(EST_TIME_WINDOW))
 {
     NameComponents::extractInfo(NameComponents::streamPrefix(basePrefix, streamName),
                                 prefixInfo_);
@@ -278,6 +279,7 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
 {
     LogDebugC << "⤹ incoming frame #" << frameSeq_ << endl;
 
+    lastPublishEpochMs_ = ndn_getNowMilliseconds();
     thisCycleMonotonicNs_ = clock::nanosecondTimestamp();
     vector<boost::shared_ptr<Data>> packets;
 
@@ -292,11 +294,13 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
     boost::shared_ptr<VideoStreamImpl2> self = dynamic_pointer_cast<VideoStreamImpl2>(shared_from_this());
     codec_.encode(raw, false,
         [this, self, &packets](const EncodedFrame &frame){
+            uint64_t t = clock::nanosecondTimestamp();
+            encodingDelay_.newValue(t-thisCycleMonotonicNs_);
+            
             LogDebugC << "+ encoded #" << frameSeq_
                       << (frame.type_ == FrameType::Key ? " key: " : " delta: ")
                       << frame.length_ << "bytes" << endl;
 
-            // generatePackets(frame);
             Name framePrefix = publishFrameGobj(frame);
 
             if (frame.type_ == FrameType::Key)
@@ -308,6 +312,8 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
             gopPos_ = (gopPos_+1) % settings_.codecSettings_.spec_.encoder_.gop_;
             frameSeq_++;
             lastFramePrefix_ = framePrefix;
+            
+            publishingDelay_.newValue(clock::nanosecondTimestamp()-t);
         },
         [this, self](const VideoCodec::Image &dropped){
             LogWarnC << "⨂ dropped" << endl;
@@ -327,6 +333,9 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
             settings_.memCache_->add(*d);
 
     lastCycleMonotonicNs_ = thisCycleMonotonicNs_;
+    
+    (*statStorage_)[Indicator::PublishDelay] = publishingDelay_.value()/1E6;
+    (*statStorage_)[Indicator::CodecDelay] = encodingDelay_.value()/1E6;
 
     return packets;
 }
@@ -361,7 +370,7 @@ VideoStreamImpl2::addMeta()
 Name
 VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
 {
-    lastPublishEpochMs_ = ndn_getNowMilliseconds();
+//    lastPublishEpochMs_ = ndn_getNowMilliseconds();
     Name frameName = Name(lastFramePrefix_.getPrefix(-1)).appendSequenceNumber(frameSeq_);
     vector<boost::shared_ptr<Data>> *packets = (vector<boost::shared_ptr<Data>>*)frame.userData_;
     size_t payloadSegmentSize = getPayloadSegmentSize();

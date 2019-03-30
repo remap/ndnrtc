@@ -23,6 +23,7 @@ namespace ndn {
 
 class Interest;
 class Data;
+class Face;
 
 }
 
@@ -39,6 +40,11 @@ typedef std::function<boost::shared_ptr<IPipelineSlot>()> DispatchSlot;
 typedef std::function<void(const IPipelineSlot*, const DataRequest&)> OnSlotStateUpdate;
 typedef boost::signals2::signal<void(const IPipelineSlot*, const DataRequest&)> SlotTrigger;
 typedef boost::signals2::connection SlotTriggerConnection;
+
+
+typedef std::function<void(IPipelineSlot*, std::vector<boost::shared_ptr<DataRequest>>&)> OnNeedData;
+typedef boost::signals2::signal<void(IPipelineSlot*, std::vector<boost::shared_ptr<DataRequest>>&)> NeedDataTrigger;
+typedef boost::signals2::connection NeedDataTriggerConnection;
 
 enum class PipelineSlotState : int {
     Free = 1,
@@ -60,6 +66,7 @@ public:
     
     virtual void setRequests(const std::vector<boost::shared_ptr<DataRequest>>&) = 0;
     virtual SlotTriggerConnection subscribe(PipelineSlotState, OnSlotStateUpdate) = 0;
+    virtual NeedDataTriggerConnection addOnNeedData(OnNeedData) = 0;
 };
     
 class Pipeline : public NdnRtcComponent {
@@ -68,6 +75,12 @@ public:
              DispatchSlot dispatchSlot,
              const ndn::Name &sequencePrefix, uint32_t nextSeqNo,
              int step = 1);
+    
+    Pipeline(boost::asio::io_service &io, ndn::Face *f,
+             DispatchSlot dispatchSlot,
+             const ndn::Name &sequencePrefix,
+             uint32_t nextSeqNo, int step = 1);
+    
     ~Pipeline();
 
     void pulse();

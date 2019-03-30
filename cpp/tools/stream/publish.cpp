@@ -19,6 +19,7 @@
 #include "../../include/simple-log.hpp"
 #include "../../include/helpers/key-chain-manager.hpp"
 #include "../../include/statistics.hpp"
+#include "../src/clock.hpp"
 
 #include "precise-generator.hpp"
 
@@ -37,7 +38,7 @@ void serveCerts(boost::shared_ptr<Face> &face, KeyChainManager &keyManager);
 void printStats(const VideoStream&, const vector<boost::shared_ptr<Data>>&);
 
 void
-runPublishing(boost::asio::io_context &io,
+runPublishing(boost::asio::io_service &io,
               string input,
               string basePrefix,
               string streamName,
@@ -189,15 +190,23 @@ serveCerts(boost::shared_ptr<Face> &face, KeyChainManager &keyManager)
 
 void printStats(const VideoStream& s, const vector<boost::shared_ptr<Data>>& packets)
 {
+    static uint64_t startTime = 0;
     StatisticsStorage ss(s.getStatistics());
 
+    if (startTime == 0)
+        startTime = clock::millisecondTimestamp();
+    
     cout << "\r"
-         << "[ " << s.getPrefix()
-        << ": pub rate " << ss[Indicator::CurrentProducerFramerate]
+         << "[ "
+         << setw(5) << setprecision(2) << (clock::millisecondTimestamp() - startTime)/1000. << "sec "
+         << s.getPrefix()
+         << ": pub rate " << ss[Indicator::CurrentProducerFramerate]
          << " processed " << (uint32_t)ss[Indicator::ProcessedNum]
          << "/" << (uint32_t)ss[Indicator::DroppedNum]
          << " "
          << (uint32_t)ss[Indicator::PublishedKeyNum] << "k"
+         << " enc " << setw(4) << setprecision(3) << ss[Indicator::CodecDelay] << "ms"
+         << " pub " << ss[Indicator::PublishDelay] << "ms"
          << fixed
          << " payload " << (uint64_t)ss[Indicator::BytesPublished]
          // TODO: why raw is much smaller than payload? check getDefaultWireEncoding()

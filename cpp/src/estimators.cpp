@@ -60,8 +60,11 @@ TimeWindow::cut(std::deque<double>& samples)
 }
 
 //******************************************************************************
-Average::Average(boost::shared_ptr<IEstimatorWindow> window):
-Estimator(window), accumulatedSum_(0.), variance_(0.), limitReached_(false)
+Average::Average(boost::shared_ptr<IEstimatorWindow> window)
+: Estimator(window)
+, accumulatedSum_(0.)
+, variance_(0.)
+, limitReached_(false)
 {
 }
 
@@ -83,6 +86,14 @@ Average::newValue(double value)
 		accumulatedSum_ += value;
 	}
 
+    if (nValues_ > 1)
+    {
+        double diffs = 0;
+        for (int i = 1; i < samples_.size(); ++i)
+            diffs += abs(samples_[i-1]-samples_[i]);
+        jitter_ = diffs/samples_.size();
+    }
+    
 	value_ = accumulatedSum_/samples_.size();
 
 	// re-calculate deviation every window

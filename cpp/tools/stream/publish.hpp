@@ -15,11 +15,11 @@ extern bool MustTerminate;
 
 namespace boost {
     namespace asio {
-        class io_context;
+        class io_service;
     }
 }
 
-void runPublishing(boost::asio::io_context &io,
+void runPublishing(boost::asio::io_service &io,
                    std::string input,
                    std::string basePrefix,
                    std::string streamName,

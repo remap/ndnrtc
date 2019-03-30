@@ -14,10 +14,6 @@
 #include "interest-queue.hpp"
 #include "name-components.hpp"
 
-#define REQ_DL_PRI_DEFAULT  150
-#define REQ_DL_PRI_RTX      50
-#define REQ_DL_PRI_URGENT   0
-
 using namespace std;
 using namespace ndn;
 using namespace ndnrtc;
@@ -35,6 +31,18 @@ Pipeline::Pipeline(boost::shared_ptr<IInterestQueue> interestQ,
     description_ = "pipeline";
 }
 
+Pipeline::Pipeline(boost::asio::io_service &io, Face *f,
+                   DispatchSlot dispatchSlot,
+                   const Name &sequencePrefix,
+                   uint32_t nextSeqNo, int step)
+    : interestQ_(boost::make_shared<RequestQueue>(io, f))
+    , dispatchSlot_(dispatchSlot)
+    , sequencePrefix_(sequencePrefix)
+    , nextSeqNo_(nextSeqNo)
+    , step_(step)
+{
+    description_ = "pipeline";
+}
 
 Pipeline::~Pipeline()
 {
@@ -48,6 +56,16 @@ Pipeline::pulse()
     try {
         boost::shared_ptr<IPipelineSlot> slot = dispatchSlot_();
         slot->setRequests(frameRequests);
+        
+        // TODO: decide on whether requesting missing segments should be here or not
+        // Pipeline don't know whether FEC data need to be fetched
+        // either provide flag for FEC data or don't request missing segments here
+        // (let the jitter buffer do it?)
+//        boost::shared_ptr<IInterestQueue> interestQ = interestQ_;
+//        slot->addOnNeedData([interestQ](IPipelineSlot *s, vector<boost::shared_ptr<DataRequest>> &requests){
+//            s->setRequests(requests);
+//            interestQ->enqueueRequests(requests, boost::make_shared<DeadlinePriority>(REQ_DL_PRI_RTX));
+//        });
         
         LogDebugC << "dispatched slot " << slot->getPrefix()
                   << " " << frameRequests.size() << " requests total" << endl;

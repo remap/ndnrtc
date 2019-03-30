@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 #include "src/estimators.hpp"
-#include "client/src/precise-generator.hpp"
+#include "tools/stream/precise-generator.hpp"
 
 using namespace ndnrtc::estimators;
 
@@ -84,6 +84,7 @@ TEST(TestSlidingAverage, TestTimeWindow)
 		for (int i = 1; i <= 100; ++i)
 		{
 			avg.newValue(v);
+            std::cout << avg.value() << std::endl;
 			if (i%10 == 0) d = -d;
 			else v+=d;
 			boost::this_thread::sleep_for(boost::chrono::milliseconds(10));

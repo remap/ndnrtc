@@ -101,6 +101,8 @@ namespace ndnrtc {
                 InterestsReceivedNum,
                 SignNum,
                 RdrPointerNum,
+                PublishDelay,
+                CodecDelay,
                 
                 // encoder
                 // DroppedNum, // borrowed from buffer (above)

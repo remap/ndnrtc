@@ -15,7 +15,7 @@ extern bool MustTerminate;
 
 namespace boost {
     namespace asio {
-        class io_context;
+        class io_service;
     }
 }
 
@@ -23,7 +23,7 @@ namespace ndnrtc {
     class NamespaceInfo;
 }
 
-void runFetching(boost::asio::io_context &io,
+void runFetching(boost::asio::io_service &io,
                  std::string output,
                  const ndnrtc::NamespaceInfo& prefixInfo,
                  long ppSize,

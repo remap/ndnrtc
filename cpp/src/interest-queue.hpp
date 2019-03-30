@@ -19,6 +19,10 @@
 #include "ndnrtc-object.hpp"
 #include "statistics.hpp"
 
+#define REQ_DL_PRI_DEFAULT  150
+#define REQ_DL_PRI_RTX      50
+#define REQ_DL_PRI_URGENT   0
+
 namespace ndn {
     class Interest;
     class Face;
@@ -41,7 +45,7 @@ namespace ndnrtc {
 
     typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&,
                                     const boost::shared_ptr<ndn::Data>&)> OnData;
-    typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&)> 
+    typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&)>
             OnTimeout;
     typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>& interest,
         const boost::shared_ptr<ndn::NetworkNack>& networkNack)> OnNetworkNack;
@@ -52,7 +56,7 @@ namespace ndnrtc {
     public:
         virtual void onInterestIssued(const boost::shared_ptr<const ndn::Interest>&) = 0;
     };
-    
+
     class IInterestQueue {
     public:
         virtual void
@@ -65,7 +69,7 @@ namespace ndnrtc {
         virtual void
         enqueueRequest(boost::shared_ptr<DataRequest>& request,
                        boost::shared_ptr<DeadlinePriority> priority) = 0;
-        
+
         virtual void
         enqueueRequests(std::vector<boost::shared_ptr<DataRequest>>& requests,
                         boost::shared_ptr<DeadlinePriority> priority) = 0;
@@ -90,15 +94,15 @@ namespace ndnrtc {
         RequestQueue(boost::asio::io_service& io,
                      const boost::shared_ptr<ndn::Face> &face,
                      const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
-        RequestQueue(boost::asio::io_context& io,
+        RequestQueue(boost::asio::io_service& io,
                      ndn::Face *face,
                      const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
-        RequestQueue(boost::asio::io_context& io,
+        RequestQueue(boost::asio::io_service& io,
                      ndn::Face *face);
 //        InterestQueue(const ndn::Face &face,
 //                      const boost::shared_ptr<statistics::StatisticsStorage>& statStorage){}
         ~RequestQueue();
-        
+
         /**
          * Enqueues Interest in the queue.
          * @param interest Interest to be expressed
@@ -120,36 +124,40 @@ namespace ndnrtc {
          */
         void
         enqueueRequest(boost::shared_ptr<DataRequest>& request,
-                       boost::shared_ptr<DeadlinePriority> priority);
-        
+                       boost::shared_ptr<DeadlinePriority> priority =
+                            boost::make_shared<DeadlinePriority>(REQ_DL_PRI_DEFAULT));
+
         void
         enqueueRequests(std::vector<boost::shared_ptr<DataRequest>>& requests,
-                        boost::shared_ptr<DeadlinePriority> priority);
+                        boost::shared_ptr<DeadlinePriority> priority =
+                            boost::make_shared<DeadlinePriority>(REQ_DL_PRI_DEFAULT));
         /**
-         * Only call that if interest queue was not initialized using io_context
+         * Only call that if interest queue was not initialized using io_service
          */
 //        void
 //        process();
-        
+
         /**
          * Flushes current interest queue
          */
         void reset();
+
+
+        size_t size() const;
+        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+        double getDrdEstimate() const;
+        double getJitterEstimate() const;
+
         void registerObserver(IInterestQueueObserver *observer) DEPRECATED;
         void unregisterObserver() DEPRECATED;
-        size_t size() const;
-        
-        virtual void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
-
-        
     private:
         boost::shared_ptr<RequestQueueImpl> pimpl_;
     };
-    
+
     typedef RequestQueue InterestQueue;
-    
+
     /**
-     * DeadlinePriority class implements IPriority interface for assigning 
+     * DeadlinePriority class implements IPriority interface for assigning
      * priorities for Interests based on expected data arrival deadlines.
      * The farther the arrival deadline is, the lower the priority.
      */
@@ -163,7 +171,7 @@ namespace ndnrtc {
 
         static boost::shared_ptr<DeadlinePriority>
         fromNow(int64_t delayMs) { return boost::make_shared<DeadlinePriority>(delayMs); }
-        
+
     private:
         int64_t enqueuedMs_, arrivalDelayMs_;
 

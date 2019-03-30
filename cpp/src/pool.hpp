@@ -32,6 +32,7 @@ class Pool {
 public:
     Pool(const size_t& capacity = 300)
     {
+        capacity_ = capacity;
         for (int i = 0; i < capacity; ++i)
             pool_.push_back(boost::make_shared<T>());
     }

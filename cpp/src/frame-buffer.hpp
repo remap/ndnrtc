@@ -143,6 +143,7 @@ namespace ndnrtc
 //        std::vector<boost::shared_ptr<const DataRequest>> getAllRequests() const override;
         const ndn::Name& getPrefix() const override  { return name_; }
         SlotTriggerConnection subscribe(PipelineSlotState, OnSlotStateUpdate) override;
+        NeedDataTriggerConnection addOnNeedData(OnNeedData) override;
         
         /**
          * Clears all internal structures of this slot and returns to Free state
@@ -163,12 +164,10 @@ namespace ndnrtc
         const NamespaceInfo& getNameInfo() const { return nameInfo_; }
         double getFetchProgress() const { return fetchProgress_; }
         
-        
         std::string
         dump(bool showLastSegment = false) const;
         
-        boost::signals2::signal<void(IPipelineSlot*,
-                                     std::vector<boost::shared_ptr<DataRequest>>)> onMissing_;
+        boost::shared_ptr<const packets::Meta> getFrameMeta() const { return meta_; }
         
         size_t getDataSegmentsNum() const { return nDataSegments_; }
         size_t getFetchedDataSegmentsNum() const { return nDataSegmentsFetched_; }
@@ -178,9 +177,33 @@ namespace ndnrtc
         size_t getFetchedBytesData() const { return fetchedBytesData_; }
         size_t getFetchedBytesParity() const { return fetchedBytesParity_; }
         
+    private:
+        PipelineSlotState slotState_;
+        std::vector<boost::shared_ptr<DataRequest>> requests_;
+        std::vector<RequestTriggerConnection> requestConnections_;
+        SlotTrigger onPending_, onReady_, onUnfetchable_;
+        NeedDataTrigger onMissing_;
+        bool metaIsFetched_, manifestIsFetched_;
+        boost::shared_ptr<const packets::Meta> meta_;
+        boost::shared_ptr<const packets::Manifest> manifest_;
+        SegmentNumber maxDataSegNo_, maxParitySegNo_;
+        
+        int64_t firstRequestTsUsec_, firstDataTsUsec_, lastDataTsUsec_;
+        size_t nDataSegments_, nParitySegments_;
+        size_t nDataSegmentsFetched_, nParitySegmentsFetched_;
+        size_t fetchedBytesData_, fetchedBytesParity_, fetchedBytesTotal_;
+        double fetchProgress_;
+        
+        void onReply(const DataRequest&);
+        void onError(const DataRequest&);
+        
+        void checkForMissingSegments(const DataRequest&);
+        void updateAssemblingProgress(const DataRequest&);
+        void triggerEvent(PipelineSlotState, const DataRequest&);
+        
         // ----------------------------------------------------------------------------------------
         // CODE BELOW IS DEPRECATED
-        
+    public:
         int getConsistencyState() const { return consistency_; }
         double getAssembledLevel() const { return fetchProgress_; }
         
@@ -243,27 +266,6 @@ namespace ndnrtc
         const _CommonHeader getHeader() const DEPRECATED;
 
     private:
-        PipelineSlotState slotState_;
-        std::vector<boost::shared_ptr<DataRequest>> requests_;
-        std::vector<RequestTriggerConnection> requestConnections_;
-        SlotTrigger onPending_, onReady_, onUnfetchable_;
-        bool metaIsFetched_, manifestIsFetched_;
-        boost::shared_ptr<const packets::Meta> meta_;
-        boost::shared_ptr<const packets::Manifest> manifest_;
-        SegmentNumber maxDataSegNo_, maxParitySegNo_;
-        
-        int64_t firstRequestTsUsec_, firstDataTsUsec_, lastDataTsUsec_;
-        size_t nDataSegments_, nParitySegments_;
-        size_t nDataSegmentsFetched_, nParitySegmentsFetched_;
-        size_t fetchedBytesData_, fetchedBytesParity_, fetchedBytesTotal_;
-        double fetchProgress_;
-        
-        void onReply(const DataRequest&);
-        void onError(const DataRequest&);
-        
-        void checkForMissingSegments(const DataRequest&);
-        void updateAssemblingProgress(const DataRequest&);
-        void triggerEvent(PipelineSlotState, const DataRequest&);
         
         
         // ???

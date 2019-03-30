@@ -128,6 +128,12 @@ BufferSlot::subscribe(PipelineSlotState slotState, OnSlotStateUpdate onSlotState
     return c;
 }
 
+NeedDataTriggerConnection
+BufferSlot::addOnNeedData(OnNeedData onNeedData)
+{
+    return onMissing_.connect(onNeedData);
+}
+
 void
 BufferSlot::setRequests(const std::vector<boost::shared_ptr<DataRequest> > &requests)
 {
@@ -383,7 +389,8 @@ BufferSlot::updateAssemblingProgress(const DataRequest &dr)
     if (nDataSegments_ > 0)
         fetchProgress_ = double(nDataSegmentsFetched_+nParitySegmentsFetched_+2) / double(nDataSegments_+nParitySegments_+2);
     
-    if (isDecodable() && slotState_ == PipelineSlotState::Assembling)
+    if (metaIsFetched_ &&
+        isDecodable() && slotState_ == PipelineSlotState::Assembling)
     {
         slotState_ = PipelineSlotState::Ready;
         triggerEvent(PipelineSlotState::Ready, dr);

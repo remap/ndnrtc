@@ -120,10 +120,10 @@ void terminate(boost::asio::io_service &ioService,
 {
     if (error)
         return;
-    
+
     cerr << "caught signal '" << strsignal(signalNo) << "', exiting..." << endl;
     ioService.stop();
-    
+
     if (signalNo == SIGABRT || signalNo == SIGSEGV)
     {
         void *array[10];
@@ -132,13 +132,13 @@ void terminate(boost::asio::io_service &ioService,
         // print out all the frames to stderr
         backtrace_symbols_fd(array, size, STDERR_FILENO);
     }
-    
+
     MustTerminate = true;
 }
 
 int main(int argc, char **argv)
 {
-    boost::asio::io_context io;
+    boost::asio::io_service io;
     boost::asio::signal_set signalSet(io);
     signalSet.add(SIGINT);
     signalSet.add(SIGTERM);
@@ -227,11 +227,11 @@ int main(int argc, char **argv)
         else if (args["fetch"].asBool())
         {
             LogDebug(AppLog) << "initializing fetching" << endl;
-            
+
             if (args["<prefix>"].isString())
             {
                 NamespaceInfo prefixInfo;
-                
+
                 if (NameComponents::extractInfo(args["<prefix>"].asString(), prefixInfo))
                 {
                     runFetching(io,

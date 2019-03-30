@@ -146,7 +146,7 @@ TEST(TestBufferSlot, TestIsDecodable)
     { // reply all data
         boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
         slot->setRequests(requests);
-        slot->onMissing_.connect(onMissing);
+        slot->addOnNeedData(onMissing);
         expressRequests(requests);
         replyData(requests);
         replyData(missing);
@@ -174,7 +174,7 @@ TEST(TestBufferSlot, TestIsDecodable)
         
         boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
         slot->setRequests(requests);
-        slot->onMissing_.connect(onMissing);
+        slot->addOnNeedData(onMissing);
         expressRequests(requests);
         replyNoParity(requests);
         replyNoParity(missing);
@@ -220,7 +220,7 @@ TEST(TestBufferSlot, TestIsDecodable)
             
             boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
             slot->setRequests(requests);
-            slot->onMissing_.connect(onMissing);
+            slot->addOnNeedData(onMissing);
             expressRequests(requests);
             replyData(requests);
             replyAllParity(missing);
@@ -234,7 +234,7 @@ TEST(TestBufferSlot, TestIsDecodable)
     { // first reply - manifest
         boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
         slot->setRequests(requests);
-        slot->onMissing_.connect(onMissing);
+        slot->addOnNeedData(onMissing);
         expressRequests(requests);
         
         vector<boost::shared_ptr<DataRequest>> manifest;
@@ -258,7 +258,7 @@ TEST(TestBufferSlot, TestIsDecodable)
     { // first reply - parity
         boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
         slot->setRequests(requests);
-        slot->onMissing_.connect(onMissing);
+        slot->addOnNeedData(onMissing);
         expressRequests(requests);
         
         vector<boost::shared_ptr<DataRequest>> parity;
@@ -355,7 +355,7 @@ TEST(TestBufferSlot, TestFrameAssembling)
         
         boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
         
-        slot->onMissing_.connect(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
+        slot->addOnNeedData(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
         
         slot->subscribe(PipelineSlotState::Pending,
                         bind(&SlotCallbacksStub::onPending, &callbackStub, _1, _2));
@@ -391,7 +391,7 @@ TEST(TestBufferSlot, TestFrameAssembling)
         
         boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
         
-        slot->onMissing_.connect(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
+        slot->addOnNeedData(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
         
         slot->subscribe(PipelineSlotState::Pending,
                         bind(&SlotCallbacksStub::onPending, &callbackStub, _1, _2));
@@ -457,7 +457,7 @@ TEST(TestBufferSlot, TestFrameAssembling)
         
         boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
         
-        slot->onMissing_.connect(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
+        slot->addOnNeedData(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
         
         slot->subscribe(PipelineSlotState::Pending,
                         bind(&SlotCallbacksStub::onPending, &callbackStub, _1, _2));
@@ -503,7 +503,7 @@ TEST(TestBufferSlot, TestFrameAssembling)
         
         boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
         
-        slot->onMissing_.connect(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
+        slot->addOnNeedData(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
         
         slot->subscribe(PipelineSlotState::Pending,
                         bind(&SlotCallbacksStub::onPending, &callbackStub, _1, _2));
@@ -549,7 +549,7 @@ TEST(TestBufferSlot, TestFrameAssembling)
         
         boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
         
-        slot->onMissing_.connect(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
+        slot->addOnNeedData(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
         
         slot->subscribe(PipelineSlotState::Pending,
                         bind(&SlotCallbacksStub::onPending, &callbackStub, _1, _2));
@@ -657,7 +657,7 @@ TEST(TestBufferSlot, TestFrameAssemblingEdgeCase1)
     { // TEST SLOT READY WHEN EXPRESS MORE THAN NEEDED REQUESTS
         SlotCallbacksStub callbackStub;
         boost::shared_ptr<BufferSlot> slot = boost::make_shared<BufferSlot>();
-        slot->onMissing_.connect(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
+        slot->addOnNeedData(bind(&SlotCallbacksStub::onMissing, &callbackStub, _1, _2));
         
         slot->subscribe(PipelineSlotState::Pending,
                         bind(&SlotCallbacksStub::onPending, &callbackStub, _1, _2));
@@ -665,10 +665,6 @@ TEST(TestBufferSlot, TestFrameAssemblingEdgeCase1)
                         bind(&SlotCallbacksStub::onReady, &callbackStub, _1, _2));
         slot->subscribe(PipelineSlotState::Unfetchable,
                         bind(&SlotCallbacksStub::onUnfetchable, &callbackStub, _1, _2));
-        
-        cout << requests.size() << endl;
-        for (auto &r:requests)
-            cout << r->getInterest()->getName() << endl;
         
         slot->setRequests(requests);
         

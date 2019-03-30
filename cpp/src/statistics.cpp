@@ -91,9 +91,11 @@ map_list_of
 ( Indicator::InterestsReceivedNum, "Interests received" )
 ( Indicator::SignNum, "Sign operations")
 ( Indicator::RdrPointerNum, "RDR pointer num")
+( Indicator::PublishDelay, "Publish delay")
 
 // encoder
 ( Indicator::EncodedNum, "Encoded frames" )
+( Indicator::CodecDelay, "Coding delay")
 
 // capturer
 ( Indicator::CapturedNum, "Captured frames" );
@@ -134,6 +136,8 @@ map_list_of
 ( Indicator::PlayedKeyNum, 0. )
 ( Indicator::SkippedNum, 0. )
 ( Indicator::LatencyEstimated, 0. )
+( Indicator::CodecDelay, 0.)
+
 // pipeliner
 ( Indicator::SegmentsDeltaAvgNum, 0. )
 ( Indicator::SegmentsKeyAvgNum, 0. )
@@ -176,9 +180,11 @@ map_list_of ( Indicator::Timestamp, 0. )
 ( Indicator::SignNum, 0. )
 ( Indicator::CurrentProducerFramerate, 0. )
 ( Indicator::RdrPointerNum, 0. )
+( Indicator::PublishDelay, 0.)
 // encoder
 ( Indicator::DroppedNum, 0. )
 ( Indicator::EncodedNum, 0. )
+( Indicator::CodecDelay, 0.)
 // capturer
 ( Indicator::CapturedNum, 0. );
 
@@ -256,8 +262,10 @@ boost::assign::map_list_of
 (Indicator::InterestsReceivedNum, "irecvd")
 (Indicator::SignNum, "signNum")
 (Indicator::RdrPointerNum, "rdrNum")
+(Indicator::PublishDelay, "pubDelay")
 // encoder
 (Indicator::EncodedNum, "framesEncoded")
+(Indicator::CodecDelay, "codecDelay")
 // capturer
 (Indicator::CapturedNum, "framesCaptured");
 

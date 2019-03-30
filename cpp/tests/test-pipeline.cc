@@ -45,6 +45,8 @@ public:
                                        OnNetworkNack onNetworkNack));
     MOCK_METHOD2(enqueueRequest, void(boost::shared_ptr<DataRequest>& request,
                                       boost::shared_ptr<DeadlinePriority> priority));
+    MOCK_METHOD2(enqueueRequests, void(std::vector<boost::shared_ptr<DataRequest>>& requests,
+                                       boost::shared_ptr<DeadlinePriority> priority));
     MOCK_METHOD0(reset, void());
 };
 
@@ -71,8 +73,8 @@ TEST(TestPipeline, TestDefault)
     });
 
     int nPulses = 10;
-    EXPECT_CALL(*iqStub, enqueueRequest(_,_))
-        .Times(AtLeast(nPulses*4));
+    EXPECT_CALL(*iqStub, enqueueRequests(_,_))
+        .Times(AtLeast(nPulses));
     
     for (int i = 0; i < nPulses; ++i)
         pp.pulse();
@@ -104,8 +106,8 @@ TEST(TestPipeline, TestSeed)
     });
     
     int nPulses = 10;
-    EXPECT_CALL(*iqStub, enqueueRequest(_,_))
-    .Times(AtLeast(nPulses*4));
+    EXPECT_CALL(*iqStub, enqueueRequests(_,_))
+    .Times(nPulses);
     
     for (int i = 0; i < nPulses; ++i)
         pp.pulse();
@@ -137,8 +139,8 @@ TEST(TestPipeline, TestStep)
     });
     
     int nPulses = 10;
-    EXPECT_CALL(*iqStub, enqueueRequest(_,_))
-        .Times(AtLeast(nPulses*4));
+    EXPECT_CALL(*iqStub, enqueueRequests(_,_))
+        .Times(nPulses);
     
     for (int i = 0; i < nPulses; ++i)
         pp.pulse();
@@ -171,8 +173,8 @@ TEST(TestPipeline, TestStepBckwd)
     });
     
     int nPulses = 10;
-    EXPECT_CALL(*iqStub, enqueueRequest(_,_))
-    .Times(AtLeast(nPulses*4));
+    EXPECT_CALL(*iqStub, enqueueRequests(_,_))
+        .Times(AtLeast(nPulses));
     
     for (int i = 0; i < nPulses; ++i)
         pp.pulse();
@@ -193,7 +195,7 @@ TEST(TestPipeline, TestIntegrationFullCycle)
     FaceStub faceStub;
     
     map<Name, boost::shared_ptr<Data>> framePackets;
-    uint64_t startSeqNo = 0, nFrames = 5000;
+    uint64_t startSeqNo = 0, nFrames = 1;
     for (uint64_t f = startSeqNo; f < nFrames; ++f)
     {
         Name frameName = Name(stream).appendSequenceNumber(f);
@@ -243,7 +245,7 @@ TEST(TestPipeline, TestIntegrationFullCycle)
     // --------------------------------------------------------------------------------------------
     // MOCK CONSUMER SIDE
     bool useParity = true;
-    boost::asio::io_context io;
+    boost::asio::io_service io;
     boost::shared_ptr<InterestQueue> interestQ = boost::make_shared<InterestQueue>(io, &cFace);
     Pool<BufferSlot> slotPool(500);
     int nPending = 0;
@@ -333,7 +335,7 @@ TEST(TestPipeline, TestIntegrationFullCycle)
         slot->subscribe(PipelineSlotState::Unfetchable, onSlotUnfetchable);
         
         boost::shared_ptr<BufferSlot> s = boost::dynamic_pointer_cast<BufferSlot>(slot);
-        s->onMissing_.connect(onMissingSlotRequests);
+        slot->addOnNeedData(onMissingSlotRequests);
     });
     
     start = clock::millisecondTimestamp();

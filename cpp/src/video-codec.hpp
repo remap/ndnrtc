@@ -81,6 +81,7 @@ public:
   typedef struct _Stats {
       uint32_t nFrames_, nProcessed_, nDropped_, nKey_;
       uint64_t bytesIn_, bytesOut_;
+      double procDelayAvg_, procDelayJitter_;
   } Stats;
 
   typedef std::function<void(const EncodedFrame&)> OnEncodedFrame;
