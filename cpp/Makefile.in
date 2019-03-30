@@ -557,8 +557,7 @@ bin_tests_test_drd_estimator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_drd_estimator_LDFLAGS) $(LDFLAGS) -o $@
 am__bin_tests_test_estimators_SOURCES_DIST = tests/test-estimators.cc \
-	src/estimators.cpp src/clock.cpp \
-	client/src/precise-generator.cpp \
+	src/estimators.cpp tools/stream/precise-generator.cpp \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
@@ -569,13 +568,12 @@ am__objects_20 = contrib/gtest/googlemock/src/bin_tests_test_estimators-gmock-al
 am_bin_tests_test_estimators_OBJECTS =  \
 	tests/bin_tests_test_estimators-test-estimators.$(OBJEXT) \
 	src/bin_tests_test_estimators-estimators.$(OBJEXT) \
-	src/bin_tests_test_estimators-clock.$(OBJEXT) \
-	client/src/bin_tests_test_estimators-precise-generator.$(OBJEXT) \
+	tools/stream/bin_tests_test_estimators-precise-generator.$(OBJEXT) \
 	$(am__objects_20)
 bin_tests_test_estimators_OBJECTS =  \
 	$(am_bin_tests_test_estimators_OBJECTS)
-bin_tests_test_estimators_DEPENDENCIES = $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_3)
+bin_tests_test_estimators_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
+	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
 bin_tests_test_estimators_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
@@ -1850,7 +1848,6 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	client/src/$(DEPDIR)/bin_tests_test_data_validator-ipc-shim.Po \
 	client/src/$(DEPDIR)/bin_tests_test_drd_estimator-ipc-shim.Po \
 	client/src/$(DEPDIR)/bin_tests_test_estimators-ipc-shim.Po \
-	client/src/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po \
 	client/src/$(DEPDIR)/bin_tests_test_frame_buffer-ipc-shim.Po \
 	client/src/$(DEPDIR)/bin_tests_test_frame_converter-ipc-shim.Po \
 	client/src/$(DEPDIR)/bin_tests_test_frame_io-frame-io.Po \
@@ -2061,7 +2058,6 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	src/$(DEPDIR)/bin_tests_test_drd_estimator-fec.Po \
 	src/$(DEPDIR)/bin_tests_test_drd_estimator-frame-data.Po \
 	src/$(DEPDIR)/bin_tests_test_drd_estimator-name-components.Po \
-	src/$(DEPDIR)/bin_tests_test_estimators-clock.Po \
 	src/$(DEPDIR)/bin_tests_test_estimators-estimators.Po \
 	src/$(DEPDIR)/bin_tests_test_frame_converter-fec.Po \
 	src/$(DEPDIR)/bin_tests_test_frame_converter-frame-converter.Po \
@@ -2481,6 +2477,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po \
 	tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po \
 	tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po \
+	tools/stream/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po \
 	tools/stream/$(DEPDIR)/ndnrtc_stream-fetch.Po \
 	tools/stream/$(DEPDIR)/ndnrtc_stream-main.Po \
 	tools/stream/$(DEPDIR)/ndnrtc_stream-precise-generator.Po \
@@ -3231,10 +3228,6 @@ bin_tests_test_frame_converter_SOURCES = tests/test-frame-converter.cc tests/tes
 bin_tests_test_frame_converter_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_converter_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_frame_converter_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
-bin_tests_test_estimators_SOURCES = tests/test-estimators.cc src/estimators.cpp src/clock.cpp client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_estimators_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-bin_tests_test_estimators_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_estimators_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 bin_tests_test_async_SOURCES = tests/test-async.cc src/async.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_async_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_async_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -3374,6 +3367,10 @@ bin_tests_test_frame_buffer_SOURCES = tests/test-frame-buffer.cc tests/tests-hel
 bin_tests_test_frame_buffer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_buffer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_frame_buffer_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
+bin_tests_test_estimators_SOURCES = tests/test-estimators.cc src/estimators.cpp tools/stream/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_estimators_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_estimators_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_estimators_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 all: all-am
 
 .SUFFIXES:
@@ -3960,11 +3957,15 @@ tests/bin_tests_test_estimators-test-estimators.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_estimators-estimators.$(OBJEXT):  \
 	src/$(am__dirstamp) src/$(DEPDIR)/$(am__dirstamp)
-src/bin_tests_test_estimators-clock.$(OBJEXT): src/$(am__dirstamp) \
-	src/$(DEPDIR)/$(am__dirstamp)
-client/src/bin_tests_test_estimators-precise-generator.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
+tools/stream/$(am__dirstamp):
+	@$(MKDIR_P) tools/stream
+	@: > tools/stream/$(am__dirstamp)
+tools/stream/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tools/stream/$(DEPDIR)
+	@: > tools/stream/$(DEPDIR)/$(am__dirstamp)
+tools/stream/bin_tests_test_estimators-precise-generator.$(OBJEXT):  \
+	tools/stream/$(am__dirstamp) \
+	tools/stream/$(DEPDIR)/$(am__dirstamp)
 contrib/gtest/googlemock/src/bin_tests_test_estimators-gmock-all.$(OBJEXT):  \
 	contrib/gtest/googlemock/src/$(am__dirstamp) \
 	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
@@ -5248,12 +5249,6 @@ tools/codec/ndnrtc_codec-tools.$(OBJEXT): tools/codec/$(am__dirstamp) \
 ndnrtc-codec$(EXEEXT): $(ndnrtc_codec_OBJECTS) $(ndnrtc_codec_DEPENDENCIES) $(EXTRA_ndnrtc_codec_DEPENDENCIES) 
 	@rm -f ndnrtc-codec$(EXEEXT)
 	$(AM_V_CXXLD)$(ndnrtc_codec_LINK) $(ndnrtc_codec_OBJECTS) $(ndnrtc_codec_LDADD) $(LIBS)
-tools/stream/$(am__dirstamp):
-	@$(MKDIR_P) tools/stream
-	@: > tools/stream/$(am__dirstamp)
-tools/stream/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) tools/stream/$(DEPDIR)
-	@: > tools/stream/$(DEPDIR)/$(am__dirstamp)
 tools/stream/ndnrtc_stream-main.$(OBJEXT):  \
 	tools/stream/$(am__dirstamp) \
 	tools/stream/$(DEPDIR)/$(am__dirstamp)
@@ -5372,7 +5367,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_data_validator-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_drd_estimator-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_estimators-ipc-shim.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_frame_buffer-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_frame_converter-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_frame_io-frame-io.Po@am__quote@ # am--include-marker
@@ -5583,7 +5577,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_drd_estimator-fec.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_drd_estimator-frame-data.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_drd_estimator-name-components.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_estimators-clock.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_estimators-estimators.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_frame_converter-fec.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@src/$(DEPDIR)/bin_tests_test_frame_converter-frame-converter.Po@am__quote@ # am--include-marker
@@ -6003,6 +5996,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tools/stream/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream/$(DEPDIR)/ndnrtc_stream-fetch.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream/$(DEPDIR)/ndnrtc_stream-main.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tools/stream/$(DEPDIR)/ndnrtc_stream-precise-generator.Po@am__quote@ # am--include-marker
@@ -8442,33 +8436,19 @@ src/bin_tests_test_estimators-estimators.obj: src/estimators.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_estimators-estimators.obj `if test -f 'src/estimators.cpp'; then $(CYGPATH_W) 'src/estimators.cpp'; else $(CYGPATH_W) '$(srcdir)/src/estimators.cpp'; fi`
 
-src/bin_tests_test_estimators-clock.o: src/clock.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_estimators-clock.o -MD -MP -MF src/$(DEPDIR)/bin_tests_test_estimators-clock.Tpo -c -o src/bin_tests_test_estimators-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_estimators-clock.Tpo src/$(DEPDIR)/bin_tests_test_estimators-clock.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/clock.cpp' object='src/bin_tests_test_estimators-clock.o' libtool=no @AMDEPBACKSLASH@
+tools/stream/bin_tests_test_estimators-precise-generator.o: tools/stream/precise-generator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tools/stream/bin_tests_test_estimators-precise-generator.o -MD -MP -MF tools/stream/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Tpo -c -o tools/stream/bin_tests_test_estimators-precise-generator.o `test -f 'tools/stream/precise-generator.cpp' || echo '$(srcdir)/'`tools/stream/precise-generator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Tpo tools/stream/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/stream/precise-generator.cpp' object='tools/stream/bin_tests_test_estimators-precise-generator.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_estimators-clock.o `test -f 'src/clock.cpp' || echo '$(srcdir)/'`src/clock.cpp
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream/bin_tests_test_estimators-precise-generator.o `test -f 'tools/stream/precise-generator.cpp' || echo '$(srcdir)/'`tools/stream/precise-generator.cpp
 
-src/bin_tests_test_estimators-clock.obj: src/clock.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT src/bin_tests_test_estimators-clock.obj -MD -MP -MF src/$(DEPDIR)/bin_tests_test_estimators-clock.Tpo -c -o src/bin_tests_test_estimators-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) src/$(DEPDIR)/bin_tests_test_estimators-clock.Tpo src/$(DEPDIR)/bin_tests_test_estimators-clock.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='src/clock.cpp' object='src/bin_tests_test_estimators-clock.obj' libtool=no @AMDEPBACKSLASH@
+tools/stream/bin_tests_test_estimators-precise-generator.obj: tools/stream/precise-generator.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tools/stream/bin_tests_test_estimators-precise-generator.obj -MD -MP -MF tools/stream/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Tpo -c -o tools/stream/bin_tests_test_estimators-precise-generator.obj `if test -f 'tools/stream/precise-generator.cpp'; then $(CYGPATH_W) 'tools/stream/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream/precise-generator.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/stream/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Tpo tools/stream/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tools/stream/precise-generator.cpp' object='tools/stream/bin_tests_test_estimators-precise-generator.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o src/bin_tests_test_estimators-clock.obj `if test -f 'src/clock.cpp'; then $(CYGPATH_W) 'src/clock.cpp'; else $(CYGPATH_W) '$(srcdir)/src/clock.cpp'; fi`
-
-client/src/bin_tests_test_estimators-precise-generator.o: client/src/precise-generator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_estimators-precise-generator.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Tpo -c -o client/src/bin_tests_test_estimators-precise-generator.o `test -f 'client/src/precise-generator.cpp' || echo '$(srcdir)/'`client/src/precise-generator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Tpo client/src/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/precise-generator.cpp' object='client/src/bin_tests_test_estimators-precise-generator.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_estimators-precise-generator.o `test -f 'client/src/precise-generator.cpp' || echo '$(srcdir)/'`client/src/precise-generator.cpp
-
-client/src/bin_tests_test_estimators-precise-generator.obj: client/src/precise-generator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/bin_tests_test_estimators-precise-generator.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Tpo -c -o client/src/bin_tests_test_estimators-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Tpo client/src/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/precise-generator.cpp' object='client/src/bin_tests_test_estimators-precise-generator.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/bin_tests_test_estimators-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tools/stream/bin_tests_test_estimators-precise-generator.obj `if test -f 'tools/stream/precise-generator.cpp'; then $(CYGPATH_W) 'tools/stream/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/tools/stream/precise-generator.cpp'; fi`
 
 contrib/gtest/googlemock/src/bin_tests_test_estimators-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_estimators_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_estimators-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_estimators-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_estimators-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
@@ -15714,7 +15694,6 @@ distclean: distclean-am
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_data_validator-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_drd_estimator-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_estimators-ipc-shim.Po
-	-rm -f client/src/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_frame_buffer-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_frame_converter-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_frame_io-frame-io.Po
@@ -15925,7 +15904,6 @@ distclean: distclean-am
 	-rm -f src/$(DEPDIR)/bin_tests_test_drd_estimator-fec.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_drd_estimator-frame-data.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_drd_estimator-name-components.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_estimators-clock.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_estimators-estimators.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_frame_converter-fec.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_frame_converter-frame-converter.Po
@@ -16345,6 +16323,7 @@ distclean: distclean-am
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
 	-rm -f tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po
 	-rm -f tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po
+	-rm -f tools/stream/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po
 	-rm -f tools/stream/$(DEPDIR)/ndnrtc_stream-fetch.Po
 	-rm -f tools/stream/$(DEPDIR)/ndnrtc_stream-main.Po
 	-rm -f tools/stream/$(DEPDIR)/ndnrtc_stream-precise-generator.Po
@@ -16418,7 +16397,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_data_validator-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_drd_estimator-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_estimators-ipc-shim.Po
-	-rm -f client/src/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_frame_buffer-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_frame_converter-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_frame_io-frame-io.Po
@@ -16629,7 +16607,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f src/$(DEPDIR)/bin_tests_test_drd_estimator-fec.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_drd_estimator-frame-data.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_drd_estimator-name-components.Po
-	-rm -f src/$(DEPDIR)/bin_tests_test_estimators-clock.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_estimators-estimators.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_frame_converter-fec.Po
 	-rm -f src/$(DEPDIR)/bin_tests_test_frame_converter-frame-converter.Po
@@ -17049,6 +17026,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f tools/stream-recorder/$(DEPDIR)/stream_recorder-main.Po
 	-rm -f tools/stream-scrubber/$(DEPDIR)/stream_scrubber-main.Po
 	-rm -f tools/stream-scrubber/$(DEPDIR)/stream_scrubber-renderer.Po
+	-rm -f tools/stream/$(DEPDIR)/bin_tests_test_estimators-precise-generator.Po
 	-rm -f tools/stream/$(DEPDIR)/ndnrtc_stream-fetch.Po
 	-rm -f tools/stream/$(DEPDIR)/ndnrtc_stream-main.Po
 	-rm -f tools/stream/$(DEPDIR)/ndnrtc_stream-precise-generator.Po

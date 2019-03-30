@@ -306,46 +306,6 @@ then
 fi
 
 ###############################
-# Check for NDN-CPP
-AC_CHECK_HEADERS([ndn-cpp/interest.hpp],,[AC_MSG_FAILURE([can't find interest.hpp])])
-AC_MSG_CHECKING([for NDN-CPP library...])
-
-AC_LINK_IFELSE(
- 	[AC_LANG_PROGRAM([#include <ndn-cpp/interest.hpp>],
- 		[ndn::Interest interest])],
- 		[AC_MSG_RESULT([yes])],
- 		[AC_MSG_FAILURE([can't find NDN-CPP lib])]
-)
-
-AC_MSG_CHECKING([if NDN-CPP library was compiled for using boost::shared_ptr])
-AC_CHECK_LIB([ndn-cpp], [ndn_getNowMilliseconds])
-
-if test "$build_os" == "$host_os"; then
-	AC_RUN_IFELSE(
-		[AC_LANG_PROGRAM([
-			#include <ndn-cpp/interest.hpp>
-			#include <boost/shared_ptr.hpp>
-			],
-			[
-				ndn::ptr_lib::shared_ptr<int> ptrlibPtr(new int(5));
-				boost::shared_ptr<int> boostPtr(new int(6));
-				ptrlibPtr = boostPtr;
-			]
-		)],
-		[AC_MSG_RESULT([yes])],
-		[AC_MSG_RESULT([no])]
-		[AC_MSG_FAILURE([NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr])]
-	)
-fi
-
-AC_CHECK_LIB([ndn-cpp-tools], [ndntools_getGeneralizedContentMetaComponent])
-
-###############################
-# Check for OpenFEC library
-AC_CHECK_HEADERS([lib_common/of_openfec_api.h],,[AC_MSG_FAILURE([can't find OpenFEC headers])])
-AC_CHECK_LIB([openfec],[of_create_codec_instance],,[AC_MSG_FAILURE([can't find OpenFEC library])])
-
-###############################
 # Check for Protobuf library
 AC_MSG_CHECKING([for Protobuf])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
@@ -377,6 +337,46 @@ if test "$HAVE_PROTOBUF" == "1" ; then
   )
   AS_IF([test "${PROTOC}" == "no"], [AC_MSG_ERROR([ProtoBuf compiler "protoc" not found.])])
 fi
+
+###############################
+# Check for NDN-CPP
+AC_CHECK_HEADERS([ndn-cpp/interest.hpp],,[AC_MSG_FAILURE([can't find interest.hpp])])
+AC_MSG_CHECKING([for NDN-CPP library...])
+
+#AC_LINK_IFELSE(
+# 	[AC_LANG_PROGRAM([#include <ndn-cpp/interest.hpp>],
+# 		[ndn::Interest interest])],
+# 		[AC_MSG_RESULT([yes])],
+# 		[AC_MSG_FAILURE([can't find NDN-CPP lib])]
+#)
+
+AC_MSG_CHECKING([if NDN-CPP library was compiled for using boost::shared_ptr])
+AC_CHECK_LIB([ndn-cpp], [ndn_getNowMilliseconds])
+
+if test "$build_os" == "$host_os"; then
+	AC_RUN_IFELSE(
+		[AC_LANG_PROGRAM([
+			#include <ndn-cpp/interest.hpp>
+			#include <boost/shared_ptr.hpp>
+			],
+			[
+				ndn::ptr_lib::shared_ptr<int> ptrlibPtr(new int(5));
+				boost::shared_ptr<int> boostPtr(new int(6));
+				ptrlibPtr = boostPtr;
+			]
+		)],
+		[AC_MSG_RESULT([yes])],
+		[AC_MSG_RESULT([no])]
+		[AC_MSG_FAILURE([NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr])]
+	)
+fi
+
+AC_CHECK_LIB([ndn-cpp-tools], [ndntools_getGeneralizedContentMetaComponent])
+
+###############################
+# Check for OpenFEC library
+AC_CHECK_HEADERS([lib_common/of_openfec_api.h],,[AC_MSG_FAILURE([can't find OpenFEC headers])])
+AC_CHECK_LIB([openfec],[of_create_codec_instance],,[AC_MSG_FAILURE([can't find OpenFEC library])])
 
 ###############################
 # Check for nanomsg

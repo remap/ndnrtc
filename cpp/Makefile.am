@@ -346,11 +346,6 @@ bin_tests_test_frame_converter_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_converter_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_frame_converter_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
-bin_tests_test_estimators_SOURCES = tests/test-estimators.cc src/estimators.cpp src/clock.cpp client/src/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
-bin_tests_test_estimators_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
-bin_tests_test_estimators_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
-bin_tests_test_estimators_LDADD = ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
-
 bin_tests_test_async_SOURCES = tests/test-async.cc src/async.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_async_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_async_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -498,6 +493,13 @@ bin_tests_test_frame_buffer_SOURCES = tests/test-frame-buffer.cc tests/tests-hel
 bin_tests_test_frame_buffer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_buffer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_frame_buffer_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
+
+
+bin_tests_test_estimators_SOURCES = tests/test-estimators.cc src/estimators.cpp tools/stream/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_estimators_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_estimators_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_estimators_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
+
 
 TESTS = ${check_PROGRAMS}
 
