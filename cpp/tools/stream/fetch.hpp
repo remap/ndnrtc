@@ -9,15 +9,10 @@
 #define __fetch_hpp__
 
 #include <string>
+#include <boost/asio.hpp>
 
 extern std::string AppLog;
 extern bool MustTerminate;
-
-namespace boost {
-    namespace asio {
-        class io_service;
-    }
-}
 
 namespace ndnrtc {
     class NamespaceInfo;

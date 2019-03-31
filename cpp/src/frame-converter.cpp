@@ -6,8 +6,22 @@
 //
 
 // #include <common_video/libyuv/include/webrtc_libyuv.h>
-#if 0
+
+// TODO this is to make library copmilabble on ubuntu
 #include "frame-converter.hpp"
+
+int webrtc::CalcBufferSize(webrtc::FrameFormat, unsigned int, unsigned int)
+{
+    return 0;
+}
+
+void ConvertFromI420(WebRtcVideoFrame, webrtc::VideoType, int, uint8_t*)
+{
+
+}
+
+#if 0
+
 #include <stdexcept>
 
 using namespace ndnrtc;

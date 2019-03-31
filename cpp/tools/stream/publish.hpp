@@ -8,16 +8,11 @@
 #ifndef __publish_hpp__
 #define __publish_hpp__
 
+#include <boost/asio.hpp>
 #include "../include/stream.hpp"
 
 extern std::string AppLog;
 extern bool MustTerminate;
-
-namespace boost {
-    namespace asio {
-        class io_service;
-    }
-}
 
 void runPublishing(boost::asio::io_service &io,
                    std::string input,
