@@ -1,19 +1,10 @@
 FROM ubuntu:16.04
 LABEL maintainer "Peter Gusev <peter@remap.ucla.edu>"
 
-ARG BRANCH=master
-
 RUN  apt-get update \
-     && apt-get install -y libssl-dev libboost-all-dev libprotobuf-dev libsqlite3-dev sudo \
-     libconfig++9v5 libconfig++-dev wget autoconf automake libtool cmake git build-essential \
-     lsb-release protobuf-compiler gawk
-
-# NDN-CPP
-RUN git clone https://github.com/named-data/ndn-cpp \
-    && cd ndn-cpp \
-    && ./configure --with-std-shared-ptr=no --with-std-function=no \
-    && make && make install \
-    && rm -Rf /ndn-cpp
+     && apt-get install -y libssl-dev libboost-all-dev libsqlite3-dev sudo \
+     wget autoconf automake libtool cmake git build-essential \
+     lsb-release gawk nasm
 
 # OpenFEC
 RUN wget http://openfec.org/files/openfec_v1_4_2.tgz \
@@ -23,6 +14,15 @@ RUN wget http://openfec.org/files/openfec_v1_4_2.tgz \
     && patch src/CMakeLists.txt ndnrtc-openfec.patch \
     && cd build && cmake .. -DDEBUG:STRING=OFF \
     && make
+
+# protobuf
+RUN git clone https://github.com/protocolbuffers/protobuf.git \
+    && cd protobuf \
+    && git submodule update --init --recursive \
+    && ./autogen.sh \
+    && ./configure \
+    && make && make install \
+    && ldconfig
 
 # nanomsg
 RUN git clone https://github.com/nanomsg/nanomsg.git \
@@ -35,49 +35,28 @@ RUN git clone https://github.com/facebook/rocksdb.git \
     && cd /rocksdb \
     && make static_lib && make install
 
-# This line accepts the Microsoft End User License Agreement allowing use of
-#   the MS True Type core fonts 
-RUN echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections
+# libvpx
+RUN git clone https://github.com/webmproject/libvpx.git \
+    && cd libvpx/build \
+    && ../configure --disable-vp8 --enable-shared --enable-better-hw-compatibility --enable-realtime-only --enable-vp9-highbitdepth --enable-runtime-cpu-detect \
+    && make && make install
 
-# WebRTC & NDN-RTC (doing in one step to avoid large image size)
-RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git \
-    && export PATH=$PATH:`pwd`/depot_tools \
-    && mkdir webrtc-checkout && cd webrtc-checkout \
-    && fetch --nohooks webrtc \
-    && cd src && ./build/install-build-deps.sh --no-syms --no-prompt \
-    && git checkout -b branch-heads-59 refs/remotes/branch-heads/59 \
-    && gclient sync \
-    && gn gen out/Default --args='is_debug=false' \
-    && ninja -C out/Default \
-    && cd / \
-    && git clone --recursive --single-branch -b $BRANCH https://github.com/remap/ndnrtc.git \
-    && cd /ndnrtc/cpp && mkdir -p build/share \
-    && echo 'CPPFLAGS="-g -O2 -DWEBRTC_POSIX" CXXFLAGS="-g -O2 -DWEBRTC_POSIX"' > build/share/config.site \
-    && echo OPENFECDIR=/openfec_v1.4.2 >> build/share/config.site \
-    && echo WEBRTCDIR=/webrtc-checkout/src >> build/share/config.site \
-    && ./configure --prefix=$(pwd)/build \
-    && make && make install && make ndnrtc-client \
-    && rm -Rf /webrtc-checkout \
-    && rm -Rf /depot_tools
+# NDN-CPP
+RUN git clone https://github.com/named-data/ndn-cpp \
+    && cd ndn-cpp \
+    && ./configure --with-std-shared-ptr=no --with-std-function=no \
+    && make && make install
 
-# cleanup
-RUN apt autoremove \
-    && apt-get remove -y wget autoconf automake libtool cmake git build-essential \
-                         lsb-release protobuf-compiler
+# CNL-CPP
+RUN git clone https://github.com/named-data/cnl-cpp \
+    && cd cnl-cpp \
+    && ./configure \
+    && make && make install
 
-# Setup image for ndnrtc-client Simple Example (https://github.com/remap/ndnrtc/tree/master/cpp/client#simple-example)
-RUN ndnsec-keygen /ndnrtc-test | ndnsec-install-cert - \
-    && ndnsec-dump-certificate -i /ndnrtc-test > /ndnrtc/cpp/tests/policy_config/signing.cert
-
-ENV RUNTIME=10000
-ENV SIGNING_IDENTITY=/ndnrtc-test
-ENV CONFIG_FILE=tests/sample-producer.cfg
-ENV POLICY_FILE=tests/policy_config/rule.conf
-ENV INSTANCE_NAME=instance1
-ENV STAT_SAMPLING=100
-
-COPY run.sh /ndnrtc/cpp
-RUN chmod +x /ndnrtc/cpp/run.sh
-
-WORKDIR /ndnrtc/cpp
-CMD ./run.sh
+# NDN-RTC
+ARG BRANCH=master
+RUN git clone --recursive https://github.com/remap/ndnrtc.git \
+    && cd ndnrtc/cpp \
+    && git checkout $BRANCH \
+    && ./configure CPPFLAGS="-I/openfec_v1.4.2/src/" LDFLAGS="-L/openfec_v1.4.2/bin/Release" \
+    && make && make install
