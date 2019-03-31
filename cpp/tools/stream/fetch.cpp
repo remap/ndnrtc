@@ -91,7 +91,7 @@ void runFetching(boost::asio::io_service &io,
     params.pbcRate_ = (int)pbcRate;
     params.ppAdjustable_ = (ppSize == 0);
     params.useFec_ = useFec;
-    
+
     // check if need to fetch from live stream
     if (prefixInfo.hasSeqNo_ == false)
     {
@@ -107,7 +107,11 @@ void runFetching(boost::asio::io_service &io,
         if (io.stopped())
         {
             LogWarn(AppLog) << "restart io_service" << endl;
+            #ifdef BOOST_ASIO_IO_CONTEXT_HPP
             io.restart();
+            #else
+            io.reset();
+            #endif
         }
     } while (!MustTerminate);
 }
@@ -132,25 +136,25 @@ void setupFetching(boost::shared_ptr<KeyChain> keyChain,
                                             },
                                             fp.prefixInfo_.getPrefix(NameFilter::Stream),
                                             fp.prefixInfo_.sampleNo_, fp.ppStep_);
-    
+
     // setup PipelineControl
     pipelineControl = boost::make_shared<v4::PipelineControl>(fp.ppSize_);
-    
+
     pipelineControl->onNewRequest.connect(bind(&Pipeline::pulse, pipeline));
     pipelineControl->onSkipPulse.connect([](){
         LogDebug(AppLog) << "pipeline-control: pulse skipped" << endl;
     });
-    
+
     // TEMPORARY: onNewSlot will be connected to a buffer
     pipeline->onNewSlot.connect([slotPool](boost::shared_ptr<IPipelineSlot> s){
         auto bufferSlot = dynamic_pointer_cast<BufferSlot>(s);
-        
+
         bufferSlot->addOnNeedData([&](IPipelineSlot *sl, std::vector<boost::shared_ptr<DataRequest>> missingR)
                                   {
                                       sl->setRequests(missingR);
                                       requestQ->enqueueRequests(missingR, boost::make_shared<DeadlinePriority>(REQ_DL_PRI_RTX));
                                   });
-        
+
         bufferSlot->subscribe(PipelineSlotState::Ready,
                               [bufferSlot, slotPool](const IPipelineSlot *sl, const DataRequest&)
                               {
@@ -159,10 +163,10 @@ void setupFetching(boost::shared_ptr<KeyChain> keyChain,
                                                    << " (" << bufferSlot->getNameInfo().sampleNo_ << ") assembled in "
                                                    << bufferSlot->getLongestDrd()/1000 << "ms"
                                                    << endl;
-                                  
+
                                   if (!(Logger::getLogger(AppLog).getLogLevel() > NdnLoggerDetailLevelDefault && AppLog == ""))
                                       printStats(bufferSlot, pipelineControl, slotPool);
-                                  
+
                                   pipelineControl->pulse();
                                   slotPool->push(bufferSlot);
                               });
@@ -183,10 +187,10 @@ void setupFetching(boost::shared_ptr<KeyChain> keyChain,
                                   }
                               });
     });
-    
+
     pipeline->setLogger(Logger::getLoggerPtr(AppLog));
     pipelineControl->setLogger(Logger::getLoggerPtr(AppLog));
-    
+
     // initiate fetching
     pipelineControl->pulse();
 }
@@ -197,7 +201,7 @@ setupStreamMetaProcessing(FetchingParams fetchingParams, OnMetaProcessed onMetaP
 {
     Name liveMetaPrefix = fetchingParams.prefixInfo_.getPrefix(NameFilter::Stream).append(NameComponents::Live);
     Name latestPrefix = fetchingParams.prefixInfo_.getPrefix(NameFilter::Stream).append(NameComponents::Latest);
-    
+
     vector<boost::shared_ptr<DataRequest>> requests;
     {
         boost::shared_ptr<Interest> i = boost::make_shared<Interest>(liveMetaPrefix);
@@ -209,7 +213,7 @@ setupStreamMetaProcessing(FetchingParams fetchingParams, OnMetaProcessed onMetaP
         i->setMustBeFresh(true);
         requests.push_back(boost::make_shared<DataRequest>(i));
     }
-    
+
     DataRequest::invokeWhenAll(requests, DataRequest::Status::Data,
                                [fetchingParams, onMetaProcessed](vector<boost::shared_ptr<DataRequest>> requests){
                                    bool firstIsMeta = (requests[0]->getNamespaceInfo().segmentClass_ == SegmentClass::Meta);
@@ -220,22 +224,22 @@ setupStreamMetaProcessing(FetchingParams fetchingParams, OnMetaProcessed onMetaP
                                    double samplePeriod = 1000. / meta->getLiveMeta().framerate();
                                    double ppEst = ((double)drdUsec/1000.) / samplePeriod;
                                    PacketNumber lastFrameNo = pointer->getDelegationSet().get(0).getName()[-1].toSequenceNumber();
-                                   
+
                                    LogTrace(AppLog) << "DRD " << drdUsec/1000
                                                     << "ms, raw pp-sz est " << ppEst
                                                     << " last-seq " << lastFrameNo
                                                     << endl;
-                                   
+
                                    int pipelineEstimate = max(3, (int)ceil(ppEst));
                                    PacketNumber nextFrame = lastFrameNo + (int)ceil((double)pipelineEstimate/2.);
 
                                    LogDebug(AppLog) << "pp-sz est " << pipelineEstimate << " next-seq " << nextFrame << endl;
-                                   
+
                                    FetchingParams fp(fetchingParams);
                                    if (fp.ppAdjustable_)
                                        fp.ppSize_ = pipelineEstimate;
                                    fp.prefixInfo_.sampleNo_ = nextFrame;
-                                   
+
                                    onMetaProcessed(fp);
                                });
     DataRequest::invokeIfAny(requests,
@@ -245,7 +249,7 @@ setupStreamMetaProcessing(FetchingParams fetchingParams, OnMetaProcessed onMetaP
                                                   << requests.back()->getInterest()->getName() << endl;
                                  MustTerminate = true;
                              });
-    
+
     return requests;
 }
 
@@ -259,10 +263,10 @@ void printStats(boost::shared_ptr<BufferSlot> slot,
     static uint64_t lastPacketNo = 0;
     static Average avgEsimtator(boost::make_shared<TimeWindow>(30000));
     static uint32_t outOfOrder = 0;
-    
+
     if (startTime == 0)
         startTime = clock::millisecondTimestamp();
-    
+
     if (slot->getState()==PipelineSlotState::Unfetchable)
         nUnfetchable++;
     else
@@ -272,9 +276,9 @@ void printStats(boost::shared_ptr<BufferSlot> slot,
             outOfOrder ++ ;
         lastPacketNo = slot->getNameInfo().sampleNo_;
     }
-    
+
     avgEsimtator.newValue(slot->getLongestDrd());
-    
+
     cout << "\r"
     << "[ "
     << setw(6) << setprecision(5) << (clock::millisecondTimestamp()-startTime)/1000. << "sec "
