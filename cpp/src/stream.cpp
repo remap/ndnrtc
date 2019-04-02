@@ -133,6 +133,11 @@ namespace ndnrtc {
                                  uint64_t interestFilterId,
                                  const boost::shared_ptr<const InterestFilter>& filter);
 
+        void onStreamMetaRequest(const boost::shared_ptr<const Name>& prefix,
+                                  const boost::shared_ptr<const Interest>& interest, Face& face,
+                                  uint64_t interestFilterId,
+                                  const boost::shared_ptr<const InterestFilter>& filter);
+
         boost::shared_ptr<Data> generateLatestPacket();
         boost::shared_ptr<Data> generateLivePacket();
     };
@@ -249,6 +254,8 @@ VideoStreamImpl2::VideoStreamImpl2(string basePrefix, string streamName,
             bind(&VideoStreamImpl2::onLiveMetadataRequest, this, _1, _2, _3, _4, _5));
         settings_.memCache_->setInterestFilter(prefixInfo_.getPrefix(NameFilter::Stream).append(NameComponents::Latest),
             bind(&VideoStreamImpl2::onLatestMetaRequest, this, _1, _2, _3, _4, _5));
+        settings_.memCache_->setInterestFilter(prefixInfo_.getPrefix(NameFilter::Stream).append(NameComponents::Meta),
+            bind(&VideoStreamImpl2::onStreamMetaRequest, this, _1, _2, _3, _4, _5));
     }
 
     addMeta();
@@ -296,12 +303,15 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
         [this, self, &packets](const EncodedFrame &frame){
             uint64_t t = clock::nanosecondTimestamp();
             encodingDelay_.newValue(t-thisCycleMonotonicNs_);
-            
+
             LogDebugC << "+ encoded #" << frameSeq_
                       << (frame.type_ == FrameType::Key ? " key: " : " delta: ")
                       << frame.length_ << "bytes" << endl;
 
             Name framePrefix = publishFrameGobj(frame);
+
+            if (frame.type_ == FrameType::Key)
+                assert(frameSeq_ % settings_.codecSettings_.spec_.encoder_.gop_ == 0);
 
             if (frame.type_ == FrameType::Key)
             {
@@ -312,7 +322,7 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
             gopPos_ = (gopPos_+1) % settings_.codecSettings_.spec_.encoder_.gop_;
             frameSeq_++;
             lastFramePrefix_ = framePrefix;
-            
+
             publishingDelay_.newValue(clock::nanosecondTimestamp()-t);
         },
         [this, self](const VideoCodec::Image &dropped){
@@ -333,7 +343,7 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
             settings_.memCache_->add(*d);
 
     lastCycleMonotonicNs_ = thisCycleMonotonicNs_;
-    
+
     (*statStorage_)[Indicator::PublishDelay] = publishingDelay_.value()/1E6;
     (*statStorage_)[Indicator::CodecDelay] = encodingDelay_.value()/1E6;
 
@@ -616,6 +626,16 @@ VideoStreamImpl2::onLatestMetaRequest(const boost::shared_ptr<const Name>& prefi
     (*statStorage_)[Indicator::RdrPointerNum]++;
 }
 
+void
+VideoStreamImpl2::onStreamMetaRequest(const boost::shared_ptr<const Name>& prefix,
+                                      const boost::shared_ptr<const Interest>& interest, Face& face,
+                                      uint64_t interestFilterId,
+                                      const boost::shared_ptr<const InterestFilter>& filter)
+{
+    face.putData(*meta_);
+
+    LogDebugC << "_meta request satisfied: " << meta_->getName() << endl;
+}
 
 boost::shared_ptr<Data>
 VideoStreamImpl2::generateLatestPacket()
