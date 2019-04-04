@@ -26,6 +26,8 @@ void runFetching(boost::asio::io_service &io,
                  long pbcRate,
                  bool useFec,
                  bool needRvp = false,
-                 std::string policyFile = "");
+                 std::string policyFile = "",
+                 std::string csv = "",
+                 std::string stats = "");
 
 #endif

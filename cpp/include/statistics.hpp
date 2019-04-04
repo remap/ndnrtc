@@ -149,6 +149,10 @@ namespace ndnrtc {
                 double&
                 operator[](const statistics::Indicator& indicator)
                 { return indicators_.at(indicator); }
+            
+                const double&
+                operator[](const statistics::Indicator& indicator) const
+                { return indicators_.at(indicator); }
                 
                 friend std::ostream& operator<<(std::ostream& os,
                                                 const StatisticsStorage& storage)

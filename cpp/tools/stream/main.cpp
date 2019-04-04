@@ -58,8 +58,15 @@ R"(NdnRtc Stream.
     See the usage examples below for more info.
 
     Usage:
-      ndnrtc-stream publish <base_prefix> <stream_name> --input=<in_file> --size=<WxH> --signing-identity=<identity> [--bitrate=<bitrate>] [--gop=<gop>] [--fps=<fps>] [--no-drop] [--use-fec] [--i420] [--segment-size=<seg_size>] [--rvp] [--loop] [(--v | --vv | --vvv)] [--log=<file>]
-      ndnrtc-stream fetch (<prefix> | (<base_prefix> --rvp)) --output=<out_file> [--use-fec] [--verify-policy=<file>] [--pp-size=<pp_size>] [--pp-step=<step>] [--pbc-rate=<rate>] [(--v | --vv | --vvv)] [--log=<file>]
+      ndnrtc-stream publish <base_prefix> <stream_name> --input=<in_file> --size=<WxH> --signing-identity=<identity>
+                                   [--bitrate=<bitrate>] [--gop=<gop>] [--fps=<fps>] [--no-drop] [--use-fec] [--i420]
+                                   [--segment-size=<seg_size>] [--rvp] [--loop]
+                                   [(--v | --vv | --vvv)] [--log=<file>]
+                                   [(--csv=<file> --stats=<stat_string>)]
+      ndnrtc-stream fetch (<prefix> | (<base_prefix> --rvp)) --output=<out_file> [--use-fec] [--verify-policy=<file>]
+                                   [--pp-size=<pp_size>] [--pp-step=<step>] [--pbc-rate=<rate>]
+                                   [(--v | --vv | --vvv)] [--log=<file>]
+                                   [(--csv=<file> --stats=<stat_string>)]
 
     Arguments:
       <base_prefix>     Base prefix used to form stream prefix from (see NDN-RTC namespace).
@@ -99,6 +106,9 @@ R"(NdnRtc Stream.
       --pbc-rate=<rate>         PlayBack Clock: external -- creates external clock for playback
                                    based on provided FPS rate. If 0, uses internal clock --
                                    based on frame timestamps set by producer [default: 0]
+      --csv=<file>              CSV file to save statistics to
+      --stats=<stat_string>     A comma-separated list of statistics keywords that will be collected.
+                                   See statistics.cpp - IndicatorKeywords map for available keywords.
       --v                       Verbose mode: debug
       --vv                      Verbose mode: trace
       --vvv                     Verbose mode: all
@@ -216,7 +226,9 @@ int main(int argc, char **argv)
                              args["--signing-identity"].asString(),
                              streamSettings,
                              args["--rvp"].asBool(),
-                             args["--loop"].asBool());
+                             args["--loop"].asBool(),
+                             args["--csv"] ? args["--csv"].asString() : "",
+                             args["--stats"] ? args["--stats"].asString() : "");
             }
             else
             {
@@ -242,7 +254,9 @@ int main(int argc, char **argv)
                                 args["--pbc-rate"].asLong(),
                                 args["--use-fec"].asBool(),
                                 args["--rvp"].asBool(),
-                                args["--verify-policy"].asString());
+                                args["--verify-policy"].asString(),
+                                args["--csv"] ? args["--csv"].asString() : "",
+                                args["--stats"] ? args["--stats"].asString() : "");
                 }
                 else
                     LogError(AppLog) << "bad stream or frame prefix provided" << endl;

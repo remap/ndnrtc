@@ -33,6 +33,7 @@
 #include "../../src/estimators.hpp"
 
 #include "precise-generator.hpp"
+#include "stat.hpp"
 
 using namespace std;
 using namespace ndn;
@@ -52,6 +53,7 @@ void setupFetching(boost::shared_ptr<KeyChain> keyChain,
 void printStats(boost::shared_ptr<BufferSlot> slot,
                 boost::shared_ptr<v4::PipelineControl> ppCtrl,
                 boost::shared_ptr<Pool<BufferSlot>> slotPool);
+void callPeriodic(uint64_t milliseconds, function<void()> callback);
 
 typedef function<void(FetchingParams)> OnMetaProcessed;
 vector<boost::shared_ptr<DataRequest>> setupStreamMetaProcessing(FetchingParams, OnMetaProcessed);
@@ -63,6 +65,8 @@ boost::shared_ptr<helpers::KeyChainManager> keyChainManager;
 boost::shared_ptr<RequestQueue> requestQ;
 boost::shared_ptr<v4::PipelineControl> pipelineControl;
 boost::shared_ptr<Pipeline> pipeline;
+boost::shared_ptr<const packets::Meta> streamMeta;
+boost::shared_ptr<const packets::Meta> liveMeta;
 
 void runFetching(boost::asio::io_service &io,
                  std::string output,
@@ -72,7 +76,9 @@ void runFetching(boost::asio::io_service &io,
                  long pbcRate,
                  bool useFec,
                  bool needRvp,
-                 string policyFile)
+                 string policyFile,
+                 string csv,
+                 string stats)
 {
     face = boost::make_shared<ThreadsafeFace>(io);
     keyChainManager =
@@ -128,6 +134,21 @@ void setupFetching(boost::shared_ptr<KeyChain> keyChain,
                      << (fp.useFec_ ? "use-fec" : "no-fec")
                      << endl;
 
+    // setup periodic _live meta fetching
+    Name liveMetaPrefix = fp.prefixInfo_.getPrefix(NameFilter::Stream).append(NameComponents::Live);
+    boost::shared_ptr<Interest> i1 = boost::make_shared<Interest>(liveMetaPrefix);
+    i1->setMustBeFresh(true);
+    auto fetchLiveMeta = [i1](){
+        auto r = boost::make_shared<DataRequest>(i1);
+        r->subscribe(DataRequest::Status::Data, [](const DataRequest& r){
+            liveMeta = dynamic_pointer_cast<const packets::Meta>(r.getNdnrtcPacket());
+        });
+        
+        requestQ->enqueueRequest(r);
+    };
+    
+    callPeriodic(5000, fetchLiveMeta);
+
     // setup Pipeline
     auto slotPool = boost::make_shared<Pool<BufferSlot>>(500);
     pipeline = boost::make_shared<Pipeline>(requestQ,
@@ -135,7 +156,26 @@ void setupFetching(boost::shared_ptr<KeyChain> keyChain,
                                                 return slotPool->pop();
                                             },
                                             fp.prefixInfo_.getPrefix(NameFilter::Stream),
-                                            fp.prefixInfo_.sampleNo_, fp.ppStep_);
+                                            fp.prefixInfo_.sampleNo_, fp.ppStep_,
+                                            [](const Name& framePrefix, PacketNumber seqNo){
+                                                // check if nearby Key frame
+                                                if (seqNo % streamMeta->getStreamMeta().gop_size() < 3)
+                                                {
+                                                    LogDebug(AppLog) << "generating requests for KEY " << liveMeta->getLiveMeta().segnum_key() << endl;
+                                                    return Pipeline::requestsForFrame(framePrefix, seqNo,
+                                                            DEFAULT_LIFETIME,
+                                                            liveMeta->getLiveMeta().segnum_key(),
+                                                            liveMeta->getLiveMeta().segnum_key_parity());
+                                                }
+                                                else
+                                                {
+                                                    LogDebug(AppLog) << "generating requests for DELTA " << liveMeta->getLiveMeta().segnum_delta() << endl;
+                                                    return Pipeline::requestsForFrame(framePrefix, seqNo,
+                                                            DEFAULT_LIFETIME,
+                                                            liveMeta->getLiveMeta().segnum_delta(),
+                                                            liveMeta->getLiveMeta().segnum_delta_parity());
+                                                }
+                                            });
 
     // setup PipelineControl
     pipelineControl = boost::make_shared<v4::PipelineControl>(fp.ppSize_);
@@ -201,27 +241,33 @@ setupStreamMetaProcessing(FetchingParams fetchingParams, OnMetaProcessed onMetaP
 {
     Name liveMetaPrefix = fetchingParams.prefixInfo_.getPrefix(NameFilter::Stream).append(NameComponents::Live);
     Name latestPrefix = fetchingParams.prefixInfo_.getPrefix(NameFilter::Stream).append(NameComponents::Latest);
+    Name streamMetaPrefix = fetchingParams.prefixInfo_.getPrefix(NameFilter::Stream).append(NameComponents::Meta);
 
     vector<boost::shared_ptr<DataRequest>> requests;
-    {
-        boost::shared_ptr<Interest> i = boost::make_shared<Interest>(liveMetaPrefix);
-        i->setMustBeFresh(true);
-        requests.push_back(boost::make_shared<DataRequest>(i));
-    }
-    {
-        boost::shared_ptr<Interest> i = boost::make_shared<Interest>(latestPrefix);
-        i->setMustBeFresh(true);
-        requests.push_back(boost::make_shared<DataRequest>(i));
-    }
+    boost::shared_ptr<Interest> i1 = boost::make_shared<Interest>(liveMetaPrefix);
+    i1->setMustBeFresh(true);
+    boost::shared_ptr<Interest> i2 = boost::make_shared<Interest>(latestPrefix);
+    i2->setMustBeFresh(true);
+    boost::shared_ptr<Interest> i3 = boost::make_shared<Interest>(streamMetaPrefix);
+    i3->setMustBeFresh(true);
+
+    auto liveMetaRequest = boost::make_shared<DataRequest>(i1);
+    auto latestRequest = boost::make_shared<DataRequest>(i2);
+    auto streamMetaRequest = boost::make_shared<DataRequest>(i3);
+
+    requests.push_back(liveMetaRequest);
+    requests.push_back(latestRequest);
+    requests.push_back(streamMetaRequest);
 
     DataRequest::invokeWhenAll(requests, DataRequest::Status::Data,
-                               [fetchingParams, onMetaProcessed](vector<boost::shared_ptr<DataRequest>> requests){
-                                   bool firstIsMeta = (requests[0]->getNamespaceInfo().segmentClass_ == SegmentClass::Meta);
-                                   auto meta = dynamic_pointer_cast<const packets::Meta>(requests[firstIsMeta ? 0 : 1]->getNdnrtcPacket());
-                                   auto pointer = dynamic_pointer_cast<const packets::Pointer>(requests[firstIsMeta ? 1 : 0]->getNdnrtcPacket());
-                                   uint64_t drdUsec = requests[firstIsMeta ? 0 : 1]->getDrdUsec();
+                               [fetchingParams, onMetaProcessed, liveMetaRequest, streamMetaRequest, latestRequest]
+                               (vector<boost::shared_ptr<DataRequest>> requests){
+                                   streamMeta = dynamic_pointer_cast<const packets::Meta>(streamMetaRequest->getNdnrtcPacket());
+                                   liveMeta = dynamic_pointer_cast<const packets::Meta>(liveMetaRequest->getNdnrtcPacket());
 
-                                   double samplePeriod = 1000. / meta->getLiveMeta().framerate();
+                                   auto pointer = dynamic_pointer_cast<const packets::Pointer>(latestRequest->getNdnrtcPacket());
+                                   uint64_t drdUsec = liveMetaRequest->getDrdUsec();
+                                   double samplePeriod = 1000. / liveMeta->getLiveMeta().framerate();
                                    double ppEst = ((double)drdUsec/1000.) / samplePeriod;
                                    PacketNumber lastFrameNo = pointer->getDelegationSet().get(0).getName()[-1].toSequenceNumber();
 
@@ -242,6 +288,7 @@ setupStreamMetaProcessing(FetchingParams fetchingParams, OnMetaProcessed onMetaP
 
                                    onMetaProcessed(fp);
                                });
+
     DataRequest::invokeIfAny(requests,
                              DataRequest::Status::Timeout | DataRequest::Status::NetworkNack | DataRequest::Status::AppNack,
                              [](vector<boost::shared_ptr<DataRequest>> requests){
@@ -279,22 +326,53 @@ void printStats(boost::shared_ptr<BufferSlot> slot,
 
     avgEsimtator.newValue(slot->getLongestDrd());
 
-    cout << "\r"
-    << "[ "
-    << setw(6) << setprecision(5) << (clock::millisecondTimestamp()-startTime)/1000. << "sec "
-    << setw(20) << slot->getNameInfo().getSuffix(NameFilter::Sample)
-    << " (" << lastPacketNo << ")"
-    << " total " << nAssembled << "/" << nUnfetchable
-    << " pp " << ppCtrl->getNumOutstanding() << "/" << ppCtrl->getWSize()
-    << " slot-pool " << slotPool->size() << "/" << slotPool->capacity()
-    << setprecision(5)
-    << " asm " << setw(6) << (double)slot->getAssemblingTime()/1000.
-    << " nw drd " << requestQ->getDrdEstimate()/1000.
-    << " nw jttr " << requestQ->getJitterEstimate()/1000.
-    << " ff-est " << avgEsimtator.value()/1000
-    << " ff-jttr " << avgEsimtator.jitter()/1000
-    << " lat-est " << setw(6) << (ndn_getNowMilliseconds() - slot->getFrameMeta()->getContentMetaInfo().getTimestamp())
-    << " ooo " << outOfOrder
-    << " ]"
-    << flush;
+    // cout << "\r"
+    // << "[ "
+    // << setw(6) << setprecision(5) << (clock::millisecondTimestamp()-startTime)/1000. << "sec "
+    // << setw(20) << slot->getNameInfo().getSuffix(NameFilter::Sample)
+    // << " (" << lastPacketNo << ")"
+    // << " total " << nAssembled << "/" << nUnfetchable
+    // << " pp " << ppCtrl->getNumOutstanding() << "/" << ppCtrl->getWSize()
+    // << " slot-pool " << slotPool->size() << "/" << slotPool->capacity()
+    // << setprecision(5)
+    // << " asm " << setw(6) << (double)slot->getAssemblingTime()/1000.
+    // << " nw drd " << requestQ->getDrdEstimate()/1000.
+    // << " nw jttr " << requestQ->getJitterEstimate()/1000.
+    // << " ff-est " << avgEsimtator.value()/1000
+    // << " ff-jttr " << avgEsimtator.jitter()/1000
+    // << " lat-est " << setw(6) << (ndn_getNowMilliseconds() - slot->getFrameMeta()->getContentMetaInfo().getTimestamp())
+    // << " ooo " << outOfOrder
+    // << " ]"
+    // << flush;
+    for (auto &r:slot->getRequests())
+    {
+        if (r == *slot->getRequests().begin())
+        {
+            cout << clock::millisecondTimestamp()
+                << "\t" << slot->getNameInfo().sampleNo_
+                << "\t" << r->getDrdUsec()
+                << "\t" << slot->getFetchedDataSegmentsNum() + slot->getParitySegmentsNum() + 2
+                << "\t" << slot->getFetchedBytesTotal()
+                << "\t" << slot->getAssemblingTime()
+                << endl;
+        }
+        else
+            if (r->getDrdUsec() != -1)
+                cout << clock::millisecondTimestamp()
+                    << "\t" << slot->getNameInfo().sampleNo_
+                    << "\t" << r->getDrdUsec()
+                    << endl;
+    }
+
+    // collect 30 seconds worth of data
+    if (nAssembled == 30 * 30)
+        exit(0);
+}
+
+void callPeriodic(uint64_t milliseconds, function<void()> callback)
+{
+    face->callLater(milliseconds, [milliseconds,callback](){
+        callback();
+        callPeriodic(milliseconds, callback);
+    });
 }

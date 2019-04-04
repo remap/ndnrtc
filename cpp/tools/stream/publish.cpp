@@ -22,6 +22,7 @@
 #include "../src/clock.hpp"
 
 #include "precise-generator.hpp"
+#include "stat.hpp"
 
 using namespace std;
 using namespace std::chrono;
@@ -45,7 +46,9 @@ runPublishing(boost::asio::io_service &io,
               string signingIdentity,
               const VideoStream::Settings& settings,
               bool needRvp,
-              bool isLooped)
+              bool isLooped,
+              string csv,
+              string stats)
 {
     FILE *fIn = fopen(input.c_str(), "rb");
     if (!fIn)
@@ -136,6 +139,9 @@ runPublishing(boost::asio::io_service &io,
             if (AppLog != "" ||
                 (AppLog == "" && Logger::getLoggerPtr(AppLog)->getLogLevel() <= ndnlog::NdnLoggerDetailLevelDefault))
                 printStats(stream, framePackets);
+            
+            dumpStats(csv, stats, stream.getStatistics());
+            
         };
 
         PreciseGenerator gen(io,

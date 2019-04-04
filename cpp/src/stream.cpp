@@ -298,6 +298,8 @@ VideoStreamImpl2::getStatistics() const
     (*statStorage_)[Indicator::EncodedNum] = codec_.getStats().nProcessed_;
     (*statStorage_)[Indicator::DroppedNum] = codec_.getStats().nDropped_;
 
+    (*statStorage_)[Indicator::Timestamp] = clock::millisecondTimestamp();
+    
     return *statStorage_;
 }
 
