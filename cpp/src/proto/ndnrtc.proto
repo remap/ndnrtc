@@ -15,10 +15,12 @@ message StreamMeta {
 message LiveMeta {
   google.protobuf.Timestamp timestamp = 1;
   float framerate = 2;
-  float segnum_delta = 3;
-  float segnum_key = 4;
-  float segnum_delta_parity = 5;
-  float segnum_key_parity = 6;
+  float segnum_delta = 3;   // deprecated
+  float segnum_key = 4;     // deprecated
+  float segnum_delta_parity = 5;    // deprecated
+  float segnum_key_parity = 6;      // deprecated
+  int32 segnum_estimate = 7;
+  int32 framesize_estimate = 8;
 }
 
 message FrameMeta {
