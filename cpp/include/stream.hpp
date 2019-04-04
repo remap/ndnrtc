@@ -89,6 +89,11 @@ namespace ndnrtc {
 		std::string getBasePrefix() const;
 		std::string getStreamName() const;
 		std::string getPrefix() const;
+        
+        uint64_t getSeqNo() const;
+        uint64_t getGopNo() const;
+        uint64_t getGopPos() const;
+        
 		statistics::StatisticsStorage getStatistics() const;
 		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
 		boost::shared_ptr<StorageEngine> getStorage() const;

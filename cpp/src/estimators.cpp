@@ -125,13 +125,24 @@ FreqMeter::newValue(double value)
         value_ = 1000.*(double)samples_.size()/(samples_.back()-samples_.front());
 }
 
-Filter::Filter(double smoothing):smoothing_(smoothing), value_(0){}
+Filter::Filter(double smoothing, double vsmoothing)
+    : smoothing_(smoothing)
+    , vsmoothing_(vsmoothing)
+    , value_(0)
+    , variation_(0)
+    , nValues_(0)
+{}
 
 void
 Filter::newValue(double value)
 {
-	if (value_ == 0)
+	if (nValues_ == 0)
 		value_ = value;
 	else
-		value_ += (value-value_)*smoothing_;
+    {
+        value_ = value_ * smoothing_ + (1-smoothing_) * value;
+        variation_ = variation_ * vsmoothing_ + (1-vsmoothing_) * abs(value_ - value);
+    }
+    
+    nValues_++;
 }

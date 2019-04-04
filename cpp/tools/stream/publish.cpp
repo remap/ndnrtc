@@ -96,6 +96,7 @@ runPublishing(boost::asio::io_service &io,
     {
         auto publish = [&](){
             res = readYUV420(fIn, w, h, &imgData);
+
             if (res == 0)
             {
                 if(feof(fIn))
@@ -105,13 +106,33 @@ runPublishing(boost::asio::io_service &io,
                         rewind(fIn);
                         res = readYUV420(fIn, w, h, &imgData);
                     }
+                    else
+                    {
+                        io.stop();
+                        return;
+                    }
                 }
                 else
+                {
+                    LogError(AppLog) << "error reading frame "
+                                     << errno << ": " << strerror(errno) << endl;
+                    io.stop();
                     return; // error
+                }
             }
 
             vector<boost::shared_ptr<Data>> framePackets = stream.processImage(ImageFormat::I420, imgData);
-
+            size_t bytesRaw = 0;
+            for (auto &d:framePackets)
+                bytesRaw += d->getDefaultWireEncoding().size();
+            
+//            cout << stream.getSeqNo()
+//                 << "\t" << stream.getGopNo()
+//                 << "\t" << framePackets.size()
+//                 << "\t" << bytesRaw
+//                 << endl;
+//            if (stream.getSeqNo() == 1000)
+//                exit(0);
             if (AppLog != "" ||
                 (AppLog == "" && Logger::getLoggerPtr(AppLog)->getLogLevel() <= ndnlog::NdnLoggerDetailLevelDefault))
                 printStats(stream, framePackets);

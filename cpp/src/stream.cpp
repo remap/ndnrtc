@@ -27,6 +27,7 @@
 #define PARITY_RATIO 0.2
 #define NDNRTC_FRAME_TYPE "ndnrtcv4"
 #define EST_TIME_WINDOW 30000
+#define FSIZE_EST_K 4
 
 using namespace std;
 using namespace ndn;
@@ -43,7 +44,9 @@ namespace ndnrtc {
         double getRate() const { return rateMeter_.value(); }
         double getSegmentsNumEstimate(FrameType ft, SegmentClass cls) const;
 
-        void update(bool isKey, size_t nDataSeg, size_t nParitySeg);
+        void update(bool isKey, size_t nDataSeg, size_t nParitySeg) DEPRECATED;
+        void update(bool isKey, size_t frameSizeBytes);
+        const estimators::Filter& getFrameSizeEstimate() const { return frameSizeFilter_; }
 
       private:
         LiveMetadata(const LiveMetadata &) = delete;
@@ -51,6 +54,7 @@ namespace ndnrtc {
         estimators::FreqMeter rateMeter_;
         estimators::Average deltaData_, deltaParity_;
         estimators::Average keyData_, keyParity_;
+        estimators::Filter frameSizeFilter_;
     };
 
     class VideoStreamImpl2 : public NdnRtcComponent, public StatObject {
@@ -62,6 +66,11 @@ namespace ndnrtc {
         string getBasePrefix() const { return prefixInfo_.basePrefix_.toUri(); }
         string getStreamName() const { return prefixInfo_.streamName_; }
         string getPrefix() const { return prefixInfo_.getPrefix(NameFilter::Stream).toUri(); }
+        
+        uint64_t getSeqNo() const { return frameSeq_-1; }
+        uint64_t getGopNo() const { return gopSeq_; }
+        uint64_t getGopPos() const { return gopPos_-1; }
+        
         NamespaceInfo getPrefixInfo() const { return prefixInfo_; }
         StatisticsStorage getStatistics() const;
 
@@ -150,6 +159,7 @@ LiveMetadata::LiveMetadata()
     , deltaParity_(estimators::Average(boost::make_shared<estimators::TimeWindow>(100)))
     , keyData_(estimators::Average(boost::make_shared<estimators::SampleWindow>(2)))
     , keyParity_(estimators::Average(boost::make_shared<estimators::SampleWindow>(2)))
+    , frameSizeFilter_(15./16., 15./16.)
 {}
 
 LiveMetadata::~LiveMetadata() {}
@@ -169,6 +179,13 @@ LiveMetadata::update(bool isKey, size_t nDataSeg, size_t nParitySeg)
     rateMeter_.newValue(0);
     dataAvg.newValue(nDataSeg);
     parityAvg.newValue(nParitySeg);
+}
+
+void
+LiveMetadata::update(bool isKey, size_t frameSizeBytes)
+{
+    frameSizeFilter_.newValue((double)frameSizeBytes);
+    rateMeter_.newValue(0);
 }
 
 double
@@ -191,6 +208,9 @@ VideoStream::processImage(const ImageFormat& fmt, uint8_t *imageData)
 string VideoStream::getBasePrefix() const{ return pimpl_->getBasePrefix(); }
 string VideoStream::getStreamName() const { return pimpl_->getStreamName(); }
 string VideoStream::getPrefix() const { return pimpl_->getPrefix(); }
+uint64_t VideoStream::getSeqNo() const { return pimpl_->getSeqNo(); }
+uint64_t VideoStream::getGopNo() const { return pimpl_->getGopNo(); }
+uint64_t VideoStream::getGopPos() const { return pimpl_->getGopPos(); }
 statistics::StatisticsStorage
 VideoStream::getStatistics() const { return pimpl_->getStatistics(); }
 void VideoStream::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
@@ -443,7 +463,7 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
     LogDebugC << "⤷ published GObj-Frame " << frameName << endl;
 
     // update live meta
-    liveMetadata_.update(frame.type_ == FrameType::Key, nDataSegments, nParitySegments);
+    liveMetadata_.update(frame.type_ == FrameType::Key, frame.length_);
     (*statStorage_)[Indicator::CurrentProducerFramerate] = liveMetadata_.getRate();
 
     if (frame.type_ == FrameType::Key)
@@ -669,10 +689,21 @@ VideoStreamImpl2::generateLivePacket()
     LiveMeta liveMeta;
     liveMeta.set_allocated_timestamp(timestamp);
     liveMeta.set_framerate(liveMetadata_.getRate());
-    liveMeta.set_segnum_delta(liveMetadata_.getSegmentsNumEstimate(FrameType::Delta, SegmentClass::Data));
-    liveMeta.set_segnum_delta_parity(liveMetadata_.getSegmentsNumEstimate(FrameType::Delta, SegmentClass::Parity));
-    liveMeta.set_segnum_key(liveMetadata_.getSegmentsNumEstimate(FrameType::Key, SegmentClass::Data));
-    liveMeta.set_segnum_key_parity(liveMetadata_.getSegmentsNumEstimate(FrameType::Key, SegmentClass::Parity));
+    
+    double segSize = (double)getPayloadSegmentSize();
+    double frameEstimate = ceil(liveMetadata_.getFrameSizeEstimate().value() + FSIZE_EST_K * liveMetadata_.getFrameSizeEstimate().variation());
+    size_t segnum = ceil(frameEstimate / segSize);
+    
+    liveMeta.set_segnum_estimate(segnum);
+    liveMeta.set_framesize_estimate((size_t)frameEstimate);
+    
+    // for backwards compatibility
+    size_t segnumParity = ceil(frameEstimate / segSize * PARITY_RATIO);
+    
+    liveMeta.set_segnum_delta(segnum);
+    liveMeta.set_segnum_delta_parity(segnumParity);
+    liveMeta.set_segnum_key(segnum);
+    liveMeta.set_segnum_key_parity(segnumParity);
 
     Name packetName = prefixInfo_.getPrefix(NameFilter::Stream)
                         .append(NameComponents::Live)

@@ -124,17 +124,20 @@ namespace ndnrtc {
 		};
 
 		/**
-		 * A low pass filter class
+		 * An exponential smoothing filter.
+         * It also calculates smoothed variation as in RFC793
 		 */
 		class Filter {
 		public:
-			Filter(double smoothing = 1./8.);
+			Filter(double smoothing = 1./8., double varSmoothing = 1./8.);
 
 			double value() const { return value_; }
+            double variation() const { return variation_; }
 			void newValue(double value);
 		
 		private:
-			double smoothing_,value_;
+            unsigned int nValues_;
+			double smoothing_, vsmoothing_, value_, variation_;
 		};
 	}
 }
