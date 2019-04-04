@@ -285,6 +285,10 @@ void VideoCodec::initEncoder(const CodecSettings &settings)
     res = vpx_codec_control(&vpxCodec_, VP8E_SET_MAX_INTRA_BITRATE_PCT, 130);	// TODO: tune like in WebRTC?
     if (res)
         throw runtime_error("codec control error: failed to set INTRA bitrate cap");
+    
+    res = vpx_codec_control_(&vpxCodec_, VP9E_SET_MAX_INTER_BITRATE_PCT, 200);   // TODO: tune like in WebRTC?
+    if (res)
+        throw runtime_error("codec control error: failed to set INTER bitrate cap");
 
     res = vpx_codec_control(&vpxCodec_, VP8E_SET_CPUUSED, 8); // TODO: tune like in WebRTC?
     if (res)

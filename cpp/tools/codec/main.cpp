@@ -39,8 +39,8 @@ R"(NdnRtc Codec.
     input and outputs decoded raw frames.
 
     Usage:
-      ndnrtc-codec encode <in_file>  --size=<WxH> --bitrate=<bitrate> [--gop=<gop>] [--fps=<fps>] [--no-drop] [--i420] ( <out_file> | - ) [--verbose]
-      ndnrtc-codec decode (<in_file> | - ) ( - | <out_file>) [--verbose]
+      ndnrtc-codec encode <in_file>  --size=<WxH> --bitrate=<bitrate> [--gop=<gop>] [--fps=<fps>] [--no-drop] [--i420] ( <out_file> | - ) [--csv=<csv_file>] [--verbose]
+      ndnrtc-codec decode (<in_file> | - ) ( - | <out_file>) [--csv=<csv_file>] [--verbose]
 
     Arguments:
       <in_file>     For "encode" mode: input file of raw video or stdin.
@@ -55,6 +55,7 @@ R"(NdnRtc Codec.
       --fps=<fps>               Target FPS [default: 30]
       --no-drop                 Tells encoder not to drop frames
       --i420                    I420 raw frame format
+      --csv=<csv_file>          CSV file to save statistics to
       -v --verbose              Verbose (debug) output
 )";
 
@@ -82,8 +83,8 @@ void handler(int sig)
 }
 
 int getSize(string sizeStr, uint16_t& w, uint16_t& h);
-void runEncoder(VideoCodec& codec, string inFile, string outFile);
-void runDecoder(VideoCodec& codec, string inFile, string outFile);
+void runEncoder(VideoCodec& codec, string inFile, string outFile, string statFile);
+void runDecoder(VideoCodec& codec, string inFile, string outFile, string statFile);
 
 int main(int argc, char **argv)
 {
@@ -151,7 +152,8 @@ int main(int argc, char **argv)
                              << endl;
 
                 codec.initEncoder(codecSettings);
-                runEncoder(codec, args["<in_file>"].asString(), args["<out_file>"].asString());
+                runEncoder(codec, args["<in_file>"].asString(), args["<out_file>"].asString(),
+                           args["--csv"] ? args["--csv"].asString() : "" );
             }
             else
             {
@@ -165,7 +167,8 @@ int main(int argc, char **argv)
             LogDebug("") << "initializing decoder" << endl;
 
             codec.initDecoder(codecSettings);
-            runDecoder(codec, args["<in_file>"].asString(), args["<out_file>"].asString());
+            runDecoder(codec, args["<in_file>"].asString(), args["<out_file>"].asString(),
+                       args["--csv"] ? args["--csv"].asString() : "");
         }
     }
     catch (std::exception &e)
@@ -182,9 +185,9 @@ int main(int argc, char **argv)
     LogInfo("") << "done" << endl;
 }
 
-void printStats(const VideoCodec::Stats& codecStats);
+void printStats(const VideoCodec::Stats& codecStats, string statFile);
 
-void runEncoder(VideoCodec& codec, string inFile, string outFile)
+void runEncoder(VideoCodec& codec, string inFile, string outFile, string statFile)
 {
     // open file
     FILE *f, *fOut;
@@ -214,7 +217,7 @@ void runEncoder(VideoCodec& codec, string inFile, string outFile)
             LogError("") << "failed encoding for frame "
                          << codec.getStats().nFrames_ << endl;
 
-        printStats(codec.getStats());
+        printStats(codec.getStats(), statFile);
         usleep(5);
     }
 
@@ -222,8 +225,27 @@ void runEncoder(VideoCodec& codec, string inFile, string outFile)
     fclose(f);
 }
 
-void printStats(const VideoCodec::Stats& codecStats)
+void printStats(const VideoCodec::Stats& codecStats, string statFile)
 {
+    static FILE *statF = nullptr;
+    
+    if (statFile != "")
+    {
+        if (!statF)
+        {
+            statF = fopen(statFile.c_str(), "w+");
+            if (!statF)
+                throw runtime_error("couldn't open stat file "+statFile);
+            fprintf(statF, "captured\tprocessed\tdropped\tkeynum\tbytesIn\tbytesOut\n");
+        }
+        
+        fprintf(statF, "%d\t%d\t%d\t%d\t%llu\t%llu\n",
+                codecStats.nFrames_, codecStats.nProcessed_,
+                codecStats.nDropped_, codecStats.nKey_,
+                codecStats.bytesIn_, codecStats.bytesOut_);
+        fflush(statF);
+    }
+    
     cout << "\r"
          << "[ captured " << codecStats.nFrames_
          << " processed: " << codecStats.nProcessed_
@@ -237,7 +259,7 @@ void printStats(const VideoCodec::Stats& codecStats)
          << " ]" << flush;
 }
 
-void runDecoder(VideoCodec& codec, string inFile, string outFile)
+void runDecoder(VideoCodec& codec, string inFile, string outFile, string statFile)
 {
     // open file
     FILE *f, *fOut;
@@ -262,7 +284,7 @@ void runDecoder(VideoCodec& codec, string inFile, string outFile)
         if (res)
             LogError("") << "error decoding frame (" << res << "): " << codec.getStats().nFrames_ << endl;
 
-        printStats(codec.getStats());
+        printStats(codec.getStats(), statFile);
         usleep(5);
     }
 
