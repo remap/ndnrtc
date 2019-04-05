@@ -55,8 +55,8 @@ RUN git clone https://github.com/named-data/cnl-cpp \
 
 # NDN-RTC
 ARG BRANCH=master
-RUN git clone --recursive https://github.com/remap/ndnrtc.git \
+RUN git clone --recursive --single-branch --branch $BRANCH https://github.com/remap/ndnrtc.git \
     && cd ndnrtc/cpp \
-    && git checkout $BRANCH \
     && ./configure CPPFLAGS="-I/openfec_v1.4.2/src/" LDFLAGS="-L/openfec_v1.4.2/bin/Release" \
-    && make && make install
+    && make && make install \
+    && ldconfig
