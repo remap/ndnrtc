@@ -26,7 +26,6 @@
 
 #define PARITY_RATIO 0.2
 #define NDNRTC_FRAME_TYPE "ndnrtcv4"
-#define EST_TIME_WINDOW 30000
 #define FSIZE_EST_K 4
 
 using namespace std;
@@ -99,7 +98,7 @@ namespace ndnrtc {
         uint64_t lastCycleMonotonicNs_, thisCycleMonotonicNs_;
         uint64_t lastPublishEpochMs_;
         uint64_t frameSeq_, gopPos_, gopSeq_;
-        estimators::Average encodingDelay_, publishingDelay_;
+        uint64_t encodingDelay_, publishingDelay_;
 
         // these are the packets that were generated outside of "processImage"
         // call and will be added to the output of the next  "processImage" call
@@ -246,8 +245,8 @@ VideoStreamImpl2::VideoStreamImpl2(string basePrefix, string streamName,
     , frameSeq_(0)
     , gopPos_(0)
     , gopSeq_(0)
-    , encodingDelay_(boost::make_shared<estimators::TimeWindow>(EST_TIME_WINDOW))
-    , publishingDelay_(boost::make_shared<estimators::TimeWindow>(EST_TIME_WINDOW))
+    , encodingDelay_(0)
+    , publishingDelay_(0)
 {
     NameComponents::extractInfo(NameComponents::streamPrefix(basePrefix, streamName),
                                 prefixInfo_);
@@ -324,7 +323,7 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
     codec_.encode(raw, false,
         [this, self, &packets](const EncodedFrame &frame){
             uint64_t t = clock::nanosecondTimestamp();
-            encodingDelay_.newValue(t-thisCycleMonotonicNs_);
+            encodingDelay_ = (t-thisCycleMonotonicNs_);
 
             LogDebugC << "+ encoded #" << frameSeq_
                       << (frame.type_ == FrameType::Key ? " key: " : " delta: ")
@@ -345,7 +344,7 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
             frameSeq_++;
             lastFramePrefix_ = framePrefix;
 
-            publishingDelay_.newValue(clock::nanosecondTimestamp()-t);
+            publishingDelay_ = (clock::nanosecondTimestamp()-t);
         },
         [this, self](const VideoCodec::Image &dropped){
             LogWarnC << "⨂ dropped" << endl;
@@ -366,8 +365,8 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
 
     lastCycleMonotonicNs_ = thisCycleMonotonicNs_;
 
-    (*statStorage_)[Indicator::PublishDelay] = publishingDelay_.value()/1E6;
-    (*statStorage_)[Indicator::CodecDelay] = encodingDelay_.value()/1E6;
+    (*statStorage_)[Indicator::PublishDelay] = (double)publishingDelay_/1E6;
+    (*statStorage_)[Indicator::CodecDelay] = (double)encodingDelay_/1E6;
 
     return packets;
 }
