@@ -140,7 +140,8 @@ namespace ndnrtc
         
         PipelineSlotState getState() const override { return slotState_; }
         void setRequests(const std::vector<boost::shared_ptr<DataRequest>>&) override;
-//        std::vector<boost::shared_ptr<const DataRequest>> getAllRequests() const override;
+        const std::vector<boost::shared_ptr<DataRequest>>& getRequests() const;
+
         const ndn::Name& getPrefix() const override  { return name_; }
         SlotTriggerConnection subscribe(PipelineSlotState, OnSlotStateUpdate) override;
         NeedDataTriggerConnection addOnNeedData(OnNeedData) override;

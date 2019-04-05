@@ -195,7 +195,13 @@ BufferSlot::setRequests(const std::vector<boost::shared_ptr<DataRequest> > &requ
     }
 }
 
-void 
+const vector<boost::shared_ptr<DataRequest>>&
+BufferSlot::getRequests() const
+{
+    return requests_;
+}
+
+void
 BufferSlot::clear()
 {
     name_.clear();

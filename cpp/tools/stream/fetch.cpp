@@ -147,7 +147,7 @@ void setupFetching(boost::shared_ptr<KeyChain> keyChain,
         requestQ->enqueueRequest(r);
     };
     
-    callPeriodic(5000, fetchLiveMeta);
+    callPeriodic(1000, fetchLiveMeta);
 
     // setup Pipeline
     auto slotPool = boost::make_shared<Pool<BufferSlot>>(500);

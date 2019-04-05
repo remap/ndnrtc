@@ -19,6 +19,10 @@
 #include "network-data.hpp"
 #include "pool.hpp"
 
+#define DEFAULT_LIFETIME 2000
+#define DEFAULT_NDATA_OUTSTANDING 3
+#define DEFAULT_NFEC_OUTSTANDING 1
+
 namespace ndn {
 
 class Interest;
@@ -36,6 +40,9 @@ class FrameSlot;
 class DataRequest;
 
 typedef std::function<boost::shared_ptr<IPipelineSlot>()> DispatchSlot;
+
+typedef std::vector<boost::shared_ptr<DataRequest>> DataRequestsArray;
+typedef std::function<DataRequestsArray(const ndn::Name& framePrefix, PacketNumber seqNo)> PrepareSegmentRequests;
 
 typedef std::function<void(const IPipelineSlot*, const DataRequest&)> OnSlotStateUpdate;
 typedef boost::signals2::signal<void(const IPipelineSlot*, const DataRequest&)> SlotTrigger;
@@ -74,8 +81,9 @@ public:
     Pipeline(boost::shared_ptr<IInterestQueue> interestQ,
              DispatchSlot dispatchSlot,
              const ndn::Name &sequencePrefix, uint32_t nextSeqNo,
-             int step = 1);
-    
+             int step = 1,
+             PrepareSegmentRequests = getPrepareSegmentRequests());
+
     Pipeline(boost::asio::io_service &io, ndn::Face *f,
              DispatchSlot dispatchSlot,
              const ndn::Name &sequencePrefix,
@@ -89,16 +97,18 @@ public:
     boost::shared_ptr<IInterestQueue> getInterestQ() const { return interestQ_; }
     uint64_t getNextSeqNo() const { return nextSeqNo_; }
     
+    static PrepareSegmentRequests getPrepareSegmentRequests();
     static std::vector<boost::shared_ptr<DataRequest>>
         requestsForFrame(const ndn::Name& framePrefix,
                          PacketNumber seqNo,
-                         uint64_t lifetime = 2000,
-                         size_t nDataOustanding = 3,
-                         size_t nParityOutstanding = 1);
+                         uint64_t lifetime = DEFAULT_LIFETIME,
+                         size_t nDataOustanding = DEFAULT_NDATA_OUTSTANDING,
+                         size_t nParityOutstanding = DEFAULT_NFEC_OUTSTANDING);
 
 private:
     uint64_t pulseCount_;
     DispatchSlot dispatchSlot_;
+    PrepareSegmentRequests requestsForFrame_;
     boost::shared_ptr<IInterestQueue> interestQ_;
     ndn::Name sequencePrefix_;
     int32_t step_;

@@ -21,12 +21,14 @@ using namespace ndnrtc;
 Pipeline::Pipeline(boost::shared_ptr<IInterestQueue> interestQ,
                    DispatchSlot dispatchSlot,
                    const ndn::Name &sequencePrefix, uint32_t nextSeqNo,
-                   int step)
+                   int step,
+                   PrepareSegmentRequests requestsForFrame)
     : interestQ_(interestQ)
     , dispatchSlot_(dispatchSlot)
     , sequencePrefix_(sequencePrefix)
     , nextSeqNo_(nextSeqNo)
     , step_(step)
+    , requestsForFrame_(requestsForFrame)
 {
     description_ = "pipeline";
 }
@@ -52,7 +54,7 @@ Pipeline::~Pipeline()
 void
 Pipeline::pulse()
 {
-    vector<boost::shared_ptr<DataRequest>> frameRequests = Pipeline::requestsForFrame(sequencePrefix_, nextSeqNo_);
+    vector<boost::shared_ptr<DataRequest>> frameRequests = requestsForFrame_(sequencePrefix_, nextSeqNo_);
     try {
         boost::shared_ptr<IPipelineSlot> slot = dispatchSlot_();
         slot->setRequests(frameRequests);
@@ -77,6 +79,13 @@ Pipeline::pulse()
     } catch (runtime_error& e) {
         LogErrorC << "exception while trying to dispatch new slot: " << e.what() << endl;
     }
+}
+
+PrepareSegmentRequests
+Pipeline::getPrepareSegmentRequests()
+{
+    return bind(&Pipeline::requestsForFrame, _1, _2,
+        DEFAULT_LIFETIME, DEFAULT_NDATA_OUTSTANDING, DEFAULT_NFEC_OUTSTANDING);
 }
 
 vector<boost::shared_ptr<DataRequest>>
