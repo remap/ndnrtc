@@ -58,7 +58,7 @@ Pipeline::pulse()
     try {
         boost::shared_ptr<IPipelineSlot> slot = dispatchSlot_();
         slot->setRequests(frameRequests);
-        
+
         // TODO: decide on whether requesting missing segments should be here or not
         // Pipeline don't know whether FEC data need to be fetched
         // either provide flag for FEC data or don't request missing segments here
@@ -68,10 +68,10 @@ Pipeline::pulse()
 //            s->setRequests(requests);
 //            interestQ->enqueueRequests(requests, boost::make_shared<DeadlinePriority>(REQ_DL_PRI_RTX));
 //        });
-        
+
         LogDebugC << "dispatched slot " << slot->getPrefix()
                   << " " << frameRequests.size() << " requests total" << endl;
-        
+
         interestQ_->enqueueRequests(frameRequests, boost::make_shared<DeadlinePriority>(REQ_DL_PRI_DEFAULT));
         nextSeqNo_ += step_;
         pulseCount_++;
@@ -102,16 +102,16 @@ Pipeline::requestsForFrame(const Name& sequencePrefix,
     {
         boost::shared_ptr<Interest> i =
             boost::make_shared<Interest>(Name(framePrefix).append(NameComponents::Meta), lifetime);
-        
+
         i->setMustBeFresh(false);
         requests.push_back(boost::make_shared<DataRequest>(i));
     }
-    
+
     // manifest
     {
         boost::shared_ptr<Interest> i =
             boost::make_shared<Interest>(Name(framePrefix).append(NameComponents::Manifest), lifetime);
-        
+
         i->setMustBeFresh(false);
         requests.push_back(boost::make_shared<DataRequest>(i));
     }
@@ -121,21 +121,21 @@ Pipeline::requestsForFrame(const Name& sequencePrefix,
     {
         boost::shared_ptr<Interest> i =
             boost::make_shared<Interest>(Name(framePrefix).appendSegment(seg), lifetime);
-        
+
         i->setMustBeFresh(false);
         requests.push_back(boost::make_shared<DataRequest>(i));
     }
-    
+
     // parity
     for (int seg = 0; seg < nParityOutstanding; ++seg)
     {
         boost::shared_ptr<Interest> i =
             boost::make_shared<Interest>(Name(framePrefix).append(NameComponents::Parity)
                                                           .appendSegment(seg), lifetime);
-        
+
         i->setMustBeFresh(false);
         requests.push_back(boost::make_shared<DataRequest>(i));
     }
-    
+
     return requests;
 }

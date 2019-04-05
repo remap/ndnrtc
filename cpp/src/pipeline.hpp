@@ -61,21 +61,21 @@ enum class PipelineSlotState : int {
     Ready = 5,
     Unfetchable = 6
 };
-    
+
 class IPipelineSlot {
 public:
     virtual ~IPipelineSlot(){}
-    
+
     virtual PipelineSlotState getState() const = 0;
 //    virtual std::vector<boost::shared_ptr<const DataRequest>> getAllRequests() const = 0;
 //    virtual const std::vector<boost::shared_ptr<const DataRequest>> getRequests(DataRequest::Status) const = 0;
     virtual const ndn::Name& getPrefix() const = 0;
-    
+
     virtual void setRequests(const std::vector<boost::shared_ptr<DataRequest>>&) = 0;
     virtual SlotTriggerConnection subscribe(PipelineSlotState, OnSlotStateUpdate) = 0;
     virtual NeedDataTriggerConnection addOnNeedData(OnNeedData) = 0;
 };
-    
+
 class Pipeline : public NdnRtcComponent {
 public:
     Pipeline(boost::shared_ptr<IInterestQueue> interestQ,
@@ -88,15 +88,15 @@ public:
              DispatchSlot dispatchSlot,
              const ndn::Name &sequencePrefix,
              uint32_t nextSeqNo, int step = 1);
-    
+
     ~Pipeline();
 
     void pulse();
     boost::signals2::signal<void(boost::shared_ptr<IPipelineSlot>)> onNewSlot;
-    
+
     boost::shared_ptr<IInterestQueue> getInterestQ() const { return interestQ_; }
     uint64_t getNextSeqNo() const { return nextSeqNo_; }
-    
+
     static PrepareSegmentRequests getPrepareSegmentRequests();
     static std::vector<boost::shared_ptr<DataRequest>>
         requestsForFrame(const ndn::Name& framePrefix,
@@ -114,7 +114,7 @@ private:
     int32_t step_;
     uint32_t nextSeqNo_;
 };
-    
+
 }
 
 #endif

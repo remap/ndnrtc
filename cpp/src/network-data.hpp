@@ -71,7 +71,7 @@ public:
         NetworkNack = 1<<4,
         Data = 1<<5
     };
-    
+
     DataRequest(const boost::shared_ptr<const ndn::Interest> &interest);
     // DataRequest(const boost::shared_ptr<ndn::Data> &data,
     //             const boost::shared_ptr<const ndn::Interest> &interest);
@@ -96,11 +96,11 @@ public:
         { return packet_; }
 
     RequestTriggerConnection subscribe(Status, OnRequestUpdate);
-    
+
     // helpers for handling results from multiple requests
     typedef std::function<void(std::vector<boost::shared_ptr<DataRequest>>)>
         OnRequestsReady;
-    
+
     static void invokeWhenAll(std::vector<boost::shared_ptr<DataRequest>> requests,
                               DataRequest::Status status,
                               OnRequestsReady onRequestsReady);
@@ -111,7 +111,7 @@ public:
 protected:
     friend RequestQueueImpl;
     friend class ::UnitTestDataRequestProxy;
-    
+
     void setStatus(Status s) { status_ = s; }
     void setRtx() { rtxNum_++; }
     void triggerEvent(Status s);
@@ -131,7 +131,7 @@ protected:
 private:
     uint64_t requestTsUsec_, replyTsUsec_;
     size_t rtxNum_, timeoutNum_, netwNackNum_, appNackNum_;
-    
+
     Status status_;
     NamespaceInfo namespaceInfo_;
     boost::shared_ptr<const ndn::Interest> interest_;
@@ -896,6 +896,6 @@ class WireData : public WireSegment
         return segment().getHeader().playbackNo_;
     }
 };
-    
+
 }
 #endif
