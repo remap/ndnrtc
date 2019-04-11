@@ -344,23 +344,28 @@ void printStats(boost::shared_ptr<BufferSlot> slot,
     // << " ooo " << outOfOrder
     // << " ]"
     // << flush;
+    boost::shared_ptr<const packets::Meta> frameMeta = slot->getFrameMeta();
+    double ooo = requestQ->getStatistics()[statistics::Indicator::OutOfOrderNum];
     for (auto &r:slot->getRequests())
     {
         if (r == *slot->getRequests().begin())
         {
-            cout << clock::millisecondTimestamp()
+            cout << r->getReplyTimestampUsec()/1000
                 << "\t" << slot->getNameInfo().sampleNo_
                 << "\t" << r->getDrdUsec()
-                << "\t" << slot->getFetchedDataSegmentsNum() + slot->getParitySegmentsNum() + 2
+                << "\t" << ooo
+                << "\t" << (frameMeta->getFrameMeta().type() == FrameMeta_FrameType_Key)
+                << "\t" << slot->getFetchedDataSegmentsNum() + slot->getFetchedParitySegmentsNum() + 1
                 << "\t" << slot->getFetchedBytesTotal()
                 << "\t" << slot->getAssemblingTime()
                 << endl;
         }
         else
             if (r->getDrdUsec() != -1)
-                cout << clock::millisecondTimestamp()
+                cout << r->getReplyTimestampUsec()/1000
                     << "\t" << slot->getNameInfo().sampleNo_
                     << "\t" << r->getDrdUsec()
+                    << "\t" << ooo
                     << endl;
     }
 

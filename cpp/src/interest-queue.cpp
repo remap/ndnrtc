@@ -117,6 +117,7 @@ private:
     IInterestQueueObserver *observer_;
     bool isDrainingQueue_;
     estimators::Average drdEstimator_;
+    uint64_t lastRequestId_, lastRcvdRequestId_;
     
     void enqueue(QueueEntry&, boost::shared_ptr<DeadlinePriority> priority);
     void drainQueueSafe();
@@ -182,6 +183,7 @@ size_t RequestQueue::size() const { return pimpl_->size(); }
 void RequestQueue::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) { pimpl_->setLogger(logger); }
 double RequestQueue::getDrdEstimate() const { return pimpl_->getEstimator().value(); }
 double RequestQueue::getJitterEstimate() const { return pimpl_->getEstimator().jitter(); }
+const statistics::StatisticsStorage& RequestQueue::getStatistics() const { return pimpl_->getStatistics(); }
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -235,6 +237,8 @@ RequestQueueImpl::RequestQueueImpl(boost::asio::io_service& io,
 , isDrainingQueue_(false)
 , observer_(nullptr)
 , drdEstimator_(boost::make_shared<estimators::TimeWindow>(NW_ESTIMATE_WINDOW))
+, lastRequestId_(0)
+, lastRcvdRequestId_(0)
 {
     description_ = "iqueue";
 }
@@ -272,6 +276,12 @@ RequestQueueImpl::enqueueRequest(boost::shared_ptr<DataRequest> &request,
                                const boost::shared_ptr<Data>& d){
                          request->timestampReply();
                          request->setData(d);
+                         
+                         if (request->getId() < lastRcvdRequestId_)
+                             (*statStorage_)[Indicator::OutOfOrderNum]++;
+                         else
+                             lastRcvdRequestId_ = request->getId();
+                         
                          drdEstimator_.newValue(request->getDrdUsec());
                          
                          if (d->getMetaInfo().getType() == ndn_ContentType_NACK)
@@ -307,6 +317,8 @@ RequestQueueImpl::enqueueRequest(boost::shared_ptr<DataRequest> &request,
                          request->triggerEvent(DataRequest::Status::NetworkNack);
                      },
                      [request, me, this](const boost::shared_ptr<const Interest>& i){
+                         lastRequestId_++;
+                         request->setId(lastRequestId_);
                          if (request->getStatus() != DataRequest::Status::Created)
                              request->setRtx();
                          request->timestampRequest();

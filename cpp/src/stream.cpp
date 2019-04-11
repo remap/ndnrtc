@@ -24,7 +24,7 @@
 #include "proto/ndnrtc.pb.h"
 #include "video-codec.hpp"
 
-#define PARITY_RATIO 0.2
+#define PARITY_RATIO 1
 #define NDNRTC_FRAME_TYPE "ndnrtcv4"
 #define FSIZE_EST_K 4
 
@@ -129,6 +129,9 @@ namespace ndnrtc {
         size_t getPayloadSegmentSize() const {
             // TODO: explore if you can accommodate NDN's packet overhead here
             return settings_.segmentSize_;
+        }
+        double getFrameSizeEstimate() const {
+            return ceil(liveMetadata_.getFrameSizeEstimate().value() + FSIZE_EST_K * liveMetadata_.getFrameSizeEstimate().variation());
         }
 
         void onLiveMetadataRequest(const boost::shared_ptr<const Name>& prefix,
@@ -293,11 +296,14 @@ VideoStreamImpl2::getStatistics() const
     // captured == processed in this setup as VideoSream is single-threaded
     (*statStorage_)[Indicator::ProcessedNum] =
         (*statStorage_)[Indicator::CapturedNum] = codec_.getStats().nFrames_;
-
     (*statStorage_)[Indicator::EncodedNum] = codec_.getStats().nProcessed_;
     (*statStorage_)[Indicator::DroppedNum] = codec_.getStats().nDropped_;
+    (*statStorage_)[Indicator::GopNum] = codec_.getStats().nKey_;
 
     (*statStorage_)[Indicator::Timestamp] = clock::millisecondTimestamp();
+    
+    (*statStorage_)[Indicator::FrameSizeEstimate]  = getFrameSizeEstimate();
+    (*statStorage_)[Indicator::SegnumEstimate] = ceil((*statStorage_)[Indicator::FrameSizeEstimate]/(double)getPayloadSegmentSize());
     
     return *statStorage_;
 }
@@ -331,8 +337,8 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
 
             Name framePrefix = publishFrameGobj(frame);
 
-            if (frame.type_ == FrameType::Key)
-                assert(frameSeq_ % settings_.codecSettings_.spec_.encoder_.gop_ == 0);
+//            if (frame.type_ == FrameType::Key)
+//                assert(frameSeq_ % settings_.codecSettings_.spec_.encoder_.gop_ == 0);
 
             if (frame.type_ == FrameType::Key)
             {
@@ -434,6 +440,8 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
 
         packets->push_back(d);
         slice += payloadSegmentSize;
+        
+        (*statStorage_)[Indicator::BytesPublished] += d->getContent().size();
     }
 
     slice = fecData.data();
@@ -448,6 +456,9 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
 
         packets->push_back(d);
         slice += payloadSegmentSize;
+        
+        (*statStorage_)[Indicator::FecBytesPublished] += d->getContent().size();
+        (*statStorage_)[Indicator::FecPublishedSegmentsNum] += 1.;
     }
 
     LogTraceC << "▻▻▻ generated " << packets->size() << " segments ("
@@ -457,9 +468,11 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
                                                                      *packets);
     manifest->getMetaInfo().setFreshnessPeriod(sampleFreshness);
     sign(*manifest);
+    (*statStorage_)[Indicator::BytesPublished] += manifest->getContent().size();
 
     packets->push_back(manifest);
     packets->push_back(generateFrameMeta(lastPublishEpochMs_, frameName, frame.type_, nDataSegments, nParitySegments));
+    (*statStorage_)[Indicator::BytesPublished] += packets->back()->getContent().size();
 
     LogDebugC << "⤷ published GObj-Frame " << frameName << endl;
 
@@ -470,6 +483,7 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
     if (frame.type_ == FrameType::Key)
         (*statStorage_)[Indicator::PublishedKeyNum]++;
 
+    
     return frameName;
 }
 
@@ -606,7 +620,6 @@ VideoStreamImpl2::sign(Data& d, bool phony)
         (*statStorage_)[Indicator::SignNum]++;
     }
 
-    (*statStorage_)[Indicator::BytesPublished] += d.getContent().size();
     (*statStorage_)[Indicator::RawBytesPublished] += d.getDefaultWireEncoding().size();
     (*statStorage_)[Indicator::PublishedSegmentsNum]++;
 }
@@ -692,7 +705,7 @@ VideoStreamImpl2::generateLivePacket()
     liveMeta.set_framerate(liveMetadata_.getRate());
     
     double segSize = (double)getPayloadSegmentSize();
-    double frameEstimate = ceil(liveMetadata_.getFrameSizeEstimate().value() + FSIZE_EST_K * liveMetadata_.getFrameSizeEstimate().variation());
+    double frameEstimate = getFrameSizeEstimate();
     size_t segnum = ceil(frameEstimate / segSize);
     
     liveMeta.set_segnum_estimate(segnum);

@@ -86,7 +86,8 @@ public:
     int64_t getDrdUsec() const { return (replyTsUsec_ ? replyTsUsec_ - requestTsUsec_ : -1); }
     uint64_t getRequestTimestampUsec() const { return requestTsUsec_; }
     uint64_t getReplyTimestampUsec() const { return replyTsUsec_; }
-
+    uint64_t getId() const { return id_; }
+    
     size_t getRtxNum() const { return rtxNum_; }
     size_t getTimeoutNum() const { return timeoutNum_; }
     size_t getNetworkNackNum() const { return netwNackNum_; }
@@ -121,6 +122,8 @@ protected:
     void setData(const boost::shared_ptr<const ndn::Data>& data);
     void setNack(const boost::shared_ptr<const ndn::NetworkNack>& nack);
     void setTimeout();
+    // sets request ID (for tracking out-of-order delivery)
+    void setId(uint64_t id) { id_ = id; }
 
     RequestTrigger onExpressed_;
     RequestTrigger onData_;
@@ -129,7 +132,7 @@ protected:
     RequestTrigger onAppNack_;
 
 private:
-    uint64_t requestTsUsec_, replyTsUsec_;
+    uint64_t id_, requestTsUsec_, replyTsUsec_;
     size_t rtxNum_, timeoutNum_, netwNackNum_, appNackNum_;
 
     Status status_;

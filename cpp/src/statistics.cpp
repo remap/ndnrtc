@@ -80,12 +80,16 @@ map_list_of
 // interest queue
 ( Indicator::QueueSize, "Interest queue" )
 ( Indicator::InterestsSentNum, "Sent interests" )
+( Indicator::OutOfOrderNum, "Out of Order deliveries number" )
+
 // producer
 // media thread
 ( Indicator::BytesPublished, "Payload published bytes" )
+( Indicator::FecBytesPublished, "FEC data published bytes" )
 ( Indicator::RawBytesPublished, "Wire published bytes" )
 ( Indicator::ProcessedNum, "Processed frames" )
-( Indicator::PublishedSegmentsNum, "Published segments" )
+( Indicator::PublishedSegmentsNum, "All published segments" )
+( Indicator::FecPublishedSegmentsNum, "Published FEC segments" )
 ( Indicator::PublishedNum, "Published frames" ) 
 ( Indicator::PublishedKeyNum, "Published key frames" )
 ( Indicator::InterestsReceivedNum, "Interests received" )
@@ -93,8 +97,13 @@ map_list_of
 ( Indicator::RdrPointerNum, "RDR pointer num")
 ( Indicator::PublishDelay, "Publish delay")
 
+// estimators
+(Indicator::FrameSizeEstimate, "Producer frame size estimation")
+(Indicator::SegnumEstimate, "Producer frame segment number estimation")
+
 // encoder
 ( Indicator::EncodedNum, "Encoded frames" )
+( Indicator::GopNum, "GOP number" )
 ( Indicator::CodecDelay, "Coding delay")
 
 // capturer
@@ -164,15 +173,18 @@ map_list_of
 ( Indicator::DrdOriginalEstimation, 0. )
 // interest queue
 ( Indicator::QueueSize, 0. )
-( Indicator::InterestsSentNum, 0. );
+( Indicator::InterestsSentNum, 0. )
+( Indicator::OutOfOrderNum, 0. );
 
 const StatisticsStorage::StatRepo StatisticsStorage::ProducerStatRepo =
 map_list_of ( Indicator::Timestamp, 0. )
 // producer
 // media thread
 ( Indicator::BytesPublished, 0. )
+( Indicator::FecBytesPublished, 0. )
 ( Indicator::RawBytesPublished, 0. )
 ( Indicator::PublishedSegmentsNum, 0. )
+( Indicator::FecPublishedSegmentsNum, 0. )
 ( Indicator::ProcessedNum, 0. )
 ( Indicator::PublishedNum, 0. )
 ( Indicator::PublishedKeyNum, 0. )
@@ -181,9 +193,13 @@ map_list_of ( Indicator::Timestamp, 0. )
 ( Indicator::CurrentProducerFramerate, 0. )
 ( Indicator::RdrPointerNum, 0. )
 ( Indicator::PublishDelay, 0.)
+// estimators
+( Indicator::FrameSizeEstimate, 0. )
+( Indicator::SegnumEstimate, 0. )
 // encoder
 ( Indicator::DroppedNum, 0. )
 ( Indicator::EncodedNum, 0. )
+( Indicator::GopNum, 0. )
 ( Indicator::CodecDelay, 0.)
 // capturer
 ( Indicator::CapturedNum, 0. );
@@ -252,10 +268,13 @@ boost::assign::map_list_of
 // interest queue
 (Indicator::QueueSize, "iqueue")
 (Indicator::InterestsSentNum, "isent")
+(Indicator::OutOfOrderNum, "outOfOrderNum")
 // producer
 (Indicator::BytesPublished, "bytesPub")
+(Indicator::FecBytesPublished, "fecBytesPub")
 (Indicator::RawBytesPublished, "rawBytesPub")
 (Indicator::PublishedSegmentsNum, "segPub")
+(Indicator::FecPublishedSegmentsNum, "fecSegPub")
 (Indicator::ProcessedNum, "framesProcessed")
 (Indicator::PublishedNum, "framesPub")
 (Indicator::PublishedKeyNum, "framesPubKey")
@@ -263,8 +282,12 @@ boost::assign::map_list_of
 (Indicator::SignNum, "signNum")
 (Indicator::RdrPointerNum, "rdrNum")
 (Indicator::PublishDelay, "pubDelay")
+// estimators
+(Indicator::FrameSizeEstimate, "frameSizeEst")
+(Indicator::SegnumEstimate, "segNumEst")
 // encoder
 (Indicator::EncodedNum, "framesEncoded")
+(Indicator::GopNum, "gopNum")
 (Indicator::CodecDelay, "codecDelay")
 // capturer
 (Indicator::CapturedNum, "framesCaptured");

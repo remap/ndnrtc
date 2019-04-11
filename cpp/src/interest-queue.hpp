@@ -147,6 +147,7 @@ namespace ndnrtc {
         void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
         double getDrdEstimate() const;
         double getJitterEstimate() const;
+        const statistics::StatisticsStorage& getStatistics() const;
 
         void registerObserver(IInterestQueueObserver *observer) DEPRECATED;
         void unregisterObserver() DEPRECATED;

@@ -117,6 +117,7 @@ DataRequest::DataRequest(const boost::shared_ptr<const Interest>& interest)
 , netwNackNum_(0)
 , appNackNum_(0)
 , status_(Status::Created)
+, id_(0)
 {
     if (!NameComponents::extractInfo(interest->getName(), namespaceInfo_))
         throw runtime_error("error creating DataRequest: failed to extract"

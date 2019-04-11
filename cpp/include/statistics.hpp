@@ -89,12 +89,15 @@ namespace ndnrtc {
                 // interest queue
                 QueueSize,                      // InterestQueue
                 InterestsSentNum,               // InterestQueue
+                OutOfOrderNum,              
                 
                 // producer
                 //media thread
                 BytesPublished,
+                FecBytesPublished,
                 RawBytesPublished,
                 PublishedSegmentsNum,
+                FecPublishedSegmentsNum,
                 ProcessedNum,
                 PublishedNum,
                 PublishedKeyNum,
@@ -103,10 +106,15 @@ namespace ndnrtc {
                 RdrPointerNum,
                 PublishDelay,
                 CodecDelay,
+            
+                // publisher estimators
+                FrameSizeEstimate,
+                SegnumEstimate,
                 
                 // encoder
                 // DroppedNum, // borrowed from buffer (above)
                 EncodedNum,
+                GopNum,
                 
                 // capturer
                 CapturedNum
@@ -184,6 +192,7 @@ namespace ndnrtc {
             StatObject(const boost::shared_ptr<StatisticsStorage>& statStorage):statStorage_(statStorage){}
             
             virtual ~StatObject(){}
+            const StatisticsStorage& getStatistics() const { return *statStorage_; }
             
         protected:
             boost::shared_ptr<StatisticsStorage> statStorage_;
