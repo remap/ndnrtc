@@ -8,18 +8,17 @@
 #ifndef __async_h__
 #define __async_h__
 
-#include <boost/function.hpp>
 #include <boost/asio.hpp>
 
 namespace ndnrtc {
 	namespace async {
 		void dispatchAsync(boost::asio::io_service& io,
-			boost::function<void(void)> dispatchBlock,
-			boost::function<void(void)> onCompletion = boost::function<void(void)>());
+			std::function<void(void)> dispatchBlock,
+			std::function<void(void)> onCompletion = std::function<void(void)>());
 		
 		void dispatchSync(boost::asio::io_service& io,
-			boost::function<void(void)> dispatchBlock,
-			boost::function<void(void)> onCompletion = boost::function<void(void)>());
+			std::function<void(void)> dispatchBlock,
+			std::function<void(void)> onCompletion = std::function<void(void)>());
 	}
 }
 

@@ -17,8 +17,8 @@ using namespace ndnlog;
 
 //******************************************************************************
 VideoPlayoutImpl::VideoPlayoutImpl(boost::asio::io_service& io,
-            const boost::shared_ptr<IPlaybackQueue>& queue,
-            const boost::shared_ptr<StatisticsStorage>& statStorage):
+            const std::shared_ptr<IPlaybackQueue>& queue,
+            const std::shared_ptr<StatisticsStorage>& statStorage):
 PlayoutImpl(io, queue, statStorage),
 gopIsValid_(false), currentPlayNo_(-1), 
 gopCount_(0), frameConsumer_(nullptr)
@@ -58,12 +58,12 @@ void VideoPlayoutImpl::stop()
 }
 
 //******************************************************************************
-bool VideoPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& slot)
+bool VideoPlayoutImpl::processSample(const std::shared_ptr<const BufferSlot>& slot)
 {
     LogTraceC << "processing sample " << slot->dump() << std::endl;
 
     bool recovered = false;
-    boost::shared_ptr<ImmutableVideoFramePacket> framePacket =
+    std::shared_ptr<ImmutableVideoFramePacket> framePacket =
         frameSlot_.readPacket(*slot, recovered);
 
     if (framePacket.get())

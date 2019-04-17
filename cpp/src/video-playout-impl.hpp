@@ -29,9 +29,9 @@ namespace ndnrtc {
         typedef statistics::StatisticsStorage StatStorage;
     public:
         VideoPlayoutImpl(boost::asio::io_service& io,
-            const boost::shared_ptr<IPlaybackQueue>& queue,
-            const boost::shared_ptr<StatStorage>& statStorage = 
-                boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
+            const std::shared_ptr<IPlaybackQueue>& queue,
+            const std::shared_ptr<StatStorage>& statStorage = 
+                std::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
         
         void stop();
         void registerFrameConsumer(IEncodedFrameConsumer* frameConsumer);
@@ -51,7 +51,7 @@ namespace ndnrtc {
         int gopCount_;
 
         bool
-        processSample(const boost::shared_ptr<const BufferSlot>&);
+        processSample(const std::shared_ptr<const BufferSlot>&);
 	};
 
 	class IEncodedFrameConsumer 

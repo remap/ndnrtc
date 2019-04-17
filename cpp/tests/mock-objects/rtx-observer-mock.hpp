@@ -15,7 +15,7 @@
 
 class MockRtxObserver : public ndnrtc::IRtxObserver {
 public:
-	MOCK_METHOD1(onRetransmissionRequired, void(const std::vector<boost::shared_ptr<const ndn::Interest>>&));
+	MOCK_METHOD1(onRetransmissionRequired, void(const std::vector<std::shared_ptr<const ndn::Interest>>&));
 };
 
 #endif

@@ -6,9 +6,8 @@
 //  Copyright 2013-2015 Regents of the University of California
 //
 #include <algorithm>
-#include <boost/make_shared.hpp>
+#include <memory>
 #include <boost/thread/lock_guard.hpp>
-#include <boost/bind.hpp>
 
 #include "stat-collector.hpp"
 
@@ -22,7 +21,7 @@ using namespace ndnrtc::statistics;
 std::map<std::string, Indicator> StatWriter::IndicatorLookupTable;
 
 StatWriter::StatWriter(const StatGatheringParams& p, std::ostream* ostream,
-    const boost::shared_ptr<IMetricFormatter>& formatter):
+    const std::shared_ptr<IMetricFormatter>& formatter):
 stats_(p), ostream_(ostream), formatter_(formatter), nWrites_(0)
 {     
     if (StatWriter::IndicatorLookupTable.size() == 0)
@@ -92,7 +91,7 @@ void StatWriter::initLookupTable()
 
 //******************************************************************************
 StatFileWriter::StatFileWriter(const StatGatheringParams& p, 
-    const boost::shared_ptr<IMetricFormatter>& formatter, string fname):
+    const std::shared_ptr<IMetricFormatter>& formatter, string fname):
 StatWriter(p, new ofstream(), formatter)
 {
     ((ofstream*)ostream_)->open(fname.c_str(), ofstream::out);
@@ -225,9 +224,9 @@ StatWriter* StatCollector::newDefaultStatWriter(const StatGatheringParams& p,
       std::string fname)
 {
 #ifdef JSON_FORMATTER
-    return new StatFileWriter(p, boost::make_shared<JsonFormatter>(), fname);
+    return new StatFileWriter(p, std::make_shared<JsonFormatter>(), fname);
 #else
-    return new StatFileWriter(p, boost::make_shared<CsvFormatter>(), fname);
+    return new StatFileWriter(p, std::make_shared<CsvFormatter>(), fname);
 #endif
 }
 
@@ -238,7 +237,7 @@ StatCollector::~StatCollector()
     removeAllStreams();
 }
 
-void StatCollector::addStream(const boost::shared_ptr<const IStream>& stream,
+void StatCollector::addStream(const std::shared_ptr<const IStream>& stream,
                               string path, vector<StatGatheringParams> stats)
 {
     if (streamStatCollectors_.find(stream->getPrefix()) == streamStatCollectors_.end())
@@ -250,7 +249,7 @@ void StatCollector::addStream(const boost::shared_ptr<const IStream>& stream,
         throw runtime_error("stream has been already added for stat gathering");
 }
 
-void StatCollector::removeStream(const boost::shared_ptr<const IStream>& stream)
+void StatCollector::removeStream(const std::shared_ptr<const IStream>& stream)
 {
     if (streamStatCollectors_.find(stream->getPrefix()) != streamStatCollectors_.end())
     {
@@ -284,7 +283,7 @@ void StatCollector::startCollecting(unsigned int queryInterval)
 {
     double rate = 1000./(double)queryInterval;
 
-    generator_ = boost::make_shared<PreciseGenerator>(io_, rate, 
+    generator_ = std::make_shared<PreciseGenerator>(io_, rate, 
         boost::bind(&StatCollector::queryStats, this));
     generator_->start();
 }

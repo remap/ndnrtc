@@ -30,13 +30,13 @@ class MockInterestControl : public ndnrtc::IInterestControl
     MOCK_METHOD0(withhold, bool());
     MOCK_METHOD1(markLowerLimit, void(unsigned int));
     MOCK_CONST_METHOD0(snapshot, std::string());
-    MOCK_CONST_METHOD0(getCurrentStrategy, const boost::shared_ptr<const ndnrtc::IInterestControlStrategy>(void));
+    MOCK_CONST_METHOD0(getCurrentStrategy, const std::shared_ptr<const ndnrtc::IInterestControlStrategy>(void));
 };
 
 class MockInterestControlStrategy : public ndnrtc::IInterestControlStrategy 
 {
   public:
-    MOCK_METHOD4(getLimits, void(double, boost::shared_ptr<ndnrtc::DrdEstimator>, unsigned int&, unsigned int&));
+    MOCK_METHOD4(getLimits, void(double, std::shared_ptr<ndnrtc::DrdEstimator>, unsigned int&, unsigned int&));
     MOCK_CONST_METHOD3(calculateDemand, int(double, double, double));
     MOCK_METHOD3(burst, int(unsigned int, unsigned int, unsigned int));
     MOCK_METHOD3(withhold, int(unsigned int,unsigned int, unsigned int));

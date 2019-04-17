@@ -7,7 +7,7 @@
 
 // #define DEBUG_PG
 #include "precise-generator.hpp"
-#include <boost/make_shared.hpp>
+#include <memory>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/atomic.hpp>
@@ -54,7 +54,7 @@ typedef boost::posix_time::time_duration duration_type;
 using namespace std;
 using namespace std::placeholders;
 
-class PreciseGeneratorImpl : public boost::enable_shared_from_this<PreciseGeneratorImpl>
+class PreciseGeneratorImpl : public std::enable_shared_from_this<PreciseGeneratorImpl>
 {
   public:
     PreciseGeneratorImpl(boost::asio::io_service &io, const double &ratePerSec,
@@ -91,7 +91,7 @@ class PreciseGeneratorImpl : public boost::enable_shared_from_this<PreciseGenera
 
 //******************************************************************************
 PreciseGenerator::PreciseGenerator(boost::asio::io_service &io, const double &ratePerSec,
-                                   const Task &task) : pimpl_(boost::make_shared<PreciseGeneratorImpl>(io, ratePerSec, task)) {}
+                                   const Task &task) : pimpl_(std::make_shared<PreciseGeneratorImpl>(io, ratePerSec, task)) {}
 PreciseGenerator::~PreciseGenerator() { pimpl_->stop(); }
 
 void PreciseGenerator::start() { pimpl_->start(); }

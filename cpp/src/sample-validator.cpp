@@ -19,18 +19,18 @@ using namespace ndnrtc;
 using namespace ndn;
 using namespace ndnrtc::statistics;
 
-void SampleValidator::onNewRequest(const boost::shared_ptr<BufferSlot> &slot)
+void SampleValidator::onNewRequest(const std::shared_ptr<BufferSlot> &slot)
 {
     // do nothing
 }
 
 void SampleValidator::onNewData(const BufferReceipt &receipt)
 {
-    boost::shared_ptr<SampleValidator> me = boost::dynamic_pointer_cast<SampleValidator>(shared_from_this());
-    boost::shared_ptr<int> nVerifiedSegments(boost::make_shared<int>(0));
-    boost::shared_ptr<const BufferSlot> slot = receipt.slot_;
+    std::shared_ptr<SampleValidator> me = std::dynamic_pointer_cast<SampleValidator>(shared_from_this());
+    std::shared_ptr<int> nVerifiedSegments(std::make_shared<int>(0));
+    std::shared_ptr<const BufferSlot> slot = receipt.slot_;
     keyChain_->verifyData(receipt.segment_->getData()->getData(),
-                          [me, this, slot, nVerifiedSegments](const boost::shared_ptr<ndn::Data> &data) {
+                          [me, this, slot, nVerifiedSegments](const std::shared_ptr<ndn::Data> &data) {
                               // success
                               (*nVerifiedSegments)++;
                               if (slot->getState() >= BufferSlot::State::Ready &&
@@ -41,7 +41,7 @@ void SampleValidator::onNewData(const BufferReceipt &receipt)
                               LogDebugC << "sample verified " << slot->dump() << std::endl;
                               (*statStorage_)[Indicator::VerifySuccess]++;
                           },
-                          (const OnDataValidationFailed)([me, this, slot](const boost::shared_ptr<ndn::Data> &data, const std::string &reason) {
+                          (const OnDataValidationFailed)([me, this, slot](const std::shared_ptr<ndn::Data> &data, const std::string &reason) {
                               // failure
                               if (slot->getState() >= BufferSlot::State::Assembling)
                                   slot->verified_ = BufferSlot::Verification::Failed;
@@ -52,16 +52,16 @@ void SampleValidator::onNewData(const BufferReceipt &receipt)
                           }));
 }
 
-ManifestValidator::ManifestValidator(boost::shared_ptr<ndn::Face> face,
-                                     boost::shared_ptr<ndn::KeyChain> keyChain,
-                                     const boost::shared_ptr<StatisticsStorage> &statStorage) 
+ManifestValidator::ManifestValidator(std::shared_ptr<ndn::Face> face,
+                                     std::shared_ptr<ndn::KeyChain> keyChain,
+                                     const std::shared_ptr<StatisticsStorage> &statStorage) 
     : StatObject(statStorage), face_(face), keyChain_(keyChain),
     metaFetcherPool_(META_FETCHER_POOL_SIZE)
 {
     description_ = "sample-validator";
 }
 
-void ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot> &slot)
+void ManifestValidator::onNewRequest(const std::shared_ptr<BufferSlot> &slot)
 {
     if (slot->getState() == BufferSlot::State::New)
     {
@@ -69,8 +69,8 @@ void ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot> &slot)
         if (metaFetcherPool_.size() == 0)
             metaFetcherPool_.enlarge(META_FETCHER_POOL_SIZE);
 
-        boost::shared_ptr<ManifestValidator> me = boost::dynamic_pointer_cast<ManifestValidator>(shared_from_this());
-        boost::shared_ptr<MetaFetcher> mfetcher = metaFetcherPool_.pop();
+        std::shared_ptr<ManifestValidator> me = std::dynamic_pointer_cast<ManifestValidator>(shared_from_this());
+        std::shared_ptr<MetaFetcher> mfetcher = metaFetcherPool_.pop();
         Name manifestName = slot->getNameInfo().getPrefix(prefix_filter::Sample).append(NameComponents::NameComponentManifest);
         mfetcher->fetch(face_, keyChain_,
                         manifestName,
@@ -93,7 +93,7 @@ void ManifestValidator::onNewRequest(const boost::shared_ptr<BufferSlot> &slot)
 
                                 if (slot->getState() >= BufferSlot::State::New)
                                 {
-                                    slot->manifest_ = boost::make_shared<Manifest>(boost::move(nd));
+                                    slot->manifest_ = std::make_shared<Manifest>(boost::move(nd));
                                     if (slot->getState() >= BufferSlot::State::Ready)
                                         verifySlot(slot);
                                 }
@@ -125,7 +125,7 @@ void ManifestValidator::onNewData(const BufferReceipt &receipt)
             verifySlot(receipt.slot_);
 }
 
-void ManifestValidator::verifySlot(const boost::shared_ptr<const BufferSlot> slot)
+void ManifestValidator::verifySlot(const std::shared_ptr<const BufferSlot> slot)
 {
     assert(slot->getState() >= BufferSlot::State::Ready);
 

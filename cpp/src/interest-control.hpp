@@ -37,7 +37,7 @@ class InterestControlStrategy;
 class IInterestControlStrategy
 {
   public:
-    virtual void getLimits(double rate, boost::shared_ptr<DrdEstimator> drdEstimator,
+    virtual void getLimits(double rate, std::shared_ptr<DrdEstimator> drdEstimator,
                            unsigned int &lowerLimit, unsigned int &upperLimit) = 0;
     virtual int calculateDemand(double rate, double drdAvgValue, double drdDeviation) const = 0;
     virtual int burst(unsigned int currentLimit,
@@ -60,7 +60,7 @@ class IInterestControl
     virtual bool withhold() = 0;
     virtual void markLowerLimit(unsigned int lowerLimit) = 0;
     virtual std::string snapshot() const = 0;
-    virtual const boost::shared_ptr<const IInterestControlStrategy> getCurrentStrategy() const = 0;
+    virtual const std::shared_ptr<const IInterestControlStrategy> getCurrentStrategy() const = 0;
 };
 
 /**
@@ -87,7 +87,7 @@ class InterestControl : public NdnRtcComponent,
     class StrategyDefault : public IInterestControlStrategy
     {
       public:
-        void getLimits(double rate, boost::shared_ptr<DrdEstimator> drdEstimator,
+        void getLimits(double rate, std::shared_ptr<DrdEstimator> drdEstimator,
                        unsigned int &lowerLimit, unsigned int &upperLimit) override;
         int calculateDemand(double rate, double drdAvgValue, double drdDeviation) const override;
         int burst(unsigned int currentLimit,
@@ -96,9 +96,9 @@ class InterestControl : public NdnRtcComponent,
                      unsigned int lowerLimit, unsigned int upperLimit) override;
     };
 
-    InterestControl(const boost::shared_ptr<DrdEstimator> &,
-                    const boost::shared_ptr<statistics::StatisticsStorage> &storage,
-                    boost::shared_ptr<IInterestControlStrategy> strategy = boost::make_shared<StrategyDefault>());
+    InterestControl(const std::shared_ptr<DrdEstimator> &,
+                    const std::shared_ptr<statistics::StatisticsStorage> &storage,
+                    std::shared_ptr<IInterestControlStrategy> strategy = std::make_shared<StrategyDefault>());
     ~InterestControl();
 
     /**
@@ -177,7 +177,7 @@ class InterestControl : public NdnRtcComponent,
      */
     std::string snapshot() const override;
 
-    const boost::shared_ptr<const IInterestControlStrategy> getCurrentStrategy() const override { return strategy_; }
+    const std::shared_ptr<const IInterestControlStrategy> getCurrentStrategy() const override { return strategy_; }
 
     // IDrdEstimatorObserver
     void onDrdUpdate() override;
@@ -189,13 +189,13 @@ class InterestControl : public NdnRtcComponent,
     void sampleArrived(const PacketNumber &) override { decrement(); }
 
   private:
-    boost::shared_ptr<IInterestControlStrategy> strategy_;
+    std::shared_ptr<IInterestControlStrategy> strategy_;
     boost::atomic<bool> initialized_, limitSet_;
     unsigned int lowerLimit_, limit_, upperLimit_;
     boost::atomic<int> pipeline_;
-    boost::shared_ptr<DrdEstimator> drdEstimator_;
+    std::shared_ptr<DrdEstimator> drdEstimator_;
     double targetRate_;
-    boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
+    std::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
     void setLimits();
     void changeLimitTo(unsigned int newLimit);

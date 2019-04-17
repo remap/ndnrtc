@@ -8,9 +8,6 @@
 #ifndef __segment_fetcher_h__
 #define __segment_fetcher_h__
 
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/function.hpp>
-
 #include "ndnrtc-object.hpp"
 #include "data-validator.hpp"
 
@@ -89,20 +86,20 @@ namespace ndnrtc {
 	    DATA_HAS_NO_SEGMENT = 2
 	  };
 	
-	  typedef boost::function<bool(const boost::shared_ptr<ndn::Data>& data)> 
+	  typedef std::function<bool(const std::shared_ptr<ndn::Data>& data)> 
 	  	VerifySegment;
 	
-	  typedef boost::function<void(const ndn::Blob& content, 
+	  typedef std::function<void(const ndn::Blob& content, 
 	  	const std::vector<ValidationErrorInfo>& info)> OnComplete;
 	
-	  typedef boost::function<void
+	  typedef std::function<void
 	    (ErrorCode errorCode, const std::string& message)> OnError;
 	
 	  /**
 	   * DontVerifySegment may be used in fetch to skip validation of Data packets.
 	   */
 	  static bool
-	  DontVerifySegment(const boost::shared_ptr<ndn::Data>& data);
+	  DontVerifySegment(const std::shared_ptr<ndn::Data>& data);
 	
 	  /**
 	   * Initiate segment fetching. For more details, see the documentation for
@@ -193,22 +190,22 @@ namespace ndnrtc {
 
 	  void
 	  onSegmentReceived
-	    (const boost::shared_ptr<const ndn::Interest>& originalInterest,
-	     const boost::shared_ptr<ndn::Data>& data);
+	    (const std::shared_ptr<const ndn::Interest>& originalInterest,
+	     const std::shared_ptr<ndn::Data>& data);
 
 	  void
 	  processSegment
-	    (const boost::shared_ptr<ndn::Data>& data,
-	     const boost::shared_ptr<const ndn::Interest>& originalInterest);
+	    (const std::shared_ptr<ndn::Data>& data,
+	     const std::shared_ptr<const ndn::Interest>& originalInterest);
 
 	  void
-	  onVerifyFailed(const boost::shared_ptr<ndn::Data>& data,
+	  onVerifyFailed(const std::shared_ptr<ndn::Data>& data,
 	  	const std::string& reason,
-	  	const boost::shared_ptr<ndn::Data>& originalData,
-	  	const boost::shared_ptr<const ndn::Interest>& originalInterest);
+	  	const std::shared_ptr<ndn::Data>& originalData,
+	  	const std::shared_ptr<const ndn::Interest>& originalInterest);
 
 	  void
-	  onTimeout(const boost::shared_ptr<const ndn::Interest>& interest);
+	  onTimeout(const std::shared_ptr<const ndn::Interest>& interest);
 
 	  /**
 	   * Check if the last component in the name is a segment number.

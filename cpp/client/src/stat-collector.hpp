@@ -58,7 +58,7 @@ class StatWriter {
       static std::map<std::string, ndnrtc::statistics::Indicator> IndicatorLookupTable;
    
       StatWriter(const StatGatheringParams& p, std::ostream* ostream,
-         const boost::shared_ptr<IMetricFormatter>& formatter);
+         const std::shared_ptr<IMetricFormatter>& formatter);
       virtual ~StatWriter(){ flush(); }
    
       /**
@@ -80,7 +80,7 @@ class StatWriter {
    
    private:
       unsigned int nWrites_;
-      boost::shared_ptr<IMetricFormatter> formatter_;
+      std::shared_ptr<IMetricFormatter> formatter_;
       StatGatheringParams stats_;
       std::map<std::string, double> metricsToWrite_;
    
@@ -97,7 +97,7 @@ class StatWriter {
 class StatFileWriter : public StatWriter {
    public:
       StatFileWriter(const StatGatheringParams& p, 
-         const boost::shared_ptr<IMetricFormatter>& formatter,
+         const std::shared_ptr<IMetricFormatter>& formatter,
        std::string fname);
       ~StatFileWriter();
 
@@ -169,14 +169,14 @@ public:
     * Add stream to gather metrics from
     * @param stream Pointer to a stream (local or remote)
     */
-   void addStream(const boost::shared_ptr<const ndnrtc::IStream>& stream,
+   void addStream(const std::shared_ptr<const ndnrtc::IStream>& stream,
                   std::string path, std::vector<StatGatheringParams> stats);
    
    /**
     * Remove stream previously added
     * @param stream Pointer to a stream 
     */
-   void removeStream(const boost::shared_ptr<const ndnrtc::IStream>& stream);
+   void removeStream(const std::shared_ptr<const ndnrtc::IStream>& stream);
    
    /**
     * Remove all streams
@@ -218,7 +218,7 @@ private:
     */
    class StreamStatCollector {
    public:
-      StreamStatCollector(const boost::shared_ptr<const ndnrtc::IStream>& stream):
+      StreamStatCollector(const std::shared_ptr<const ndnrtc::IStream>& stream):
          stream_(stream){}
       ~StreamStatCollector();
 
@@ -230,7 +230,7 @@ private:
       std::string getStreamPrefix() { return stream_->getPrefix(); }
 
       private:
-         boost::shared_ptr<const ndnrtc::IStream> stream_;
+         std::shared_ptr<const ndnrtc::IStream> stream_;
          std::vector<StatWriter*> statWriters_;
 
          void prepareWriters();
@@ -240,7 +240,7 @@ private:
 
    boost::asio::io_service& io_;
    boost::mutex mutex_;
-   boost::shared_ptr<PreciseGenerator> generator_;
+   std::shared_ptr<PreciseGenerator> generator_;
    std::map<std::string, StreamStatCollector*> streamStatCollectors_;
 
    void flushData();

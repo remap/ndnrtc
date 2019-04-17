@@ -11,7 +11,7 @@
 #include <webrtc/voice_engine/include/voe_network.h>
 #include <webrtc/voice_engine/include/voe_base.h>
 #include <boost/thread/lock_guard.hpp>
-#include <boost/make_shared.hpp>
+#include <memory>
 
 #include "audio-capturer.hpp"
 #include "audio-controller.hpp"
@@ -121,7 +121,7 @@ AudioCapturer::getPlayoutDevices()
 AudioCapturer::AudioCapturer(const unsigned int deviceIdx, 
             IAudioSampleConsumer* sampleConsumer,
             const WebrtcAudioChannel::Codec& codec):
-pimpl_(boost::make_shared<AudioCapturerImpl>(deviceIdx, sampleConsumer, codec))
+pimpl_(std::make_shared<AudioCapturerImpl>(deviceIdx, sampleConsumer, codec))
 {}
 
 AudioCapturer::~AudioCapturer()
@@ -153,7 +153,7 @@ AudioCapturer::getRtcpNum()
 }
 
 void
-AudioCapturer::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+AudioCapturer::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     pimpl_->setLogger(logger);    
 }
@@ -279,12 +279,12 @@ bool AudioCapturerImpl::SendRtp(const uint8_t* data, size_t len, const PacketOpt
         // as we are dispatching callback asynchronously, we have to
         // allocate memory for received data and wrap it in a shared_ptr
         nRtp_++;
-        boost::shared_ptr<AudioCapturerImpl> me = boost::static_pointer_cast<AudioCapturerImpl>(shared_from_this());
-        boost::shared_ptr<uint8_t[]> dataCopy(new uint8_t[len]);
-        memcpy(dataCopy.get(), data, len);
+        std::shared_ptr<AudioCapturerImpl> me = std::static_pointer_cast<AudioCapturerImpl>(shared_from_this());
+        auto dataCopy = std::make_shared<std::vector<uint8_t>>(len);
+        memcpy(dataCopy->data(), data, len);
 
         AudioController::getSharedInstance()->dispatchOnAudioThread([me, len, dataCopy](){
-            me->sampleConsumer_->onDeliverRtpFrame(len, dataCopy.get());
+            me->sampleConsumer_->onDeliverRtpFrame(len, dataCopy->data());
         });
     }
     return true;
@@ -297,12 +297,12 @@ bool AudioCapturerImpl::SendRtcp(const uint8_t* data, size_t len)
     if (capturing_)
     {
         nRtcp_++;
-        boost::shared_ptr<AudioCapturerImpl> me = boost::static_pointer_cast<AudioCapturerImpl>(shared_from_this());
-        boost::shared_ptr<uint8_t[]> dataCopy(new uint8_t[len]);
-        memcpy(dataCopy.get(), data, len);
+        std::shared_ptr<AudioCapturerImpl> me = std::static_pointer_cast<AudioCapturerImpl>(shared_from_this());
+        auto dataCopy = std::make_shared<std::vector<uint8_t>>(len);
+        memcpy(dataCopy->data(), data, len);
 
         AudioController::getSharedInstance()->dispatchOnAudioThread([me, len, dataCopy](){
-            me->sampleConsumer_->onDeliverRtcpFrame(len, dataCopy.get());
+            me->sampleConsumer_->onDeliverRtcpFrame(len, dataCopy->data());
         });
     }
     return true;

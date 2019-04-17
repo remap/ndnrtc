@@ -39,8 +39,8 @@ struct Args
 };
 
 int run(const struct Args &);
-void registerPrefix(boost::shared_ptr<Face> &, const KeyChainManager &);
-void publishCertificate(boost::shared_ptr<Face> &, KeyChainManager &);
+void registerPrefix(std::shared_ptr<Face> &, const KeyChainManager &);
+void publishCertificate(std::shared_ptr<Face> &, KeyChainManager &);
 
 void handler(int sig)
 {
@@ -150,7 +150,7 @@ int run(const struct Args &args)
                 << std::endl;
 
     boost::asio::io_service io;
-    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+    std::shared_ptr<boost::asio::io_service::work> work(std::make_shared<boost::asio::io_service::work>(io));
     boost::thread t([&io, &err]() {
         try
         {
@@ -162,9 +162,9 @@ int run(const struct Args &args)
             err = 1;
         }
     });
-    boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+    std::shared_ptr<Face> face(std::make_shared<ThreadsafeFace>(io));
     boost::asio::io_service rendererIo;
-    boost::shared_ptr<boost::asio::io_service::work> rendererWork(boost::make_shared<boost::asio::io_service::work>(rendererIo));
+    std::shared_ptr<boost::asio::io_service::work> rendererWork(std::make_shared<boost::asio::io_service::work>(rendererIo));
     boost::thread rendererThread([&rendererIo](){ 
       try {
         rendererIo.run(); 
@@ -230,7 +230,7 @@ int run(const struct Args &args)
     return err;
 }
 
-void registerPrefix(boost::shared_ptr<Face> &face, const KeyChainManager &keyChainManager)
+void registerPrefix(std::shared_ptr<Face> &face, const KeyChainManager &keyChainManager)
 {
     boost::mutex m;
     boost::unique_lock<boost::mutex> lock(m);
@@ -239,17 +239,17 @@ void registerPrefix(boost::shared_ptr<Face> &face, const KeyChainManager &keyCha
     bool registered = false;
 
     face->registerPrefix(Name(keyChainManager.instancePrefix()),
-                         [](const boost::shared_ptr<const Name> &prefix,
-                            const boost::shared_ptr<const Interest> &interest,
-                            Face &face, uint64_t, const boost::shared_ptr<const InterestFilter> &) {
+                         [](const std::shared_ptr<const Name> &prefix,
+                            const std::shared_ptr<const Interest> &interest,
+                            Face &face, uint64_t, const std::shared_ptr<const InterestFilter> &) {
                              LogTrace("") << "Unexpected incoming interest " << interest->getName() << std::endl;
                          },
-                         [&completed, &isDone](const boost::shared_ptr<const Name> &prefix) {
+                         [&completed, &isDone](const std::shared_ptr<const Name> &prefix) {
                              LogError("") << "Prefix registration failure (" << prefix << ")" << std::endl;
                              completed = true;
                              isDone.notify_one();
                          },
-                         [&completed, &registered, &isDone](const boost::shared_ptr<const Name> &p, uint64_t) {
+                         [&completed, &registered, &isDone](const std::shared_ptr<const Name> &p, uint64_t) {
                              LogInfo("") << "Successfully registered prefix " << *p << std::endl;
                              registered = true;
                              completed = true;
@@ -261,7 +261,7 @@ void registerPrefix(boost::shared_ptr<Face> &face, const KeyChainManager &keyCha
         throw std::runtime_error("Prefix registration failed");
 }
 
-void publishCertificate(boost::shared_ptr<Face> &face, KeyChainManager &keyManager)
+void publishCertificate(std::shared_ptr<Face> &face, KeyChainManager &keyManager)
 {
     static MemoryContentCache cache(face.get());
     Name filter;

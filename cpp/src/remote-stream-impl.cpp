@@ -31,11 +31,10 @@
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 using namespace ndn;
-using namespace boost;
 
-RemoteStreamImpl::RemoteStreamImpl(asio::io_service &io,
-                                   const shared_ptr<ndn::Face> &face,
-                                   const shared_ptr<ndn::KeyChain> &keyChain,
+RemoteStreamImpl::RemoteStreamImpl(boost::asio::io_service &io,
+                                   const std::shared_ptr<ndn::Face> &face,
+                                   const std::shared_ptr<ndn::KeyChain> &keyChain,
                                    const std::string &streamPrefix)
     : type_(MediaStreamParams::MediaStreamType::MediaStreamTypeUnknown),
       io_(io),
@@ -44,28 +43,27 @@ RemoteStreamImpl::RemoteStreamImpl(asio::io_service &io,
       streamPrefix_(streamPrefix),
       needMeta_(true), isRunning_(false), cuedToRun_(false),
       metadataRequestedMs_(0),
-      metaFetcher_(make_shared<MetaFetcher>()),
+      metaFetcher_(std::make_shared<MetaFetcher>()),
       sstorage_(StatisticsStorage::createConsumerStatistics()),
-      drdEstimator_(make_shared<DrdEstimator>())
+      drdEstimator_(std::make_shared<DrdEstimator>())
 {
     assert(face.get());
     assert(keyChain.get());
 
     description_ = "remote-stream";
 
-    segmentController_ = make_shared<SegmentController>(io, 500, sstorage_);
-    buffer_ = make_shared<Buffer>(sstorage_, make_shared<SlotPool>(500));
-    playbackQueue_ = make_shared<PlaybackQueue>(Name(streamPrefix),
-                                                dynamic_pointer_cast<Buffer>(buffer_));
-    rtxController_ = make_shared<RetransmissionController>(sstorage_, playbackQueue_, drdEstimator_);
+    segmentController_ = std::make_shared<SegmentController>(io, 500, sstorage_);
+    buffer_ = std::make_shared<Buffer>(sstorage_, std::make_shared<SlotPool>(500));
+    playbackQueue_ = std::make_shared<PlaybackQueue>(Name(streamPrefix), std::dynamic_pointer_cast<Buffer>(buffer_));
+    rtxController_ = std::make_shared<RetransmissionController>(sstorage_, playbackQueue_, drdEstimator_);
     buffer_->attach(rtxController_.get());
     // playout and playout-control created in subclasses
 
-    interestQueue_ = make_shared<InterestQueue>(io, face, sstorage_);
-    sampleEstimator_ = make_shared<SampleEstimator>(sstorage_);
-    bufferControl_ = make_shared<BufferControl>(drdEstimator_, buffer_, sstorage_);
-    latencyControl_ = make_shared<LatencyControl>(1000, drdEstimator_, sstorage_);
-    interestControl_ = make_shared<InterestControl>(drdEstimator_, sstorage_);
+    interestQueue_ = std::make_shared<InterestQueue>(io, face, sstorage_);
+    sampleEstimator_ = std::make_shared<SampleEstimator>(sstorage_);
+    bufferControl_ = std::make_shared<BufferControl>(drdEstimator_, buffer_, sstorage_);
+    latencyControl_ = std::make_shared<LatencyControl>(1000, drdEstimator_, sstorage_);
+    interestControl_ = std::make_shared<InterestControl>(drdEstimator_, sstorage_);
 
     // pipeliner and pipeline control created in subclasses
 
@@ -139,17 +137,17 @@ void RemoteStreamImpl::setTargetBufferSize(unsigned int bufferSizeMs)
         LogWarnC << "attempting to setTargetBufferSize() but playoutControl_ is null" << std::endl;
 }
 
-void RemoteStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void RemoteStreamImpl::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     NdnRtcComponent::setLogger(logger);
-    dynamic_pointer_cast<NdnRtcComponent>(buffer_)->setLogger(logger);
-    dynamic_pointer_cast<NdnRtcComponent>(metaFetcher_)->setLogger(logger);
-    dynamic_pointer_cast<NdnRtcComponent>(bufferControl_)->setLogger(logger);
-    dynamic_pointer_cast<NdnRtcComponent>(interestQueue_)->setLogger(logger);
-    dynamic_pointer_cast<NdnRtcComponent>(pipeliner_)->setLogger(logger);
-    dynamic_pointer_cast<NdnRtcComponent>(latencyControl_)->setLogger(logger);
-    dynamic_pointer_cast<NdnRtcComponent>(interestControl_)->setLogger(logger);
-    dynamic_pointer_cast<NdnRtcComponent>(playbackQueue_)->setLogger(logger);
+    std::dynamic_pointer_cast<NdnRtcComponent>(buffer_)->setLogger(logger);
+    std::dynamic_pointer_cast<NdnRtcComponent>(metaFetcher_)->setLogger(logger);
+    std::dynamic_pointer_cast<NdnRtcComponent>(bufferControl_)->setLogger(logger);
+    std::dynamic_pointer_cast<NdnRtcComponent>(interestQueue_)->setLogger(logger);
+    std::dynamic_pointer_cast<NdnRtcComponent>(pipeliner_)->setLogger(logger);
+    std::dynamic_pointer_cast<NdnRtcComponent>(latencyControl_)->setLogger(logger);
+    std::dynamic_pointer_cast<NdnRtcComponent>(interestControl_)->setLogger(logger);
+    std::dynamic_pointer_cast<NdnRtcComponent>(playbackQueue_)->setLogger(logger);
     segmentController_->setLogger(logger);
     rtxController_->setLogger(logger);
     if (pipelineControl_.get())
@@ -193,7 +191,7 @@ RemoteStreamImpl::getStreamPrefix() const
 #pragma mark - private
 void RemoteStreamImpl::fetchMeta()
 {
-    shared_ptr<RemoteStreamImpl> me = dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
+    std::shared_ptr<RemoteStreamImpl> me = std::dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
     metaFetcher_->fetch(face_, keyChain_, Name(streamPrefix_).append(NameComponents::NameComponentMeta),
                         [me, this](NetworkData &meta,
                                    const std::vector<ValidationErrorInfo> &validationInfo) {
@@ -209,9 +207,9 @@ void RemoteStreamImpl::fetchMeta()
 
 void RemoteStreamImpl::streamMetaFetched(NetworkData &meta)
 {
-    streamMeta_ = make_shared<MediaStreamMeta>(move(meta));
+    streamMeta_ = std::make_shared<MediaStreamMeta>(std::move(meta));
 
-    shared_ptr<RemoteStreamImpl> me = dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
+    std::shared_ptr<RemoteStreamImpl> me = std::dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
     std::stringstream ss;
     int64_t metadataRequestedMs = clock::millisecondTimestamp();
 
@@ -229,7 +227,7 @@ void RemoteStreamImpl::fetchThreadMeta(const std::string &threadName, const int6
     Name metaPrefix(streamPrefix_);
     metaPrefix.appendTimestamp(streamMeta_->getStreamTimestamp()).append(threadName).append(NameComponents::NameComponentMeta);
 
-    shared_ptr<RemoteStreamImpl> me = dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
+    std::shared_ptr<RemoteStreamImpl> me = std::dynamic_pointer_cast<RemoteStreamImpl>(shared_from_this());
     metaFetcher_->fetch(face_, keyChain_, metaPrefix,
                         [threadName, me, metadataRequestedMs, this](NetworkData &meta,
                                                const std::vector<ValidationErrorInfo> &validationInfo) {
@@ -249,7 +247,7 @@ void RemoteStreamImpl::fetchThreadMeta(const std::string &threadName, const int6
 
 void RemoteStreamImpl::threadMetaFetched(const std::string &thread, NetworkData &meta)
 {
-    threadsMeta_[thread] = make_shared<NetworkData>(move(meta));
+    threadsMeta_[thread] = std::make_shared<NetworkData>(std::move(meta));
     LogInfoC << "received thread meta info for: " << thread << std::endl;
 
     if (threadsMeta_.size() == streamMeta_->getThreads().size())

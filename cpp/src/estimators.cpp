@@ -60,7 +60,7 @@ TimeWindow::cut(std::deque<double>& samples)
 }
 
 //******************************************************************************
-Average::Average(boost::shared_ptr<IEstimatorWindow> window):
+Average::Average(std::shared_ptr<IEstimatorWindow> window):
 Estimator(window), accumulatedSum_(0.), variance_(0.), limitReached_(false)
 {
 }
@@ -95,7 +95,7 @@ Average::newValue(double value)
 }
 
 //******************************************************************************
-FreqMeter::FreqMeter(boost::shared_ptr<IEstimatorWindow> window):Estimator(window),
+FreqMeter::FreqMeter(std::shared_ptr<IEstimatorWindow> window):Estimator(window),
 run_(false)
 {}
 

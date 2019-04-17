@@ -28,14 +28,14 @@ namespace ndnrtc {
 	 */
 	class MetaFetcher : public NdnRtcComponent {
 	public:
-		typedef boost::function<void(NetworkData&, 
+		typedef std::function<void(NetworkData&, 
 			const std::vector<ValidationErrorInfo>)>
 			OnMeta;
-		typedef boost::function<void(const std::string&)>
+		typedef std::function<void(const std::string&)>
 			OnError;
 
 		MetaFetcher(){ description_ = "meta-fetcher"; }
-		void fetch(boost::shared_ptr<ndn::Face>, boost::shared_ptr<ndn::KeyChain>, 
+		void fetch(std::shared_ptr<ndn::Face>, std::shared_ptr<ndn::KeyChain>, 
 			const ndn::Name&, const OnMeta&, const OnError&);
 		bool hasPendingRequest() const { return isPending_; }
 

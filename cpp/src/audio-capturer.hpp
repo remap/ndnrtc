@@ -61,13 +61,13 @@ namespace ndnrtc {
         getRtcpNum();
 
         void
-        setLogger(boost::shared_ptr<ndnlog::new_api::Logger>);
+        setLogger(std::shared_ptr<ndnlog::new_api::Logger>);
 
         static std::vector<std::pair<std::string, std::string>> getRecordingDevices();
         static std::vector<std::pair<std::string, std::string>> getPlayoutDevices();
 
     private:
-        boost::shared_ptr<AudioCapturerImpl> pimpl_;
+        std::shared_ptr<AudioCapturerImpl> pimpl_;
     };
 }
 

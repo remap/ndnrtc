@@ -70,7 +70,7 @@ case $host_os in
 		esac
 		os_module=darwin
 		;;
-  linux-android*)
+  *linux-android*)
   		os_module=android
   		;;
   linux*)
@@ -235,7 +235,7 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
-AX_CXX_COMPILE_STDCXX_11([], optional)
+AX_CXX_COMPILE_STDCXX_11([], mandatory)
 
 # Checks for library functions.
 #AC_FUNC_MALLOC
@@ -298,26 +298,6 @@ AC_LINK_IFELSE(
  		[AC_MSG_RESULT([yes])],
  		[AC_MSG_FAILURE([can't find NDN-CPP lib])]
 )
-
-AC_MSG_CHECKING([if NDN-CPP library was compiled for using boost::shared_ptr])
-
-if test "$build_os" == "$host_os"; then
-	AC_RUN_IFELSE(
-		[AC_LANG_PROGRAM([
-			#include <ndn-cpp/interest.hpp>
-			#include <boost/shared_ptr.hpp>
-			],
-			[
-				ndn::ptr_lib::shared_ptr<int> ptrlibPtr(new int(5));
-				boost::shared_ptr<int> boostPtr(new int(6));
-				ptrlibPtr = boostPtr;
-			]
-		)],
-		[AC_MSG_RESULT([yes])],
-		[AC_MSG_RESULT([no])]
-		[AC_MSG_FAILURE([NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr])]	
-	)
-fi
 
 LIBS=$SAVED_LIBS
 LDFLAGS=$SAVED_LDFLAGS

@@ -30,7 +30,7 @@ public:
 		onNotFound();
 	}
 
-	boost::shared_ptr<ndnrtc::ISlot> slot_;
+	std::shared_ptr<ndnrtc::ISlot> slot_;
 };
 
 class MockSlot : public ndnrtc::ISlot {

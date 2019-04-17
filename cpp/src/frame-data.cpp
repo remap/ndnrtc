@@ -23,7 +23,7 @@ using namespace ndnrtc;
 namespace ndnrtc
 {
 template <>
-boost::shared_ptr<VideoFramePacket>
+std::shared_ptr<VideoFramePacket>
 VideoFramePacket::merge(const std::vector<ImmutableHeaderPacket<VideoFrameSegmentHeader>> &segments)
 {
     std::vector<uint8_t> packetBytes;
@@ -32,12 +32,12 @@ VideoFramePacket::merge(const std::vector<ImmutableHeaderPacket<VideoFrameSegmen
                            s.getPayload().begin(), s.getPayload().end());
 
     NetworkData packetData(boost::move(packetBytes));
-    return boost::make_shared<VideoFramePacket>(boost::move(packetData));
+    return std::make_shared<VideoFramePacket>(boost::move(packetData));
 }
 
 //******************************************************************************
 template <>
-boost::shared_ptr<AudioBundlePacket>
+std::shared_ptr<AudioBundlePacket>
 AudioBundlePacket::merge(const std::vector<ImmutableHeaderPacket<DataSegmentHeader>> &segments)
 {
     std::vector<uint8_t> packetBytes;
@@ -46,11 +46,11 @@ AudioBundlePacket::merge(const std::vector<ImmutableHeaderPacket<DataSegmentHead
                            s.getPayload().begin(), s.getPayload().end());
 
     NetworkData packetData(boost::move(packetBytes));
-    return boost::make_shared<AudioBundlePacket>(boost::move(packetData));
+    return std::make_shared<AudioBundlePacket>(boost::move(packetData));
 }
 }
 //******************************************************************************
-Manifest::Manifest(const std::vector<boost::shared_ptr<const ndn::Data>> &dataObjects)
+Manifest::Manifest(const std::vector<std::shared_ptr<const ndn::Data>> &dataObjects)
     : DataPacket(std::vector<uint8_t>())
 {
     for (auto &d : dataObjects)
@@ -232,8 +232,8 @@ MediaStreamMeta::getStreamTimestamp() const
 }
 
 //******************************************************************************
-WireSegment::WireSegment(const boost::shared_ptr<ndn::Data> &data,
-                         const boost::shared_ptr<const ndn::Interest> &interest)
+WireSegment::WireSegment(const std::shared_ptr<ndn::Data> &data,
+                         const std::shared_ptr<const ndn::Interest> &interest)
     : data_(data), interest_(interest),
       isValid_(NameComponents::extractInfo(data->getName(), dataNameInfo_))
 {
@@ -249,8 +249,8 @@ WireSegment::WireSegment(const boost::shared_ptr<ndn::Data> &data,
 }
 
 WireSegment::WireSegment(const NamespaceInfo &info,
-                         const boost::shared_ptr<ndn::Data> &data,
-                         const boost::shared_ptr<const ndn::Interest> &interest)
+                         const std::shared_ptr<ndn::Data> &data,
+                         const std::shared_ptr<const ndn::Interest> &interest)
     : dataNameInfo_(info), data_(data), interest_(interest), isValid_(true)
 {
     if (dataNameInfo_.apiVersion_ != NameComponents::nameApiVersion())
@@ -288,7 +288,7 @@ WireSegment::packetHeader() const
                                  "non-zero segment is not allowed");
 
     ImmutableHeaderPacket<DataSegmentHeader> s0(data_->getContent());
-    boost::shared_ptr<std::vector<uint8_t>> data(boost::make_shared<std::vector<uint8_t>>(s0.getPayload().begin(),
+    std::shared_ptr<std::vector<uint8_t>> data(std::make_shared<std::vector<uint8_t>>(s0.getPayload().begin(),
                                                                                           s0.getPayload().end()));
     ImmutableHeaderPacket<CommonHeader> p0(data);
     return p0.getHeader();
@@ -302,15 +302,15 @@ bool WireSegment::isOriginal() const
     return header().interestNonce_ == *(uint32_t *)(interest_->getNonce().buf());
 }
 
-boost::shared_ptr<WireSegment>
+std::shared_ptr<WireSegment>
 WireSegment::createSegment(const NamespaceInfo &namespaceInfo,
-                           const boost::shared_ptr<ndn::Data> &data,
-                           const boost::shared_ptr<const ndn::Interest> &interest)
+                           const std::shared_ptr<ndn::Data> &data,
+                           const std::shared_ptr<const ndn::Interest> &interest)
 {
     if (namespaceInfo.streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo &&
         (namespaceInfo.segmentClass_ == SegmentClass::Data || namespaceInfo.segmentClass_ == SegmentClass::Parity))
-        return boost::make_shared<WireData<VideoFrameSegmentHeader>>(namespaceInfo, data, interest);
+        return std::make_shared<WireData<VideoFrameSegmentHeader>>(namespaceInfo, data, interest);
 
-    return boost::make_shared<WireData<DataSegmentHeader>>(namespaceInfo, data, interest);
+    return std::make_shared<WireData<DataSegmentHeader>>(namespaceInfo, data, interest);
     ;
 }

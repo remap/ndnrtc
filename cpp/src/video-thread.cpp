@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#include <boost/make_shared.hpp>
+#include <memory>
 #include <ndn-cpp/data.hpp>
 
 #include "video-thread.hpp"
@@ -33,7 +33,7 @@ VideoThread::~VideoThread()
 
 //******************************************************************************
 #pragma mark - public
-boost::shared_ptr<VideoFramePacket>
+std::shared_ptr<VideoFramePacket>
 VideoThread::encode(const WebRtcVideoFrame &frame)
 {
     coder_.onRawFrame(frame);
@@ -58,7 +58,7 @@ void VideoThread::onEncodingStarted()
 void VideoThread::onEncodedFrame(const webrtc::EncodedImage &encodedImage)
 {
     nEncoded_++;
-    videoFramePacket_ = boost::make_shared<VideoFramePacket>(encodedImage);
+    videoFramePacket_ = std::make_shared<VideoFramePacket>(encodedImage);
 }
 
 void VideoThread::onDroppedFrame()
@@ -66,7 +66,7 @@ void VideoThread::onDroppedFrame()
     nDropped_++;
 }
 
-void VideoThread::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void VideoThread::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     coder_.setLogger(logger);
     ILoggingObject::setLogger(logger);

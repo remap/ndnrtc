@@ -18,8 +18,8 @@ using namespace ndn;
 using namespace ndnrtc;
 
 RemoteAudioStreamImpl::RemoteAudioStreamImpl(boost::asio::io_service &io,
-                                             const boost::shared_ptr<ndn::Face> &face,
-                                             const boost::shared_ptr<ndn::KeyChain> &keyChain,
+                                             const std::shared_ptr<ndn::Face> &face,
+                                             const std::shared_ptr<ndn::KeyChain> &keyChain,
                                              const std::string &streamPrefix)
     : RemoteStreamImpl(io, face, keyChain, streamPrefix),
       io_(io)
@@ -36,9 +36,9 @@ RemoteAudioStreamImpl::RemoteAudioStreamImpl(boost::asio::io_service &io,
     pps.segmentController_ = segmentController_;
     pps.sstorage_ = sstorage_;
 
-    pipeliner_ = boost::make_shared<Pipeliner>(pps,
-                                               boost::make_shared<Pipeliner::AudioNameScheme>());
-    validator_ = boost::make_shared<SampleValidator>(keyChain, sstorage_);
+    pipeliner_ = std::make_shared<Pipeliner>(pps,
+                                               std::make_shared<Pipeliner::AudioNameScheme>());
+    validator_ = std::make_shared<SampleValidator>(keyChain, sstorage_);
     buffer_->attach(validator_.get());
 }
 
@@ -64,7 +64,7 @@ void RemoteAudioStreamImpl::stopFetching()
     releasePipelineControl();
 }
 
-void RemoteAudioStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void RemoteAudioStreamImpl::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     RemoteStreamImpl::setLogger(logger);
     validator_->setLogger(logger);
@@ -73,16 +73,16 @@ void RemoteAudioStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger>
 void RemoteAudioStreamImpl::setupPlayout()
 {
     AudioThreadMeta meta(threadsMeta_[threadName_]->data());
-    playout_ = boost::make_shared<AudioPlayout>(io_, playbackQueue_, sstorage_,
+    playout_ = std::make_shared<AudioPlayout>(io_, playbackQueue_, sstorage_,
                                                 WebrtcAudioChannel::fromString(meta.getCodec()));
-    playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, 
+    playoutControl_ = std::make_shared<PlayoutControl>(playout_, playbackQueue_, 
                                                          rtxController_);
     playbackQueue_->attach(playoutControl_.get());
     latencyControl_->setPlayoutControl(playoutControl_);
     drdEstimator_->attach(playoutControl_.get());
 
-    boost::dynamic_pointer_cast<Playout>(playout_)->setLogger(logger_);
-    boost::dynamic_pointer_cast<NdnRtcComponent>(playoutControl_)->setLogger(logger_);
+    std::dynamic_pointer_cast<Playout>(playout_)->setLogger(logger_);
+    std::dynamic_pointer_cast<NdnRtcComponent>(playoutControl_)->setLogger(logger_);
 }
 
 void RemoteAudioStreamImpl::releasePlayout()
@@ -98,14 +98,14 @@ void RemoteAudioStreamImpl::setupPipelineControl()
     Name threadPrefix(getStreamPrefix());
     threadPrefix.append(threadName_);
 
-    pipelineControl_ = boost::make_shared<PipelineControl>(
+    pipelineControl_ = std::make_shared<PipelineControl>(
         PipelineControl::defaultPipelineControl(threadPrefix.toUri(),
                                                 drdEstimator_,
-                                                boost::dynamic_pointer_cast<IBuffer>(buffer_),
-                                                boost::dynamic_pointer_cast<IPipeliner>(pipeliner_),
-                                                boost::dynamic_pointer_cast<IInterestControl>(interestControl_),
-                                                boost::dynamic_pointer_cast<ILatencyControl>(latencyControl_),
-                                                boost::dynamic_pointer_cast<IPlayoutControl>(playoutControl_),
+                                                std::dynamic_pointer_cast<IBuffer>(buffer_),
+                                                std::dynamic_pointer_cast<IPipeliner>(pipeliner_),
+                                                std::dynamic_pointer_cast<IInterestControl>(interestControl_),
+                                                std::dynamic_pointer_cast<ILatencyControl>(latencyControl_),
+                                                std::dynamic_pointer_cast<IPlayoutControl>(playoutControl_),
                                                 sampleEstimator_,
                                                 sstorage_));
     pipelineControl_->setLogger(logger_);

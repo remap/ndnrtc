@@ -23,13 +23,13 @@ using namespace estimators;
 // minimal default size of the playback queue
 unsigned int PlayoutControl::MinimalPlayableLevel = 150;
 
-PlayoutControl::PlayoutControl(const boost::shared_ptr<IPlayout> &playout,
-                               const boost::shared_ptr<IPlaybackQueue> &queue,
-                               const boost::shared_ptr<RetransmissionController> &rtxController,
+PlayoutControl::PlayoutControl(const std::shared_ptr<IPlayout> &playout,
+                               const std::shared_ptr<IPlaybackQueue> &queue,
+                               const std::shared_ptr<RetransmissionController> &rtxController,
                                unsigned int minimalPlayableLevel)
     : playoutAllowed_(false),
       ffwdMs_(0), queueCheckMs_(0), 
-      playbackQueueSize_(Average(boost::make_shared<TimeWindow>(QUEUE_CHECK_INTERVAL))),
+      playbackQueueSize_(Average(std::make_shared<TimeWindow>(QUEUE_CHECK_INTERVAL))),
       playout_(playout),
       queue_(queue),
       rtxController_(rtxController),

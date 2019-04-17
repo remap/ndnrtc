@@ -23,7 +23,7 @@ using namespace ndnrtc::statistics;
 using namespace ndn;
 
 Pipeliner::Pipeliner(const PipelinerSettings& settings,
-                     const boost::shared_ptr<INameScheme>& nameScheme):
+                     const std::shared_ptr<INameScheme>& nameScheme):
 nameScheme_(nameScheme),
 sampleEstimator_(settings.sampleEstimator_),
 buffer_(settings.buffer_),
@@ -53,7 +53,7 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
 {
     if (lastRequestedSample_ == SampleClass::Unknown) // request metadata
     {
-        boost::shared_ptr<Interest> interest = nameScheme_->metadataInterest(Name(threadPrefix), interestLifetime_, seqCounter_);
+        std::shared_ptr<Interest> interest = nameScheme_->metadataInterest(Name(threadPrefix), interestLifetime_, seqCounter_);
         request(interest, DeadlinePriority::fromNow(0));
 
         LogDebugC << interest->getName() << std::endl;
@@ -63,7 +63,7 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
         Name n = nameScheme_->samplePrefix(threadPrefix, nextSamplePriority_);
         n.appendSequenceNumber((nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_));
         
-        const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
+        const std::vector<std::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
         
         LogDebugC << "sample "
             << (nextSamplePriority_ == SampleClass::Delta ? seqCounter_.delta_ : seqCounter_.key_) 
@@ -78,7 +78,7 @@ Pipeliner::express(const ndn::Name& threadPrefix, bool placeInBuffer)
 }
 
 void
-Pipeliner::express(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests,
+Pipeliner::express(const std::vector<std::shared_ptr<const ndn::Interest>>& interests,
     bool placeInBuffer)
 {
     request(interests, DeadlinePriority::fromNow(0));
@@ -99,7 +99,7 @@ Pipeliner::onIncomingData(const ndn::Name& threadPrefix)
         n.appendSequenceNumber((nextSamplePriority_ == SampleClass::Delta ?
                                 seqCounter_.delta_ : seqCounter_.key_));
 
-        const std::vector<boost::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
+        const std::vector<std::shared_ptr<const Interest>> batch = getBatch(n, nextSamplePriority_);
         int64_t deadline = playbackQueue_->size()+playbackQueue_->pendingSize();
 
         request(batch, DeadlinePriority::fromNow(deadline));
@@ -152,15 +152,15 @@ Pipeliner::getSequenceNumber(SampleClass cls)
 
 #pragma mark - private
 void
-Pipeliner::request(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests,
-    const boost::shared_ptr<DeadlinePriority>& priority)
+Pipeliner::request(const std::vector<std::shared_ptr<const ndn::Interest>>& interests,
+    const std::shared_ptr<DeadlinePriority>& priority)
 {
     for (auto& i:interests) request(i, priority);
 }
 
 void 
-Pipeliner::request(const boost::shared_ptr<const ndn::Interest>& interest,
-            const boost::shared_ptr<DeadlinePriority>& priority)
+Pipeliner::request(const std::shared_ptr<const ndn::Interest>& interest,
+            const std::shared_ptr<DeadlinePriority>& priority)
 {
     interestQueue_->enqueueInterest(interest,  priority,
         segmentController_->getOnDataCallback(),
@@ -168,10 +168,10 @@ Pipeliner::request(const boost::shared_ptr<const ndn::Interest>& interest,
         segmentController_->getOnNetworkNackCallback());
 }
 
-std::vector<boost::shared_ptr<const Interest>>
+std::vector<std::shared_ptr<const Interest>>
 Pipeliner::getBatch(Name n, SampleClass cls, bool noParity) const
 {
-    std::vector<boost::shared_ptr<const Interest>> interests;
+    std::vector<std::shared_ptr<const Interest>> interests;
     unsigned int nData = sampleEstimator_->getSegmentNumberEstimation(cls, SegmentClass::Data);
 
     for (int segNo = 0; segNo < nData; ++segNo)
@@ -179,7 +179,7 @@ Pipeliner::getBatch(Name n, SampleClass cls, bool noParity) const
         Name iname(n);
         iname.appendSegment(segNo);
         
-        boost::shared_ptr<Interest> i = boost::make_shared<Interest>(iname, interestLifetime_);
+        std::shared_ptr<Interest> i = std::make_shared<Interest>(iname, interestLifetime_);
         i->setMustBeFresh(false);
         interests.push_back(i);
     }
@@ -193,7 +193,7 @@ Pipeliner::getBatch(Name n, SampleClass cls, bool noParity) const
             Name iname(n);
             iname.appendSegment(segNo);
             
-            boost::shared_ptr<Interest> i = boost::make_shared<Interest>(iname, interestLifetime_);
+            std::shared_ptr<Interest> i = std::make_shared<Interest>(iname, interestLifetime_);
             i->setMustBeFresh(false);
             interests.push_back(i);
         }
@@ -203,7 +203,7 @@ Pipeliner::getBatch(Name n, SampleClass cls, bool noParity) const
 }
 
 // IBufferObserver
-void Pipeliner::onNewRequest(const boost::shared_ptr<BufferSlot>&)
+void Pipeliner::onNewRequest(const std::shared_ptr<BufferSlot>&)
 {
     // do nothing
 }
@@ -211,10 +211,10 @@ void Pipeliner::onNewRequest(const boost::shared_ptr<BufferSlot>&)
 void Pipeliner::onNewData(const BufferReceipt& receipt)
 {
     // check for missing segments
-    std::vector<boost::shared_ptr<const Interest>> interests;
+    std::vector<std::shared_ptr<const Interest>> interests;
     for (auto& n:receipt.slot_->getMissingSegments())
     {
-        boost::shared_ptr<Interest> i = boost::make_shared<Interest>(n, interestLifetime_);
+        std::shared_ptr<Interest> i = std::make_shared<Interest>(n, interestLifetime_);
         i->setMustBeFresh(false);
         interests.push_back(i);
     }
@@ -253,12 +253,12 @@ Pipeliner::VideoNameScheme::metadataPrefix(const ndn::Name& threadPrefix)
     return prefix.append(NameComponents::NameComponentMeta);
 }
 
-boost::shared_ptr<ndn::Interest>
+std::shared_ptr<ndn::Interest>
 Pipeliner::VideoNameScheme::metadataInterest(const ndn::Name threadPrefix,
                                              unsigned int lifetime,
                                              SequenceCounter seqCounter)
 {
-    boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(metadataPrefix(threadPrefix),
+    std::shared_ptr<Interest> interest(std::make_shared<Interest>(metadataPrefix(threadPrefix),
                                                                       lifetime));
     interest->setMustBeFresh(true);
     // set "can be prefix"?
@@ -278,12 +278,12 @@ Pipeliner::AudioNameScheme::metadataPrefix(const ndn::Name& threadPrefix)
     return prefix.append(NameComponents::NameComponentMeta).appendVersion(0).appendSegment(0);
 }
 
-boost::shared_ptr<ndn::Interest>
+std::shared_ptr<ndn::Interest>
 Pipeliner::AudioNameScheme::metadataInterest(const ndn::Name threadPrefix,
                                              unsigned int lifetime,
                                              SequenceCounter seqCounter)
 {
-    boost::shared_ptr<Interest> interest(boost::make_shared<Interest>(metadataPrefix(threadPrefix),
+    std::shared_ptr<Interest> interest(std::make_shared<Interest>(metadataPrefix(threadPrefix),
                                                                       lifetime));
     interest->setMustBeFresh(true);
     

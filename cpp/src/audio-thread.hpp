@@ -40,7 +40,7 @@ class IAudioThreadCallback
      * @see AudioController
      */
     virtual void onSampleBundle(std::string threadName, uint64_t bundleNo,
-                                boost::shared_ptr<AudioBundlePacketT<Mutable>> packet) = 0;
+                                std::shared_ptr<AudioBundlePacketT<Mutable>> packet) = 0;
 };
 
 class AudioThread : public NdnRtcComponent,
@@ -61,7 +61,7 @@ class AudioThread : public NdnRtcComponent,
     std::string getCodec() const { return codec_; }
     double getRate() const;
     uint64_t getBundleNo() const { return bundleNo_; }
-    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+    void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
 
   private:
     AudioThread(const AudioThread &) = delete;
@@ -70,7 +70,7 @@ class AudioThread : public NdnRtcComponent,
     estimators::FreqMeter rateMeter_;
     std::string threadName_, codec_;
     IAudioThreadCallback *callback_;
-    boost::shared_ptr<AudioBundlePacketT<Mutable>> bundle_;
+    std::shared_ptr<AudioBundlePacketT<Mutable>> bundle_;
     AudioCapturer capturer_;
     boost::atomic<bool> isRunning_;
 

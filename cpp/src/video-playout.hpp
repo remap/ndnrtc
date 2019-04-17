@@ -22,9 +22,9 @@ namespace ndnrtc {
     {
     public:
         VideoPlayout(boost::asio::io_service& io,
-            const boost::shared_ptr<IPlaybackQueue>& queue,
-            const boost::shared_ptr<StatStorage>& statStorage = 
-                boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
+            const std::shared_ptr<IPlaybackQueue>& queue,
+            const std::shared_ptr<StatStorage>& statStorage = 
+                std::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
         
         void stop();
         void registerFrameConsumer(IEncodedFrameConsumer* frameConsumer);

@@ -17,17 +17,17 @@ class MockNdnKeyChain
 {
 public:
 	MOCK_METHOD1(sign, void(ndn::Data&));
-	MOCK_METHOD3(verifyData, void(const boost::shared_ptr<ndn::Data>& data, 
+	MOCK_METHOD3(verifyData, void(const std::shared_ptr<ndn::Data>& data, 
 		const ndn::OnVerified& onVerified, const ndn::OnDataValidationFailed& onVerifyFailed));
 
-	void callOnVerifySuccess(const boost::shared_ptr<ndn::Data>& data, 
+	void callOnVerifySuccess(const std::shared_ptr<ndn::Data>& data, 
 		const ndn::OnVerified& onVerified, const ndn::OnDataValidationFailed& onVerifyFailed)
 
 	{
 		onVerified(data);
 	}
 
-	void callOnVerifyFailed(const boost::shared_ptr<ndn::Data>& data, 
+	void callOnVerifyFailed(const std::shared_ptr<ndn::Data>& data, 
 		const ndn::OnVerified& onVerified, const ndn::OnDataValidationFailed& onVerifyFailed)
 	{
 		onVerifyFailed(data, "");
@@ -38,17 +38,17 @@ class MockNdnMemoryCache
 {
 public:
 	MOCK_METHOD2(setInterestFilter, void(const ndn::Name&, const ndn::OnInterestCallback&));
-	MOCK_METHOD2(getPendingInterestsForName, void(const ndn::Name&, std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest> >&));
-	MOCK_METHOD2(getPendingInterestsWithPrefix, void(const ndn::Name&, std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest> >&));
+	MOCK_METHOD2(getPendingInterestsForName, void(const ndn::Name&, std::vector<std::shared_ptr<const ndn::MemoryContentCache::PendingInterest> >&));
+	MOCK_METHOD2(getPendingInterestsWithPrefix, void(const ndn::Name&, std::vector<std::shared_ptr<const ndn::MemoryContentCache::PendingInterest> >&));
 	MOCK_METHOD1(add, void(const ndn::Data&));
 	MOCK_METHOD0(getStorePendingInterest, const ndn::OnInterestCallback&());
 
 	void
 	storePendingInterestCallback
-	(const boost::shared_ptr<const ndn::Name>& prefix,
-		const boost::shared_ptr<const ndn::Interest>& interest, ndn::Face& face,
+	(const std::shared_ptr<const ndn::Name>& prefix,
+		const std::shared_ptr<const ndn::Interest>& interest, ndn::Face& face,
 		uint64_t interestFilterId,
-		const boost::shared_ptr<const ndn::InterestFilter>& filter)
+		const std::shared_ptr<const ndn::InterestFilter>& filter)
 	{
 	}
 };

@@ -8,7 +8,7 @@
 //  Author:  Peter Gusev
 //
 
-#include <boost/make_shared.hpp>
+#include <memory>
 #include <ndn-cpp/data.hpp>
 
 #include "audio-thread.hpp"
@@ -25,11 +25,11 @@ AudioThread::AudioThread(const AudioThreadParams &params,
                          IAudioThreadCallback *callback,
                          size_t bundleWireLength)
     : bundleNo_(0),
-      rateMeter_(boost::make_shared<estimators::TimeWindow>(250)),
+      rateMeter_(std::make_shared<estimators::TimeWindow>(250)),
       threadName_(params.threadName_),
       codec_(params.codec_),
       callback_(callback),
-      bundle_(boost::make_shared<AudioBundlePacket>(bundleWireLength)),
+      bundle_(std::make_shared<AudioBundlePacket>(bundleWireLength)),
       capturer_(captureParams.deviceId_, this,
                 (params.codec_ == "opus" ? WebrtcAudioChannel::Codec::Opus : WebrtcAudioChannel::Codec::G722)),
       isRunning_(false)
@@ -69,7 +69,7 @@ double AudioThread::getRate() const
     return rateMeter_.value();
 }
 
-void AudioThread::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void AudioThread::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     ILoggingObject::setLogger(logger);
     capturer_.setLogger(logger);

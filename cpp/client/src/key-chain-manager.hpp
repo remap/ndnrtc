@@ -23,33 +23,33 @@ class PrivateKeyStorage;
 class KeyChainManager
 {
   public:
-    KeyChainManager(boost::shared_ptr<ndn::Face> face,
+    KeyChainManager(std::shared_ptr<ndn::Face> face,
                     const std::string &identityName,
                     const std::string &instanceName,
                     const std::string &configPolicy,
                     unsigned int runTime);
 
-    boost::shared_ptr<ndn::KeyChain> defaultKeyChain() { return defaultKeyChain_; }
-    boost::shared_ptr<ndn::KeyChain> instanceKeyChain() { return instanceKeyChain_; }
+    std::shared_ptr<ndn::KeyChain> defaultKeyChain() { return defaultKeyChain_; }
+    std::shared_ptr<ndn::KeyChain> instanceKeyChain() { return instanceKeyChain_; }
     std::string instancePrefix() const { return instanceIdentity_; }
 
-    const boost::shared_ptr<ndn::Data> instanceCertificate() const
+    const std::shared_ptr<ndn::Data> instanceCertificate() const
     {
         return instanceCert_;
     }
 
   private:
-    boost::shared_ptr<ndn::Face> face_;
+    std::shared_ptr<ndn::Face> face_;
     std::string signingIdentity_, instanceName_,
         configPolicy_, instanceIdentity_;
     unsigned int runTime_;
 
-    boost::shared_ptr<ndn::ConfigPolicyManager> configPolicyManager_;
-    boost::shared_ptr<ndn::KeyChain> defaultKeyChain_, instanceKeyChain_;
+    std::shared_ptr<ndn::ConfigPolicyManager> configPolicyManager_;
+    std::shared_ptr<ndn::KeyChain> defaultKeyChain_, instanceKeyChain_;
     // instanceCert_ is a certificate subclass of Data.
-    boost::shared_ptr<ndn::Data> instanceCert_;
-    boost::shared_ptr<ndn::IdentityStorage> identityStorage_;
-    boost::shared_ptr<ndn::PrivateKeyStorage> privateKeyStorage_;
+    std::shared_ptr<ndn::Data> instanceCert_;
+    std::shared_ptr<ndn::IdentityStorage> identityStorage_;
+    std::shared_ptr<ndn::PrivateKeyStorage> privateKeyStorage_;
 
     void setupDefaultKeyChain();
     void setupInstanceKeyChain();

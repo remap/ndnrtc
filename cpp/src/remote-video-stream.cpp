@@ -25,8 +25,8 @@ using namespace ndn;
 using namespace boost;
 
 RemoteVideoStreamImpl::RemoteVideoStreamImpl(boost::asio::io_service &io,
-                                             const boost::shared_ptr<ndn::Face> &face,
-                                             const boost::shared_ptr<ndn::KeyChain> &keyChain,
+                                             const std::shared_ptr<ndn::Face> &face,
+                                             const std::shared_ptr<ndn::KeyChain> &keyChain,
                                              const std::string &streamPrefix) 
     : RemoteStreamImpl(io, face, keyChain, streamPrefix)
 {
@@ -42,14 +42,14 @@ RemoteVideoStreamImpl::RemoteVideoStreamImpl(boost::asio::io_service &io,
     pps.segmentController_ = segmentController_;
     pps.sstorage_ = sstorage_;
 
-    pipeliner_ = make_shared<Pipeliner>(pps, boost::make_shared<Pipeliner::VideoNameScheme>());
-    playout_ = boost::make_shared<VideoPlayout>(io, playbackQueue_, sstorage_);
-    playoutControl_ = boost::make_shared<PlayoutControl>(playout_, playbackQueue_, rtxController_);
+    pipeliner_ = std::make_shared<Pipeliner>(pps, std::make_shared<Pipeliner::VideoNameScheme>());
+    playout_ = std::make_shared<VideoPlayout>(io, playbackQueue_, sstorage_);
+    playoutControl_ = std::make_shared<PlayoutControl>(playout_, playbackQueue_, rtxController_);
     playbackQueue_->attach(playoutControl_.get());
     latencyControl_->setPlayoutControl(playoutControl_);
     drdEstimator_->attach(playoutControl_.get());
 
-    validator_ = boost::make_shared<ManifestValidator>(face, keyChain, sstorage_);
+    validator_ = std::make_shared<ManifestValidator>(face, keyChain, sstorage_);
     buffer_->attach(validator_.get());
 }
 
@@ -83,12 +83,12 @@ void RemoteVideoStreamImpl::stopFetching()
     releaseDecoder();
 }
 
-void RemoteVideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void RemoteVideoStreamImpl::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     RemoteStreamImpl::setLogger(logger);
     validator_->setLogger(logger);
-    boost::dynamic_pointer_cast<NdnRtcComponent>(playoutControl_)->setLogger(logger);
-    boost::dynamic_pointer_cast<Playout>(playout_)->setLogger(logger);
+    std::dynamic_pointer_cast<NdnRtcComponent>(playoutControl_)->setLogger(logger);
+    std::dynamic_pointer_cast<Playout>(playout_)->setLogger(logger);
 }
 
 #pragma mark private
@@ -111,15 +111,15 @@ void RemoteVideoStreamImpl::feedFrame(const FrameInfo &frameInfo, const WebRtcVi
 
 void RemoteVideoStreamImpl::setupDecoder()
 {
-    boost::shared_ptr<RemoteVideoStreamImpl> me = boost::dynamic_pointer_cast<RemoteVideoStreamImpl>(shared_from_this());
+    std::shared_ptr<RemoteVideoStreamImpl> me = std::dynamic_pointer_cast<RemoteVideoStreamImpl>(shared_from_this());
     VideoThreadMeta meta(threadsMeta_[threadName_]->data());
-    boost::shared_ptr<VideoDecoder> decoder =
-        boost::make_shared<VideoDecoder>(meta.getCoderParams(),
+    std::shared_ptr<VideoDecoder> decoder =
+        std::make_shared<VideoDecoder>(meta.getCoderParams(),
                                          [this, me](const FrameInfo& finfo, const WebRtcVideoFrame &frame) 
                                          {
                                             feedFrame(finfo, frame);
                                          });
-    boost::dynamic_pointer_cast<VideoPlayout>(playout_)->registerFrameConsumer(decoder.get());
+    std::dynamic_pointer_cast<VideoPlayout>(playout_)->registerFrameConsumer(decoder.get());
     decoder_ = decoder;
 }
 
@@ -134,14 +134,14 @@ void RemoteVideoStreamImpl::setupPipelineControl()
     Name threadPrefix(getStreamPrefix());
     threadPrefix.append(threadName_);
 
-    pipelineControl_ = boost::make_shared<PipelineControl>(
+    pipelineControl_ = std::make_shared<PipelineControl>(
         PipelineControl::videoPipelineControl(threadPrefix.toUri(),
                                               drdEstimator_,
-                                              boost::dynamic_pointer_cast<IBuffer>(buffer_),
-                                              boost::dynamic_pointer_cast<IPipeliner>(pipeliner_),
-                                              boost::dynamic_pointer_cast<IInterestControl>(interestControl_),
-                                              boost::dynamic_pointer_cast<ILatencyControl>(latencyControl_),
-                                              boost::dynamic_pointer_cast<IPlayoutControl>(playoutControl_),
+                                              std::dynamic_pointer_cast<IBuffer>(buffer_),
+                                              std::dynamic_pointer_cast<IPipeliner>(pipeliner_),
+                                              std::dynamic_pointer_cast<IInterestControl>(interestControl_),
+                                              std::dynamic_pointer_cast<ILatencyControl>(latencyControl_),
+                                              std::dynamic_pointer_cast<IPlayoutControl>(playoutControl_),
                                               sampleEstimator_,
                                               sstorage_));
     pipelineControl_->setLogger(logger_);

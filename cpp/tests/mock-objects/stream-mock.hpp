@@ -18,7 +18,7 @@ public:
 	MOCK_CONST_METHOD0(getStreamName, std::string());
 	MOCK_CONST_METHOD0(getPrefix, std::string());
 	MOCK_CONST_METHOD0(getStatistics, ndnrtc::statistics::StatisticsStorage());
-	MOCK_METHOD1(setLogger, void(boost::shared_ptr<ndnlog::new_api::Logger>));
+	MOCK_METHOD1(setLogger, void(std::shared_ptr<ndnlog::new_api::Logger>));
 };
 
 #endif

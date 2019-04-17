@@ -43,7 +43,7 @@ struct Mutable
 
 struct Immutable
 {
-    typedef boost::shared_ptr<const std::vector<uint8_t>> storage;
+    typedef std::shared_ptr<const std::vector<uint8_t>> storage;
     typedef std::vector<uint8_t>::const_iterator payload_iter;
 };
 
@@ -70,7 +70,7 @@ class NetworkDataT
 {
   public:
     ENABLE_IF(T, Immutable)
-    NetworkDataT(const boost::shared_ptr<const std::vector<uint8_t>> &data) : data_(data) {}
+    NetworkDataT(const std::shared_ptr<const std::vector<uint8_t>> &data) : data_(data) {}
 
     ENABLE_IF(T, Mutable)
     NetworkDataT(unsigned int dataLength, const uint8_t *rawData) : isValid_(true)
@@ -258,7 +258,7 @@ class DataPacketT : public NetworkDataT<T>
     }
 
     ENABLE_IF(T, Immutable)
-    DataPacketT(const boost::shared_ptr<const std::vector<uint8_t>> &data) : NetworkDataT<T>(data)
+    DataPacketT(const std::shared_ptr<const std::vector<uint8_t>> &data) : NetworkDataT<T>(data)
     {
         this->isValid_ = true;
         this->reinit();
@@ -431,7 +431,7 @@ class HeaderPacketT : public DataPacketT<T>
 {
   public:
     ENABLE_IF(T, Immutable)
-    HeaderPacketT(const boost::shared_ptr<const std::vector<uint8_t>> &data) : DataPacketT<T>(data)
+    HeaderPacketT(const std::shared_ptr<const std::vector<uint8_t>> &data) : DataPacketT<T>(data)
     {
         isHeaderSet_ = this->isValid_ && (this->blobs_.size() >= 1) &&
                        (this->blobs_.back().size() == sizeof(Header));
@@ -584,10 +584,10 @@ class DataSegment : protected DataPacket::Blob
      * Creates new NetworkData object which has data copied using begin 
      * and end iterators passed to this object during creation
      */
-    const boost::shared_ptr<NetworkData> getNetworkData() const
+    const std::shared_ptr<NetworkData> getNetworkData() const
     {
-        boost::shared_ptr<HeaderPacket<Header>> sp =
-            boost::make_shared<HeaderPacket<Header>>(std::vector<uint8_t>(begin_, end_));
+        std::shared_ptr<HeaderPacket<Header>> sp =
+            std::make_shared<HeaderPacket<Header>>(std::vector<uint8_t>(begin_, end_));
         sp->setHeader(header_);
         return sp;
     }
@@ -661,7 +661,7 @@ class VideoFramePacketT : public HeaderPacketT<CommonHeader, T>
     typedef std::map<std::string, PacketNumber> ThreadSyncList;
 
     ENABLE_IF(T, Immutable)
-    VideoFramePacketT(const boost::shared_ptr<const std::vector<uint8_t>> &data) : HeaderPacketT<CommonHeader, T>(data) {}
+    VideoFramePacketT(const std::shared_ptr<const std::vector<uint8_t>> &data) : HeaderPacketT<CommonHeader, T>(data) {}
 
     ENABLE_IF(T, Mutable)
     VideoFramePacketT(const webrtc::EncodedImage &frame) : HeaderPacketT<CommonHeader, T>(frame._length, frame._buffer),
@@ -714,7 +714,7 @@ class VideoFramePacketT : public HeaderPacketT<CommonHeader, T>
     }
 
     ENABLE_IF(T, Mutable)
-    boost::shared_ptr<NetworkData>
+    std::shared_ptr<NetworkData>
     getParityData(size_t segmentLength, double ratio)
     {
         if (!this->isValid_)
@@ -728,12 +728,12 @@ class VideoFramePacketT : public HeaderPacketT<CommonHeader, T>
         std::vector<uint8_t> fecData(nParitySegments * segmentLength, 0);
         fec::Rs28Encoder enc(nDataSegmets, nParitySegments, segmentLength);
         size_t padding = (nDataSegmets * segmentLength - this->getLength());
-        boost::shared_ptr<NetworkData> parityData;
+        std::shared_ptr<NetworkData> parityData;
 
         // expand data with zeros
         this->_data().resize(nDataSegmets * segmentLength, 0);
         if (enc.encode(this->_data().data(), fecData.data()) >= 0)
-            parityData = boost::make_shared<NetworkData>(boost::move(fecData));
+            parityData = std::make_shared<NetworkData>(boost::move(fecData));
         // shrink data back
         this->_data().resize(this->getLength() - padding);
         this->reinit(); // data may have been relocated, so we need to reinit blobs
@@ -762,7 +762,7 @@ class VideoFramePacketT : public HeaderPacketT<CommonHeader, T>
     typedef std::vector<ImmutableHeaderPacket<VideoFrameSegmentHeader>> ImmutableVideoSegmentsVector;
     typedef std::vector<ImmutableHeaderPacket<DataSegmentHeader>> ImmutableRecoverySegmentsVector;
 
-    static boost::shared_ptr<VideoFramePacketT<>>
+    static std::shared_ptr<VideoFramePacketT<>>
     merge(const ImmutableVideoSegmentsVector &segments);
 
   private:
@@ -832,7 +832,7 @@ class AudioBundlePacketT : public HeaderPacketT<CommonHeader, T>
     };
 
     ENABLE_IF(T, Immutable)
-    AudioBundlePacketT(const boost::shared_ptr<const std::vector<uint8_t>> &data) : HeaderPacketT<CommonHeader, T>(data) {}
+    AudioBundlePacketT(const std::shared_ptr<const std::vector<uint8_t>> &data) : HeaderPacketT<CommonHeader, T>(data) {}
 
     ENABLE_IF(T, Mutable)
     AudioBundlePacketT(size_t wireLength) : HeaderPacketT<CommonHeader, T>(std::vector<uint8_t>()), wireLength_(wireLength)
@@ -913,7 +913,7 @@ class AudioBundlePacketT : public HeaderPacketT<CommonHeader, T>
         return DataPacket::wireLength(0, sampleSizes);
     }
 
-    static boost::shared_ptr<AudioBundlePacketT<Mutable>>
+    static std::shared_ptr<AudioBundlePacketT<Mutable>>
     merge(const std::vector<ImmutableHeaderPacket<DataSegmentHeader>> &);
 
   private:
@@ -941,7 +941,7 @@ typedef AudioBundlePacketT<Immutable> ImmutableAudioBundlePacket;
 class Manifest : public DataPacket
 {
   public:
-    Manifest(const std::vector<boost::shared_ptr<const ndn::Data>> &dataObjects);
+    Manifest(const std::vector<std::shared_ptr<const ndn::Data>> &dataObjects);
     Manifest(NetworkData &&nd);
 
     /**
@@ -1020,8 +1020,8 @@ class MediaStreamMeta : public DataPacket
 class WireSegment
 {
   public:
-    WireSegment(const boost::shared_ptr<ndn::Data> &data,
-                const boost::shared_ptr<const ndn::Interest> &interest);
+    WireSegment(const std::shared_ptr<ndn::Data> &data,
+                const std::shared_ptr<const ndn::Interest> &interest);
     WireSegment(const WireSegment &data);
 
     virtual ~WireSegment() {}
@@ -1029,8 +1029,8 @@ class WireSegment
     bool isValid() { return isValid_; }
     size_t getSlicesNum() const;
 
-    boost::shared_ptr<ndn::Data> getData() const { return data_; }
-    boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
+    std::shared_ptr<ndn::Data> getData() const { return data_; }
+    std::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
 
     ndn::Name getBasePrefix() const { return dataNameInfo_.basePrefix_; }
     unsigned int getApiVersion() const { return dataNameInfo_.apiVersion_; }
@@ -1090,29 +1090,43 @@ class WireSegment
      */
     bool isOriginal() const;
 
-    static boost::shared_ptr<WireSegment>
+    static std::shared_ptr<WireSegment>
     createSegment(const NamespaceInfo &namespaceInfo,
-                  const boost::shared_ptr<ndn::Data> &data,
-                  const boost::shared_ptr<const ndn::Interest> &interest);
+                  const std::shared_ptr<ndn::Data> &data,
+                  const std::shared_ptr<const ndn::Interest> &interest);
 
   protected:
     NamespaceInfo dataNameInfo_;
     bool isValid_;
-    boost::shared_ptr<ndn::Data> data_;
-    boost::shared_ptr<const ndn::Interest> interest_;
+    std::shared_ptr<ndn::Data> data_;
+    std::shared_ptr<const ndn::Interest> interest_;
 
     WireSegment(const NamespaceInfo &info,
-                const boost::shared_ptr<ndn::Data> &data,
-                const boost::shared_ptr<const ndn::Interest> &interest);
+                const std::shared_ptr<ndn::Data> &data,
+                const std::shared_ptr<const ndn::Interest> &interest);
 };
 
 template <typename SegmentHeader>
 class WireData : public WireSegment
 {
   public:
-    WireData(const boost::shared_ptr<ndn::Data> &data,
-             const boost::shared_ptr<const ndn::Interest> &interest) : WireSegment(data, interest) {}
-    WireData(const WireData<SegmentHeader> &data) : WireSegment(data) {}
+    WireData(const std::shared_ptr<ndn::Data> &data,
+             const std::shared_ptr<const ndn::Interest> &interest)
+      : WireSegment(data, interest)
+    {
+    }
+
+    WireData(const WireData<SegmentHeader> &data)
+      : WireSegment(data)
+    {
+    }
+
+    WireData(const NamespaceInfo &info,
+             const std::shared_ptr<ndn::Data> &data,
+             const std::shared_ptr<const ndn::Interest> &interest)
+      : WireSegment(info, data, interest)
+    {
+    }
 
     const ImmutableHeaderPacket<SegmentHeader> segment() const
     {
@@ -1125,14 +1139,10 @@ class WireData : public WireSegment
     }
 
   private:
-    friend boost::shared_ptr<WireData<SegmentHeader>>
-    boost::make_shared<WireData<SegmentHeader>>(const ndnrtc::NamespaceInfo &,
-                                                const boost::shared_ptr<ndn::Data> &,
-                                                const boost::shared_ptr<const ndn::Interest> &);
-
-    WireData(const NamespaceInfo &info,
-             const boost::shared_ptr<ndn::Data> &data,
-             const boost::shared_ptr<const ndn::Interest> &interest) : WireSegment(info, data, interest) {}
+    // friend std::shared_ptr<WireData<SegmentHeader>>
+    // std::make_shared<WireData<SegmentHeader>>(const ndnrtc::NamespaceInfo &,
+    //                                             const std::shared_ptr<ndn::Data> &,
+    //                                             const std::shared_ptr<const ndn::Interest> &);
 
     ENABLE_IF(SegmentHeader, _DataSegmentHeader)
     PacketNumber playbackNo(ENABLE_FOR(_DataSegmentHeader)) const

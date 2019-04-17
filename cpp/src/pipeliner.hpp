@@ -32,19 +32,19 @@ namespace ndnrtc {
 
     typedef struct _PipelinerSettings {
         unsigned int interestLifetimeMs_;
-        boost::shared_ptr<SampleEstimator> sampleEstimator_;
-        boost::shared_ptr<IBuffer> buffer_;
-        boost::shared_ptr<IInterestControl> interestControl_;
-        boost::shared_ptr<IInterestQueue> interestQueue_;
-        boost::shared_ptr<IPlaybackQueue> playbackQueue_;
-        boost::shared_ptr<ISegmentController> segmentController_;
-        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
+        std::shared_ptr<SampleEstimator> sampleEstimator_;
+        std::shared_ptr<IBuffer> buffer_;
+        std::shared_ptr<IInterestControl> interestControl_;
+        std::shared_ptr<IInterestQueue> interestQueue_;
+        std::shared_ptr<IPlaybackQueue> playbackQueue_;
+        std::shared_ptr<ISegmentController> segmentController_;
+        std::shared_ptr<statistics::StatisticsStorage> sstorage_;
     } PipelinerSettings;
 
     class IPipeliner {
     public:
         virtual void express(const ndn::Name& threadPrefix, bool placeInBuffer = false) = 0;
-        virtual void express(const std::vector<boost::shared_ptr<const ndn::Interest>>&, 
+        virtual void express(const std::vector<std::shared_ptr<const ndn::Interest>>&, 
             bool placeInBuffer = false) = 0;
         virtual void onIncomingData(const ndn::Name&) = 0;
         virtual void reset() = 0;
@@ -71,7 +71,7 @@ namespace ndnrtc {
         } SequenceCounter;
         
         Pipeliner(const PipelinerSettings& settings,
-                  const boost::shared_ptr<INameScheme>&);
+                  const std::shared_ptr<INameScheme>&);
         ~Pipeliner();
 
         /**
@@ -92,7 +92,7 @@ namespace ndnrtc {
          * @param placeInBuffer Indicates whether interests need to be placed in 
          *          the buffer.
          */
-        void express(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests,
+        void express(const std::vector<std::shared_ptr<const ndn::Interest>>& interests,
             bool placeInBuffer = false);
 
         /**
@@ -146,7 +146,7 @@ namespace ndnrtc {
         public:
             virtual ndn::Name samplePrefix(const ndn::Name&, SampleClass) = 0;
             virtual ndn::Name metadataPrefix(const ndn::Name&) = 0;
-            virtual boost::shared_ptr<ndn::Interest> metadataInterest(const ndn::Name,
+            virtual std::shared_ptr<ndn::Interest> metadataInterest(const ndn::Name,
                                                                       unsigned int,
                                                                       SequenceCounter) = 0;
         };
@@ -155,7 +155,7 @@ namespace ndnrtc {
         public:
             ndn::Name samplePrefix(const ndn::Name&, SampleClass);
             ndn::Name metadataPrefix(const ndn::Name&);
-            boost::shared_ptr<ndn::Interest> metadataInterest(const ndn::Name,
+            std::shared_ptr<ndn::Interest> metadataInterest(const ndn::Name,
                                                               unsigned int,
                                                               SequenceCounter);
         };
@@ -164,39 +164,39 @@ namespace ndnrtc {
         public:
             ndn::Name samplePrefix(const ndn::Name&, SampleClass);
             ndn::Name metadataPrefix(const ndn::Name&);
-            boost::shared_ptr<ndn::Interest> metadataInterest(const ndn::Name,
+            std::shared_ptr<ndn::Interest> metadataInterest(const ndn::Name,
                                                               unsigned int,
                                                               SequenceCounter);
         };
 
     private:
         unsigned int interestLifetime_;
-        boost::shared_ptr<INameScheme> nameScheme_;
-        boost::shared_ptr<SampleEstimator> sampleEstimator_;
-        boost::shared_ptr<IBuffer> buffer_;
-        boost::shared_ptr<IInterestControl> interestControl_;
-        boost::shared_ptr<IInterestQueue> interestQueue_;
-        boost::shared_ptr<IPlaybackQueue> playbackQueue_;
-        boost::shared_ptr<ISegmentController> segmentController_;
-        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
+        std::shared_ptr<INameScheme> nameScheme_;
+        std::shared_ptr<SampleEstimator> sampleEstimator_;
+        std::shared_ptr<IBuffer> buffer_;
+        std::shared_ptr<IInterestControl> interestControl_;
+        std::shared_ptr<IInterestQueue> interestQueue_;
+        std::shared_ptr<IPlaybackQueue> playbackQueue_;
+        std::shared_ptr<ISegmentController> segmentController_;
+        std::shared_ptr<statistics::StatisticsStorage> sstorage_;
         SequenceCounter seqCounter_;
         SampleClass nextSamplePriority_, lastRequestedSample_;
 
-        void request(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests,
-            const boost::shared_ptr<DeadlinePriority>& prioirty);
-        void request(const boost::shared_ptr<const ndn::Interest>& interest,
-            const boost::shared_ptr<DeadlinePriority>& prioirty);
+        void request(const std::vector<std::shared_ptr<const ndn::Interest>>& interests,
+            const std::shared_ptr<DeadlinePriority>& prioirty);
+        void request(const std::shared_ptr<const ndn::Interest>& interest,
+            const std::shared_ptr<DeadlinePriority>& prioirty);
         
-        std::vector<boost::shared_ptr<const ndn::Interest>>
+        std::vector<std::shared_ptr<const ndn::Interest>>
         getBatch(ndn::Name n, SampleClass cls, bool noParity = false) const;
         
         // IBufferObserver
-        void onNewRequest(const boost::shared_ptr<BufferSlot>&);
+        void onNewRequest(const std::shared_ptr<BufferSlot>&);
         void onNewData(const BufferReceipt& receipt);
         void onReset(){}
 
         // IRtxObserver
-        void onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>>&);
+        void onRetransmissionRequired(const std::vector<std::shared_ptr<const ndn::Interest>>&);
     };
 }
 

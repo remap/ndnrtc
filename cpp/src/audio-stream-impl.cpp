@@ -34,7 +34,7 @@ AudioStreamImpl::AudioStreamImpl(const std::string &basePrefix,
     ps.freshnessPeriodMs_ = settings.params_.producerParams_.freshness_.sampleMs_;
     ps.statStorage_ = statStorage_.get();
 
-    samplePublisher_ = boost::make_shared<CommonPacketPublisher>(ps);
+    samplePublisher_ = std::make_shared<CommonPacketPublisher>(ps);
     samplePublisher_->setDescription("sample-publisher-" + settings_.params_.streamName_);
 
     description_ = "astream-" + settings_.params_.streamName_;
@@ -43,7 +43,7 @@ AudioStreamImpl::AudioStreamImpl(const std::string &basePrefix,
             add(settings_.params_.getAudioThread(i));
 
     for (int i = 0; i < BUNDLES_POOL_SIZE; ++i)
-        bundlePool_.push_back(boost::make_shared<AudioBundlePacket>(CommonSegment::payloadLength(settings_.params_.producerParams_.segmentSize_)));
+        bundlePool_.push_back(std::make_shared<AudioBundlePacket>(CommonSegment::payloadLength(settings_.params_.producerParams_.segmentSize_)));
 }
 
 AudioStreamImpl::~AudioStreamImpl()
@@ -63,9 +63,9 @@ void AudioStreamImpl::start()
 
     if (!isPeriodicInvocationSet())
     {
-        boost::shared_ptr<AudioStreamImpl> me = boost::dynamic_pointer_cast<AudioStreamImpl>(shared_from_this());
+        std::shared_ptr<AudioStreamImpl> me = std::dynamic_pointer_cast<AudioStreamImpl>(shared_from_this());
         setupInvocation(MediaStreamBase::MetaCheckIntervalMs,
-                        boost::bind(&AudioStreamImpl::periodicInvocation, me));
+                        std::bind(&AudioStreamImpl::periodicInvocation, me));
     }
 
     streamRunning_ = true;
@@ -85,7 +85,7 @@ void AudioStreamImpl::stop()
     streamRunning_ = false;
 }
 
-void AudioStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void AudioStreamImpl::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
     MediaStreamBase::setLogger(logger);
@@ -121,8 +121,8 @@ void AudioStreamImpl::add(const MediaThreadParams *mp)
     {
         AudioCaptureParams p;
         p.deviceId_ = settings_.params_.captureDevice_.deviceId_;
-        boost::shared_ptr<AudioThread> thread = 
-            boost::make_shared<AudioThread>(*params,
+        std::shared_ptr<AudioThread> thread = 
+            std::make_shared<AudioThread>(*params,
                                             p, this,
                                             CommonSegment::payloadLength(settings_.params_.producerParams_.segmentSize_));
 
@@ -130,7 +130,7 @@ void AudioStreamImpl::add(const MediaThreadParams *mp)
         {
             boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
             threads_[params->threadName_] = thread;
-            metaKeepers_[params->threadName_] = boost::make_shared<MetaKeeper>(params);
+            metaKeepers_[params->threadName_] = std::make_shared<MetaKeeper>(params);
         }
 
         if (streamRunning_)
@@ -143,7 +143,7 @@ void AudioStreamImpl::remove(const std::string &threadName)
 {
     if (threads_.find(threadName) != threads_.end())
     {
-        boost::shared_ptr<AudioThread> thread = threads_[threadName];
+        std::shared_ptr<AudioThread> thread = threads_[threadName];
 
         {
             boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
@@ -162,7 +162,7 @@ void AudioStreamImpl::remove(const std::string &threadName)
 
 //******************************************************************************
 void AudioStreamImpl::onSampleBundle(std::string threadName, uint64_t bundleNo,
-                                     boost::shared_ptr<AudioBundlePacket> packet)
+                                     std::shared_ptr<AudioBundlePacket> packet)
 {
     if (!bundlePool_.size())
     {
@@ -174,8 +174,8 @@ void AudioStreamImpl::onSampleBundle(std::string threadName, uint64_t bundleNo,
 
     Name n(streamPrefix_);
     n.append(threadName).appendSequenceNumber(bundleNo);
-    boost::shared_ptr<AudioStreamImpl> me = boost::static_pointer_cast<AudioStreamImpl>(shared_from_this());
-    boost::shared_ptr<AudioBundlePacket> bundle = bundlePool_.back();
+    std::shared_ptr<AudioStreamImpl> me = std::static_pointer_cast<AudioStreamImpl>(shared_from_this());
+    std::shared_ptr<AudioBundlePacket> bundle = bundlePool_.back();
 
     double packetRate = 0;
     bool threadRemoved = false;

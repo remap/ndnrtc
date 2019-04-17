@@ -37,8 +37,8 @@ namespace ndnrtc
         static const int64_t TolerableLaggingDriftMs; // audio should not lag video by more than this value
         static const int64_t MaxAllowableAvSyncAdjustment; // this value should be used when synchronizing stream for sync adjustment control
         
-        AudioVideoSynchronizer(const boost::shared_ptr<new_api::Consumer>& masterConsumer,
-                               const boost::shared_ptr<new_api::Consumer>& slaveConsumer);
+        AudioVideoSynchronizer(const std::shared_ptr<new_api::Consumer>& masterConsumer,
+                               const std::shared_ptr<new_api::Consumer>& slaveConsumer);
         ~AudioVideoSynchronizer();
         
         /**

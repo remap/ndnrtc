@@ -25,8 +25,8 @@ class VideoSource
      * frames from a source file)
      */
     VideoSource(boost::asio::io_service &io_service, 
-                const boost::shared_ptr<IFrameSource>& source,
-                const boost::shared_ptr<RawFrame> &frame);
+                const std::shared_ptr<IFrameSource>& source,
+                const std::shared_ptr<RawFrame> &frame);
     ~VideoSource();
 
     /**
@@ -47,11 +47,11 @@ class VideoSource
   private:
     bool isRunning_;
     unsigned int framesSourced_, nRewinds_;
-    boost::shared_ptr<IFrameSource> source_;
-    boost::shared_ptr<RawFrame> frame_;
+    std::shared_ptr<IFrameSource> source_;
+    std::shared_ptr<RawFrame> frame_;
     std::vector<ndnrtc::IExternalCapturer *> capturers_;
     boost::asio::io_service &io_;
-    boost::shared_ptr<PreciseGenerator> generator_;
+    std::shared_ptr<PreciseGenerator> generator_;
 
     void sourceFrame();
     void deliverFrame(const RawFrame &frame);

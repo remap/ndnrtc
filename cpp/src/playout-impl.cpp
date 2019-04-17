@@ -19,8 +19,8 @@ using namespace std;
 using namespace ndnrtc::statistics;
 
 PlayoutImpl::PlayoutImpl(boost::asio::io_service& io,
-    const boost::shared_ptr<IPlaybackQueue>& queue,
-    const boost::shared_ptr<statistics::StatisticsStorage> statStorage):
+    const std::shared_ptr<IPlaybackQueue>& queue,
+    const std::shared_ptr<statistics::StatisticsStorage> statStorage):
 isRunning_(false),
 jitterTiming_(io),
 pqueue_(queue),
@@ -66,7 +66,7 @@ PlayoutImpl::stop()
 }
 
 void
-PlayoutImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+PlayoutImpl::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     ILoggingObject::setLogger(logger);
     jitterTiming_.setLogger(logger);
@@ -108,7 +108,7 @@ void PlayoutImpl::extractSample()
 
     if (pqueue_->size())
     {
-        pqueue_->pop([this, &sampleDelay, &debugStr, &validForPlayback](const boost::shared_ptr<const BufferSlot>& slot, double playTimeMs){
+        pqueue_->pop([this, &sampleDelay, &debugStr, &validForPlayback](const std::shared_ptr<const BufferSlot>& slot, double playTimeMs){
             validForPlayback = processSample(slot);
             correctAdjustment(slot->getHeader().publishTimestampMs_);
             lastTimestamp_ = slot->getHeader().publishTimestampMs_;
@@ -135,9 +135,9 @@ void PlayoutImpl::extractSample()
     if (validForPlayback)
         LogDebugC << "●-- play frame " << debugStr.str() << actualDelay << "ms" << std::endl;
 
-    boost::shared_ptr<PlayoutImpl> me = boost::dynamic_pointer_cast<PlayoutImpl>(shared_from_this());
+    std::shared_ptr<PlayoutImpl> me = std::dynamic_pointer_cast<PlayoutImpl>(shared_from_this());
     jitterTiming_.updatePlayoutTime(actualDelay);
-    jitterTiming_.run(boost::bind(&PlayoutImpl::extractSample, me));
+    jitterTiming_.run(std::bind(&PlayoutImpl::extractSample, me));
 }
 
 void PlayoutImpl::correctAdjustment(int64_t newSampleTimestamp)

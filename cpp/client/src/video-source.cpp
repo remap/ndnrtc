@@ -13,8 +13,8 @@ using namespace boost::chrono;
 using namespace boost::asio;
 
 VideoSource::VideoSource(io_service &io_service,
-                         const boost::shared_ptr<IFrameSource>& source,
-                         const boost::shared_ptr<RawFrame> &frame) : io_(io_service), frame_(frame), source_(source), 
+                         const std::shared_ptr<IFrameSource>& source,
+                         const std::shared_ptr<RawFrame> &frame) : io_(io_service), frame_(frame), source_(source), 
                                                                      isRunning_(false), framesSourced_(0),
                                                                      nRewinds_(0)
 {

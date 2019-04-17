@@ -30,7 +30,7 @@ class AudioStreamImpl : public MediaStreamBase,
 
     bool isRunning() const { return streamRunning_; };
     std::vector<std::string> getThreads() const override;
-    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) override;
+    void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger) override;
 
   private:
     friend LocalAudioStream::LocalAudioStream(const std::string &basePrefix,
@@ -56,10 +56,10 @@ class AudioStreamImpl : public MediaStreamBase,
         uint64_t bundleNo_;
     };
 
-    boost::shared_ptr<CommonPacketPublisher> samplePublisher_;
-    std::map<std::string, boost::shared_ptr<AudioThread>> threads_;
-    std::map<std::string, boost::shared_ptr<MetaKeeper>> metaKeepers_;
-    std::vector<boost::shared_ptr<AudioBundlePacket>> bundlePool_;
+    std::shared_ptr<CommonPacketPublisher> samplePublisher_;
+    std::map<std::string, std::shared_ptr<AudioThread>> threads_;
+    std::map<std::string, std::shared_ptr<MetaKeeper>> metaKeepers_;
+    std::vector<std::shared_ptr<AudioBundlePacket>> bundlePool_;
     boost::atomic<bool> streamRunning_;
 
     // may be called from main thread or face thread
@@ -69,7 +69,7 @@ class AudioStreamImpl : public MediaStreamBase,
     // called on audio thread. need to sync with Face thread and
     // on access to internal data, if any
     void onSampleBundle(std::string threadName, uint64_t bundleNo,
-                        boost::shared_ptr<AudioBundlePacket> packet) override;
+                        std::shared_ptr<AudioBundlePacket> packet) override;
     bool updateMeta() override;
 };
 }

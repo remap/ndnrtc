@@ -58,7 +58,7 @@ class ISegmentController
 class SegmentController : public ISegmentController
 {
     typedef statistics::StatisticsStorage StatStorage;
-    typedef boost::shared_ptr<statistics::StatisticsStorage> StatStoragePtr;
+    typedef std::shared_ptr<statistics::StatisticsStorage> StatStoragePtr;
 
   public:
     SegmentController(boost::asio::io_service &faceIo,
@@ -78,10 +78,10 @@ class SegmentController : public ISegmentController
     void attach(ISegmentControllerObserver *o);
     void detach(ISegmentControllerObserver *o);
 
-    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+    void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
 
   private:
-    boost::shared_ptr<SegmentControllerImpl> pimpl_;
+    std::shared_ptr<SegmentControllerImpl> pimpl_;
 };
 
 class ISegmentControllerObserver
@@ -90,19 +90,19 @@ class ISegmentControllerObserver
     /**
      * Called whenever new segment has arrived
      */
-    virtual void segmentArrived(const boost::shared_ptr<WireSegment> &) = 0;
+    virtual void segmentArrived(const std::shared_ptr<WireSegment> &) = 0;
 
     /**
      * Called whenever interest has timed out
      */
     virtual void segmentRequestTimeout(const NamespaceInfo &, 
-                                       const boost::shared_ptr<const ndn::Interest> &) = 0;
+                                       const std::shared_ptr<const ndn::Interest> &) = 0;
 
     /**
      * Called whenever interest gets network nack
      */
     virtual void segmentNack(const NamespaceInfo &, int,
-                             const boost::shared_ptr<const ndn::Interest> &) = 0;
+                             const std::shared_ptr<const ndn::Interest> &) = 0;
 
     /**
      * Called when no segments were received during specified time interval.

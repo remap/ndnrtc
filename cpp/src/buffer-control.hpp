@@ -40,25 +40,25 @@ class IBufferControlObserver;
 class BufferControl : public ISegmentControllerObserver, public NdnRtcComponent
 {
   public:
-    BufferControl(const boost::shared_ptr<DrdEstimator> &,
-                  const boost::shared_ptr<IBuffer> &,
-                  const boost::shared_ptr<statistics::StatisticsStorage> &storage);
+    BufferControl(const std::shared_ptr<DrdEstimator> &,
+                  const std::shared_ptr<IBuffer> &,
+                  const std::shared_ptr<statistics::StatisticsStorage> &storage);
 
     void attach(IBufferControlObserver *);
     void detach(IBufferControlObserver *);
 
-    void segmentArrived(const boost::shared_ptr<WireSegment> &);
+    void segmentArrived(const std::shared_ptr<WireSegment> &);
     void segmentRequestTimeout(const NamespaceInfo &, 
-                               const boost::shared_ptr<const ndn::Interest> &) { /*ignored*/}
+                               const std::shared_ptr<const ndn::Interest> &) { /*ignored*/}
     void segmentNack(const NamespaceInfo &, int, 
-                     const boost::shared_ptr<const ndn::Interest> &) { /*ignored*/}
+                     const std::shared_ptr<const ndn::Interest> &) { /*ignored*/}
     void segmentStarvation() { /*ignored*/}
 
   private:
     std::vector<IBufferControlObserver *> observers_;
-    boost::shared_ptr<DrdEstimator> drdEstimator_;
-    boost::shared_ptr<IBuffer> buffer_;
-    boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
+    std::shared_ptr<DrdEstimator> drdEstimator_;
+    std::shared_ptr<IBuffer> buffer_;
+    std::shared_ptr<statistics::StatisticsStorage> sstorage_;
 };
 
 class IBufferControlObserver

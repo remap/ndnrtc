@@ -8,7 +8,6 @@
 #define BOOST_THREAD_PROVIDES_FUTURE
 #include <boost/thread/future.hpp>
 #include <boost/asio.hpp>
-#include <boost/smart_ptr/shared_ptr.hpp>
 #include <ndn-cpp/c/common.h>
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
@@ -31,13 +30,12 @@
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
-using namespace std;
 using namespace ndn;
 using namespace estimators;
 
-typedef boost::shared_ptr<VideoFramePacket> FramePacketPtr;
+typedef std::shared_ptr<VideoFramePacket> FramePacketPtr;
 typedef boost::future<FramePacketPtr> FutureFrame;
-typedef boost::shared_ptr<boost::future<FramePacketPtr>> FutureFramePtr;
+typedef std::shared_ptr<boost::future<FramePacketPtr>> FutureFramePtr;
 
 VideoStreamImpl::VideoStreamImpl(const std::string &streamPrefix,
                                  const MediaStreamSettings &settings, bool useFec)
@@ -47,7 +45,7 @@ VideoStreamImpl::VideoStreamImpl(const std::string &streamPrefix,
       busyPublishing_(0)
 {
     if (settings_.params_.type_ == MediaStreamParams::MediaStreamType::MediaStreamTypeAudio)
-        throw runtime_error("Wrong media stream parameters type supplied (audio instead of video)");
+        throw std::runtime_error("Wrong media stream parameters type supplied (audio instead of video)");
 
     description_ = "vstream-" + settings_.params_.streamName_;
 
@@ -65,10 +63,10 @@ VideoStreamImpl::VideoStreamImpl(const std::string &streamPrefix,
 
     if (settings_.storagePath_ != "")
     {
-        ps.onSegmentsCached_ = boost::bind(&MediaStreamBase::onSegmentsCached, this, _1);
+        ps.onSegmentsCached_ = std::bind(&MediaStreamBase::onSegmentsCached, this, std::placeholders::_1);
     }
 
-    framePublisher_ = boost::make_shared<VideoPacketPublisher>(ps);
+    framePublisher_ = std::make_shared<VideoPacketPublisher>(ps);
     framePublisher_->setDescription("seg-publisher-" + settings_.params_.streamName_);
 }
 
@@ -77,10 +75,10 @@ VideoStreamImpl::~VideoStreamImpl()
     // cleanup
 }
 
-vector<string> VideoStreamImpl::getThreads() const
+std::vector<std::string> VideoStreamImpl::getThreads() const
 {
     boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
-    std::vector<string> threads;
+    std::vector<std::string> threads;
 
     for (auto it : threads_)
         threads.push_back(it.first);
@@ -112,7 +110,7 @@ int VideoStreamImpl::incomingFrame(const YUV_NV21FrameWrapper &w)
     return -1;
 }
 
-void VideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void VideoStreamImpl::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
     MediaStreamBase::setLogger(logger);
@@ -131,20 +129,20 @@ void VideoStreamImpl::add(const MediaThreadParams *mp)
     // check if thread already exists
     if (threads_.find(params->threadName_) != threads_.end())
     {
-        stringstream ss;
+        std::stringstream ss;
         ss << "Thread " << params->threadName_ << " has been added already";
-        throw runtime_error(ss.str());
+        throw std::runtime_error(ss.str());
     }
     else
     {
         boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
 
-        threads_[params->threadName_] = boost::make_shared<VideoThread>(params->coderParams_);
-        scalers_[params->threadName_] = boost::make_shared<FrameScaler>(params->coderParams_.encodeWidth_,
+        threads_[params->threadName_] = std::make_shared<VideoThread>(params->coderParams_);
+        scalers_[params->threadName_] = std::make_shared<FrameScaler>(params->coderParams_.encodeWidth_,
                                                                         params->coderParams_.encodeHeight_);
         seqCounters_[params->threadName_].first = -1;
         seqCounters_[params->threadName_].second = -1;
-        metaKeepers_[params->threadName_] = boost::make_shared<MetaKeeper>(params);
+        metaKeepers_[params->threadName_] = std::make_shared<MetaKeeper>(params);
 
         threads_[params->threadName_]->setDescription("thread-" + params->threadName_);
     }
@@ -152,7 +150,7 @@ void VideoStreamImpl::add(const MediaThreadParams *mp)
     LogTraceC << "added thread " << params->threadName_ << std::endl;
 }
 
-void VideoStreamImpl::remove(const string &threadName)
+void VideoStreamImpl::remove(const std::string &threadName)
 {
     if (threads_.find(threadName) != threads_.end())
     {
@@ -182,17 +180,17 @@ bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame &frame)
         boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
         LogDebugC << "↓ feeding " << playbackCounter_ << "p into encoders..." << std::endl;
 
-        map<string, FutureFramePtr> futureFrames;
+        std::map<std::string, FutureFramePtr> futureFrames;
         for (auto it : threads_)
         {
             FutureFramePtr ff =
-                boost::make_shared<FutureFrame>(boost::move(boost::async(boost::launch::async,
-                                                                         boost::bind(&VideoThread::encode, it.second.get(), 
+                std::make_shared<FutureFrame>(boost::move(boost::async(boost::launch::async,
+                                                                         std::bind(&VideoThread::encode, it.second.get(), 
                                                                          (*scalers_[it.first])(frame)))));
             futureFrames[it.first] = ff;
         }
 
-        map<string, FramePacketPtr> frames;
+        std::map<std::string, FramePacketPtr> frames;
         for (auto it : futureFrames)
         {
             FramePacketPtr f(it.second->get());
@@ -215,9 +213,9 @@ bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame &frame)
 
         if (!isPeriodicInvocationSet())
         {
-            boost::shared_ptr<VideoStreamImpl> me = boost::dynamic_pointer_cast<VideoStreamImpl>(shared_from_this());
+            std::shared_ptr<VideoStreamImpl> me = std::dynamic_pointer_cast<VideoStreamImpl>(shared_from_this());
             setupInvocation(MediaStreamBase::MetaCheckIntervalMs,
-                            boost::bind(&VideoStreamImpl::periodicInvocation, me));
+                            std::bind(&VideoStreamImpl::periodicInvocation, me));
         }
 
         return result;
@@ -228,7 +226,7 @@ bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame &frame)
     return false;
 }
 
-void VideoStreamImpl::publish(map<string, FramePacketPtr> &frames)
+void VideoStreamImpl::publish(std::map<std::string, FramePacketPtr> &frames)
 {
     LogTraceC << "will publish " << frames.size() << " frames" << std::endl;
 
@@ -259,9 +257,9 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr> &frames)
     }
 }
 
-std::string VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
+std::string VideoStreamImpl::publish(const std::string &thread, FramePacketPtr &fp)
 {
-    boost::shared_ptr<NetworkData> parityData = fp->getParityData(
+    std::shared_ptr<NetworkData> parityData = fp->getParityData(
         VideoFrameSegment::payloadLength(settings_.params_.producerParams_.segmentSize_),
         PARITY_RATIO);
 
@@ -279,8 +277,8 @@ std::string VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
                                                    settings_.params_.producerParams_.segmentSize_);
     size_t nParitySeg = VideoFrameSegment::numSlices(*parityData,
                                                      settings_.params_.producerParams_.segmentSize_);
-    boost::shared_ptr<VideoStreamImpl> me = boost::static_pointer_cast<VideoStreamImpl>(shared_from_this());
-    boost::shared_ptr<MetaKeeper> keeper = metaKeepers_[thread];
+    std::shared_ptr<VideoStreamImpl> me = std::static_pointer_cast<VideoStreamImpl>(shared_from_this());
+    std::shared_ptr<MetaKeeper> keeper = metaKeepers_[thread];
 
     LogTraceC << "spawned publish task for "
               << seqNo
@@ -357,10 +355,10 @@ void VideoStreamImpl::publishManifest(ndn::Name dataName, PublishedDataPtrVector
               << ss.size() << std::endl;
 }
 
-map<string, PacketNumber>
+std::map<std::string, PacketNumber>
 VideoStreamImpl::getCurrentSyncList(bool forKey)
 {
-    map<string, PacketNumber> syncList;
+    std::map<std::string, PacketNumber> syncList;
     for (auto it : seqCounters_)
         syncList[it.first] = (forKey ? it.second.first : it.second.second);
     return syncList;
@@ -396,11 +394,11 @@ bool VideoStreamImpl::updateMeta()
 //******************************************************************************
 VideoStreamImpl::MetaKeeper::MetaKeeper(const VideoThreadParams *params)
     : BaseMetaKeeper(params),
-      rateMeter_(FreqMeter(boost::make_shared<TimeWindow>(1000))),
-      deltaData_(Average(boost::make_shared<TimeWindow>(100))),
-      deltaParity_(Average(boost::make_shared<TimeWindow>(100))),
-      keyData_(Average(boost::make_shared<SampleWindow>(2))),
-      keyParity_(Average(boost::make_shared<SampleWindow>(2))),
+      rateMeter_(FreqMeter(std::make_shared<TimeWindow>(1000))),
+      deltaData_(Average(std::make_shared<TimeWindow>(100))),
+      deltaParity_(Average(std::make_shared<TimeWindow>(100))),
+      keyData_(Average(std::make_shared<SampleWindow>(2))),
+      keyParity_(Average(std::make_shared<SampleWindow>(2))),
       versionNumber_(0)
 {
 }

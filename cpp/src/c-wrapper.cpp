@@ -28,7 +28,7 @@
 #include <boost/thread.hpp>
 #include <boost/thread/lock_guard.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+#include <memory>
 
 #include "face-processor.hpp"
 #include "local-stream.hpp"
@@ -49,52 +49,52 @@ using namespace cwrapper_tools;
 static const char *PublicDb = "public-info.db";
 static const char *PrivateDb = "private-keys";
 
-static boost::shared_ptr<FaceProcessor> LibFaceProcessor;
-static boost::shared_ptr<MemoryContentCache> LibContentCache; // for registering a prefix and storing certs
-static boost::shared_ptr<KeyChain> LibKeyChain;
-static boost::shared_ptr<KeyChainManager> LibKeyChainManager;
+static std::shared_ptr<FaceProcessor> LibFaceProcessor;
+static std::shared_ptr<MemoryContentCache> LibContentCache; // for registering a prefix and storing certs
+static std::shared_ptr<KeyChain> LibKeyChain;
+static std::shared_ptr<KeyChainManager> LibKeyChainManager;
 
 void initKeyChain(std::string storagePath, std::string signingIdentity);
-void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
+void initFace(std::string hostname, std::shared_ptr<Logger> logger,
 	std::string signingIdentity, std::string instanceId);
 MediaStreamParams prepareMediaStreamParams(LocalStreamParams params);
-void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger);
+void registerPrefix(Name prefix, std::shared_ptr<Logger> logger);
 
 //******************************************************************************
 namespace cwrapper_tools {
 class KeyChainManager : public ndnlog::new_api::ILoggingObject {
 public:
-    KeyChainManager(boost::shared_ptr<ndn::Face> face,
-                    boost::shared_ptr<ndn::KeyChain> keyChain,
+    KeyChainManager(std::shared_ptr<ndn::Face> face,
+                    std::shared_ptr<ndn::KeyChain> keyChain,
                     const std::string& identityName,
                     const std::string& instanceName,
                     const std::string& configPolicy,
                     unsigned int instanceCertLifetime,
-                    boost::shared_ptr<Logger> logger);
+                    std::shared_ptr<Logger> logger);
 
-	boost::shared_ptr<ndn::KeyChain> defaultKeyChain() { return defaultKeyChain_; }
-	boost::shared_ptr<ndn::KeyChain> instanceKeyChain() { return instanceKeyChain_; }
+	std::shared_ptr<ndn::KeyChain> defaultKeyChain() { return defaultKeyChain_; }
+	std::shared_ptr<ndn::KeyChain> instanceKeyChain() { return instanceKeyChain_; }
     std::string instancePrefix() const { return instanceIdentity_; }
     
-    const boost::shared_ptr<ndn::IdentityCertificate> instanceCertificate() const
+    const std::shared_ptr<ndn::IdentityCertificate> instanceCertificate() const
         { return instanceCert_; }
 
-    const boost::shared_ptr<ndn::IdentityCertificate> signingIdentityCertificate() const
+    const std::shared_ptr<ndn::IdentityCertificate> signingIdentityCertificate() const
     {
     	return signingCert_;
     }
     
 private:
-    boost::shared_ptr<ndn::Face> face_;
+    std::shared_ptr<ndn::Face> face_;
 	std::string signingIdentity_, instanceName_,
         configPolicy_, instanceIdentity_;
 	unsigned int runTime_;
 
-    boost::shared_ptr<ndn::PolicyManager> configPolicyManager_;
-	boost::shared_ptr<ndn::KeyChain> defaultKeyChain_, instanceKeyChain_;
-    boost::shared_ptr<ndn::IdentityCertificate> instanceCert_, signingCert_;
-    boost::shared_ptr<ndn::IdentityStorage> identityStorage_;
-    boost::shared_ptr<ndn::PrivateKeyStorage> privateKeyStorage_;
+    std::shared_ptr<ndn::PolicyManager> configPolicyManager_;
+	std::shared_ptr<ndn::KeyChain> defaultKeyChain_, instanceKeyChain_;
+    std::shared_ptr<ndn::IdentityCertificate> instanceCert_, signingCert_;
+    std::shared_ptr<ndn::IdentityStorage> identityStorage_;
+    std::shared_ptr<ndn::PrivateKeyStorage> privateKeyStorage_;
 
 	void setupDefaultKeyChain();
 	void setupInstanceKeyChain();
@@ -118,8 +118,8 @@ bool ndnrtc_init(const char* hostname, const char* storagePath,
 {
 	Logger::initAsyncLogging();
 
-	boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
-		boost::make_shared<CallbackSink>(libLog));
+	std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
+		std::make_shared<CallbackSink>(libLog));
 	callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up NDN-RTC..." << std::endl;
 
 	try {
@@ -156,8 +156,8 @@ ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog logge
 		settings.keyChain_ = LibKeyChainManager->instanceKeyChain().get();
         settings.storagePath_ = (params.storagePath ? std::string(params.storagePath) : "");
 
-		boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
-			boost::make_shared<CallbackSink>(loggerSink));
+		std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
+			std::make_shared<CallbackSink>(loggerSink));
 		callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up Local Video Stream with params ("
 			<< "signing " << (settings.sign_ ? "ON" : "OFF")
 	 		<< "):" << settings.params_ << std::endl;
@@ -253,14 +253,14 @@ double ndnrtc_getStatistic(ndnrtc::IStream *stream, const char* statName)
     return 0;
 }
 
-static std::map<std::string, boost::shared_ptr<FrameFetcher>> FrameFetchers;
+static std::map<std::string, std::shared_ptr<FrameFetcher>> FrameFetchers;
 void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
                                const char* frameName, 
                                BufferAlloc bufferAllocFunc,
                                FrameFetched frameFetchedFunc)
 {
-    boost::shared_ptr<StorageEngine> storage = ((LocalVideoStream*)stream)->getStorage();
-    boost::shared_ptr<FrameFetcher> ff = boost::make_shared<FrameFetcher>(storage);
+    std::shared_ptr<StorageEngine> storage = ((LocalVideoStream*)stream)->getStorage();
+    std::shared_ptr<FrameFetcher> ff = std::make_shared<FrameFetcher>(storage);
 
     std::string fkey(frameName);
     FrameFetchers[fkey] = ff;
@@ -269,19 +269,19 @@ void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
 
     ff->setLogger(((LocalVideoStream*)stream)->getLogger());
     ff->fetch(Name(frameName),
-              [fkey, bufferAllocFunc](const boost::shared_ptr<IFrameFetcher>& fetcher, 
+              [fkey, bufferAllocFunc](const std::shared_ptr<IFrameFetcher>& fetcher, 
                                       int width, int height)->uint8_t*
               {
                   return bufferAllocFunc(fkey.c_str(), width, height);
               },
-              [fkey, frameFetchedFunc](const boost::shared_ptr<IFrameFetcher>& fetcher, 
+              [fkey, frameFetchedFunc](const std::shared_ptr<IFrameFetcher>& fetcher, 
                  const FrameInfo fi, int nFetchedFrames,
                  int width, int height, const uint8_t* buffer){
                     cFrameInfo frameInfo({fi.timestamp_, fi.playbackNo_, (char*)fi.ndnName_.c_str()});
                     frameFetchedFunc(frameInfo, width, height, buffer);
                     FrameFetchers.erase(fkey);
               },
-              [fkey, frameFetchedFunc](const boost::shared_ptr<IFrameFetcher>& ff, std::string reason){
+              [fkey, frameFetchedFunc](const std::shared_ptr<IFrameFetcher>& ff, std::string reason){
                     cFrameInfo frameInfo({0,0,(char*)fkey.c_str()});
                     frameFetchedFunc(frameInfo, 0, 0, nullptr);
                     FrameFetchers.erase(fkey);
@@ -335,12 +335,12 @@ void initKeyChain(std::string storagePath, std::string signingIdentityStr)
 	std::string databaseFilePath = storagePath + "/" + std::string(PublicDb);
 	std::string privateKeysPath = storagePath + "/" + std::string(PrivateDb);
 
-	boost::shared_ptr<IdentityStorage> identityStorage = boost::make_shared<BasicIdentityStorage>(databaseFilePath);
-	boost::shared_ptr<IdentityManager> identityManager = boost::make_shared<IdentityManager>(identityStorage, 
-		boost::make_shared<FilePrivateKeyStorage>(privateKeysPath));
-	boost::shared_ptr<PolicyManager> policyManager = boost::make_shared<SelfVerifyPolicyManager>(identityStorage.get());
+	std::shared_ptr<IdentityStorage> identityStorage = std::make_shared<BasicIdentityStorage>(databaseFilePath);
+	std::shared_ptr<IdentityManager> identityManager = std::make_shared<IdentityManager>(identityStorage, 
+		std::make_shared<FilePrivateKeyStorage>(privateKeysPath));
+	std::shared_ptr<PolicyManager> policyManager = std::make_shared<SelfVerifyPolicyManager>(identityStorage.get());
 
-	LibKeyChain = boost::make_shared<KeyChain>(identityManager, policyManager);
+	LibKeyChain = std::make_shared<KeyChain>(identityManager, policyManager);
 
 	const Name signingIdentity = Name(signingIdentityStr);
 	LibKeyChain->createIdentityAndCertificate(signingIdentity);
@@ -348,11 +348,11 @@ void initKeyChain(std::string storagePath, std::string signingIdentityStr)
 }
 
 // initializes face and face processing thread 
-void initFace(std::string hostname, boost::shared_ptr<Logger> logger, 
+void initFace(std::string hostname, std::shared_ptr<Logger> logger, 
 	std::string signingIdentityStr, std::string instanceIdStr)
 {
-	LibFaceProcessor = boost::make_shared<FaceProcessor>(hostname);
-	LibKeyChainManager = boost::make_shared<KeyChainManager>(LibFaceProcessor->getFace(),
+	LibFaceProcessor = std::make_shared<FaceProcessor>(hostname);
+	LibKeyChainManager = std::make_shared<KeyChainManager>(LibFaceProcessor->getFace(),
 		LibKeyChain, 
 		std::string(signingIdentityStr),
 		std::string(instanceIdStr),
@@ -360,13 +360,13 @@ void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
 		3600,
 		logger);
 
-	LibFaceProcessor->performSynchronized([logger](boost::shared_ptr<Face> face){
+	LibFaceProcessor->performSynchronized([logger](std::shared_ptr<Face> face){
 		logger->log(ndnlog::NdnLoggerLevelInfo) << "Setting command signing info with certificate: " 
 			<< LibKeyChainManager->defaultKeyChain()->getDefaultCertificateName() << std::endl;
 
 		face->setCommandSigningInfo(*(LibKeyChainManager->defaultKeyChain()),
 			LibKeyChainManager->defaultKeyChain()->getDefaultCertificateName());
-		LibContentCache = boost::make_shared<MemoryContentCache>(face.get());
+		LibContentCache = std::make_shared<MemoryContentCache>(face.get());
 	});
 
 	{ // registering prefix for serving signing ifdentity: <signing-identity>/KEY
@@ -385,18 +385,18 @@ void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
 	LibContentCache->add(*(LibKeyChainManager->instanceCertificate()));
 }
 
-void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger) 
+void registerPrefix(Name prefix, std::shared_ptr<Logger> logger) 
 {
 	LibContentCache->registerPrefix(prefix,
-		[logger](const boost::shared_ptr<const Name> &p){
+		[logger](const std::shared_ptr<const Name> &p){
 			logger->log(ndnlog::NdnLoggerLevelError) << "Prefix registration failure: " << p << std::endl;
 		},
-		[logger](const boost::shared_ptr<const Name>& p, uint64_t id){
+		[logger](const std::shared_ptr<const Name>& p, uint64_t id){
 			logger->log(ndnlog::NdnLoggerLevelInfo) << "Prefix registration success: " << p << std::endl;
 		},
-		[logger](const boost::shared_ptr<const Name>& p,
-			const boost::shared_ptr<const Interest> &i,
-			Face& f, uint64_t, const boost::shared_ptr<const InterestFilter>&){
+		[logger](const std::shared_ptr<const Name>& p,
+			const std::shared_ptr<const Interest> &i,
+			Face& f, uint64_t, const std::shared_ptr<const InterestFilter>&){
 			logger->log(ndnlog::NdnLoggerLevelWarning) << "Unexpected interest received " << i->getName() 
 				<< std::endl;
 
@@ -433,13 +433,13 @@ MediaStreamParams prepareMediaStreamParams(LocalStreamParams params)
 }
 
 //******************************************************************************
-KeyChainManager::KeyChainManager(boost::shared_ptr<ndn::Face> face,
-                    boost::shared_ptr<ndn::KeyChain> keyChain,
+KeyChainManager::KeyChainManager(std::shared_ptr<ndn::Face> face,
+                    std::shared_ptr<ndn::KeyChain> keyChain,
                     const std::string& identityName,
                     const std::string& instanceName,
                     const std::string& configPolicy,
                     unsigned int instanceCertLifetime,
-                    boost::shared_ptr<Logger> logger):
+                    std::shared_ptr<Logger> logger):
 face_(face),
 defaultKeyChain_(keyChain),
 signingIdentity_(identityName),
@@ -450,15 +450,15 @@ runTime_(instanceCertLifetime)
 	description_ = "key-chain-manager";
 	setLogger(logger);
 	// checkExists(configPolicy);
-	identityStorage_ = boost::make_shared<MemoryIdentityStorage>();
-    privateKeyStorage_ = boost::make_shared<MemoryPrivateKeyStorage>();
-	configPolicyManager_ = boost::make_shared<SelfVerifyPolicyManager>(identityStorage_.get());
+	identityStorage_ = std::make_shared<MemoryIdentityStorage>();
+    privateKeyStorage_ = std::make_shared<MemoryPrivateKeyStorage>();
+	configPolicyManager_ = std::make_shared<SelfVerifyPolicyManager>(identityStorage_.get());
 	setupInstanceKeyChain();
 }
 
 void KeyChainManager::setupDefaultKeyChain()
 {
-	defaultKeyChain_ = boost::make_shared<ndn::KeyChain>();
+	defaultKeyChain_ = std::make_shared<ndn::KeyChain>();
 }
 
 void KeyChainManager::setupInstanceKeyChain()
@@ -485,9 +485,9 @@ void KeyChainManager::setupInstanceKeyChain()
 
 void KeyChainManager::setupConfigPolicyManager()
 {
-	identityStorage_ = boost::make_shared<MemoryIdentityStorage>();
-    privateKeyStorage_ = boost::make_shared<MemoryPrivateKeyStorage>();
-	configPolicyManager_ = boost::make_shared<ConfigPolicyManager>(configPolicy_);
+	identityStorage_ = std::make_shared<MemoryIdentityStorage>();
+    privateKeyStorage_ = std::make_shared<MemoryPrivateKeyStorage>();
+	configPolicyManager_ = std::make_shared<ConfigPolicyManager>(configPolicy_);
 }
 
 void KeyChainManager::createSigningIdentity()
@@ -503,8 +503,8 @@ void KeyChainManager::createSigningIdentity()
 
 void KeyChainManager::createMemoryKeychain()
 {
-    instanceKeyChain_ = boost::make_shared<KeyChain>
-      (boost::make_shared<IdentityManager>(identityStorage_, privateKeyStorage_),
+    instanceKeyChain_ = std::make_shared<KeyChain>
+      (std::make_shared<IdentityManager>(identityStorage_, privateKeyStorage_),
        configPolicyManager_);
     instanceKeyChain_->setFace(face_.get());
 }

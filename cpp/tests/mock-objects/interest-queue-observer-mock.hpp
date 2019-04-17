@@ -16,7 +16,7 @@
 class MockInterestQueueObserver : public ndnrtc::IInterestQueueObserver
 {
 public:
-	MOCK_METHOD1(onInterestIssued, void(const boost::shared_ptr<const ndn::Interest>&));
+	MOCK_METHOD1(onInterestIssued, void(const std::shared_ptr<const ndn::Interest>&));
 };
 
 #endif

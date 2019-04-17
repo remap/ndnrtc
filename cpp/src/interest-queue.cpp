@@ -22,8 +22,8 @@ using namespace ndnrtc::statistics;
 
 //******************************************************************************
 #pragma mark - construction/destruction
-InterestQueue::QueueEntry::QueueEntry(const boost::shared_ptr<const ndn::Interest>& interest,
-                                      const boost::shared_ptr<IPriority>& priority,
+InterestQueue::QueueEntry::QueueEntry(const std::shared_ptr<const ndn::Interest>& interest,
+                                      const std::shared_ptr<IPriority>& priority,
                                       OnData onData,
                                       OnTimeout onTimeout,
                                       OnNetworkNack onNetworkNack):
@@ -61,8 +61,8 @@ DeadlinePriority::getArrivalDeadlineFromEnqueue() const
 
 //******************************************************************************
 InterestQueue::InterestQueue(boost::asio::io_service& io,
-                      const boost::shared_ptr<Face> &face,
-                      const boost::shared_ptr<statistics::StatisticsStorage>& statStorage):
+                      const std::shared_ptr<Face> &face,
+                      const std::shared_ptr<statistics::StatisticsStorage>& statStorage):
 StatObject(statStorage),
 faceIo_(io),
 face_(face),
@@ -82,8 +82,8 @@ InterestQueue::~InterestQueue()
 //******************************************************************************
 #pragma mark - public
 void
-InterestQueue::enqueueInterest(const boost::shared_ptr<const Interest>& interest,
-                               boost::shared_ptr<DeadlinePriority> priority,
+InterestQueue::enqueueInterest(const std::shared_ptr<const Interest>& interest,
+                               std::shared_ptr<DeadlinePriority> priority,
                                OnData onData,
                                OnTimeout onTimeout,
                                OnNetworkNack onNetworkNack)
@@ -100,11 +100,11 @@ InterestQueue::enqueueInterest(const boost::shared_ptr<const Interest>& interest
         if (!isDrainingQueue_)
         {
             isDrainingQueue_ = true;
-            async::dispatchAsync(faceIo_, boost::bind(&InterestQueue::safeDrain, this));
+            async::dispatchAsync(faceIo_, std::bind(&InterestQueue::safeDrain, this));
         }
         else 
           if (queue_.size() > 10)
-            // async::dispatchSync(faceIo_, boost::bind(&InterestQueue::drainQueue, this));
+            // async::dispatchSync(faceIo_, std::bind(&InterestQueue::drainQueue, this));
             drainQueue();   // this is a hack and it will break everything if enqueueInterest
                             // is called from other than faceIo_ thread. however, the code 
                             // above locks and I don't know how to avoid growing queues in 

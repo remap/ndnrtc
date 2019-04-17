@@ -51,12 +51,12 @@ void AudioController::releaseVoiceEngine()
     });
 }
 
-void AudioController::dispatchOnAudioThread(boost::function<void(void)> dispatchBlock)
+void AudioController::dispatchOnAudioThread(std::function<void(void)> dispatchBlock)
 {
     dispatchOnMyThread(dispatchBlock);
 }
 
-void AudioController::performOnAudioThread(boost::function<void(void)> dispatchBlock)
+void AudioController::performOnAudioThread(std::function<void(void)> dispatchBlock)
 {
     performOnMyThread(dispatchBlock);
 }

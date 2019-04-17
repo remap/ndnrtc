@@ -21,9 +21,9 @@ namespace ndnrtc {
     typedef statistics::StatisticsStorage StatStorage;
   public:
     AudioPlayout(boost::asio::io_service& io,
-            const boost::shared_ptr<IPlaybackQueue>& queue,
-            const boost::shared_ptr<StatStorage>& statStorage = 
-            boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()),
+            const std::shared_ptr<IPlaybackQueue>& queue,
+            const std::shared_ptr<StatStorage>& statStorage = 
+            std::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()),
             const WebrtcAudioChannel::Codec& codec = WebrtcAudioChannel::Codec::G722,
             unsigned int deviceIdx = 0);
 

@@ -20,9 +20,9 @@ using namespace ndnrtc::statistics;
 
 #define RTX_DEADLINE_MS 100
 
-RetransmissionController::RetransmissionController(boost::shared_ptr<statistics::StatisticsStorage> storage,
-                                                   boost::shared_ptr<IPlaybackQueue> playbackQueue,
-                                                   const boost::shared_ptr<DrdEstimator> &drdEstimator)
+RetransmissionController::RetransmissionController(std::shared_ptr<statistics::StatisticsStorage> storage,
+                                                   std::shared_ptr<IPlaybackQueue> playbackQueue,
+                                                   const std::shared_ptr<DrdEstimator> &drdEstimator)
     : StatObject(storage),
       playbackQueue_(playbackQueue),
       drdEstimator_(drdEstimator),
@@ -51,7 +51,7 @@ void RetransmissionController::setEnabled(bool enable)
     LogTraceC << (enabled_ ? "enabled" : "disabled") << std::endl;
 }
 
-void RetransmissionController::onNewRequest(const boost::shared_ptr<BufferSlot> &slot)
+void RetransmissionController::onNewRequest(const std::shared_ptr<BufferSlot> &slot)
 {
     if (!enabled_)
         return;
@@ -87,7 +87,7 @@ void RetransmissionController::checkRetransmissions()
 
     for (auto it = activeSlots_.begin(); it != activeSlots_.end(); /* no increment */)
     {
-        boost::shared_ptr<BufferSlot> slot = it->second.slot_;
+        std::shared_ptr<BufferSlot> slot = it->second.slot_;
         int64_t playbackDeadline = it->second.deadlineTimestamp_;
         bool needRtx = (playbackDeadline - now < drdEstimator_->getOriginalAverage().latestValue());
         bool assembledOrCleared = (slot->getState() >= BufferSlot::State::Ready || slot->getState() == BufferSlot::State::Free);
@@ -101,7 +101,7 @@ void RetransmissionController::checkRetransmissions()
                 LogTraceC << "rtx required " << slot->dump()
                           << " playback in " << playbackDeadline - now << "ms" << std::endl;
 
-                std::vector<boost::shared_ptr<const ndn::Interest>> pendingInterests = slot->getPendingInterests();
+                std::vector<std::shared_ptr<const ndn::Interest>> pendingInterests = slot->getPendingInterests();
                 if (pendingInterests.size())
                     for (auto o : observers_)
                         o->onRetransmissionRequired(pendingInterests);

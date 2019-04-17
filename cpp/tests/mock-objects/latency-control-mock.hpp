@@ -19,7 +19,7 @@ public:
 	MOCK_CONST_METHOD0(getCurrentCommand, ndnrtc::PipelineAdjust());
     MOCK_METHOD1(registerObserver, void(ndnrtc::ILatencyControlObserver*));
     MOCK_METHOD0(unregisterObserver, void());
-    MOCK_METHOD1(setPlayoutControl, void(boost::shared_ptr<ndnrtc::IPlayoutControl>));
+    MOCK_METHOD1(setPlayoutControl, void(std::shared_ptr<ndnrtc::IPlayoutControl>));
 };
 
 #endif

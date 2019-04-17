@@ -6,7 +6,7 @@
 //
 
 #include <algorithm>
-#include <boost/make_shared.hpp>
+#include <memory>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/identity/memory-private-key-storage.hpp>
 #include <ndn-cpp/security/identity/memory-identity-storage.hpp>
@@ -141,7 +141,7 @@ void Client::tearDownProducer()
     for (auto &ls : localStreams_)
     {
         if (!ls.getVideoSource().get())
-            boost::dynamic_pointer_cast<ndnrtc::LocalAudioStream>(ls.getStream())->stop();
+            std::dynamic_pointer_cast<ndnrtc::LocalAudioStream>(ls.getStream())->stop();
         else
             ls.stopSource();
 
@@ -159,7 +159,7 @@ void Client::tearDownConsumer()
 
     for (auto &rs : remoteStreams_)
     {
-        boost::dynamic_pointer_cast<ndnrtc::RemoteStream>(rs.getStream())->stop();
+        std::dynamic_pointer_cast<ndnrtc::RemoteStream>(rs.getStream())->stop();
         LogInfo("") << "...stopped fetching from " << rs.getStream()->getPrefix() << std::endl;
     }
     remoteStreams_.clear();
@@ -172,28 +172,28 @@ RemoteStream Client::initRemoteStream(const ConsumerStreamParams &p,
 
     if (p.type_ == ConsumerStreamParams::MediaStreamTypeVideo)
     {
-        boost::shared_ptr<ndnrtc::RemoteVideoStream>
-            remoteStream(boost::make_shared<ndnrtc::RemoteVideoStream>(io_, face_, keyChain_,
+        std::shared_ptr<ndnrtc::RemoteVideoStream>
+            remoteStream(std::make_shared<ndnrtc::RemoteVideoStream>(io_, face_, keyChain_,
                                                                        p.sessionPrefix_, p.streamName_, gcp.interestLifetime_, gcp.jitterSizeMs_));
         remoteStream->setLogger(consumerLogger(p.sessionPrefix_, p.streamName_));
         remoteStream->start(p.threadToFetch_, renderer);
-        return RemoteStream(remoteStream, boost::shared_ptr<RendererInternal>(renderer));
+        return RemoteStream(remoteStream, std::shared_ptr<RendererInternal>(renderer));
     }
     else
     {
-        boost::shared_ptr<ndnrtc::RemoteAudioStream>
-            remoteStream(boost::make_shared<ndnrtc::RemoteAudioStream>(io_, face_, keyChain_,
+        std::shared_ptr<ndnrtc::RemoteAudioStream>
+            remoteStream(std::make_shared<ndnrtc::RemoteAudioStream>(io_, face_, keyChain_,
                                                                        p.sessionPrefix_, p.streamName_, gcp.interestLifetime_, gcp.jitterSizeMs_));
         remoteStream->setLogger(consumerLogger(p.sessionPrefix_, p.streamName_));
         remoteStream->start(p.threadToFetch_);
-        return RemoteStream(remoteStream, boost::shared_ptr<RendererInternal>(renderer));
+        return RemoteStream(remoteStream, std::shared_ptr<RendererInternal>(renderer));
     }
 }
 
 LocalStream Client::initLocalStream(const ProducerStreamParams &p)
 {
-    boost::shared_ptr<ndnrtc::IStream> localStream;
-    boost::shared_ptr<VideoSource> videoSource;
+    std::shared_ptr<ndnrtc::IStream> localStream;
+    std::shared_ptr<VideoSource> videoSource;
     ndnrtc::MediaStreamSettings settings(io_, p);
 
     settings.keyChain_ = keyChain_.get();
@@ -203,12 +203,12 @@ LocalStream Client::initLocalStream(const ProducerStreamParams &p)
     {
         LogDebug("") << "initializing video source at " << p.source_.name_ << endl;
 
-        boost::shared_ptr<RawFrame> sampleFrame = sampleFrameForStream(p);
+        std::shared_ptr<RawFrame> sampleFrame = sampleFrameForStream(p);
 
         LogDebug("") << "source should support frames of size "
                      << sampleFrame->getWidth() << "x" << sampleFrame->getHeight() << endl;
 
-        boost::shared_ptr<IFrameSource> source;
+        std::shared_ptr<IFrameSource> source;
 
         if (p.source_.type_ == "file")
         {
@@ -231,8 +231,8 @@ LocalStream Client::initLocalStream(const ProducerStreamParams &p)
         videoSource.reset(new VideoSource(io_, source, sampleFrame));
         LogDebug("") << "video source initialized" << endl;
 
-        boost::shared_ptr<ndnrtc::LocalVideoStream> s =
-            boost::make_shared<ndnrtc::LocalVideoStream>(p.sessionPrefix_, settings);
+        std::shared_ptr<ndnrtc::LocalVideoStream> s =
+            std::make_shared<ndnrtc::LocalVideoStream>(p.sessionPrefix_, settings);
 
         s->setLogger(producerLogger(p.streamName_));
         videoSource->addCapturer(s.get());
@@ -245,8 +245,8 @@ LocalStream Client::initLocalStream(const ProducerStreamParams &p)
     }
     else
     {
-        boost::shared_ptr<ndnrtc::LocalAudioStream> s =
-            boost::make_shared<ndnrtc::LocalAudioStream>(p.sessionPrefix_, settings);
+        std::shared_ptr<ndnrtc::LocalAudioStream> s =
+            std::make_shared<ndnrtc::LocalAudioStream>(p.sessionPrefix_, settings);
         s->setLogger(producerLogger(p.streamName_));
         s->start();
         localStream = s;
@@ -255,7 +255,7 @@ LocalStream Client::initLocalStream(const ProducerStreamParams &p)
     return LocalStream(localStream, videoSource);
 }
 
-boost::shared_ptr<RawFrame> Client::sampleFrameForStream(const ProducerStreamParams &p)
+std::shared_ptr<RawFrame> Client::sampleFrameForStream(const ProducerStreamParams &p)
 {
     unsigned int width = 0, height = 0;
     p.getMaxResolution(width, height);
@@ -267,29 +267,29 @@ boost::shared_ptr<RawFrame> Client::sampleFrameForStream(const ProducerStreamPar
         throw runtime_error(ss.str());
     }
 
-    return boost::shared_ptr<RawFrame>(new ArgbFrame(width, height));
+    return std::shared_ptr<RawFrame>(new ArgbFrame(width, height));
 }
 
-boost::shared_ptr<ndnlog::new_api::Logger>
+std::shared_ptr<ndnlog::new_api::Logger>
 Client::producerLogger(std::string streamName)
 {
     std::stringstream logFileName;
     logFileName << params_.getGeneralParameters().logPath_ << "/"
                 << "producer-" << instanceName_ << "-" << streamName << ".log";
-    boost::shared_ptr<ndnlog::new_api::Logger> logger(new ndnlog::new_api::Logger(params_.getGeneralParameters().loggingLevel_,
+    std::shared_ptr<ndnlog::new_api::Logger> logger(new ndnlog::new_api::Logger(params_.getGeneralParameters().loggingLevel_,
                                                                                   logFileName.str()));
 
     return logger;
 }
 
-boost::shared_ptr<ndnlog::new_api::Logger>
+std::shared_ptr<ndnlog::new_api::Logger>
 Client::consumerLogger(std::string prefix, std::string streamName)
 {
     std::replace(prefix.begin(), prefix.end(), '/', '-');
     std::stringstream logFileName;
     logFileName << params_.getGeneralParameters().logPath_ << "/"
                 << "consumer" << prefix << "-" << streamName << ".log";
-    boost::shared_ptr<ndnlog::new_api::Logger> logger(new ndnlog::new_api::Logger(params_.getGeneralParameters().loggingLevel_,
+    std::shared_ptr<ndnlog::new_api::Logger> logger(new ndnlog::new_api::Logger(params_.getGeneralParameters().loggingLevel_,
                                                                                   logFileName.str()));
 
     return logger;
@@ -301,8 +301,8 @@ RendererInternal *Client::setupRenderer(const ConsumerStreamParams &p)
     {
         if (p.sink_.type_ == "pipe")
             return new RendererInternal(p.sink_.name_,
-                                        [p](const std::string &s) -> boost::shared_ptr<IFrameSink> {
-                                            boost::shared_ptr<IFrameSink> sink = boost::make_shared<PipeSink>(s);
+                                        [p](const std::string &s) -> std::shared_ptr<IFrameSink> {
+                                            std::shared_ptr<IFrameSink> sink = std::make_shared<PipeSink>(s);
                                             if (p.sink_.writeFrameInfo_) sink->setWriteFrameInfo(true);
                                             return sink;
                                         }, rendererIo_);
@@ -310,9 +310,9 @@ RendererInternal *Client::setupRenderer(const ConsumerStreamParams &p)
         {
 #ifdef HAVE_LIBNANOMSG
             return new RendererInternal(p.sink_.name_,
-                                        [p](const std::string &s) -> boost::shared_ptr<IFrameSink> {
+                                        [p](const std::string &s) -> std::shared_ptr<IFrameSink> {
                                             try {
-                                                boost::shared_ptr<IFrameSink> sink = boost::make_shared<NanoMsgSink>(s);
+                                                std::shared_ptr<IFrameSink> sink = std::make_shared<NanoMsgSink>(s);
                                                 if (p.sink_.writeFrameInfo_) sink->setWriteFrameInfo(true);
                                                 return sink;
                                             }
@@ -328,8 +328,8 @@ RendererInternal *Client::setupRenderer(const ConsumerStreamParams &p)
         }
         else
             return new RendererInternal(p.sink_.name_,
-                                        [p](const std::string &s) -> boost::shared_ptr<IFrameSink> {
-                                            boost::shared_ptr<IFrameSink> sink = boost::make_shared<FileSink>(s);
+                                        [p](const std::string &s) -> std::shared_ptr<IFrameSink> {
+                                            std::shared_ptr<IFrameSink> sink = std::make_shared<FileSink>(s);
                                             if (p.sink_.writeFrameInfo_) sink->setWriteFrameInfo(true);
                                             return sink;
                                         }, rendererIo_);

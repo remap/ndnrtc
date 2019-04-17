@@ -39,7 +39,7 @@ class ScalerThread : public ThreadingCapability
         return &scalerThread;
     }
 
-    void perform(boost::function<void(void)> block)
+    void perform(std::function<void(void)> block)
     {
         performOnMyThread(block);
     }

@@ -22,13 +22,11 @@ namespace lib_chrono = std::chrono;
 
 #else
 
-#include <boost/function.hpp>
 #include <boost/chrono.hpp>
-#include <boost/bind.hpp>
 #include <boost/thread.hpp>
 
-namespace lib_bind = boost;
-namespace lib_fun = boost;
+namespace lib_bind = std;
+namespace lib_fun = std;
 namespace lib_chrono = boost::chrono;
 
 #endif
@@ -53,7 +51,7 @@ class PreciseGenerator
     double getMeanTaskTimeNs();
 
   private:
-    boost::shared_ptr<PreciseGeneratorImpl> pimpl_;
+    std::shared_ptr<PreciseGeneratorImpl> pimpl_;
 };
 
 #endif

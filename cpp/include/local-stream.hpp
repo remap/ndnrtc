@@ -81,8 +81,8 @@ namespace ndnrtc {
 		 * Sets logger for current stream
 		 * @param logger Pointer to Logger instance
 		 */
-		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
-        boost::shared_ptr<ndnlog::new_api::Logger> getLogger() const;
+		void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
+        std::shared_ptr<ndnlog::new_api::Logger> getLogger() const;
 
 		/**
 		 * Returns statistics storage for this stream
@@ -92,7 +92,7 @@ namespace ndnrtc {
         /**
          *  Returns local persistent storage, if it was set up
          */
-        boost::shared_ptr<StorageEngine> getStorage() const;
+        std::shared_ptr<StorageEngine> getStorage() const;
 
 		static std::vector<std::pair<std::string, std::string>> getRecordingDevices();
 		static std::vector<std::pair<std::string, std::string>> getPlayoutDevices();
@@ -101,7 +101,7 @@ namespace ndnrtc {
 		LocalAudioStream(const LocalAudioStream&) = delete;
 		LocalAudioStream(LocalAudioStream&&) = delete;
 		
-		boost::shared_ptr<AudioStreamImpl> pimpl_;
+		std::shared_ptr<AudioStreamImpl> pimpl_;
 	};
 
 	/**
@@ -233,8 +233,8 @@ namespace ndnrtc {
 		 * Sets logger for current stream
 		 * @param logger Pointer to Logger instance
 		 */
-		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) override;
-        boost::shared_ptr<ndnlog::new_api::Logger> getLogger() const;
+		void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger) override;
+        std::shared_ptr<ndnlog::new_api::Logger> getLogger() const;
 
 		/**
 		 * Returns statistics storage for this stream
@@ -244,13 +244,13 @@ namespace ndnrtc {
         /**
          *  Returns local persistent storage, if it was set up
          */
-        boost::shared_ptr<StorageEngine> getStorage() const;
+        std::shared_ptr<StorageEngine> getStorage() const override;
 
 	private:
 		LocalVideoStream(const LocalVideoStream&) = delete;
 		LocalVideoStream(LocalVideoStream&&) = delete;
 
-		boost::shared_ptr<VideoStreamImpl> pimpl_;
+		std::shared_ptr<VideoStreamImpl> pimpl_;
 	};
 }
 

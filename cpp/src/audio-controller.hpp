@@ -27,9 +27,9 @@ namespace ndnrtc {
         void releaseVoiceEngine();
 
         // asynchronous
-        void dispatchOnAudioThread(boost::function<void(void)> dispatchBlock);
+        void dispatchOnAudioThread(std::function<void(void)> dispatchBlock);
         // synchronous
-        void performOnAudioThread(boost::function<void(void)> dispatchBlock);
+        void performOnAudioThread(std::function<void(void)> dispatchBlock);
         
         ~AudioController();
     private:

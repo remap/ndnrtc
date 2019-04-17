@@ -31,7 +31,7 @@ namespace ndnrtc {
          * Data is saved asynchronously, so the call returns immediately.
          * The call is thread-safe.
          */
-        void put(const boost::shared_ptr<const ndn::Data>& data);
+        void put(const std::shared_ptr<const ndn::Data>& data);
 
         /**
          * Tries to retrieve data from persistent storage. 
@@ -39,10 +39,10 @@ namespace ndnrtc {
          * If data is not present in the persistent storage, returned pointer
          * is invalid.
          */
-        boost::shared_ptr<ndn::Data> get(const ndn::Name& dataName);
+        std::shared_ptr<ndn::Data> get(const ndn::Name& dataName);
 
     private:
-        boost::shared_ptr<StorageEngineImpl> pimpl_;
+        std::shared_ptr<StorageEngineImpl> pimpl_;
     };
 }
 

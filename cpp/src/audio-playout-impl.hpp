@@ -22,9 +22,9 @@ namespace ndnrtc {
   	typedef statistics::StatisticsStorage StatStorage;
   public:
     AudioPlayoutImpl(boost::asio::io_service& io,
-            const boost::shared_ptr<IPlaybackQueue>& queue,
-            const boost::shared_ptr<StatStorage>& statStorage = 
-            boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()),
+            const std::shared_ptr<IPlaybackQueue>& queue,
+            const std::shared_ptr<StatStorage>& statStorage = 
+            std::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()),
             const WebrtcAudioChannel::Codec& codec = WebrtcAudioChannel::Codec::G722,
             unsigned int deviceIdx = 0);
     ~AudioPlayoutImpl(){}
@@ -32,15 +32,15 @@ namespace ndnrtc {
     void start(unsigned int fastForwardMs = 0);
     void stop();
 
-    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+    void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
 
   private:
     AudioBundleSlot bundleSlot_;
     PacketNumber packetCount_;
-    boost::shared_ptr<AudioRenderer> renderer_;
+    std::shared_ptr<AudioRenderer> renderer_;
 
     bool
-    processSample(const boost::shared_ptr<const BufferSlot>&);
+    processSample(const std::shared_ptr<const BufferSlot>&);
   };
 }
 

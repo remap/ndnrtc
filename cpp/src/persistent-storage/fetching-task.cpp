@@ -14,13 +14,12 @@
 
 using namespace ndnrtc;
 using namespace ndn;
-using namespace boost;
 
 #define NSEGMENTS_GUESS_DELTA 5
 #define NSEGMENTS_GUESS_KEY 30
 
 FrameFetchingTask::FrameFetchingTask(const ndn::Name& frameName,
-                          const shared_ptr<IFetchMethod>& fetchMethod,
+                          const std::shared_ptr<IFetchMethod>& fetchMethod,
                           OnFetchingComplete onFetchingComplete,
                           OnFetchingFailed onFetchingFailed,
                           const FetchingTask::Settings& settings,
@@ -45,7 +44,7 @@ FrameFetchingTask::FrameFetchingTask(const ndn::Name& frameName,
     }
 
     description_ = "fetch-task-" + frameNameInfo_.getSuffix(suffix_filter::Sample).toUri();
-    slot_ = make_shared<BufferSlot>();
+    slot_ = std::make_shared<BufferSlot>();
 }
 
 FrameFetchingTask::~FrameFetchingTask()
@@ -57,7 +56,7 @@ FrameFetchingTask::~FrameFetchingTask()
 
 void FrameFetchingTask::start()
 {
-    std::vector<shared_ptr<const Interest>> interests = prepareBatch(frameNameInfo_.getPrefix(prefix_filter::Sample));
+    std::vector<std::shared_ptr<const Interest>> interests = prepareBatch(frameNameInfo_.getPrefix(prefix_filter::Sample));
     taskProgress_ = 0;
     taskCompletion_ = interests.size() * (1+settings_.nRtx_);
     nNacks_ = 0;
@@ -79,22 +78,22 @@ void FrameFetchingTask::cancel()
     state_ = Canceled;
 }
 
-void FrameFetchingTask::requestSegment(const shared_ptr<const Interest>& interest)
+void FrameFetchingTask::requestSegment(const std::shared_ptr<const Interest>& interest)
 {
-    shared_ptr<FrameFetchingTask> self = shared_from_this();
+    std::shared_ptr<FrameFetchingTask> self = shared_from_this();
     LogTraceC << "requesting segment " << interest->getName() << std::endl;
 
     taskProgress_ += 1;
     fetchMethod_->express(interest, 
-        [self, this](const shared_ptr<const Interest>& interest, const shared_ptr<Data>& data)
+        [self, this](const std::shared_ptr<const Interest>& interest, const std::shared_ptr<Data>& data)
         {
             if (data->getMetaInfo().getType() != ndn_ContentType_NACK)
             {
                 NamespaceInfo info;
                 NameComponents::extractInfo(data->getName(), info);
-                boost::shared_ptr<WireSegment> segment = WireSegment::createSegment(info, data, interest);
+                std::shared_ptr<WireSegment> segment = WireSegment::createSegment(info, data, interest);
                 BufferSlot::State s = slot_->getState();
-                shared_ptr<SlotSegment> seg = slot_->segmentReceived(segment);
+                std::shared_ptr<SlotSegment> seg = slot_->segmentReceived(segment);
                 taskProgress_ += (settings_.nRtx_+1) - seg->getRequestNum();
 
                 LogTraceC << "received " << data->getName() 
@@ -109,7 +108,7 @@ void FrameFetchingTask::requestSegment(const shared_ptr<const Interest>& interes
                 checkCompletion();
             }
         }, 
-        [self, this](const shared_ptr<const Interest>& interest) // onTimeout
+        [self, this](const std::shared_ptr<const Interest>& interest) // onTimeout
         {
             LogTraceC << "timeout for " << interest->getName() << std::endl;
 
@@ -118,7 +117,7 @@ void FrameFetchingTask::requestSegment(const shared_ptr<const Interest>& interes
                 requestSegment(interest);
             checkCompletion();
         }, 
-        [self, this](const shared_ptr<const Interest>& interest, const shared_ptr<NetworkNack>& networkNack)
+        [self, this](const std::shared_ptr<const Interest>& interest, const std::shared_ptr<NetworkNack>& networkNack)
         {
             LogTraceC << "NACK for " << interest->getName() << std::endl;
 
@@ -128,10 +127,10 @@ void FrameFetchingTask::requestSegment(const shared_ptr<const Interest>& interes
         });
 }
 
-std::vector<shared_ptr<const Interest>> 
+std::vector<std::shared_ptr<const Interest>> 
 FrameFetchingTask::prepareBatch(ndn::Name n, bool noParity) const
 {
-    std::vector<boost::shared_ptr<const Interest>> interests;
+    std::vector<std::shared_ptr<const Interest>> interests;
     unsigned int nData = (frameNameInfo_.isDelta_ ? NSEGMENTS_GUESS_DELTA : NSEGMENTS_GUESS_KEY);
     unsigned int nParity = (unsigned int)round(0.2*nData);
 
@@ -159,7 +158,7 @@ FrameFetchingTask::prepareBatch(ndn::Name n, bool noParity) const
 void
 FrameFetchingTask::checkMissingSegments()
 {
-    std::vector<boost::shared_ptr<const Interest>> interests;
+    std::vector<std::shared_ptr<const Interest>> interests;
     for (auto& n:slot_->getMissingSegments())
     {
         taskCompletion_ += (1+settings_.nRtx_);
@@ -197,10 +196,10 @@ FrameFetchingTask::checkCompletion()
     }
 }
 
-boost::shared_ptr<const ndn::Interest> 
+std::shared_ptr<const ndn::Interest> 
 FrameFetchingTask::makeInterest(const ndn::Name& name) const
 {
-    boost::shared_ptr<Interest> i = boost::make_shared<Interest>(name, settings_.interestLifeTimeMs_);
+    std::shared_ptr<Interest> i = std::make_shared<Interest>(name, settings_.interestLifeTimeMs_);
     i->setMustBeFresh(false);
 
     return i;
@@ -208,14 +207,14 @@ FrameFetchingTask::makeInterest(const ndn::Name& name) const
 
 //******************************************************************************
 void
-FetchMethodLocal::express(const boost::shared_ptr<const ndn::Interest>& interest,
+FetchMethodLocal::express(const std::shared_ptr<const ndn::Interest>& interest,
                           ndn::OnData onData,
                           ndn::OnTimeout,
                           ndn::OnNetworkNack onNack)
 {
-    shared_ptr<Data> data = storage_->get(interest->getName());
+    std::shared_ptr<Data> data = storage_->get(interest->getName());
     if (data.get())
         onData(interest, data);
     else
-        onNack(interest, make_shared<NetworkNack>());
+        onNack(interest, std::make_shared<NetworkNack>());
 }

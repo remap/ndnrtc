@@ -29,7 +29,6 @@
 
 using namespace ndnrtc;
 using namespace ndn;
-using namespace boost;
 
 //******************************************************************************
 namespace ndnrtc {
@@ -71,7 +70,7 @@ class StorageEngineImpl {
 #endif
         }
 
-        bool put(const shared_ptr<const Data>& data)
+        bool put(const std::shared_ptr<const Data>& data)
         {
 #if HAVE_PERSISTENT_STORAGE
             if (!db_)
@@ -88,7 +87,7 @@ class StorageEngineImpl {
 #endif
         }
 
-        shared_ptr<Data> get(const Name& dataName)
+        std::shared_ptr<Data> get(const Name& dataName)
         {
 #if HAVE_PERSISTENT_STORAGE
             if (!db_)
@@ -100,13 +99,13 @@ class StorageEngineImpl {
                                               &dataString);
             if (s.ok())
             {
-                shared_ptr<Data> data = make_shared<Data>();
+                std::shared_ptr<Data> data = std::make_shared<Data>();
                 data->wireDecode((const uint8_t*)dataString.data(), dataString.size());
                 
                 return data;
             }
 #endif
-            return shared_ptr<Data>(nullptr);
+            return std::shared_ptr<Data>(nullptr);
         }
 
     private:
@@ -120,7 +119,7 @@ class StorageEngineImpl {
 
 //******************************************************************************
 StorageEngine::StorageEngine(std::string dbPath):
-    pimpl_(boost::make_shared<StorageEngineImpl>(dbPath))
+    pimpl_(std::make_shared<StorageEngineImpl>(dbPath))
 {
     pimpl_->open();
 }
@@ -130,12 +129,12 @@ StorageEngine::~StorageEngine()
     pimpl_->close();
 }
 
-void StorageEngine::put(const shared_ptr<const Data>& data)
+void StorageEngine::put(const std::shared_ptr<const Data>& data)
 {
     pimpl_->put(data);
 }
 
-boost::shared_ptr<Data> 
+std::shared_ptr<Data> 
 StorageEngine::get(const Name& dataName)
 {
     return pimpl_->get(dataName);

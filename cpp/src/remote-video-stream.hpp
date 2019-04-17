@@ -26,20 +26,20 @@ class RemoteVideoStreamImpl : public RemoteStreamImpl
 {
   public:
     RemoteVideoStreamImpl(boost::asio::io_service &io,
-                          const boost::shared_ptr<ndn::Face> &face,
-                          const boost::shared_ptr<ndn::KeyChain> &keyChain,
+                          const std::shared_ptr<ndn::Face> &face,
+                          const std::shared_ptr<ndn::KeyChain> &keyChain,
                           const std::string &streamPrefix);
     ~RemoteVideoStreamImpl();
 
     void start(const std::string &threadName, IExternalRenderer *render);
     void initiateFetching();
     void stopFetching();
-    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+    void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
 
   private:
-    boost::shared_ptr<ManifestValidator> validator_;
+    std::shared_ptr<ManifestValidator> validator_;
     IExternalRenderer *renderer_;
-    boost::shared_ptr<VideoDecoder> decoder_;
+    std::shared_ptr<VideoDecoder> decoder_;
 
     void feedFrame(const FrameInfo&, const WebRtcVideoFrame &);
     void setupDecoder();

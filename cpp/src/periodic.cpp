@@ -11,8 +11,10 @@
 #include <boost/chrono.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/atomic.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/bind.hpp>
+#include <memory>
+
+using std::placeholders::_1;
+using std::placeholders::_2;
 
 #if BOOST_ASIO_HAS_STD_CHRONO
 
@@ -28,7 +30,7 @@ namespace lib_chrono=boost::chrono;
 using namespace ndnrtc;
 
 namespace ndnrtc {
-	class PeriodicImpl : public boost::enable_shared_from_this<PeriodicImpl> 
+	class PeriodicImpl : public std::enable_shared_from_this<PeriodicImpl> 
 	{
 	public:
 		PeriodicImpl(boost::asio::io_service& io);
@@ -40,13 +42,13 @@ namespace ndnrtc {
 
 		boost::atomic<bool> isRunning_;
 		boost::asio::io_service& io_;
-		boost::function<unsigned int(void)> workFunc_;
+		std::function<unsigned int(void)> workFunc_;
 		boost::asio::steady_timer timer_;
 	};
 }
 
 Periodic::Periodic(boost::asio::io_service& io):
-pimpl_(boost::make_shared<PeriodicImpl>(io))
+pimpl_(std::make_shared<PeriodicImpl>(io))
 {
 }
 
@@ -57,7 +59,7 @@ Periodic::~Periodic()
 
 void 
 Periodic::setupInvocation(unsigned int intervalMs, 
-	boost::function<unsigned int(void)> callback)
+	std::function<unsigned int(void)> callback)
 {
 	if (!pimpl_->isRunning_)
 	{
@@ -95,8 +97,7 @@ void
 PeriodicImpl::setupTimer(unsigned int intervalMs)
 {
 	timer_.expires_from_now(lib_chrono::milliseconds(intervalMs));
-	timer_.async_wait(boost::bind(&PeriodicImpl::fire, shared_from_this(), 
-		boost::asio::placeholders::error));
+	timer_.async_wait(std::bind(&PeriodicImpl::fire, shared_from_this(), _1));
 }
 
 void 
@@ -120,5 +121,5 @@ PeriodicImpl::cancel()
 {
 	isRunning_ = false;
 	timer_.cancel();
-    workFunc_ = boost::function<unsigned int(void)>();
+    workFunc_ = std::function<unsigned int(void)>();
 }

@@ -24,7 +24,7 @@ class RawFrame
     unsigned int getWidth() const { return width_; }
     unsigned int getHeight() const { return height_; }
     virtual void getFrameResolution(unsigned int &width, unsigned int &height) const = 0;
-    boost::shared_ptr<uint8_t> getBuffer() const { return buffer_; }
+    std::shared_ptr<uint8_t> getBuffer() const { return buffer_; }
 
     void setFrameInfo(const ndnrtc::FrameInfo& frameInfo);
     const ndnrtc::FrameInfo& getFrameInfo() const { return frameInfo_; };
@@ -33,7 +33,7 @@ class RawFrame
     unsigned int width_, height_;
     ndnrtc::FrameInfo frameInfo_;
 
-    virtual void setBuffer(const long &bufSize, boost::shared_ptr<uint8_t> buf)
+    virtual void setBuffer(const long &bufSize, std::shared_ptr<uint8_t> buf)
     {
         bufferSize_ = bufSize;
         buffer_ = buf;
@@ -41,7 +41,7 @@ class RawFrame
 
   private:
     long bufferSize_;
-    boost::shared_ptr<uint8_t> buffer_;
+    std::shared_ptr<uint8_t> buffer_;
 };
 
 //******************************************************************************

@@ -17,14 +17,14 @@ using namespace ndnrtc::statistics;
 
 //******************************************************************************
 PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name &threadPrefix,
-                                                        const boost::shared_ptr<DrdEstimator> drdEstimator,
-                                                        const boost::shared_ptr<IBuffer> buffer,
-                                                        const boost::shared_ptr<IPipeliner> pipeliner,
-                                                        const boost::shared_ptr<IInterestControl> interestControl,
-                                                        const boost::shared_ptr<ILatencyControl> latencyControl,
-                                                        const boost::shared_ptr<IPlayoutControl> playoutControl,
-                                                        const boost::shared_ptr<SampleEstimator> sampleEstimator,
-                                                        const boost::shared_ptr<statistics::StatisticsStorage> &storage)
+                                                        const std::shared_ptr<DrdEstimator> drdEstimator,
+                                                        const std::shared_ptr<IBuffer> buffer,
+                                                        const std::shared_ptr<IPipeliner> pipeliner,
+                                                        const std::shared_ptr<IInterestControl> interestControl,
+                                                        const std::shared_ptr<ILatencyControl> latencyControl,
+                                                        const std::shared_ptr<IPlayoutControl> playoutControl,
+                                                        const std::shared_ptr<SampleEstimator> sampleEstimator,
+                                                        const std::shared_ptr<statistics::StatisticsStorage> &storage)
 {
     PipelineControlStateMachine::Struct ctrl(threadPrefix);
     ctrl.drdEstimator_ = drdEstimator;
@@ -40,14 +40,14 @@ PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name &threadP
 }
 
 PipelineControl PipelineControl::videoPipelineControl(const ndn::Name &threadPrefix,
-                                                      const boost::shared_ptr<DrdEstimator> drdEstimator,
-                                                      const boost::shared_ptr<IBuffer> buffer,
-                                                      const boost::shared_ptr<IPipeliner> pipeliner,
-                                                      const boost::shared_ptr<IInterestControl> interestControl,
-                                                      const boost::shared_ptr<ILatencyControl> latencyControl,
-                                                      const boost::shared_ptr<IPlayoutControl> playoutControl,
-                                                      const boost::shared_ptr<SampleEstimator> sampleEstimator,
-                                                      const boost::shared_ptr<statistics::StatisticsStorage> &storage)
+                                                      const std::shared_ptr<DrdEstimator> drdEstimator,
+                                                      const std::shared_ptr<IBuffer> buffer,
+                                                      const std::shared_ptr<IPipeliner> pipeliner,
+                                                      const std::shared_ptr<IInterestControl> interestControl,
+                                                      const std::shared_ptr<ILatencyControl> latencyControl,
+                                                      const std::shared_ptr<IPlayoutControl> playoutControl,
+                                                      const std::shared_ptr<SampleEstimator> sampleEstimator,
+                                                      const std::shared_ptr<statistics::StatisticsStorage> &storage)
 {
     PipelineControlStateMachine::Struct ctrl(threadPrefix);
     ctrl.drdEstimator_ = drdEstimator;
@@ -63,10 +63,10 @@ PipelineControl PipelineControl::videoPipelineControl(const ndn::Name &threadPre
 }
 
 //******************************************************************************
-PipelineControl::PipelineControl(const boost::shared_ptr<StatisticsStorage> &statStorage,
+PipelineControl::PipelineControl(const std::shared_ptr<StatisticsStorage> &statStorage,
                                  const PipelineControlStateMachine &machine,
-                                 const boost::shared_ptr<IInterestControl> &interestControl,
-                                 const boost::shared_ptr<IPipeliner> pipeliner)
+                                 const std::shared_ptr<IInterestControl> &interestControl,
+                                 const std::shared_ptr<IPipeliner> pipeliner)
     : StatObject(statStorage),
       machine_(machine),
       interestControl_(interestControl),
@@ -86,7 +86,7 @@ void PipelineControl::start()
                                  "started already. Use reset() and start() to restart.");
 
     machine_.attach(this);
-    machine_.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
+    machine_.dispatch(std::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
 
     LogDebugC << "started." << std::endl;
 }
@@ -94,36 +94,36 @@ void PipelineControl::start()
 void PipelineControl::stop()
 {
     machine_.detach(this);
-    machine_.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Reset));
+    machine_.dispatch(std::make_shared<PipelineControlEvent>(PipelineControlEvent::Reset));
     LogDebugC << "stopped" << std::endl;
 }
 
-void PipelineControl::segmentArrived(const boost::shared_ptr<WireSegment> &s)
+void PipelineControl::segmentArrived(const std::shared_ptr<WireSegment> &s)
 {
     if (s->getSampleClass() == SampleClass::Key ||
         s->getSampleClass() == SampleClass::Delta ||
         s->getSegmentClass() == SegmentClass::Meta)
     {
-        machine_.dispatch(boost::make_shared<EventSegment>(s));
+        machine_.dispatch(std::make_shared<EventSegment>(s));
     }
 }
 
 void PipelineControl::segmentRequestTimeout(const NamespaceInfo &n, 
-                                            const boost::shared_ptr<const ndn::Interest> &interest)
+                                            const std::shared_ptr<const ndn::Interest> &interest)
 {
-    machine_.dispatch(boost::make_shared<EventTimeout>(n, interest));
+    machine_.dispatch(std::make_shared<EventTimeout>(n, interest));
 }
 
 void PipelineControl::segmentNack(const NamespaceInfo &n, int reason,
-                                   const boost::shared_ptr<const ndn::Interest> &interest)
+                                   const std::shared_ptr<const ndn::Interest> &interest)
 {
-    machine_.dispatch(boost::make_shared<EventNack>(n, reason, interest));
+    machine_.dispatch(std::make_shared<EventNack>(n, reason, interest));
 }
 
 void PipelineControl::segmentStarvation()
 {
-    machine_.dispatch(boost::make_shared<EventStarvation>(500));
-    machine_.dispatch(boost::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
+    machine_.dispatch(std::make_shared<EventStarvation>(500));
+    machine_.dispatch(std::make_shared<PipelineControlEvent>(PipelineControlEvent::Start));
 }
 
 bool PipelineControl::needPipelineAdjustment(const PipelineAdjust &cmd)
@@ -140,14 +140,14 @@ bool PipelineControl::needPipelineAdjustment(const PipelineAdjust &cmd)
     return false;
 }
 
-void PipelineControl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void PipelineControl::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     NdnRtcComponent::setLogger(logger);
     machine_.setLogger(logger);
 }
 
 #pragma mark - private
-void PipelineControl::onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent> &trigger,
+void PipelineControl::onStateMachineChangedState(const std::shared_ptr<const PipelineControlEvent> &trigger,
                                                  std::string newState)
 {
     // if new state is idle - reset the machine
@@ -163,12 +163,12 @@ void PipelineControl::onStateMachineChangedState(const boost::shared_ptr<const P
     }
 }
 
-void PipelineControl::onStateMachineReceivedEvent(const boost::shared_ptr<const PipelineControlEvent> &trigger,
+void PipelineControl::onStateMachineReceivedEvent(const std::shared_ptr<const PipelineControlEvent> &trigger,
                                                   std::string currentState)
 {
 }
 
-void PipelineControl::onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>> &interests)
+void PipelineControl::onRetransmissionRequired(const std::vector<std::shared_ptr<const ndn::Interest>> &interests)
 {
     if (machine_.currentState()->toInt() >= PipelineControlState::Bootstrapping)
     {

@@ -73,55 +73,55 @@ class PipelineControlEvent
 class EventSegment : public PipelineControlEvent
 {
   public:
-    EventSegment(const boost::shared_ptr<const WireSegment> &segment) 
+    EventSegment(const std::shared_ptr<const WireSegment> &segment) 
         : PipelineControlEvent(PipelineControlEvent::Segment), segment_(segment) {}
 
-    boost::shared_ptr<const WireSegment> getSegment() const { return segment_; }
+    std::shared_ptr<const WireSegment> getSegment() const { return segment_; }
 
   private:
-    boost::shared_ptr<const WireSegment> segment_;
+    std::shared_ptr<const WireSegment> segment_;
 };
 
 // class EventInit : public PipelineControlEvent
 // {
 //   public:
-//     EventInit(const boost::shared_ptr<NetworkDataAlias> &data) 
+//     EventInit(const std::shared_ptr<NetworkDataAlias> &data) 
 //         : PipelineControlEvent(PipelineControlEvent::Init), data_(data){};
 
-//     const boost::shared_ptr<NetworkDataAlias> getNetworkData() const { return data_; }
+//     const std::shared_ptr<NetworkDataAlias> getNetworkData() const { return data_; }
 
 //   private:
-//     boost::shared_ptr<NetworkDataAlias> data_;
+//     std::shared_ptr<NetworkDataAlias> data_;
 // };
 
 class EventTimeout : public PipelineControlEvent
 {
   public:
-    EventTimeout(const NamespaceInfo &info, const boost::shared_ptr<const ndn::Interest> &i) 
+    EventTimeout(const NamespaceInfo &info, const std::shared_ptr<const ndn::Interest> &i) 
         : PipelineControlEvent(PipelineControlEvent::Timeout), info_(info), interest_(i) {}
 
     const NamespaceInfo &getInfo() const { return info_; }
-    const boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
+    const std::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
 
   private:
     NamespaceInfo info_;
-    const boost::shared_ptr<const ndn::Interest> interest_;
+    const std::shared_ptr<const ndn::Interest> interest_;
 };
 
 class EventNack : public PipelineControlEvent
 {
   public:
-    EventNack(const NamespaceInfo &info, int reason, const boost::shared_ptr<const ndn::Interest> &i) 
+    EventNack(const NamespaceInfo &info, int reason, const std::shared_ptr<const ndn::Interest> &i) 
         : PipelineControlEvent(PipelineControlEvent::Nack), info_(info), reason_(reason), interest_(i) {}
 
     const NamespaceInfo &getInfo() const { return info_; }
     int getReason() const { return reason_; }
-    const boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
+    const std::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
 
   private:
     NamespaceInfo info_;
     int reason_;
-    const boost::shared_ptr<const ndn::Interest> interest_;
+    const std::shared_ptr<const ndn::Interest> interest_;
 };
 
 class EventStarvation : public PipelineControlEvent
@@ -157,28 +157,28 @@ class IPipelineControlStateMachineObserver;
 class PipelineControlStateMachine : public NdnRtcComponent
 {
   public:
-    typedef std::map<std::string, boost::shared_ptr<PipelineControlState>>
+    typedef std::map<std::string, std::shared_ptr<PipelineControlState>>
         StatesMap;
     typedef struct _Struct
     {
         _Struct(const ndn::Name threadPrefix) : threadPrefix_(threadPrefix) {}
 
         const ndn::Name threadPrefix_;
-        boost::shared_ptr<DrdEstimator> drdEstimator_;
-        boost::shared_ptr<IBuffer> buffer_;
-        boost::shared_ptr<IPipeliner> pipeliner_;
-        boost::shared_ptr<IInterestControl> interestControl_;
-        boost::shared_ptr<ILatencyControl> latencyControl_;
-        boost::shared_ptr<IPlayoutControl> playoutControl_;
-        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
-        boost::shared_ptr<SampleEstimator> sampleEstimator_;
+        std::shared_ptr<DrdEstimator> drdEstimator_;
+        std::shared_ptr<IBuffer> buffer_;
+        std::shared_ptr<IPipeliner> pipeliner_;
+        std::shared_ptr<IInterestControl> interestControl_;
+        std::shared_ptr<ILatencyControl> latencyControl_;
+        std::shared_ptr<IPlayoutControl> playoutControl_;
+        std::shared_ptr<statistics::StatisticsStorage> sstorage_;
+        std::shared_ptr<SampleEstimator> sampleEstimator_;
     } Struct;
 
     ~PipelineControlStateMachine();
 
     std::string getState() const;
-    boost::shared_ptr<PipelineControlState> currentState() const { return currentState_; }
-    void dispatch(const boost::shared_ptr<const PipelineControlEvent> &ev);
+    std::shared_ptr<PipelineControlState> currentState() const { return currentState_; }
+    void dispatch(const std::shared_ptr<const PipelineControlEvent> &ev);
 
     // not thread-safe! should be called on the same thread as dispatch(...)
     void attach(IPipelineControlStateMachineObserver *);
@@ -192,31 +192,31 @@ class PipelineControlStateMachine : public NdnRtcComponent
     typedef std::pair<std::string, PipelineControlEvent::Type> StateEventPair;
     typedef std::map<StateEventPair, std::string> TransitionMap;
 
-    boost::shared_ptr<Struct> ppCtrl_;
-    std::map<std::string, boost::shared_ptr<PipelineControlState>> states_;
+    std::shared_ptr<Struct> ppCtrl_;
+    std::map<std::string, std::shared_ptr<PipelineControlState>> states_;
     TransitionMap stateMachineTable_;
-    boost::shared_ptr<PipelineControlState> currentState_;
+    std::shared_ptr<PipelineControlState> currentState_;
     int64_t lastEventTimestamp_;
     std::vector<IPipelineControlStateMachineObserver *> observers_;
 
-    PipelineControlStateMachine(const boost::shared_ptr<Struct> &ctrl,
+    PipelineControlStateMachine(const std::shared_ptr<Struct> &ctrl,
                                 StatesMap statesMap);
 
-    bool transition(const boost::shared_ptr<const PipelineControlEvent> &ev);
-    void switchToState(const boost::shared_ptr<PipelineControlState> &state,
-                       const boost::shared_ptr<const PipelineControlEvent> &event);
+    bool transition(const std::shared_ptr<const PipelineControlEvent> &ev);
+    void switchToState(const std::shared_ptr<PipelineControlState> &state,
+                       const std::shared_ptr<const PipelineControlEvent> &event);
 
-    static StatesMap defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct> &);
-    static StatesMap videoConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct> &);
+    static StatesMap defaultConsumerStatesMap(const std::shared_ptr<PipelineControlStateMachine::Struct> &);
+    static StatesMap videoConsumerStatesMap(const std::shared_ptr<PipelineControlStateMachine::Struct> &);
 };
 
 class IPipelineControlStateMachineObserver
 {
   public:
-    virtual void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent> &,
+    virtual void onStateMachineChangedState(const std::shared_ptr<const PipelineControlEvent> &,
                                             std::string newState) = 0;
     // called whenever received event didn't trigger any state change
-    virtual void onStateMachineReceivedEvent(const boost::shared_ptr<const PipelineControlEvent> &,
+    virtual void onStateMachineReceivedEvent(const std::shared_ptr<const PipelineControlEvent> &,
                                              std::string state) = 0;
 };
 
@@ -234,7 +234,7 @@ class PipelineControlState
         Fetching = 4
     } StateId;
 
-    PipelineControlState(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : ctrl_(ctrl) {}
+    PipelineControlState(const std::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : ctrl_(ctrl) {}
 
     virtual std::string str() const = 0;
 
@@ -253,7 +253,7 @@ class PipelineControlState
      * @param event State machine event
      * @return Next state transition to
      */
-    virtual std::string dispatchEvent(const boost::shared_ptr<const PipelineControlEvent> &ev);
+    virtual std::string dispatchEvent(const std::shared_ptr<const PipelineControlEvent> &ev);
 
     bool operator==(const PipelineControlState &other) const
     {
@@ -263,29 +263,29 @@ class PipelineControlState
     virtual int toInt() { return (int)StateId::Unknown; }
 
   protected:
-    boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl_;
+    std::shared_ptr<PipelineControlStateMachine::Struct> ctrl_;
 
-    virtual std::string onStart(const boost::shared_ptr<const PipelineControlEvent> &)
+    virtual std::string onStart(const std::shared_ptr<const PipelineControlEvent> &)
     {
         return str();
     }
-    virtual std::string onReset(const boost::shared_ptr<const PipelineControlEvent> &ev)
+    virtual std::string onReset(const std::shared_ptr<const PipelineControlEvent> &ev)
     {
         return str();
     }
-    virtual std::string onStarvation(const boost::shared_ptr<const EventStarvation> &ev)
+    virtual std::string onStarvation(const std::shared_ptr<const EventStarvation> &ev)
     {
         return str();
     }
-    virtual std::string onTimeout(const boost::shared_ptr<const EventTimeout> &ev)
+    virtual std::string onTimeout(const std::shared_ptr<const EventTimeout> &ev)
     {
         return str();
     }
-    virtual std::string onNack(const boost::shared_ptr<const EventNack> &ev)
+    virtual std::string onNack(const std::shared_ptr<const EventNack> &ev)
     {
         return str();
     }
-    virtual std::string onSegment(const boost::shared_ptr<const EventSegment> &ev)
+    virtual std::string onSegment(const std::shared_ptr<const EventSegment> &ev)
     {
         return str();
     }

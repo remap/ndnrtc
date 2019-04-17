@@ -174,12 +174,12 @@ namespace ndnrtc {
 
         class StatObject {
         public:
-            StatObject(const boost::shared_ptr<StatisticsStorage>& statStorage):statStorage_(statStorage){}
+            StatObject(const std::shared_ptr<StatisticsStorage>& statStorage):statStorage_(statStorage){}
             
             virtual ~StatObject(){}
             
         protected:
-            boost::shared_ptr<StatisticsStorage> statStorage_;
+            std::shared_ptr<StatisticsStorage> statStorage_;
         };
     };
 }

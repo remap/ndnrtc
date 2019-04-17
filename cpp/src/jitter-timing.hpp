@@ -13,7 +13,6 @@
 #include <boost/asio/steady_timer.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/recursive_mutex.hpp>
-#include <boost/function.hpp>
 
 #include "ndnrtc-common.hpp"
 
@@ -63,15 +62,15 @@ namespace ndnrtc {
          * Sets up playback timer asynchronously.
          * @param callback A callback to call when timer is fired
          */
-        void run(boost::function<void()> callback);
+        void run(std::function<void()> callback);
 
-        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+        void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
         void setDescription(const std::string& desc);
         
     private:
         JitterTiming(const JitterTiming&) = delete;
 
-        boost::shared_ptr<JitterTimingImpl> pimpl_;
+        std::shared_ptr<JitterTimingImpl> pimpl_;
     };
 }
 

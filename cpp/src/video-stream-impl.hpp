@@ -57,7 +57,7 @@ class VideoStreamImpl : public MediaStreamBase
     int incomingFrame(const YUV_NV21FrameWrapper &);
     
     const std::map<std::string, FrameInfo>& getLastPublished() { return lastPublished_; }
-    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger>) override;
+    void setLogger(std::shared_ptr<ndnlog::new_api::Logger>) override;
 
   private:
     friend LocalVideoStream::LocalVideoStream(const std::string &, const MediaStreamSettings &, bool);
@@ -93,12 +93,12 @@ class VideoStreamImpl : public MediaStreamBase
     bool fecEnabled_;
     boost::atomic<int> busyPublishing_;
     RawFrameConverter conv_;
-    std::map<std::string, boost::shared_ptr<VideoThread>> threads_;
-    std::map<std::string, boost::shared_ptr<FrameScaler>> scalers_;
-    std::map<std::string, boost::shared_ptr<MetaKeeper>> metaKeepers_;
+    std::map<std::string, std::shared_ptr<VideoThread>> threads_;
+    std::map<std::string, std::shared_ptr<FrameScaler>> scalers_;
+    std::map<std::string, std::shared_ptr<MetaKeeper>> metaKeepers_;
     std::map<std::string, std::pair<uint64_t, uint64_t>> seqCounters_;
     uint64_t playbackCounter_;
-    boost::shared_ptr<VideoPacketPublisher> framePublisher_;
+    std::shared_ptr<VideoPacketPublisher> framePublisher_;
     std::map<std::string, FrameInfo> lastPublished_;
 
     void add(const MediaThreadParams *params) override;
@@ -106,8 +106,8 @@ class VideoStreamImpl : public MediaStreamBase
     bool updateMeta() override;
 
     bool feedFrame(const WebRtcVideoFrame &frame);
-    void publish(std::map<std::string, boost::shared_ptr<VideoFramePacketAlias>> &frames);
-    std::string publish(const std::string &thread, boost::shared_ptr<VideoFramePacketAlias> &fp);
+    void publish(std::map<std::string, std::shared_ptr<VideoFramePacketAlias>> &frames);
+    std::string publish(const std::string &thread, std::shared_ptr<VideoFramePacketAlias> &fp);
     void publishManifest(ndn::Name dataName, PublishedDataPtrVector &segments);
     std::map<std::string, PacketNumber> getCurrentSyncList(bool forKey = false);
 };

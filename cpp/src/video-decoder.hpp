@@ -20,7 +20,7 @@
 #include "interfaces.hpp"
 
 namespace ndnrtc {
-    typedef boost::function<void(const FrameInfo&, const WebRtcVideoFrame&)> OnDecodedImage;
+    typedef std::function<void(const FrameInfo&, const WebRtcVideoFrame&)> OnDecodedImage;
 
     class VideoDecoder : public IEncodedFrameConsumer,
                          public webrtc::DecodedImageCallback,
@@ -37,7 +37,7 @@ namespace ndnrtc {
         VideoCoderParams settings_;
         OnDecodedImage onDecodedImage_;
         webrtc::VideoCodec codec_;
-        boost::shared_ptr<webrtc::VideoDecoder> decoder_;
+        std::shared_ptr<webrtc::VideoDecoder> decoder_;
         int frameCount_;
         FrameInfo frameInfo_;
         

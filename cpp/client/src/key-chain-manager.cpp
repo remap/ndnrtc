@@ -24,7 +24,7 @@
 using namespace boost::chrono;
 using namespace ndn;
 
-KeyChainManager::KeyChainManager(boost::shared_ptr<Face> face,
+KeyChainManager::KeyChainManager(std::shared_ptr<Face> face,
                                  const std::string &identityNameStr,
                                  const std::string &instanceNameStr,
                                  const std::string &configPolicy,
@@ -43,7 +43,7 @@ KeyChainManager::KeyChainManager(boost::shared_ptr<Face> face,
 
 void KeyChainManager::setupDefaultKeyChain()
 {
-    defaultKeyChain_ = boost::make_shared<ndn::KeyChain>();
+    defaultKeyChain_ = std::make_shared<ndn::KeyChain>();
 }
 
 void KeyChainManager::setupInstanceKeyChain()
@@ -75,12 +75,12 @@ void KeyChainManager::setupInstanceKeyChain()
 
 void KeyChainManager::setupConfigPolicyManager()
 {
-    identityStorage_ = boost::make_shared<MemoryIdentityStorage>();
-    privateKeyStorage_ = boost::make_shared<MemoryPrivateKeyStorage>();
+    identityStorage_ = std::make_shared<MemoryIdentityStorage>();
+    privateKeyStorage_ = std::make_shared<MemoryPrivateKeyStorage>();
     if (defaultKeyChain_->getIsSecurityV1())
-        configPolicyManager_ = boost::make_shared<ConfigPolicyManager>(configPolicy_);
+        configPolicyManager_ = std::make_shared<ConfigPolicyManager>(configPolicy_);
     else
-        configPolicyManager_ = boost::make_shared<ConfigPolicyManager>(configPolicy_, boost::make_shared<CertificateCacheV2>());
+        configPolicyManager_ = std::make_shared<ConfigPolicyManager>(configPolicy_, std::make_shared<CertificateCacheV2>());
 }
 
 void KeyChainManager::createSigningIdentity()
@@ -97,10 +97,10 @@ void KeyChainManager::createSigningIdentity()
 void KeyChainManager::createMemoryKeychain()
 {
     if (defaultKeyChain_->getIsSecurityV1())
-        instanceKeyChain_ = boost::make_shared<KeyChain>(boost::make_shared<IdentityManager>(identityStorage_, privateKeyStorage_),
+        instanceKeyChain_ = std::make_shared<KeyChain>(std::make_shared<IdentityManager>(identityStorage_, privateKeyStorage_),
                                                          configPolicyManager_);
     else
-        instanceKeyChain_ = boost::make_shared<KeyChain>(boost::make_shared<PibMemory>(), boost::make_shared<TpmBackEndMemory>(),
+        instanceKeyChain_ = std::make_shared<KeyChain>(std::make_shared<PibMemory>(), std::make_shared<TpmBackEndMemory>(),
                                                          configPolicyManager_);
 
     instanceKeyChain_->setFace(face_.get());
@@ -155,12 +155,12 @@ void KeyChainManager::createInstanceIdentityV2()
 
     LogInfo("") << "Instance identity " << instanceIdentity << std::endl;
 
-    boost::shared_ptr<PibIdentity> instancePibIdentity =
+    std::shared_ptr<PibIdentity> instancePibIdentity =
         instanceKeyChain_->createIdentityV2(instanceIdentity);
     std::cout << "Debug instancePibIdentity " << instancePibIdentity->getName() << std::endl;
-    boost::shared_ptr<PibKey> instancePibKey =
+    std::shared_ptr<PibKey> instancePibKey =
         instancePibIdentity->getDefaultKey();
-    boost::shared_ptr<PibKey> signingPibKey = defaultKeyChain_->getPib()
+    std::shared_ptr<PibKey> signingPibKey = defaultKeyChain_->getPib()
                                                   .getIdentity(Name(signingIdentity_))
                                                   ->getDefaultKey();
     Name signingCert = signingPibKey->getDefaultCertificate()->getName();
@@ -169,7 +169,7 @@ void KeyChainManager::createInstanceIdentityV2()
     LogDebug("") << "Signing certificate " << signingCert << std::endl;
 
     // Prepare the instance certificate.
-    boost::shared_ptr<CertificateV2> instanceCertificate(new CertificateV2());
+    std::shared_ptr<CertificateV2> instanceCertificate(new CertificateV2());
     Name certificateName = instancePibKey->getName();
     // Use the issuer's public key digest.
     certificateName.append(PublicKey(signingPibKey->getPublicKey()).getDigest());

@@ -23,6 +23,8 @@ namespace ndnrtc {
      */
 	class IStream {
 	public:
+          virtual ~IStream() = default;
+          
         /**
          * Returns base prefix for the stream
          */
@@ -50,12 +52,12 @@ namespace ndnrtc {
          * Sets logger for this stream. By default, logger is nil - no logging is
          * performed.
          */
-		virtual void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) = 0;
+		virtual void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger) = 0;
 
         /**
          * Returns stream's storage, if it was set up.
          */
-        virtual boost::shared_ptr<StorageEngine> getStorage() const = 0;
+        virtual std::shared_ptr<StorageEngine> getStorage() const = 0;
 	};
 }
 

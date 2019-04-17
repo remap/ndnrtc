@@ -105,7 +105,7 @@ class VideoCoder : public NdnRtcComponent,
     webrtc::VideoCodec codec_;
     const webrtc::CodecSpecificInfo *codecSpecificInfo_;
     std::vector<WebRtcVideoFrameType> keyFrameType_;
-    boost::shared_ptr<webrtc::VideoEncoder> encoder_;
+    std::shared_ptr<webrtc::VideoEncoder> encoder_;
 
     int keyFrameTrigger_, gopPos_;
     KeyEnforcement keyEnforcement_;

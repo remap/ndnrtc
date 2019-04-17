@@ -11,7 +11,6 @@
 
 #include <stdio.h>
 #include <boost/shared_ptr.hpp>
-#include <boost/function.hpp>
 #include <boost/asio.hpp>
 
 namespace ndn {
@@ -30,18 +29,18 @@ public:
     bool isProcessing();
     
     boost::asio::io_service& getIo();
-    boost::shared_ptr<ndn::Face> getFace();
+    std::shared_ptr<ndn::Face> getFace();
     
     // non blocking
-    void dispatchSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
+    void dispatchSynchronized(std::function<void(std::shared_ptr<ndn::Face>)> dispatchBlock);
     // blocking
-    void performSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
+    void performSynchronized(std::function<void(std::shared_ptr<ndn::Face>)> dispatchBlock);
     
-    static boost::shared_ptr<FaceProcessor> forLocalhost();
+    static std::shared_ptr<FaceProcessor> forLocalhost();
     static bool checkNfdConnection();
     
 private:
-    boost::shared_ptr<FaceProcessorImpl> _pimpl;
+    std::shared_ptr<FaceProcessorImpl> _pimpl;
 };
 
 #endif /* face_processor_hpp */

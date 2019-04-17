@@ -25,8 +25,8 @@ class Client
 {
   public:
     Client(boost::asio::io_service &io, boost::asio::io_service& rendererIo,
-           const boost::shared_ptr<ndn::Face> &face,
-           const boost::shared_ptr<ndn::KeyChain> &keyChain) : io_(io), rendererIo_(rendererIo),
+           const std::shared_ptr<ndn::Face> &face,
+           const std::shared_ptr<ndn::KeyChain> &keyChain) : io_(io), rendererIo_(rendererIo),
                                                                face_(face), keyChain_(keyChain) {}
     ~Client() {}
 
@@ -39,9 +39,9 @@ class Client
     unsigned int runTimeSec_, statSampleIntervalMs_;
     ClientParams params_;
 
-    boost::shared_ptr<StatCollector> statCollector_;
-    boost::shared_ptr<ndn::Face> face_;
-    boost::shared_ptr<ndn::KeyChain> keyChain_;
+    std::shared_ptr<StatCollector> statCollector_;
+    std::shared_ptr<ndn::Face> face_;
+    std::shared_ptr<ndn::KeyChain> keyChain_;
 
     std::vector<RemoteStream> remoteStreams_;
     std::vector<LocalStream> localStreams_;
@@ -63,10 +63,10 @@ class Client
     RemoteStream initRemoteStream(const ConsumerStreamParams &p,
                                   const ndnrtc::GeneralConsumerParams &generalParams);
     LocalStream initLocalStream(const ProducerStreamParams &p);
-    boost::shared_ptr<RawFrame> sampleFrameForStream(const ProducerStreamParams &p);
+    std::shared_ptr<RawFrame> sampleFrameForStream(const ProducerStreamParams &p);
 
-    boost::shared_ptr<ndnlog::new_api::Logger> producerLogger(std::string streamName);
-    boost::shared_ptr<ndnlog::new_api::Logger> consumerLogger(std::string prefix,
+    std::shared_ptr<ndnlog::new_api::Logger> producerLogger(std::string streamName);
+    std::shared_ptr<ndnlog::new_api::Logger> consumerLogger(std::string prefix,
                                                               std::string streamName);
 };
 

@@ -17,6 +17,9 @@
 #include "statistics.hpp"
 #include "storage-engine.hpp"
 
+using std::placeholders::_1;
+using std::placeholders::_2;
+
 #define META_CHECK_INTERVAL_MS 10
 
 using namespace ndnrtc;
@@ -48,7 +51,7 @@ MediaStreamBase::MediaStreamBase(const std::string &basePrefix,
     // set cleanup interval for memory cache to 0
     // this will make cache to cleanup every time there's an incoming interest 
     // or data added (and prevent it from hanging for few ms when data rate is high)
-    cache_ = boost::make_shared<MemoryContentCache>(settings_.face_, 0);
+    cache_ = std::make_shared<MemoryContentCache>(settings_.face_, 0);
     cache_->setMinimumCacheLifetime(1000);
     // set filter for prefix without the timestamp, because stream _meta is served there
     cache_->setInterestFilter(streamPrefix_.getPrefix(-1), cache_->getStorePendingInterest());
@@ -65,11 +68,11 @@ MediaStreamBase::MediaStreamBase(const std::string &basePrefix,
 
     if (settings_.storagePath_ != "")
     {
-        storage_ = boost::make_shared<StorageEngine>(settings_.storagePath_);
-        ps.onSegmentsCached_ = boost::bind(&MediaStreamBase::onSegmentsCached, this, _1);
+        storage_ = std::make_shared<StorageEngine>(settings_.storagePath_);
+        ps.onSegmentsCached_ = std::bind(&MediaStreamBase::onSegmentsCached, this, _1);
     }
 
-    metadataPublisher_ = boost::make_shared<CommonPacketPublisher>(ps);
+    metadataPublisher_ = std::make_shared<CommonPacketPublisher>(ps);
     metadataPublisher_->setDescription("metadata-publisher-" + settings_.params_.streamName_);
 }
 
@@ -98,14 +101,14 @@ MediaStreamBase::getStatistics() const
 }
 
 void 
-MediaStreamBase::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+MediaStreamBase::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     metadataPublisher_->setLogger(logger);
 }
 
 void MediaStreamBase::publishMeta()
 {
-    boost::shared_ptr<MediaStreamMeta> meta(boost::make_shared<MediaStreamMeta>(streamTimestamp_, getThreads()));
+    std::shared_ptr<MediaStreamMeta> meta(std::make_shared<MediaStreamMeta>(streamTimestamp_, getThreads()));
     // don't need to synchronize unless publishMeta will be called
     // from places others than addThread/removeThread or outer class'
     // constructor LocalVideoStream/LocalAudioStream
@@ -114,8 +117,8 @@ void MediaStreamBase::publishMeta()
     Name metaName(streamPrefix_.getPrefix(-1));
     metaName.append(NameComponents::NameComponentMeta).appendVersion(metaVersion_++);
 
-    boost::shared_ptr<MediaStreamBase> me = 
-        boost::static_pointer_cast<MediaStreamBase>(shared_from_this());
+    std::shared_ptr<MediaStreamBase> me = 
+        std::static_pointer_cast<MediaStreamBase>(shared_from_this());
 
     async::dispatchAsync(settings_.faceIo_, [me, metaName, meta]() {
         me->metadataPublisher_->publish(metaName, *meta);
@@ -131,7 +134,7 @@ unsigned int MediaStreamBase::periodicInvocation()
     return 0;
 }
 
-void MediaStreamBase::onSegmentsCached(std::vector<boost::shared_ptr<const ndn::Data>> segments)
+void MediaStreamBase::onSegmentsCached(std::vector<std::shared_ptr<const ndn::Data>> segments)
 {
     if (storage_)
         for (auto& d:segments)

@@ -12,7 +12,7 @@
 #include <boost/chrono.hpp>
 #include <boost/thread.hpp>
 #include <boost/asio.hpp>
-#include <boost/make_shared.hpp>
+#include <memory>
 
 #include <sys/time.h>
 
@@ -53,7 +53,7 @@ static std::string lvlToString[] = {
 
 static boost::asio::io_service LogIoService;
 static boost::thread LogThread;
-static boost::shared_ptr<boost::asio::io_service::work> LogThreadWork;
+static std::shared_ptr<boost::asio::io_service::work> LogThreadWork;
 
 NilLogger NilLogger::nilLogger_;
 Logger* Logger::sharedInstance_ = 0;
@@ -63,7 +63,7 @@ void stopLogThread();
 
 //******************************************************************************
 boost::recursive_mutex DefaultSink::stdOutMutex_;
-std::map<std::string, boost::shared_ptr<Logger>> Logger::loggers_;
+std::map<std::string, std::shared_ptr<Logger>> Logger::loggers_;
 
 unsigned int Logger::FlushIntervalMs = 100;
 
@@ -73,14 +73,14 @@ Logger::Logger(const NdnLoggerDetailLevel& logLevel,
 isWritingLogEntry_(false),
 currentEntryLogType_(NdnLoggerLevelTrace),
 logLevel_(logLevel),
-sink_(boost::make_shared<DefaultSink>(logFile))
+sink_(std::make_shared<DefaultSink>(logFile))
 {
     lastFlushTimestampMs_ = getMillisecondTimestamp();   
     isProcessing_ = true;
 }
 
 Logger::Logger(const NdnLoggerDetailLevel& logLevel,
-               const boost::shared_ptr<ILogRecordSink> sink):
+               const std::shared_ptr<ILogRecordSink> sink):
 isWritingLogEntry_(false),
 currentEntryLogType_(NdnLoggerLevelTrace),
 logLevel_(logLevel),
@@ -167,27 +167,27 @@ Logger::releaseAsyncLogging()
 Logger&
 Logger::getLogger(const std::string &logFile)
 {
-    boost::shared_ptr<Logger> logger = Logger::getLoggerPtr(logFile);
+    std::shared_ptr<Logger> logger = Logger::getLoggerPtr(logFile);
     return *logger;
 }
 
-boost::shared_ptr<Logger>
+std::shared_ptr<Logger>
 Logger::getLoggerPtr(const std::string &logFile)
 {
-    std::map<std::string, boost::shared_ptr<Logger> >::iterator it = loggers_.find(logFile);
+    std::map<std::string, std::shared_ptr<Logger> >::iterator it = loggers_.find(logFile);
     
     if (it == loggers_.end())
-        return loggers_[logFile] = boost::make_shared<Logger>(NdnLoggerDetailLevelAll, logFile);
+        return loggers_[logFile] = std::make_shared<Logger>(NdnLoggerDetailLevelAll, logFile);
     else
         return it->second;
     
-    return boost::shared_ptr<Logger>();
+    return std::shared_ptr<Logger>();
 }
 
 void
 Logger::destroyLogger(const std::string &logFile)
 {
-    std::map<std::string, boost::shared_ptr<Logger> >::iterator it = loggers_.find(logFile);
+    std::map<std::string, std::shared_ptr<Logger> >::iterator it = loggers_.find(logFile);
     
     if (it != loggers_.end())
         loggers_.erase(it);
@@ -242,7 +242,7 @@ Logger::finalizeLogRecord()
         sink_->finalizeRecord("[CRITICAL]\tlog queue is full");
         // getOutFileStream() << "[CRITICAL]\tlog queue is full" << std::endl;
     else
-        LogIoService.post(boost::bind(&Logger::processLogRecords, shared_from_this()));
+        LogIoService.post(std::bind(&Logger::processLogRecords, shared_from_this()));
 }
 
 //******************************************************************************

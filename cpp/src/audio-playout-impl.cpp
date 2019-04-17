@@ -18,12 +18,12 @@ using namespace ndnlog::new_api;
 using namespace webrtc;
 
 AudioPlayoutImpl::AudioPlayoutImpl(boost::asio::io_service& io,
-            const boost::shared_ptr<IPlaybackQueue>& queue,
-            const boost::shared_ptr<StatStorage>& statStorage,
+            const std::shared_ptr<IPlaybackQueue>& queue,
+            const std::shared_ptr<StatStorage>& statStorage,
             const WebrtcAudioChannel::Codec& codec,
             unsigned int deviceIdx):
 PlayoutImpl(io, queue, statStorage), packetCount_(0),
-renderer_(boost::make_shared<AudioRenderer>(deviceIdx, codec))
+renderer_(std::make_shared<AudioRenderer>(deviceIdx, codec))
 {
     description_ = "aplayout";
 }
@@ -41,15 +41,15 @@ void AudioPlayoutImpl::stop()
     renderer_->stopRendering();
 }
 
-void AudioPlayoutImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void AudioPlayoutImpl::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     PlayoutImpl::setLogger(logger);
     renderer_->setLogger(logger);
 }
 
-bool AudioPlayoutImpl::processSample(const boost::shared_ptr<const BufferSlot>& slot)
+bool AudioPlayoutImpl::processSample(const std::shared_ptr<const BufferSlot>& slot)
 {
-    boost::shared_ptr<ImmutableAudioBundlePacket> bundlePacket = 
+    std::shared_ptr<ImmutableAudioBundlePacket> bundlePacket = 
         bundleSlot_.readBundle(*slot);
     
     if (bundlePacket.get())

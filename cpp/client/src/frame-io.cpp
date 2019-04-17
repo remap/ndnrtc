@@ -43,7 +43,7 @@ RawFrame::setFrameInfo(const ndnrtc::FrameInfo& frameInfo)
 ArgbFrame::ArgbFrame(unsigned int width, unsigned int height) : RawFrame(width, height)
 {
     unsigned long bufSize = getFrameSizeInBytes();
-    setBuffer(bufSize, boost::shared_ptr<uint8_t>(new uint8_t[bufSize]));
+    setBuffer(bufSize, std::shared_ptr<uint8_t>(new uint8_t[bufSize]));
 }
 
 void ArgbFrame::getFrameResolution(unsigned int &width, unsigned int &height) const

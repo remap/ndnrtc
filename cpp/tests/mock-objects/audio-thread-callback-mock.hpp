@@ -15,7 +15,7 @@
 class MockAudioThreadCallback : public ndnrtc::IAudioThreadCallback
 {
 public:
-	MOCK_METHOD3(onSampleBundle, void(std::string, uint64_t, boost::shared_ptr<ndnrtc::AudioBundlePacket>));
+	MOCK_METHOD3(onSampleBundle, void(std::string, uint64_t, std::shared_ptr<ndnrtc::AudioBundlePacket>));
 };
 
 #endif

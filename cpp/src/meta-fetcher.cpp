@@ -15,7 +15,7 @@
 using namespace ndn;
 using namespace ndnrtc;
 
-void MetaFetcher::fetch(boost::shared_ptr<ndn::Face> f, boost::shared_ptr<ndn::KeyChain> kc,
+void MetaFetcher::fetch(std::shared_ptr<ndn::Face> f, std::shared_ptr<ndn::KeyChain> kc,
                         const ndn::Name &prefix, const OnMeta &onMeta, const OnError &onError)
 {
     LogTraceC << "fetching meta for " << prefix << std::endl;
@@ -23,7 +23,7 @@ void MetaFetcher::fetch(boost::shared_ptr<ndn::Face> f, boost::shared_ptr<ndn::K
     Interest i(prefix, 3000);
 
     isPending_ = true;
-    boost::shared_ptr<MetaFetcher> me = boost::dynamic_pointer_cast<MetaFetcher>(shared_from_this());
+    std::shared_ptr<MetaFetcher> me = std::dynamic_pointer_cast<MetaFetcher>(shared_from_this());
     // uses ndnrtc implementation of SegmentFetcher, NOT the one from NDN-CPP
     SegmentFetcher::fetch(*f, i, kc.get(),
                           [onMeta, me, f, kc, this](const Blob &content, const std::vector<ValidationErrorInfo> &info) {
