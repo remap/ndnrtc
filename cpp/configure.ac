@@ -289,16 +289,6 @@ LDFLAGS="$LDFLAGS -L$NDNCPPLIB"
 SAVED_LIBS=$LIBS
 LIBS="$LIBS -lndn-cpp"
 
-AC_CHECK_HEADERS([ndn-cpp/interest.hpp],,[AC_MSG_FAILURE([can't find interest.hpp])])
-AC_MSG_CHECKING([for NDN-CPP library...])
-
-AC_LINK_IFELSE(
- 	[AC_LANG_PROGRAM([#include <ndn-cpp/interest.hpp>],
- 		[ndn::Interest interest])],
- 		[AC_MSG_RESULT([yes])],
- 		[AC_MSG_FAILURE([can't find NDN-CPP lib])]
-)
-
 LIBS=$SAVED_LIBS
 LDFLAGS=$SAVED_LDFLAGS
 CPPFLAGS=$SAVED_CPPFLAGS
