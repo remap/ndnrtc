@@ -158,23 +158,9 @@ void setupFetching(boost::shared_ptr<KeyChain> keyChain,
                                             fp.prefixInfo_.getPrefix(NameFilter::Stream),
                                             fp.prefixInfo_.sampleNo_, fp.ppStep_,
                                             [](const Name& framePrefix, PacketNumber seqNo){
-                                                // check if nearby Key frame
-                                                if (seqNo % streamMeta->getStreamMeta().gop_size() < 3)
-                                                {
-                                                    LogDebug(AppLog) << "generating requests for KEY " << liveMeta->getLiveMeta().segnum_key() << endl;
-                                                    return Pipeline::requestsForFrame(framePrefix, seqNo,
-                                                            DEFAULT_LIFETIME,
-                                                            liveMeta->getLiveMeta().segnum_key(),
-                                                            liveMeta->getLiveMeta().segnum_key_parity());
-                                                }
-                                                else
-                                                {
-                                                    LogDebug(AppLog) << "generating requests for DELTA " << liveMeta->getLiveMeta().segnum_delta() << endl;
-                                                    return Pipeline::requestsForFrame(framePrefix, seqNo,
-                                                            DEFAULT_LIFETIME,
-                                                            liveMeta->getLiveMeta().segnum_delta(),
-                                                            liveMeta->getLiveMeta().segnum_delta_parity());
-                                                }
+                                                LogDebug(AppLog) << "generating requests " << liveMeta->getLiveMeta().segnum_estimate() << endl;
+                                                return Pipeline::requestsForFrame(framePrefix, seqNo, DEFAULT_LIFETIME,
+                                                                                  liveMeta->getLiveMeta().segnum_estimate(), 0); // no FEC
                                             });
 
     // setup PipelineControl

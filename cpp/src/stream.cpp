@@ -458,7 +458,7 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
         slice += payloadSegmentSize;
         
         (*statStorage_)[Indicator::FecBytesPublished] += d->getContent().size();
-        (*statStorage_)[Indicator::FecPublishedSegmentsNum] += 1.;
+        (*statStorage_)[Indicator::FecPublishedSegmentsNum] ++;
     }
 
     LogTraceC << "▻▻▻ generated " << packets->size() << " segments ("
