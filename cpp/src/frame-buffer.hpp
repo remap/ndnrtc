@@ -20,6 +20,7 @@
 #include "name-components.hpp"
 
 #include "slot-buffer.hpp"
+#include "statistics.hpp"
 #include "ndnrtc-object.hpp"
 #include "pipeline.hpp"
 
@@ -402,13 +403,36 @@ namespace ndnrtc
         virtual void detach(IBufferObserver* observer) = 0;
     };
 
+    typedef boost::signals2::signal<void(const boost::shared_ptr<BufferSlot>&)> BufferSlotUpdateTrigger;
+    typedef BufferSlotUpdateTrigger OnSlotUnfetchable;
+    typedef BufferSlotUpdateTrigger OnSlotReady;
+//    tyoedef boost::signals2::connection SlotStateUpdateConnection;
+    
     class Buffer : public NdnRtcComponent, public IBuffer {
     public:
+        Buffer(boost::shared_ptr<IInterestQueue> interestQ,
+               boost::shared_ptr<statistics::StatisticsStorage> storage =
+                boost::shared_ptr<statistics::StatisticsStorage>(statistics::StatisticsStorage::createConsumerStatistics()));
+        
+        void newSlot(boost::shared_ptr<IPipelineSlot>);
+        void removeSlot(const PacketNumber&);
+        
+        OnSlotUnfetchable onSlotUnfetchable;
+        OnSlotReady onSlotReady;
+        
+        void reset();
+        
+        
+        std::string
+        dump() const;
+        
+        // CODE BELOW IS DEPRECATED
+        
         Buffer(boost::shared_ptr<statistics::StatisticsStorage> storage,
                boost::shared_ptr<SlotPool> pool =
                 boost::shared_ptr<SlotPool>(new SlotPool()));
 
-        void reset();
+        
 
         bool requested(const std::vector<boost::shared_ptr<const ndn::Interest>>&);
         BufferReceipt received(const boost::shared_ptr<WireSegment>& segment);
@@ -419,21 +443,29 @@ namespace ndnrtc
         void detach(IBufferObserver* observer);
         boost::shared_ptr<SlotPool> getPool() const { return pool_; }
 
-        std::string
-        dump() const;
-
     private:
+        typedef struct _SlotEntry {
+            boost::shared_ptr<BufferSlot> slot_;
+            NeedDataTriggerConnection onMissingDataConn_;
+            SlotTriggerConnection onReadyConn_, onUnfetchableConn_;
+        } SlotEntry;
+        
+        
+        std::map<PacketNumber, SlotEntry> slots_;
+        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
+        boost::shared_ptr<IInterestQueue> requestsQ_;
+        
+        std::string
+        shortdump() const;
+        
+        // CODE BELOW IS DEPRECATED
         friend PlaybackQueue;
 
         mutable boost::recursive_mutex mutex_;
         boost::shared_ptr<SlotPool> pool_;
         std::map<ndn::Name, boost::shared_ptr<BufferSlot>> activeSlots_, reservedSlots_;
         std::vector<IBufferObserver*> observers_;
-        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
-
-        std::string
-        shortdump() const;
-
+    
         void
         dumpSlotDictionary(std::stringstream&,
             const std::map<ndn::Name, boost::shared_ptr<BufferSlot>> &) const;

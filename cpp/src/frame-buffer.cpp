@@ -16,6 +16,7 @@
 #include "clock.hpp"
 #include "fec.hpp"
 #include "frame-data.hpp"
+#include "interest-queue.hpp"
 #include "name-components.hpp"
 #include "proto/ndnrtc.pb.h"
 #include "packets.hpp"
@@ -849,28 +850,105 @@ SlotPool::push(const boost::shared_ptr<BufferSlot>& slot)
 }
 
 //******************************************************************************
-Buffer::Buffer(boost::shared_ptr<StatisticsStorage> storage,
-               boost::shared_ptr<SlotPool> pool):pool_(pool),
-sstorage_(storage)
+Buffer::Buffer(boost::shared_ptr<IInterestQueue> interestQ,
+               boost::shared_ptr<StatisticsStorage> storage)
+    : sstorage_(storage)
+    , requestsQ_(interestQ)
 {
     assert(sstorage_.get());
     description_ = "buffer";
 }
 
 void
-Buffer::reset()
+Buffer::newSlot(boost::shared_ptr<IPipelineSlot> slot)
+{
+    boost::shared_ptr<BufferSlot> s = dynamic_pointer_cast<BufferSlot>(slot);
+    if (s)
+    {
+        SlotEntry e;
+        e.slot_ = s;
+        
+        boost::shared_ptr<Buffer> me = dynamic_pointer_cast<Buffer>(shared_from_this());
+        // request missing segments, if needed
+        e.onMissingDataConn_ =
+            s->addOnNeedData([this, me, s](IPipelineSlot *sl,
+                                        std::vector<boost::shared_ptr<DataRequest>> missingR)
+                         {
+                             LogTraceC << "request missing " << missingR.size() << " "
+                                       << s->dump() << endl;
+                
+                             sl->setRequests(missingR);
+                             requestsQ_->enqueueRequests(missingR, boost::make_shared<DeadlinePriority>(REQ_DL_PRI_RTX));
+                         });
+        e.onReadyConn_ =
+            s->subscribe(PipelineSlotState::Ready,
+                     [this, me, s](const IPipelineSlot *sl, const DataRequest&){
+                         LogDebugC << "slot ready " << s->dump() << endl;
+
+                         onSlotReady(s);
+                     });
+        e.onUnfetchableConn_ =
+            s->subscribe(PipelineSlotState::Unfetchable,
+                     [this, me, s](const IPipelineSlot *sl, const DataRequest& r){
+                         LogDebugC << "slot unfetchable (reason "
+                                   << r.getStatus() << ") " << s->dump() << endl;
+
+                         onSlotUnfetchable(s);
+                     });
+        
+        {
+            boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+            slots_[e.slot_->getNameInfo().sampleNo_] = e;
+        }
+    }
+    else
+        LogErrorC << "couldn't add slot: the slot is not a BufferSlot instance" << endl;
+}
+
+void
+Buffer::removeSlot(const PacketNumber& no)
 {
     boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    map<PacketNumber, SlotEntry>::iterator it = slots_.find(no);
+    
+    if (it != slots_.end())
+    {
+        it->second.onUnfetchableConn_.disconnect();
+        it->second.onReadyConn_.disconnect();
+        it->second.onMissingDataConn_.disconnect();
+        slots_.erase(it);
+    }
+    else
+    {
+        LogDebugC << "trying to remove non-existent slot " << no << endl;
+    }
+}
 
-    for (auto s:activeSlots_)
-        pool_->push(s.second);
-    activeSlots_.clear();
+void
+Buffer::reset()
+{
+    slots_.clear();
+//    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+//
+//    for (auto s:activeSlots_)
+//        pool_->push(s.second);
+//    activeSlots_.clear();
+//
+//    LogDebugC << "slot pool capacity " << pool_->capacity()
+//    << " pool size " << pool_->size() << " "
+//    << reservedSlots_.size() << " slot(s) locked for playback" << std::endl;
+//
+//    for (auto o:observers_) o->onReset();
+}
 
-     LogDebugC << "slot pool capacity " << pool_->capacity()
-        << " pool size " << pool_->size() << " "
-        << reservedSlots_.size() << " slot(s) locked for playback" << std::endl;
 
-    for (auto o:observers_) o->onReset();
+// CODE BELOW IS DEPRECATED
+Buffer::Buffer(boost::shared_ptr<StatisticsStorage> storage,
+               boost::shared_ptr<SlotPool> pool):pool_(pool),
+sstorage_(storage)
+{
+    assert(sstorage_.get());
+    description_ = "buffer";
 }
 
 bool
@@ -1117,8 +1195,8 @@ Buffer::dump() const
     stringstream ss;
     ss << "buffer dump:";
 
-    for (auto& s:activeSlots_)
-        ss << std::endl << ++i << " " << s.second->dump();
+    for (auto& s:slots_)
+        ss << std::endl << ++i << " " << s.second.slot_->dump();
 
     return ss.str();
 }

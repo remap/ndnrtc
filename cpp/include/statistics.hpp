@@ -93,31 +93,38 @@ namespace ndnrtc {
                 
                 // producer
                 //media thread
-                BytesPublished,
-                FecBytesPublished,
-                RawBytesPublished,
-                PublishedSegmentsNum,
-                FecPublishedSegmentsNum,
-                ProcessedNum,
-                PublishedNum,
-                PublishedKeyNum,
+                BytesPublished,                 // number of (payload-only) bytes
+                                                // published for frame data, meta
+                                                // and manifest (no FEC data)
+                FecBytesPublished,              // number of (payload-only) bytes
+                                                // published for FEC data only
+                RawBytesPublished,              // number of ALL (frame data + FEC)
+                                                // wire bytes (payload +
+                                                // NDN overhead) published
+                PublishedSegmentsNum,           // all segments ever published
+                FecPublishedSegmentsNum,        // FEC-only segments published
+                ProcessedNum,                   // number of frames passed to encoder
+                PublishedNum,                   // number of frames published
+                PublishedKeyNum,                // number of Key frames published
                 InterestsReceivedNum,
-                SignNum,
+                SignNum,                        // sign count
                 RdrPointerNum,
                 PublishDelay,
                 CodecDelay,
             
                 // publisher estimators
-                FrameSizeEstimate,
-                SegnumEstimate,
+                FrameSizeEstimate,              // producer's frame size estimation
+                SegnumEstimate,                 // producer's estimation of the number
+                                                // of frame data segments (does not
+                                                // include FEC, meta or manifest)
                 
                 // encoder
                 // DroppedNum, // borrowed from buffer (above)
-                EncodedNum,
-                GopNum,
+                EncodedNum,                     // number of encoded frames
+                GopNum,                         // GOP count
                 
                 // capturer
-                CapturedNum
+                CapturedNum                     // number of frames passed to encoder
         };
         
         class StatisticsStorage {

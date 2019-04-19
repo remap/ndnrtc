@@ -65,6 +65,8 @@ boost::shared_ptr<helpers::KeyChainManager> keyChainManager;
 boost::shared_ptr<RequestQueue> requestQ;
 boost::shared_ptr<v4::PipelineControl> pipelineControl;
 boost::shared_ptr<Pipeline> pipeline;
+boost::shared_ptr<Buffer> buffer;
+
 boost::shared_ptr<const packets::Meta> streamMeta;
 boost::shared_ptr<const packets::Meta> liveMeta;
 
@@ -172,47 +174,38 @@ void setupFetching(boost::shared_ptr<KeyChain> keyChain,
     });
 
     // TEMPORARY: onNewSlot will be connected to a buffer
-    pipeline->onNewSlot.connect([slotPool](boost::shared_ptr<IPipelineSlot> s){
-        auto bufferSlot = dynamic_pointer_cast<BufferSlot>(s);
-
-        bufferSlot->addOnNeedData([&](IPipelineSlot *sl, std::vector<boost::shared_ptr<DataRequest>> missingR)
-                                  {
-                                      sl->setRequests(missingR);
-                                      requestQ->enqueueRequests(missingR, boost::make_shared<DeadlinePriority>(REQ_DL_PRI_RTX));
-                                  });
-
-        bufferSlot->subscribe(PipelineSlotState::Ready,
-                              [bufferSlot, slotPool](const IPipelineSlot *sl, const DataRequest&)
-                              {
-                                  LogDebug(AppLog) << "slot "
-                                                   << bufferSlot->getNameInfo().getSuffix(NameFilter::Sample)
-                                                   << " (" << bufferSlot->getNameInfo().sampleNo_ << ") assembled in "
-                                                   << bufferSlot->getLongestDrd()/1000 << "ms"
-                                                   << endl;
-
-                                  if (!(Logger::getLogger(AppLog).getLogLevel() > NdnLoggerDetailLevelDefault && AppLog == ""))
-                                      printStats(bufferSlot, pipelineControl, slotPool);
-
-                                  pipelineControl->pulse();
-                                  slotPool->push(bufferSlot);
-                              });
-        bufferSlot->subscribe(PipelineSlotState::Unfetchable,
-                              [bufferSlot, slotPool](const IPipelineSlot *sl, const DataRequest& dr)
-                              {
-                                  LogWarn(AppLog) << "slot "
-                                                  << bufferSlot->getNameInfo().getSuffix(NameFilter::Sample)
-                                                  << " (" << bufferSlot->getNameInfo().sampleNo_
-                                                  << ") unfetchable. reason " << dr.getStatus()
-                                                  << endl;
-
-                                  // keep going if it's a timeout
-                                  if (dr.getStatus() == DataRequest::Status::Timeout)
-                                  {
-                                      pipelineControl->pulse();
-                                      slotPool->push(bufferSlot);
-                                  }
-                              });
-    });
+    buffer = boost::make_shared<Buffer>(requestQ);
+    
+    pipeline->onNewSlot.connect(bind(&Buffer::newSlot, buffer, _1));
+    
+    buffer->onSlotReady.connect([slotPool](const boost::shared_ptr<BufferSlot>& bufferSlot)
+                                {
+                                    LogDebug(AppLog) << "slot "
+                                    << bufferSlot->getNameInfo().getSuffix(NameFilter::Sample)
+                                    << " (" << bufferSlot->getNameInfo().sampleNo_ << ") assembled in "
+                                    << bufferSlot->getLongestDrd()/1000 << "ms"
+                                    << endl;
+                                    
+                                    if (!(Logger::getLogger(AppLog).getLogLevel() < NdnLoggerDetailLevelDefault && AppLog == ""))
+                                        printStats(bufferSlot, pipelineControl, slotPool);
+                                    
+                                    buffer->removeSlot(bufferSlot->getNameInfo().sampleNo_);
+                                    LogDebug(AppLog) << buffer->dump() << endl;
+                                    
+                                    pipelineControl->pulse();
+                                    slotPool->push(bufferSlot);
+                                });
+    buffer->onSlotUnfetchable.connect([slotPool](const boost::shared_ptr<BufferSlot>& bufferSlot)
+                                      {
+                                          LogWarn(AppLog) << "slot unfetchable "
+                                            << bufferSlot->getNameInfo().getSuffix(NameFilter::Sample)
+                                            << endl;
+                                          
+                                          buffer->removeSlot(bufferSlot->getNameInfo().sampleNo_);
+                                          pipelineControl->pulse();
+                                          slotPool->push(bufferSlot);
+                                      });
+    
 
     pipeline->setLogger(Logger::getLoggerPtr(AppLog));
     pipelineControl->setLogger(Logger::getLoggerPtr(AppLog));
@@ -312,24 +305,26 @@ void printStats(boost::shared_ptr<BufferSlot> slot,
 
     avgEsimtator.newValue(slot->getLongestDrd());
 
-    // cout << "\r"
-    // << "[ "
-    // << setw(6) << setprecision(5) << (clock::millisecondTimestamp()-startTime)/1000. << "sec "
-    // << setw(20) << slot->getNameInfo().getSuffix(NameFilter::Sample)
-    // << " (" << lastPacketNo << ")"
-    // << " total " << nAssembled << "/" << nUnfetchable
-    // << " pp " << ppCtrl->getNumOutstanding() << "/" << ppCtrl->getWSize()
-    // << " slot-pool " << slotPool->size() << "/" << slotPool->capacity()
-    // << setprecision(5)
-    // << " asm " << setw(6) << (double)slot->getAssemblingTime()/1000.
-    // << " nw drd " << requestQ->getDrdEstimate()/1000.
-    // << " nw jttr " << requestQ->getJitterEstimate()/1000.
-    // << " ff-est " << avgEsimtator.value()/1000
-    // << " ff-jttr " << avgEsimtator.jitter()/1000
-    // << " lat-est " << setw(6) << (ndn_getNowMilliseconds() - slot->getFrameMeta()->getContentMetaInfo().getTimestamp())
-    // << " ooo " << outOfOrder
-    // << " ]"
-    // << flush;
+#if 1
+     cout << "\r"
+     << "[ "
+     << setw(6) << setprecision(5) << (clock::millisecondTimestamp()-startTime)/1000. << "sec "
+     << setw(20) << slot->getNameInfo().getSuffix(NameFilter::Sample)
+     << " (" << lastPacketNo << ")"
+     << " total " << nAssembled << "/" << nUnfetchable
+     << " pp " << ppCtrl->getNumOutstanding() << "/" << ppCtrl->getWSize()
+     << " slot-pool " << slotPool->size() << "/" << slotPool->capacity()
+     << setprecision(5)
+     << " asm " << setw(6) << (double)slot->getAssemblingTime()/1000.
+     << " nw drd " << requestQ->getDrdEstimate()/1000.
+     << " nw jttr " << requestQ->getJitterEstimate()/1000.
+     << " ff-est " << avgEsimtator.value()/1000
+     << " ff-jttr " << avgEsimtator.jitter()/1000
+     << " lat-est " << setw(6) << (ndn_getNowMilliseconds() - slot->getFrameMeta()->getContentMetaInfo().getTimestamp())
+     << " ooo " << outOfOrder
+     << " ]"
+     << flush;
+#else
     boost::shared_ptr<const packets::Meta> frameMeta = slot->getFrameMeta();
     double ooo = requestQ->getStatistics()[statistics::Indicator::OutOfOrderNum];
     for (auto &r:slot->getRequests())
@@ -358,6 +353,7 @@ void printStats(boost::shared_ptr<BufferSlot> slot,
     // collect 30 seconds worth of data
     if (nAssembled == 30 * 30)
         exit(0);
+#endif
 }
 
 void callPeriodic(uint64_t milliseconds, function<void()> callback)
