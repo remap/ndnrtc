@@ -53,7 +53,7 @@ public:
     void registerObserver(IInterestQueueObserver *observer) { observer_ = observer; }
     void unregisterObserver() { observer_ = nullptr; }
     size_t size() const { return queue_.size(); }
-    const estimators::Average& getEstimator() const { return drdEstimator_; }
+    const estimators::Filter& getEstimator() const { return drdEstimator_; }
     
 private:
     class QueueEntry
@@ -116,7 +116,8 @@ private:
     PriorityQueue queue_;
     IInterestQueueObserver *observer_;
     bool isDrainingQueue_;
-    estimators::Average drdEstimator_;
+//    estimators::Average drdEstimator_;
+    estimators::Filter drdEstimator_;
     uint64_t lastRequestId_, lastRcvdRequestId_;
     
     void enqueue(QueueEntry&, boost::shared_ptr<DeadlinePriority> priority);
@@ -182,7 +183,7 @@ void RequestQueue::unregisterObserver() { pimpl_->unregisterObserver(); }
 size_t RequestQueue::size() const { return pimpl_->size(); }
 void RequestQueue::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) { pimpl_->setLogger(logger); }
 double RequestQueue::getDrdEstimate() const { return pimpl_->getEstimator().value(); }
-double RequestQueue::getJitterEstimate() const { return pimpl_->getEstimator().jitter(); }
+double RequestQueue::getJitterEstimate() const { return pimpl_->getEstimator().variation(); }
 const statistics::StatisticsStorage& RequestQueue::getStatistics() const { return pimpl_->getStatistics(); }
 
 //******************************************************************************
@@ -236,7 +237,8 @@ RequestQueueImpl::RequestQueueImpl(boost::asio::io_service& io,
 , queue_(PriorityQueue(QueueEntry::Comparator(true)))
 , isDrainingQueue_(false)
 , observer_(nullptr)
-, drdEstimator_(boost::make_shared<estimators::TimeWindow>(NW_ESTIMATE_WINDOW))
+//, drdEstimator_(boost::make_shared<estimators::TimeWindow>(NW_ESTIMATE_WINDOW))
+, drdEstimator_(15./16., 15./16.)
 , lastRequestId_(0)
 , lastRcvdRequestId_(0)
 {

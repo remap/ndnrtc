@@ -21,6 +21,13 @@ const std::map<Indicator, std::string> StatisticsStorage::IndicatorNames =
 map_list_of
 ( Indicator::Timestamp, "Timestamp" )
 // consumer
+( Indicator::BufferedSlotsNum, "Buffered slots" )
+( Indicator::SlotsReadyNum, "Slots ready" )
+( Indicator::SlotsUnfetchableNum, "Slots unfetchable" )
+( Indicator::BufferDelayEstimate, "Buffer delay estimate" )
+( Indicator::FrameReassemblyEstimate, "Frame re-assembly delay estimate" )
+( Indicator::DoubleRttNum, "Frames required additional round-trip")
+
 // buffer
 ( Indicator::AcquiredNum, "Acquired frames" )
 ( Indicator::AcquiredKeyNum, "Acquired key frames" ) 
@@ -114,6 +121,13 @@ map_list_of
 ( Indicator::Timestamp, 0. )
 
 // consumer
+( Indicator::BufferedSlotsNum, 0. )
+( Indicator::SlotsReadyNum, 0. )
+( Indicator::SlotsUnfetchableNum, 0. )
+( Indicator::BufferDelayEstimate, 0. )
+( Indicator::FrameReassemblyEstimate, 0. )
+( Indicator::DoubleRttNum, 0.)
+
 // buffer
 ( Indicator::AcquiredNum, 0. )
 ( Indicator::AcquiredKeyNum, 0. )
@@ -210,6 +224,13 @@ boost::assign::map_list_of
 (Indicator::Timestamp, "timestamp")
 
 // consumer
+( Indicator::BufferedSlotsNum, "bufSlots" )
+( Indicator::SlotsReadyNum, "slotsReady" )
+( Indicator::SlotsUnfetchableNum, "slotsUnfetch" )
+( Indicator::BufferDelayEstimate, "bufDelayEst" )
+( Indicator::FrameReassemblyEstimate, "reasmEst" )
+( Indicator::DoubleRttNum, "dblRttNum")
+
 // buffer
 (Indicator::AcquiredNum, "framesAcq")
 (Indicator::AcquiredKeyNum, "framesAcqKey")

@@ -850,10 +850,13 @@ SlotPool::push(const boost::shared_ptr<BufferSlot>& slot)
 }
 
 //******************************************************************************
-Buffer::Buffer(boost::shared_ptr<IInterestQueue> interestQ,
+Buffer::Buffer(boost::shared_ptr<RequestQueue> interestQ,
                boost::shared_ptr<StatisticsStorage> storage)
     : sstorage_(storage)
-    , requestsQ_(interestQ)
+    , requestQ_(interestQ)
+    , delayEstimateGamma_(4.)
+    , delayEstimateTheta_(15./16.)
+    , dqFilter_(delayEstimateTheta_)
 {
     assert(sstorage_.get());
     description_ = "buffer";
@@ -876,15 +879,18 @@ Buffer::newSlot(boost::shared_ptr<IPipelineSlot> slot)
                          {
                              LogTraceC << "request missing " << missingR.size() << " "
                                        << s->dump() << endl;
+                             (*sstorage_)[Indicator::DoubleRttNum]++;
                 
                              sl->setRequests(missingR);
-                             requestsQ_->enqueueRequests(missingR, boost::make_shared<DeadlinePriority>(REQ_DL_PRI_RTX));
+                             requestQ_->enqueueRequests(missingR, boost::make_shared<DeadlinePriority>(REQ_DL_PRI_RTX));
                          });
         e.onReadyConn_ =
             s->subscribe(PipelineSlotState::Ready,
                      [this, me, s](const IPipelineSlot *sl, const DataRequest&){
                          LogDebugC << "slot ready " << s->dump() << endl;
-
+                         (*sstorage_)[Indicator::SlotsReadyNum]++;
+                         
+                         calculateDelay(s->getAssemblingTime());
                          onSlotReady(s);
                      });
         e.onUnfetchableConn_ =
@@ -892,6 +898,7 @@ Buffer::newSlot(boost::shared_ptr<IPipelineSlot> slot)
                      [this, me, s](const IPipelineSlot *sl, const DataRequest& r){
                          LogDebugC << "slot unfetchable (reason "
                                    << r.getStatus() << ") " << s->dump() << endl;
+                         (*sstorage_)[Indicator::SlotsUnfetchableNum]++;
 
                          onSlotUnfetchable(s);
                      });
@@ -899,6 +906,8 @@ Buffer::newSlot(boost::shared_ptr<IPipelineSlot> slot)
         {
             boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
             slots_[e.slot_->getNameInfo().sampleNo_] = e;
+            
+            (*sstorage_)[Indicator::BufferedSlotsNum]++;
         }
     }
     else
@@ -939,6 +948,42 @@ Buffer::reset()
 //    << reservedSlots_.size() << " slot(s) locked for playback" << std::endl;
 //
 //    for (auto o:observers_) o->onReset();
+}
+
+void
+Buffer::calculateDelay(double dQ)
+{
+    dqFilter_.newValue(dQ);
+    delayEstimate_ = dqFilter_.value() + delayEstimateGamma_ * requestQ_->getJitterEstimate();
+}
+
+std::string
+Buffer::dump() const
+{
+    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    int i = 0;
+    stringstream ss;
+    ss << "buffer dump:";
+    
+    for (auto& s:slots_)
+        ss << std::endl << ++i << " " << s.second.slot_->dump();
+    
+    return ss.str();
+}
+
+std::string
+Buffer::shortdump() const
+{
+    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    stringstream ss;
+    ss << "[ ";
+    
+    //dumpSlotDictionary(ss, reservedSlots_);
+    dumpSlotDictionary(ss, activeSlots_);
+    
+    ss << " ]";
+    
+    return ss.str();
 }
 
 
@@ -1185,35 +1230,6 @@ Buffer::releaseSlot(const boost::shared_ptr<const BufferSlot>& slot)
         pool_->push(it->second);
         reservedSlots_.erase(it);
     }
-}
-
-std::string
-Buffer::dump() const
-{
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-    int i = 0;
-    stringstream ss;
-    ss << "buffer dump:";
-
-    for (auto& s:slots_)
-        ss << std::endl << ++i << " " << s.second.slot_->dump();
-
-    return ss.str();
-}
-
-std::string
-Buffer::shortdump() const
-{
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
-    stringstream ss;
-    ss << "[ ";
-
-    //dumpSlotDictionary(ss, reservedSlots_);
-    dumpSlotDictionary(ss, activeSlots_);
-
-    ss << " ]";
-
-    return ss.str();
 }
 
 void

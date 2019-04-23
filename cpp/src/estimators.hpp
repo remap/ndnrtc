@@ -126,6 +126,10 @@ namespace ndnrtc {
 		/**
 		 * An exponential smoothing filter.
          * It also calculates smoothed variation as in RFC793
+         *
+         * Vav = alpha * V(i-1) + (1-alpha) * V(i)
+         * J = beta * J(i-1) + (1-beta) * abs( Vav - V(i) )
+         *
 		 */
 		class Filter {
 		public:

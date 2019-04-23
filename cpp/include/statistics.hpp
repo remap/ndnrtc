@@ -28,6 +28,13 @@ namespace ndnrtc {
                 
                 // consumer
                 // buffer
+                BufferedSlotsNum,
+                SlotsReadyNum,
+                SlotsUnfetchableNum,
+                BufferDelayEstimate,
+                FrameReassemblyEstimate,
+                DoubleRttNum,
+            
                 AcquiredNum,                    // PlaybackQueue
                 AcquiredKeyNum,                 // PlaybackQueue
                 DroppedNum,                     // Buffer
@@ -40,12 +47,14 @@ namespace ndnrtc {
                 RescuedKeyNum,                  // VideoPlayout
                 IncompleteNum,                  // Buffer
                 IncompleteKeyNum,               // Buffer
+            
                 BufferTargetSize,               // RemoteStreamImpl
                 BufferPlayableSize,             // PlaybackQueue
                 BufferReservedSize,             // PlaybackQueue
                 CurrentProducerFramerate,       // BufferControl
                 VerifySuccess,                  // SampleValidator
                 VerifyFailure,                  // SampleValidator
+            
                 LatencyControlStable,           // LatencyControl
                 LatencyControlCommand,          // LatencyControl
                 FrameFetchAvgDelta,             // Buffer

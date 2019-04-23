@@ -23,6 +23,7 @@
 #include "statistics.hpp"
 #include "ndnrtc-object.hpp"
 #include "pipeline.hpp"
+#include "estimators.hpp"
 
 namespace ndn {
     class Interest;
@@ -104,6 +105,7 @@ namespace ndnrtc
     class Manifest;
     class SampleValidator;
     class ManifestValidator;
+    class RequestQueue;
 
     class BufferSlot : public IPoolObject
                      , public IPipelineSlot
@@ -410,18 +412,18 @@ namespace ndnrtc
     
     class Buffer : public NdnRtcComponent, public IBuffer {
     public:
-        Buffer(boost::shared_ptr<IInterestQueue> interestQ,
+        Buffer(boost::shared_ptr<RequestQueue> interestQ,
                boost::shared_ptr<statistics::StatisticsStorage> storage =
                 boost::shared_ptr<statistics::StatisticsStorage>(statistics::StatisticsStorage::createConsumerStatistics()));
         
         void newSlot(boost::shared_ptr<IPipelineSlot>);
         void removeSlot(const PacketNumber&);
+        double getDelayEstimate() const { return delayEstimate_; }
         
         OnSlotUnfetchable onSlotUnfetchable;
         OnSlotReady onSlotReady;
         
         void reset();
-        
         
         std::string
         dump() const;
@@ -450,13 +452,24 @@ namespace ndnrtc
             SlotTriggerConnection onReadyConn_, onUnfetchableConn_;
         } SlotEntry;
         
+        // jitter buffer delay is calculated according to the formula:
+        //      B(i) = Dqav(i) + gamma * Jitter
+        //  where Jitter is a network jitter estimation from RequestQueue and
+        //  Dqav:
+        //      Dqav(i) = theta * Dqav(i-1) + (1-theta) * Dq(i)
+        //          where Dq(i) -- i-th frame re-assembly delay
+        double delayEstimateGamma_, delayEstimateTheta_, delayEstimate_;
+        estimators::Filter dqFilter_;
         
         std::map<PacketNumber, SlotEntry> slots_;
         boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
-        boost::shared_ptr<IInterestQueue> requestsQ_;
+        boost::shared_ptr<RequestQueue> requestQ_;
         
         std::string
         shortdump() const;
+        
+        void
+        calculateDelay(double dQ);
         
         // CODE BELOW IS DEPRECATED
         friend PlaybackQueue;

@@ -140,8 +140,8 @@ Filter::newValue(double value)
 		value_ = value;
 	else
     {
-        value_ = value_ * smoothing_ + (1-smoothing_) * value;
-        variation_ = variation_ * vsmoothing_ + (1-vsmoothing_) * abs(value_ - value);
+        value_ =  smoothing_ * value_ + (1-smoothing_) * value;
+        variation_ = vsmoothing_ * variation_ + (1-vsmoothing_) * abs(value_ - value);
     }
     
     nValues_++;

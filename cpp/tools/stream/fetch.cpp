@@ -305,7 +305,7 @@ void printStats(boost::shared_ptr<BufferSlot> slot,
 
     avgEsimtator.newValue(slot->getLongestDrd());
 
-#if 1
+#if 0
      cout << "\r"
      << "[ "
      << setw(6) << setprecision(5) << (clock::millisecondTimestamp()-startTime)/1000. << "sec "
