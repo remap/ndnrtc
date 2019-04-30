@@ -247,7 +247,7 @@ BufferSlot::clear()
 }
 
 bool
-BufferSlot::isDecodable() const
+BufferSlot::isReadyForDecoder() const
 {
     return nDataSegments_ > 0 &&
            (nDataSegmentsFetched_ + nParitySegmentsFetched_/2 >= nDataSegments_);
@@ -397,7 +397,7 @@ BufferSlot::updateAssemblingProgress(const DataRequest &dr)
         fetchProgress_ = double(nDataSegmentsFetched_+nParitySegmentsFetched_+2) / double(nDataSegments_+nParitySegments_+2);
 
     if (metaIsFetched_ &&
-        isDecodable() && slotState_ == PipelineSlotState::Assembling)
+        isReadyForDecoder() && slotState_ == PipelineSlotState::Assembling)
     {
         slotState_ = PipelineSlotState::Ready;
         triggerEvent(PipelineSlotState::Ready, dr);
@@ -585,7 +585,7 @@ BufferSlot::dump(bool showLastSegment) const
 //    << " dgen " << (showLastSegment ? lastFetched_->getDgen() : -1)
 //    << " rtt " << (showLastSegment ? lastFetched_->getRoundTripDelayUsec()/1000 : -1)
 //    << " " << std::setw(5) << (getConsistencyState() & BufferSlot::HeaderMeta ? getHeader().publishTimestampMs_ : 0)
-    << (isDecodable() ? "+dec" : "-dec")
+    << (isReadyForDecoder() ? "+dec" : "-dec")
     << "]";
 
     return dump.str();

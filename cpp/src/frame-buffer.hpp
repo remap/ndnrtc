@@ -155,7 +155,7 @@ namespace ndnrtc
          * performed, thus operation is not expensive.
          */
         void clear() override;
-        bool isDecodable() const;
+        bool isReadyForDecoder() const;
 
         int64_t getAssemblingTime() const
         { return ( slotState_ >= PipelineSlotState::Assembling ? lastDataTsUsec_ - firstDataTsUsec_ : 0); }
