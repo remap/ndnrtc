@@ -55,6 +55,8 @@ public:
     size_t size() const { return queue_.size(); }
     const estimators::Filter& getEstimator() const { return drdEstimator_; }
     
+    void callLater(uint64_t usecDelay, DelayedCallback callback);
+    
 private:
     class QueueEntry
     {
@@ -116,7 +118,6 @@ private:
     PriorityQueue queue_;
     IInterestQueueObserver *observer_;
     bool isDrainingQueue_;
-//    estimators::Average drdEstimator_;
     estimators::Filter drdEstimator_;
     uint64_t lastRequestId_, lastRcvdRequestId_;
     
@@ -185,6 +186,7 @@ void RequestQueue::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) 
 double RequestQueue::getDrdEstimate() const { return pimpl_->getEstimator().value(); }
 double RequestQueue::getJitterEstimate() const { return pimpl_->getEstimator().variation(); }
 const statistics::StatisticsStorage& RequestQueue::getStatistics() const { return pimpl_->getStatistics(); }
+void RequestQueue::callLater(uint64_t usecDelay, DelayedCallback callback) { pimpl_->callLater(usecDelay, callback); }
 
 //******************************************************************************
 #pragma mark - construction/destruction
@@ -340,6 +342,12 @@ RequestQueueImpl::reset()
     }
 
     LogDebugC << "queue flushed" << std::endl;
+}
+
+void
+RequestQueueImpl::callLater(uint64_t usecDelay, DelayedCallback callback)
+{
+    face_->callLater(usecDelay/1000, callback);
 }
 
 //******************************************************************************

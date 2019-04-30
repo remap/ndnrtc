@@ -51,6 +51,7 @@ namespace ndnrtc {
         const boost::shared_ptr<ndn::NetworkNack>& networkNack)> OnNetworkNack;
     typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&)>
             OnExpressInterest;
+    typedef boost::function<void()> DelayedCallback;
 
     class IInterestQueueObserver {
     public:
@@ -84,7 +85,6 @@ namespace ndnrtc {
     class RequestQueue : public IInterestQueue
     {
     public:
-
         class IPriority
         {
         public:
@@ -148,6 +148,7 @@ namespace ndnrtc {
         double getDrdEstimate() const;
         double getJitterEstimate() const;
         const statistics::StatisticsStorage& getStatistics() const;
+        void callLater(uint64_t usecDelay, DelayedCallback callback);
 
         void registerObserver(IInterestQueueObserver *observer) DEPRECATED;
         void unregisterObserver() DEPRECATED;
