@@ -335,16 +335,15 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
                       << (frame.type_ == FrameType::Key ? " key: " : " delta: ")
                       << frame.length_ << "bytes" << endl;
 
+            if (frame.type_ == FrameType::Key && frameSeq_ != 0) gopSeq_++;
+            
             Name framePrefix = publishFrameGobj(frame);
 
 //            if (frame.type_ == FrameType::Key)
 //                assert(frameSeq_ % settings_.codecSettings_.spec_.encoder_.gop_ == 0);
 
             if (frame.type_ == FrameType::Key)
-            {
                 lastGopPrefix_ = publishGop(framePrefix, lastFramePrefix_, packets);
-                gopSeq_++;
-            }
 
             gopPos_ = (gopPos_+1) % settings_.codecSettings_.spec_.encoder_.gop_;
             frameSeq_++;
@@ -571,7 +570,7 @@ VideoStreamImpl2::publishGop(const Name &framePrefix, const Name &prevFramePrefi
     if (gopSeq_ > 0)
     {
         Name endGopName = Name(gopPrefix)
-                            .appendSequenceNumber(gopSeq_)
+                            .appendSequenceNumber(gopSeq_-1)
                             .append(NameComponents::GopEnd);
         DelegationSet set;
         set.add(0, prevFramePrefix);
@@ -586,7 +585,7 @@ VideoStreamImpl2::publishGop(const Name &framePrefix, const Name &prevFramePrefi
     }
 
     Name startGopName = Name(gopPrefix)
-                        .appendSequenceNumber(gopSeq_+1)
+                        .appendSequenceNumber(gopSeq_)
                         .append(NameComponents::GopStart);
     DelegationSet set;
     set.add(0, framePrefix);
@@ -599,7 +598,7 @@ VideoStreamImpl2::publishGop(const Name &framePrefix, const Name &prevFramePrefi
 
     LogDebugC << "○ start gop " << d->getName() << " -> " << set.get(0).getName() << endl;
 
-    return gopPrefix.appendSequenceNumber(gopSeq_+1);
+    return gopPrefix.appendSequenceNumber(gopSeq_);
 }
 
 void
