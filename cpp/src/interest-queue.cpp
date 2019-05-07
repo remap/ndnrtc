@@ -55,6 +55,7 @@ public:
     size_t size() const { return queue_.size(); }
     const estimators::Filter& getEstimator() const { return drdEstimator_; }
     
+    boost::asio::io_service& getFaceIo() const { return faceIo_; }
     void callLater(uint64_t usecDelay, DelayedCallback callback);
     
 private:
@@ -187,6 +188,7 @@ double RequestQueue::getDrdEstimate() const { return pimpl_->getEstimator().valu
 double RequestQueue::getJitterEstimate() const { return pimpl_->getEstimator().variation(); }
 const statistics::StatisticsStorage& RequestQueue::getStatistics() const { return pimpl_->getStatistics(); }
 void RequestQueue::callLater(uint64_t usecDelay, DelayedCallback callback) { pimpl_->callLater(usecDelay, callback); }
+boost::asio::io_service& RequestQueue::getIoService() const { return pimpl_->getFaceIo(); }
 
 //******************************************************************************
 #pragma mark - construction/destruction

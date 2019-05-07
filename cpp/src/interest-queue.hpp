@@ -149,6 +149,7 @@ namespace ndnrtc {
         double getJitterEstimate() const;
         const statistics::StatisticsStorage& getStatistics() const;
         void callLater(uint64_t usecDelay, DelayedCallback callback);
+        boost::asio::io_service& getIoService() const;
 
         void registerObserver(IInterestQueueObserver *observer) DEPRECATED;
         void unregisterObserver() DEPRECATED;
