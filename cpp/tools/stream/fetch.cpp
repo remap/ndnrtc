@@ -175,9 +175,9 @@ void setupFetching(boost::shared_ptr<KeyChain> keyChain,
 
     // TEMPORARY: onNewSlot will be connected to a buffer
     buffer = boost::make_shared<Buffer>(requestQ);
-    
     pipeline->onNewSlot.connect(bind(&Buffer::newSlot, buffer, _1));
     
+    buffer->onSlotDiscard.connect(bind(&Pool<BufferSlot>::push, slotPool, _1));
     buffer->onSlotReady.connect([slotPool](const boost::shared_ptr<BufferSlot>& bufferSlot)
                                 {
                                     LogDebug(AppLog) << "slot "
@@ -189,11 +189,13 @@ void setupFetching(boost::shared_ptr<KeyChain> keyChain,
                                     if (!(Logger::getLogger(AppLog).getLogLevel() < NdnLoggerDetailLevelDefault && AppLog == ""))
                                         printStats(bufferSlot, pipelineControl, slotPool);
                                     
-                                    buffer->removeSlot(bufferSlot->getNameInfo().sampleNo_);
+                                    cout << "POOL SIZE " << slotPool->size() << endl;
+                                    
+//                                    buffer->removeSlot(bufferSlot->getNameInfo().sampleNo_);
                                     LogDebug(AppLog) << buffer->dump() << endl;
                                     
                                     pipelineControl->pulse();
-                                    slotPool->push(bufferSlot);
+//                                    slotPool->push(bufferSlot);
                                 });
     buffer->onSlotUnfetchable.connect([slotPool](const boost::shared_ptr<BufferSlot>& bufferSlot)
                                       {
@@ -206,7 +208,7 @@ void setupFetching(boost::shared_ptr<KeyChain> keyChain,
                                           slotPool->push(bufferSlot);
                                       });
     
-
+    buffer->setLogger(Logger::getLoggerPtr(AppLog));
     pipeline->setLogger(Logger::getLoggerPtr(AppLog));
     pipelineControl->setLogger(Logger::getLoggerPtr(AppLog));
 
@@ -324,8 +326,8 @@ void printStats(boost::shared_ptr<BufferSlot> slot,
      << " ooo " << outOfOrder
      << " ]"
      << flush;
-#else
-    boost::shared_ptr<const packets::Meta> frameMeta = slot->getFrameMeta();
+//#else
+    boost::shared_ptr<const packets::Meta> frameMeta = slot->getMetaPacket();
     double ooo = requestQ->getStatistics()[statistics::Indicator::OutOfOrderNum];
     for (auto &r:slot->getRequests())
     {

@@ -163,6 +163,10 @@ namespace ndnrtc
         { return (slotState_ >= PipelineSlotState::Assembling ? firstDataTsUsec_-firstRequestTsUsec_ : 0); }
         int64_t getLongestDrd() const
         { return (slotState_ == PipelineSlotState::Ready ? lastDataTsUsec_ - firstRequestTsUsec_ : 0); }
+        
+        uint64_t getFirstRequestTsUsec() const { return (uint64_t)firstRequestTsUsec_; }
+        uint64_t getFirstDataTsUsec() const { return (uint64_t)firstDataTsUsec_; }
+        uint64_t getLastDataTsUsec() const { return (uint64_t)lastDataTsUsec_;}
 
         Verification getVerificationStatus() const { return verified_; }
         const NamespaceInfo& getNameInfo() const { return nameInfo_; }
@@ -171,7 +175,7 @@ namespace ndnrtc
         std::string
         dump(bool showLastSegment = false) const;
 
-        boost::shared_ptr<const packets::Meta> getFrameMeta() const { return meta_; }
+        boost::shared_ptr<const packets::Meta> getMetaPacket() const { return meta_; }
 
         size_t getDataSegmentsNum() const { return nDataSegments_; }
         size_t getFetchedDataSegmentsNum() const { return nDataSegmentsFetched_; }
@@ -185,7 +189,7 @@ namespace ndnrtc
         PipelineSlotState slotState_;
         std::vector<boost::shared_ptr<DataRequest>> requests_;
         std::vector<RequestTriggerConnection> requestConnections_;
-        SlotTrigger onPending_, onReady_, onUnfetchable_;
+        SlotTrigger onPending_, onAssembling_, onReady_, onUnfetchable_;
         NeedDataTrigger onMissing_;
         bool metaIsFetched_, manifestIsFetched_;
         boost::shared_ptr<const packets::Meta> meta_;
@@ -408,11 +412,12 @@ namespace ndnrtc
     typedef boost::signals2::signal<void(const boost::shared_ptr<BufferSlot>&)> BufferSlotUpdateTrigger;
     typedef BufferSlotUpdateTrigger OnSlotUnfetchable;
     typedef BufferSlotUpdateTrigger OnSlotReady;
-//    tyoedef boost::signals2::connection SlotStateUpdateConnection;
+    typedef BufferSlotUpdateTrigger OnSlotDiscard;
     
     class Buffer : public NdnRtcComponent, public IBuffer {
     public:
         Buffer(boost::shared_ptr<RequestQueue> interestQ,
+               uint64_t slotRetainIntervalUsec = 3E6,
                boost::shared_ptr<statistics::StatisticsStorage> storage =
                 boost::shared_ptr<statistics::StatisticsStorage>(statistics::StatisticsStorage::createConsumerStatistics()));
         
@@ -420,9 +425,17 @@ namespace ndnrtc
         void removeSlot(const PacketNumber&);
         double getDelayEstimate() const { return delayEstimate_; }
         
+        bool getIsJitterCompensationOn() const { return isJitterCompensationOn_; }
+        void setIsJitterCompensationOn(bool jitterCompensation) { isJitterCompensationOn_ = jitterCompensation; }
+        
         OnSlotUnfetchable onSlotUnfetchable;
         OnSlotReady onSlotReady;
-        
+        // signal which will be called when an old undecodable slot is discarded
+        // if slot stays in the buffer for longer than slotRetainInterval and is not
+        // ready for decoding, it will be discarded
+        // this signal should be used for recylcing slots (i.e. returning them to the pool)
+        OnSlotDiscard onSlotDiscard;
+    
         void reset();
         
         std::string
@@ -430,11 +443,9 @@ namespace ndnrtc
         
         // CODE BELOW IS DEPRECATED
         
-        Buffer(boost::shared_ptr<statistics::StatisticsStorage> storage,
-               boost::shared_ptr<SlotPool> pool =
-                boost::shared_ptr<SlotPool>(new SlotPool()));
-
-        
+//        Buffer(boost::shared_ptr<statistics::StatisticsStorage> storage,
+//               boost::shared_ptr<SlotPool> pool =
+//                boost::shared_ptr<SlotPool>(new SlotPool()));
 
         bool requested(const std::vector<boost::shared_ptr<const ndn::Interest>>&);
         BufferReceipt received(const boost::shared_ptr<WireSegment>& segment);
@@ -449,8 +460,19 @@ namespace ndnrtc
         typedef struct _SlotEntry {
             boost::shared_ptr<BufferSlot> slot_;
             NeedDataTriggerConnection onMissingDataConn_;
-            SlotTriggerConnection onReadyConn_, onUnfetchableConn_;
+            SlotTriggerConnection onReadyConn_, onUnfetchableConn_, onAssemblingConn_;
+            uint64_t insertedUsec_, pushDeadlineUsec_;
+            bool pushedForDecode_;
         } SlotEntry;
+        
+//        class FrameGop {
+//        public:
+//            void add(boost::shared_ptr<BufferSlot> slot);
+//            bool hasKeyFrame() const;
+//            bool isFullyDecodable() const;
+//            size_t size() const;
+//
+//        };
         
         // jitter buffer delay is calculated according to the formula:
         //      B(i) = Dqav(i) + gamma * Jitter
@@ -460,16 +482,36 @@ namespace ndnrtc
         //          where Dq(i) -- i-th frame re-assembly delay
         double delayEstimateGamma_, delayEstimateTheta_, delayEstimate_;
         estimators::Filter dqFilter_;
+        bool isJitterCompensationOn_;
+        uint64_t cleanupIntervalUsec_, lastCleanupUsec_, slotRetainIntervalUsec_;
+        
+//        typedef struct _SlotQ {
+//            std::map<PacketNumber, SlotEntry> pending_, ready_, unfetchable_;
+//        } SlotQ;
         
         std::map<PacketNumber, SlotEntry> slots_;
+        std::map<int32_t, PacketNumber> gopDecodeMap_;
+        boost::shared_ptr<BufferSlot> lastPushedSlot_;
+        
         boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
         boost::shared_ptr<RequestQueue> requestQ_;
+        boost::asio::steady_timer slotPushTimer_;
+        uint64_t slotPushFireTime_;
+        int64_t slotPushDelay_;
         
         std::string
         shortdump() const;
         
         void
         calculateDelay(double dQ);
+        void
+        checkReadySlots(uint64_t);
+        void
+        doCleanup(uint64_t);
+        void
+        setSlotPushDeadline(const boost::shared_ptr<BufferSlot>&, uint64_t ts);
+        void
+        setupPushTimer(uint64_t);
         
         // CODE BELOW IS DEPRECATED
         friend PlaybackQueue;

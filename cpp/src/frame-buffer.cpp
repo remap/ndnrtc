@@ -119,6 +119,7 @@ BufferSlot::subscribe(PipelineSlotState slotState, OnSlotStateUpdate onSlotState
 
     switch (slotState) {
         case PipelineSlotState::Pending: c = onPending_.connect(onSlotStateUpdate); break;
+        case PipelineSlotState::Assembling: c = onAssembling_.connect(onSlotStateUpdate); break;
         case PipelineSlotState::Ready: c = onReady_.connect(onSlotStateUpdate); break;
         case PipelineSlotState::Unfetchable: c = onUnfetchable_.connect(onSlotStateUpdate); break;
         default:
@@ -404,7 +405,10 @@ BufferSlot::updateAssemblingProgress(const DataRequest &dr)
     }
     else
         if (slotState_ < PipelineSlotState::Assembling)
+        {
             slotState_ = PipelineSlotState::Assembling;
+            triggerEvent(PipelineSlotState::Assembling, dr);
+        }
 }
 
 void
@@ -413,6 +417,9 @@ BufferSlot::triggerEvent(PipelineSlotState s, const DataRequest& dr)
     switch (s) {
         case PipelineSlotState::Unfetchable:
             onUnfetchable_(this, dr);
+            break;
+        case PipelineSlotState::Assembling:
+            onAssembling_(this, dr);
             break;
         case PipelineSlotState::Ready:
             onReady_(this, dr);
@@ -424,6 +431,54 @@ BufferSlot::triggerEvent(PipelineSlotState s, const DataRequest& dr)
             break;
     }
 }
+
+std::string
+BufferSlot::dump(bool showLastSegment) const
+{
+    std::stringstream dump;
+    
+    dump << "[ "
+    // << (nameInfo_.class_ == SampleClass::Delta?"D":((nameInfo_.class_ == SampleClass::Key)?"K":"U")) << ", "
+    << nameInfo_.getSuffix(NameFilter::Sample).toUri()
+    << std::setw(5)
+    << " "
+    << nameInfo_.sampleNo_
+    << (verified_ == Verification::Verified ? "☆" : (verified_ == Verification::Unknown? "?" : "✕")) << ", "
+    << (metaIsFetched_ ? "+m " : "-m ")
+    << (manifestIsFetched_ ? "+f " : "-f ")
+    << (metaIsFetched_ ? (getMetaPacket()->getFrameMeta().type() == FrameMeta_FrameType_Key ? "K " : "D ") : "? ")
+    << (metaIsFetched_ ? getMetaPacket()->getFrameMeta().gop_number() : 0) << "-"
+    << (metaIsFetched_ ? getMetaPacket()->getFrameMeta().gop_position() : 0) << " "
+    << getFetchedDataSegmentsNum() << "/" << getDataSegmentsNum() << " "
+    << getFetchedParitySegmentsNum() << "/" << getParitySegmentsNum() << " "
+    << getFetchedBytesData() << "b " << getFetchedBytesParity() << "b "
+    //    << toString(getConsistencyState()) << ", "
+    // << std::setw(7) << getPlaybackNumber() << ", "
+    // << std::setw(10) << getProducerTimestamp() << ", "
+    << std::setw(3) << fetchProgress_*100 << "% "//"("
+    // << ((double)nSegmentsParityReady_/(double)nSegmentsParity_)*100 << "%), "
+    // << std::setw(5) << getPairedFrameNumber() << ", "
+    // << std::setw(3) << getPlaybackDeadline() << ", "
+    //    << std::setw(3) << nRtx_ << " "
+    // << (isRecovered_ ? "R" : "I") << ", "
+    // << std::setw(2) << nSegmentsTotal_ << "/" << nSegmentsReady_
+    // << "/" << nSegmentsPending_ << "/" << nSegmentsMissing_
+    // << "/" << nSegmentsParity_ << " "
+    // << getLifetime() << " "
+    //    << std::setw(5) << assembledSize_ << " "
+    //    << (showLastSegment ? lastFetched_->getInfo().getSuffix(suffix_filter::Thread) : nameInfo_.getSuffix(suffix_filter::Thread))
+    //    << " " << (lastFetched_ && lastFetched_->isOriginal() ? "ORIG" : "CACH")
+    //    << " dgen " << (showLastSegment ? lastFetched_->getDgen() : -1)
+    //    << " rtt " << (showLastSegment ? lastFetched_->getRoundTripDelayUsec()/1000 : -1)
+    //    << " " << std::setw(5) << (getConsistencyState() & BufferSlot::HeaderMeta ? getHeader().publishTimestampMs_ : 0)
+    << (isReadyForDecoder() ? "+dec " : "-dec ")
+    << getFirstRequestTsUsec() << " "
+    << getLastDataTsUsec()
+    << "]";
+    
+    return dump.str();
+}
+
 
 // ----------------------------------------------------------------------------------------
 // CODE BELOW IS DEPRECATED
@@ -550,47 +605,6 @@ BufferSlot::getRtxNum(const ndn::Name& segmentName)
     return -1;
 }
 
-std::string
-BufferSlot::dump(bool showLastSegment) const
-{
-    std::stringstream dump;
-
-    dump << "[ "
-    // << (nameInfo_.class_ == SampleClass::Delta?"D":((nameInfo_.class_ == SampleClass::Key)?"K":"U")) << ", "
-    << nameInfo_.getSuffix(NameFilter::Sample).toUri()
-    << std::setw(5)
-    << nameInfo_.sampleNo_
-    << (verified_ == Verification::Verified ? "☆" : (verified_ == Verification::Unknown? "?" : "✕")) << ", "
-    << (metaIsFetched_ ? "+m " : "-m ")
-    << (manifestIsFetched_ ? "+f " : "-f ")
-    << getFetchedDataSegmentsNum() << "/" << getDataSegmentsNum() << " "
-    << getFetchedParitySegmentsNum() << "/" << getParitySegmentsNum() << " "
-    << getFetchedBytesData() << "b " << getFetchedBytesParity() << "b "
-//    << toString(getConsistencyState()) << ", "
-    // << std::setw(7) << getPlaybackNumber() << ", "
-    // << std::setw(10) << getProducerTimestamp() << ", "
-    << std::setw(3) << fetchProgress_*100 << "% "//"("
-    // << ((double)nSegmentsParityReady_/(double)nSegmentsParity_)*100 << "%), "
-    // << std::setw(5) << getPairedFrameNumber() << ", "
-    // << std::setw(3) << getPlaybackDeadline() << ", "
-//    << std::setw(3) << nRtx_ << " "
-    // << (isRecovered_ ? "R" : "I") << ", "
-    // << std::setw(2) << nSegmentsTotal_ << "/" << nSegmentsReady_
-    // << "/" << nSegmentsPending_ << "/" << nSegmentsMissing_
-    // << "/" << nSegmentsParity_ << " "
-    // << getLifetime() << " "
-//    << std::setw(5) << assembledSize_ << " "
-//    << (showLastSegment ? lastFetched_->getInfo().getSuffix(suffix_filter::Thread) : nameInfo_.getSuffix(suffix_filter::Thread))
-//    << " " << (lastFetched_ && lastFetched_->isOriginal() ? "ORIG" : "CACH")
-//    << " dgen " << (showLastSegment ? lastFetched_->getDgen() : -1)
-//    << " rtt " << (showLastSegment ? lastFetched_->getRoundTripDelayUsec()/1000 : -1)
-//    << " " << std::setw(5) << (getConsistencyState() & BufferSlot::HeaderMeta ? getHeader().publishTimestampMs_ : 0)
-    << (isReadyForDecoder() ? "+dec" : "-dec")
-    << "]";
-
-    return dump.str();
-}
-
 const CommonHeader
 BufferSlot::getHeader() const
 {
@@ -650,7 +664,7 @@ BufferSlot::toggleLock()
     else
     {
         if (state_ != BufferSlot::State::Ready)
-            throw std::runtime_error("Trying to lock slot whith is not ready");
+            throw std::runtime_error("Trying to lock slot which is not ready");
         state_ = BufferSlot::State::Locked;
     }
 }
@@ -851,12 +865,20 @@ SlotPool::push(const boost::shared_ptr<BufferSlot>& slot)
 
 //******************************************************************************
 Buffer::Buffer(boost::shared_ptr<RequestQueue> interestQ,
+               uint64_t slotRetainIntervalUsec,
                boost::shared_ptr<StatisticsStorage> storage)
     : sstorage_(storage)
     , requestQ_(interestQ)
     , delayEstimateGamma_(4.)
     , delayEstimateTheta_(15./16.)
     , dqFilter_(delayEstimateTheta_)
+    , isJitterCompensationOn_(true)
+    , slotRetainIntervalUsec_(slotRetainIntervalUsec)
+    , cleanupIntervalUsec_(5E6)
+    , lastCleanupUsec_(0)
+    , slotPushTimer_(interestQ->getIoService())
+    , slotPushFireTime_(0)
+    , slotPushDelay_(0)
 {
     assert(sstorage_.get());
     description_ = "buffer";
@@ -870,6 +892,7 @@ Buffer::newSlot(boost::shared_ptr<IPipelineSlot> slot)
     {
         SlotEntry e;
         e.slot_ = s;
+        e.pushedForDecode_ = false;
         
         boost::shared_ptr<Buffer> me = dynamic_pointer_cast<Buffer>(shared_from_this());
         // request missing segments, if needed
@@ -877,6 +900,8 @@ Buffer::newSlot(boost::shared_ptr<IPipelineSlot> slot)
             s->addOnNeedData([this, me, s](IPipelineSlot *sl,
                                         std::vector<boost::shared_ptr<DataRequest>> missingR)
                          {
+//                             cout << "REQUEST MISSING" << endl;
+                             
                              LogTraceC << "request missing " << missingR.size() << " "
                                        << s->dump() << endl;
                              (*sstorage_)[Indicator::DoubleRttNum]++;
@@ -886,12 +911,17 @@ Buffer::newSlot(boost::shared_ptr<IPipelineSlot> slot)
                          });
         e.onReadyConn_ =
             s->subscribe(PipelineSlotState::Ready,
-                     [this, me, s](const IPipelineSlot *sl, const DataRequest&){
+                     [this, me, s](const IPipelineSlot *sl, const DataRequest& r){
                          LogDebugC << "slot ready " << s->dump() << endl;
                          (*sstorage_)[Indicator::SlotsReadyNum]++;
                          
                          calculateDelay(s->getAssemblingTime());
                          onSlotReady(s);
+                         
+//                         cout << "SLOT READY. CHECK "
+//                              << r.getReplyTimestampUsec() << " " << s->dump() << endl;
+
+                         checkReadySlots(r.getReplyTimestampUsec());
                      });
         e.onUnfetchableConn_ =
             s->subscribe(PipelineSlotState::Unfetchable,
@@ -902,9 +932,16 @@ Buffer::newSlot(boost::shared_ptr<IPipelineSlot> slot)
 
                          onSlotUnfetchable(s);
                      });
-        
+        e.onAssemblingConn_ =
+            s->subscribe(PipelineSlotState::Assembling,
+                         [this, me, s](const IPipelineSlot *sl, const DataRequest& r){
+                             setSlotPushDeadline(s, r.getReplyTimestampUsec());
+                         });
+
         {
             boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+            e.insertedUsec_ = clock::microsecondTimestamp();
+            e.pushDeadlineUsec_ = 0;
             slots_[e.slot_->getNameInfo().sampleNo_] = e;
             
             (*sstorage_)[Indicator::BufferedSlotsNum]++;
@@ -923,6 +960,7 @@ Buffer::removeSlot(const PacketNumber& no)
     if (it != slots_.end())
     {
         it->second.onUnfetchableConn_.disconnect();
+        it->second.onAssemblingConn_.disconnect();
         it->second.onReadyConn_.disconnect();
         it->second.onMissingDataConn_.disconnect();
         slots_.erase(it);
@@ -957,6 +995,153 @@ Buffer::calculateDelay(double dQ)
     delayEstimate_ = dqFilter_.value() + delayEstimateGamma_ * requestQ_->getJitterEstimate();
 }
 
+void
+Buffer::checkReadySlots(uint64_t now)
+{
+    // 1. go over ready slots
+    // 2. check:
+    //      - if frame GOP-decodable:
+    //          - frame is KEY
+    //              - OR -
+    //          - frame #-1 is GOP-decodable
+    //      -> then
+    //          - if time to push frame:
+    //              - frame # < last pushed #
+    //                  - OR -
+    //              - frame is KEY and past push deadline
+    //                  - OR -
+    //              - frame is NOT KEY
+    //          -> then
+    //              push frame to decodeQ
+    //          -> else
+    //              setup/adjust timer
+    //      -> else
+    //          do nothing
+    // 3. check for cleanup of old frames
+    
+    {
+        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        for (auto &e : slots_)
+        {
+            boost::shared_ptr<BufferSlot> slot = e.second.slot_;
+            
+            if (!e.second.pushedForDecode_ && slot->getState() == PipelineSlotState::Ready)
+            {
+                PacketNumber sampleNo = slot->getNameInfo().sampleNo_;
+                int32_t gopNo = slot->getMetaPacket()->getFrameMeta().gop_number();
+                bool isKey = (slot->getMetaPacket()->getFrameMeta().type() == FrameMeta_FrameType_Key);
+                bool prevDecodable = (gopDecodeMap_.find(gopNo) != gopDecodeMap_.end() ? (gopDecodeMap_[gopNo] + 1 == sampleNo) : false);
+                
+                LogTraceC << sampleNo << " isKey " << isKey
+                    << " previous decodable " << prevDecodable
+                << " last GOP decodable " << (gopDecodeMap_.find(gopNo) != gopDecodeMap_.end() ? gopDecodeMap_[gopNo] : 0)
+                << " now " << now
+                << " deadline " << e.second.pushDeadlineUsec_
+                << " diff " << e.second.pushDeadlineUsec_-now
+                    << endl;
+                
+                if (isKey || prevDecodable)
+                {
+                    // we push for decode if any of the following is true:
+                    // 1. it's a Key frame and it's time to push it
+                    // 2. it's a Delta frame
+                    // 3. it's out-of-order old frame
+                    bool pushForDecode =
+                        (isKey && now >= e.second.pushDeadlineUsec_) ||
+                        (!isKey) ||
+                        (lastPushedSlot_ && sampleNo < lastPushedSlot_->getNameInfo().sampleNo_);
+                    
+                    // TODO: check for getIsJitterCompensationOn()
+                    if (pushForDecode)
+                    {
+                        int64_t d = (int64_t)now - (int64_t)e.second.pushDeadlineUsec_;
+                        // if frame is Key -- add to push delay so we can adjust for it
+                        // in the future
+                        if (isKey)
+                            slotPushDelay_ += d;
+                        
+                        // push to decodeQ
+                        LogTraceC << "push to decode Q. late by "
+                                  << d << "usec "
+                                  << slot->dump() << endl;
+                        lastPushedSlot_ = slot;
+                        e.second.pushedForDecode_ = true;
+                        gopDecodeMap_[gopNo] = sampleNo;
+                    }
+                    else
+                    {
+                        // setup timer to push this frame at a later time
+                        LogTraceC << "push later. in "
+                                  << (int64_t)e.second.pushDeadlineUsec_ - (int64_t)now << "usec "
+                                  << slot->dump() << endl;
+                    }
+                }
+            }
+        }
+    }
+    
+    doCleanup(now);
+}
+
+void
+Buffer::doCleanup(uint64_t now)
+{
+    if (lastCleanupUsec_ == 0 || now - lastCleanupUsec_ >= cleanupIntervalUsec_)
+    {
+        cout << "CLEANUP " << dump() << endl;
+        
+        // iterate over slots and remove all that have insertedUsec timestamp older
+        // than slotRetainInterval
+        vector<PacketNumber> oldSlots;
+        for (auto &e : slots_)
+        {
+            if (now > e.second.insertedUsec_ &&
+                (now - e.second.insertedUsec_ >= slotRetainIntervalUsec_ ||
+                e.second.pushedForDecode_))
+            {
+                cout << "SLOT DISCARD "
+                     << now << " "
+                     << e.second.insertedUsec_ << " "
+                     << e.second.slot_->getFirstRequestTsUsec() << " "
+                     << slotRetainIntervalUsec_ << " "
+                     << now - e.second.insertedUsec_ << " "
+                     << e.second.slot_->dump() << endl;
+                
+                LogTraceC << "old slot discard " << e.second.slot_ << endl;
+                oldSlots.push_back(e.second.slot_->getNameInfo().sampleNo_);
+            }
+        }
+        
+        for (auto &s : oldSlots)
+        {
+            boost::shared_ptr<BufferSlot> discardedSlot = slots_[s].slot_;
+            removeSlot(s);
+            onSlotDiscard(discardedSlot);
+        }
+        
+        lastCleanupUsec_ = now;
+    }
+}
+
+void
+Buffer::setSlotPushDeadline(const boost::shared_ptr<BufferSlot> &s, uint64_t now)
+{
+    uint64_t delayUsec = (uint64_t)getDelayEstimate();
+    uint64_t pushDeadlineUsec = now + delayUsec;
+    slots_[s->getNameInfo().sampleNo_].pushDeadlineUsec_ = pushDeadlineUsec;
+    
+    setupPushTimer(pushDeadlineUsec);
+    
+    LogTraceC << "slot push deadline is " << delayUsec << "usec from now. "
+              << s->dump() << endl;
+}
+
+void
+Buffer::setupPushTimer(uint64_t deadline)
+{
+    
+}
+
 std::string
 Buffer::dump() const
 {
@@ -988,13 +1173,13 @@ Buffer::shortdump() const
 
 
 // CODE BELOW IS DEPRECATED
-Buffer::Buffer(boost::shared_ptr<StatisticsStorage> storage,
-               boost::shared_ptr<SlotPool> pool):pool_(pool),
-sstorage_(storage)
-{
-    assert(sstorage_.get());
-    description_ = "buffer";
-}
+//Buffer::Buffer(boost::shared_ptr<StatisticsStorage> storage,
+//               boost::shared_ptr<SlotPool> pool):pool_(pool),
+//sstorage_(storage)
+//{
+//    assert(sstorage_.get());
+//    description_ = "buffer";
+//}
 
 bool
 Buffer::requested(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests)
