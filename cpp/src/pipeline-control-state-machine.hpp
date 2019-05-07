@@ -7,7 +7,7 @@
 
 #ifndef __pipeline_control_state_machine_h__
 #define __pipeline_control_state_machine_h__
-
+#if 0
 #include <ndn-cpp/name.hpp>
 
 #include "ndnrtc-object.hpp"
@@ -304,4 +304,5 @@ class PipelineControlState
 };
 }
 
+#endif
 #endif

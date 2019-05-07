@@ -93,7 +93,7 @@ namespace v4 {
         uint64_t pulseCount_;
     };
 }
-
+#if 0
 class IPipeliner;
 class IInterestControl;
 class IPlayoutControl;
@@ -181,6 +181,7 @@ class PipelineControl : public NdnRtcComponent,
                                      std::string);
     void onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>> &interests);
 };
+#endif
 }
 
 #endif

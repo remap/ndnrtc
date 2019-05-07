@@ -6,6 +6,7 @@
 //
 
 #include "remote-video-stream.hpp"
+#if 0
 #include <ndn-cpp/name.hpp>
 // #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
 
@@ -297,3 +298,4 @@ void RemoteVideoStreamImpl::releasePipelineControl()
 
     pipelineControl_.reset();
 }
+#endif

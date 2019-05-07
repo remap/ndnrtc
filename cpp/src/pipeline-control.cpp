@@ -67,7 +67,7 @@ PipelineControl::getNumOutstanding() const
 
 }
 }
-
+#if 0
 //******************************************************************************
 PipelineControl PipelineControl::defaultPipelineControl(const ndn::Name &threadPrefix,
                                                         const boost::shared_ptr<DrdEstimator> drdEstimator,
@@ -255,3 +255,4 @@ void PipelineControl::onRetransmissionRequired(const std::vector<boost::shared_p
         pipeliner_->express(interests, true);
     }
 }
+#endif

@@ -6,6 +6,7 @@
 //
 
 #include "pipeline-control-state-machine.hpp"
+#if 0
 #include <boost/make_shared.hpp>
 #include <boost/assign.hpp>
 #include <ndn-cpp/delegation-set.hpp>
@@ -777,3 +778,4 @@ Fetching::onNack(const boost::shared_ptr<const EventNack> &ev)
     ctrl_->pipeliner_->express({ ev->getInterest() });
     return str();
 }
+#endif

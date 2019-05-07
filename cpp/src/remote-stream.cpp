@@ -6,6 +6,7 @@
 //
 
 #include "remote-stream.hpp"
+#if 0
 #include <boost/make_shared.hpp>
 #include <ndn-cpp/name.hpp>
 
@@ -188,4 +189,5 @@ RemoteVideoStream::start(const FetchingRuleSet& ruleset, IExternalRenderer* rend
 {
     boost::dynamic_pointer_cast<RemoteVideoStreamImpl>(pimpl_)->start(ruleset, renderer);
 }
+#endif
 #endif

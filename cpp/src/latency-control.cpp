@@ -6,6 +6,7 @@
 //
 
 #include "latency-control.hpp"
+#if 0
 #include <boost/make_shared.hpp>
 #include <boost/thread/lock_guard.hpp>
 
@@ -411,3 +412,4 @@ void LatencyControl::pipelineChanged(int64_t now)
               << " wait for stabilization: " << (waitForStability_ ? "YES" : "NO") 
               << std::endl;
 }
+#endif

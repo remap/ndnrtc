@@ -6,7 +6,7 @@
 //
 
 #include "remote-stream-impl.hpp"
-
+#if 0
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/name.hpp>
@@ -337,3 +337,4 @@ void RemoteStreamImpl::notifyObservers(RemoteStream::Event ev)
     for (auto o : observers_)
         o->onNewEvent(ev);
 }
+#endif

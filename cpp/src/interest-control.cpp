@@ -6,6 +6,7 @@
 //
 
 #include "interest-control.hpp"
+#if 0
 #include <algorithm>
 
 #include "frame-data.hpp"
@@ -274,3 +275,4 @@ InterestControl::snapshot() const
     ss << "]" << pipeline_ << "-" << limit_ << " (" << room() << ")";
     return ss.str();
 }
+#endif

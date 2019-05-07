@@ -9,6 +9,7 @@
 //
 
 #include "pipeliner.hpp"
+#if 0
 #include <ndn-cpp/exclude.hpp>
 
 #include "sample-estimator.hpp"
@@ -290,3 +291,4 @@ Pipeliner::AudioNameScheme::bootstrapInterest(const ndn::Name threadPrefix,
     
     return interest;
 }
+#endif

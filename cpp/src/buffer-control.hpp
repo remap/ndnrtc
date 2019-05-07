@@ -15,6 +15,7 @@
 #include "ndnrtc-object.hpp"
 #include "frame-buffer.hpp"
 
+#if 0
 namespace ndn {
     class Interest;
 }
@@ -76,5 +77,5 @@ class IBufferControlObserver
     virtual void sampleArrived(const PacketNumber &playbackNo) = 0;
 };
 }
-
+#endif
 #endif

@@ -10,7 +10,7 @@
 
 #ifndef __ndnrtc__pipeliner__
 #define __ndnrtc__pipeliner__
-
+#if 0
 #include <boost/thread/mutex.hpp>
 
 #include "ndnrtc-object.hpp"
@@ -209,5 +209,5 @@ namespace ndnrtc {
         void onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>>&);
     };
 }
-
+#endif
 #endif /* defined(__ndnrtc__pipeliner__) */

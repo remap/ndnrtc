@@ -7,7 +7,7 @@
 
 #ifndef __latency_control_h__
 #define __latency_control_h__
-
+#if 0
 #include <boost/thread/mutex.hpp>
 
 #include "drd-estimator.hpp"
@@ -136,5 +136,5 @@ class ILatencyControlObserver
     virtual bool needPipelineAdjustment(const PipelineAdjust &) = 0;
 };
 }
-
+#endif
 #endif

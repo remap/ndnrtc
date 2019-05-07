@@ -7,7 +7,7 @@
 
 #ifndef __interest_control_h__
 #define __interest_control_h__
-
+#if 0
 #include <deque>
 #include <boost/atomic.hpp>
 
@@ -202,5 +202,5 @@ class InterestControl : public NdnRtcComponent,
     void changeLimitTo(unsigned int newLimit);
 };
 }
-
+#endif
 #endif

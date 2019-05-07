@@ -6,6 +6,7 @@
 //
 
 #include "buffer-control.hpp"
+#if 0
 #include "name-components.hpp"
 #include "drd-estimator.hpp"
 #include "frame-data.hpp"
@@ -75,3 +76,4 @@ void BufferControl::segmentArrived(const boost::shared_ptr<WireSegment> &segment
     else
         LogTraceC << "data is not in the buffer: " << segment->getData()->getName() << std::endl;
 }
+#endif

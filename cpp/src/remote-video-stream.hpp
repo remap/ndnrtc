@@ -7,7 +7,7 @@
 
 #ifndef __remote_video_stream_h__
 #define __remote_video_stream_h__
-
+#if 0
 #include "remote-stream-impl.hpp"
 #include "sample-validator.hpp"
 #include "webrtc.hpp"
@@ -69,4 +69,5 @@ class RemoteVideoStreamImpl : public RemoteStreamImpl
 };
 }
 
+#endif
 #endif

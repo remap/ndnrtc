@@ -7,7 +7,7 @@
 
 #ifndef __remote_stream_impl_h__
 #define __remote_stream_impl_h__
-
+#if 0
 #include <ndn-cpp/name.hpp>
 
 #include "remote-stream.hpp"
@@ -124,5 +124,5 @@ class RemoteStreamImpl : public NdnRtcComponent
     void notifyObservers(RemoteStream::Event ev);
 };
 }
-
+#endif
 #endif
