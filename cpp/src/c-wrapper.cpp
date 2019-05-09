@@ -1,4 +1,4 @@
-// 
+//
 // c-wrapper.cpp
 //
 // Copyright (c) 2017 Regents of the University of California
@@ -75,7 +75,7 @@ public:
 	std::shared_ptr<ndn::KeyChain> defaultKeyChain() { return defaultKeyChain_; }
 	std::shared_ptr<ndn::KeyChain> instanceKeyChain() { return instanceKeyChain_; }
     std::string instancePrefix() const { return instanceIdentity_; }
-    
+
     const std::shared_ptr<ndn::IdentityCertificate> instanceCertificate() const
         { return instanceCert_; }
 
@@ -83,7 +83,7 @@ public:
     {
     	return signingCert_;
     }
-    
+
 private:
     std::shared_ptr<ndn::Face> face_;
 	std::string signingIdentity_, instanceName_,
@@ -104,6 +104,10 @@ private:
 	void createInstanceIdentity();
     void checkExists(const std::string&);
 };
+
+// class ExternalRendererProxy : public IExternalRenderer {
+//
+// };
 }
 
 //******************************************************************************
@@ -113,7 +117,7 @@ const char* ndnrtc_getVersion()
     return version.c_str();
 }
 
-bool ndnrtc_init(const char* hostname, const char* storagePath, 
+bool ndnrtc_init(const char* hostname, const char* storagePath,
 	const char* signingIdentity, const char * instanceId, LibLog libLog)
 {
 	Logger::initAsyncLogging();
@@ -199,10 +203,38 @@ cFrameInfo ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream
     return frameInfo;
 }
 
-void ndnrtc_destroyLocalStream(ndnrtc::IStream* localStreamObject)
+void ndnrtc_destroyLocalStream(ndnrtc::IStream* streamObject)
 {
-	if (localStreamObject)
-		delete localStreamObject;
+	if (streamObject)
+		delete streamObject;
+}
+
+ndnrtc::IStream* ndnrtc_createRemoteStream(const char *basePrefix,
+										   const char *streamName,
+										   LibLog loggerSink)
+{
+	std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
+		std::make_shared<CallbackSink>(loggerSink));
+	callbackLogger->log(ndnlog::NdnLoggerLevelInfo)
+		<< "Setting up Remote Video Stream with base prefix "
+		<< basePrefix
+		<< " name " << streamName
+		<< std::endl;
+
+	RemoteVideoStream *stream = new RemoteVideoStream(LibFaceProcessor->getIo(),
+		LibFaceProcessor->getFace(), LibKeyChainManager->instanceKeyChain(),
+		std::string(basePrefix), std::string(streamName));
+	stream->setLogger(callbackLogger);
+
+	return stream;
+}
+
+void ndnrtc_startRemoteStreamFetching(ndnrtc::RemoteVideoStream *stream,
+									  const char *threadName,
+									  BufferAlloc bufferAllocFunc,
+									  FrameFetched frameFetchedFunc)
+{
+	stream->start(threadName, );
 }
 
 const char* ndnrtc_LocalStream_getPrefix(IStream *stream)
@@ -255,7 +287,7 @@ double ndnrtc_getStatistic(ndnrtc::IStream *stream, const char* statName)
 
 static std::map<std::string, std::shared_ptr<FrameFetcher>> FrameFetchers;
 void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
-                               const char* frameName, 
+                               const char* frameName,
                                BufferAlloc bufferAllocFunc,
                                FrameFetched frameFetchedFunc)
 {
@@ -269,12 +301,12 @@ void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
 
     ff->setLogger(((LocalVideoStream*)stream)->getLogger());
     ff->fetch(Name(frameName),
-              [fkey, bufferAllocFunc](const std::shared_ptr<IFrameFetcher>& fetcher, 
+              [fkey, bufferAllocFunc](const std::shared_ptr<IFrameFetcher>& fetcher,
                                       int width, int height)->uint8_t*
               {
                   return bufferAllocFunc(fkey.c_str(), width, height);
               },
-              [fkey, frameFetchedFunc](const std::shared_ptr<IFrameFetcher>& fetcher, 
+              [fkey, frameFetchedFunc](const std::shared_ptr<IFrameFetcher>& fetcher,
                  const FrameInfo fi, int nFetchedFrames,
                  int width, int height, const uint8_t* buffer){
                     cFrameInfo frameInfo({fi.timestamp_, fi.playbackNo_, (char*)fi.ndnName_.c_str()});
@@ -336,7 +368,7 @@ void initKeyChain(std::string storagePath, std::string signingIdentityStr)
 	std::string privateKeysPath = storagePath + "/" + std::string(PrivateDb);
 
 	std::shared_ptr<IdentityStorage> identityStorage = std::make_shared<BasicIdentityStorage>(databaseFilePath);
-	std::shared_ptr<IdentityManager> identityManager = std::make_shared<IdentityManager>(identityStorage, 
+	std::shared_ptr<IdentityManager> identityManager = std::make_shared<IdentityManager>(identityStorage,
 		std::make_shared<FilePrivateKeyStorage>(privateKeysPath));
 	std::shared_ptr<PolicyManager> policyManager = std::make_shared<SelfVerifyPolicyManager>(identityStorage.get());
 
@@ -347,13 +379,13 @@ void initKeyChain(std::string storagePath, std::string signingIdentityStr)
 	identityManager->setDefaultIdentity(signingIdentity);
 }
 
-// initializes face and face processing thread 
-void initFace(std::string hostname, std::shared_ptr<Logger> logger, 
+// initializes face and face processing thread
+void initFace(std::string hostname, std::shared_ptr<Logger> logger,
 	std::string signingIdentityStr, std::string instanceIdStr)
 {
 	LibFaceProcessor = std::make_shared<FaceProcessor>(hostname);
 	LibKeyChainManager = std::make_shared<KeyChainManager>(LibFaceProcessor->getFace(),
-		LibKeyChain, 
+		LibKeyChain,
 		std::string(signingIdentityStr),
 		std::string(instanceIdStr),
 		std::string("policy-file.conf"),
@@ -361,7 +393,7 @@ void initFace(std::string hostname, std::shared_ptr<Logger> logger,
 		logger);
 
 	LibFaceProcessor->performSynchronized([logger](std::shared_ptr<Face> face){
-		logger->log(ndnlog::NdnLoggerLevelInfo) << "Setting command signing info with certificate: " 
+		logger->log(ndnlog::NdnLoggerLevelInfo) << "Setting command signing info with certificate: "
 			<< LibKeyChainManager->defaultKeyChain()->getDefaultCertificateName() << std::endl;
 
 		face->setCommandSigningInfo(*(LibKeyChainManager->defaultKeyChain()),
@@ -385,7 +417,7 @@ void initFace(std::string hostname, std::shared_ptr<Logger> logger,
 	LibContentCache->add(*(LibKeyChainManager->instanceCertificate()));
 }
 
-void registerPrefix(Name prefix, std::shared_ptr<Logger> logger) 
+void registerPrefix(Name prefix, std::shared_ptr<Logger> logger)
 {
 	LibContentCache->registerPrefix(prefix,
 		[logger](const std::shared_ptr<const Name> &p){
@@ -397,7 +429,7 @@ void registerPrefix(Name prefix, std::shared_ptr<Logger> logger)
 		[logger](const std::shared_ptr<const Name>& p,
 			const std::shared_ptr<const Interest> &i,
 			Face& f, uint64_t, const std::shared_ptr<const InterestFilter>&){
-			logger->log(ndnlog::NdnLoggerLevelWarning) << "Unexpected interest received " << i->getName() 
+			logger->log(ndnlog::NdnLoggerLevelWarning) << "Unexpected interest received " << i->getName()
 				<< std::endl;
 
 			LibContentCache->storePendingInterest(i, f);
@@ -495,9 +527,9 @@ void KeyChainManager::createSigningIdentity()
     // create self-signed certificate
 	Name cert = defaultKeyChain_->createIdentityAndCertificate(Name(signingIdentity_));
 
-	LogInfoC << "Generated identity " << signingIdentity_ << " (certificate name " 
+	LogInfoC << "Generated identity " << signingIdentity_ << " (certificate name "
 		<< cert << ")" << std::endl;
-	LogInfoC << "Check policy config file for correct trust anchor (run `ndnsec-dump-certificate -i " 
+	LogInfoC << "Check policy config file for correct trust anchor (run `ndnsec-dump-certificate -i "
 		<< signingIdentity_  << " > signing.cert` if needed)" << std::endl;
 }
 
@@ -518,7 +550,7 @@ void KeyChainManager::createInstanceIdentity()
 
     instanceIdentity.append(instanceName_);
     instanceIdentity_ = instanceIdentity.toUri();
-    
+
     LogInfoC << "Instance identity " << instanceIdentity << std::endl;
 
 	Name instanceKeyName = instanceKeyChain_->generateRSAKeyPairAsDefault(instanceIdentity, true);
@@ -536,7 +568,7 @@ void KeyChainManager::createInstanceIdentity()
             subjectDescriptions,
             &instanceIdentity);
     assert(instanceCert_.get());
-    
+
 	defaultKeyChain_->sign(*instanceCert_, signingCert);
 	instanceKeyChain_->installIdentityCertificate(*instanceCert_);
 	instanceKeyChain_->setDefaultCertificateForKey(*instanceCert_);
@@ -551,7 +583,7 @@ void KeyChainManager::checkExists(const std::string& file)
     std::ifstream stream(file.c_str());
     bool result = (bool)stream;
     stream.close();
-    
+
     if (!result)
     {
         std::stringstream ss;
@@ -559,4 +591,3 @@ void KeyChainManager::checkExists(const std::string& file)
         throw std::runtime_error(ss.str());
     }
 }
-
