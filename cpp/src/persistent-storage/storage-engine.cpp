@@ -14,7 +14,7 @@
 #if HAVE_PERSISTENT_STORAGE
 
 #ifndef __ANDROID__ // use RocksDB on linux and macOS
-    
+
     #include <rocksdb/db.h>
     namespace db_namespace = rocksdb;
 
@@ -41,7 +41,7 @@ class StorageEngineImpl {
         }
     #else
         StorageEngineImpl(std::string dbPath) {
-            throw std::runtime_error("The library is not copmiled with persistent storage support.");
+            throw std::runtime_error("The library is not compiled with persistent storage support.");
         }
     #endif
 
@@ -76,7 +76,7 @@ class StorageEngineImpl {
             if (!db_)
                 throw std::runtime_error("DB is not open");
 
-            db_namespace::Status s = 
+            db_namespace::Status s =
                 db_->Put(db_namespace::WriteOptions(),
                          data->getName().toUri(),
                          db_namespace::Slice((const char*)data->wireEncode().buf(),
@@ -101,7 +101,7 @@ class StorageEngineImpl {
             {
                 std::shared_ptr<Data> data = std::make_shared<Data>();
                 data->wireDecode((const uint8_t*)dataString.data(), dataString.size());
-                
+
                 return data;
             }
 #endif
@@ -134,9 +134,8 @@ void StorageEngine::put(const std::shared_ptr<const Data>& data)
     pimpl_->put(data);
 }
 
-std::shared_ptr<Data> 
+std::shared_ptr<Data>
 StorageEngine::get(const Name& dataName)
 {
     return pimpl_->get(dataName);
 }
-

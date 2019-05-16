@@ -11,6 +11,7 @@
 #define __c_wrapper_h__
 
 #include "local-stream.hpp"
+#include "remote-stream.hpp"
 
 extern "C" {
 

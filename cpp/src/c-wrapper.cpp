@@ -31,7 +31,6 @@
 #include <memory>
 
 #include "face-processor.hpp"
-#include "local-stream.hpp"
 #include "simple-log.hpp"
 #include "name-components.hpp"
 #include "frame-fetcher.hpp"
@@ -43,6 +42,7 @@ using namespace ndnlog::new_api;
 
 namespace cwrapper_tools {
 class KeyChainManager;
+class ExternalRendererProxy;
 }
 using namespace cwrapper_tools;
 
@@ -53,6 +53,8 @@ static std::shared_ptr<FaceProcessor> LibFaceProcessor;
 static std::shared_ptr<MemoryContentCache> LibContentCache; // for registering a prefix and storing certs
 static std::shared_ptr<KeyChain> LibKeyChain;
 static std::shared_ptr<KeyChainManager> LibKeyChainManager;
+
+static std::map<std::string, std::shared_ptr<ExternalRendererProxy>> Renderers;
 
 void initKeyChain(std::string storagePath, std::string signingIdentity);
 void initFace(std::string hostname, std::shared_ptr<Logger> logger,
@@ -105,9 +107,30 @@ private:
     void checkExists(const std::string&);
 };
 
-// class ExternalRendererProxy : public IExternalRenderer {
-//
-// };
+class ExternalRendererProxy : public IExternalRenderer {
+public:
+
+	ExternalRendererProxy(BufferAlloc bufferAllocFunc, FrameFetched frameFetchedFunc):
+		bufferAllocFunc_(bufferAllocFunc), frameFetchedFunc_(frameFetchedFunc_){}
+
+private:
+
+	uint8_t* getFrameBuffer(int width, int height)
+	{
+		return bufferAllocFunc_("", width, height);
+	}
+
+	void renderBGRAFrame(const FrameInfo& fi, int width, int height,
+								 const uint8_t* buffer)
+	{
+		cFrameInfo frameInfo({fi.timestamp_, fi.playbackNo_, (char*)fi.ndnName_.c_str()});
+		frameFetchedFunc_(frameInfo, width, height, buffer);
+	}
+
+	BufferAlloc bufferAllocFunc_;
+	FrameFetched frameFetchedFunc_;
+};
+
 }
 
 //******************************************************************************
@@ -148,6 +171,7 @@ void ndnrtc_deinit()
 	LibKeyChainManager.reset();
 	LibKeyChain.reset();
 	Logger::releaseAsyncLogging();
+	Renderers.clear();
 }
 
 ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog loggerSink)
@@ -206,14 +230,18 @@ cFrameInfo ndnrtc_LocalVideoStream_getLastPublishedInfo(ndnrtc::LocalVideoStream
 void ndnrtc_destroyLocalStream(ndnrtc::IStream* streamObject)
 {
 	if (streamObject)
+	{
+		if (Renderers.find(streamObject->getPrefix()) != Renderers.end())
+			Renderers.erase(streamObject->getPrefix());
 		delete streamObject;
+	}
 }
 
 ndnrtc::IStream* ndnrtc_createRemoteStream(const char *basePrefix,
 										   const char *streamName,
 										   LibLog loggerSink)
 {
-	std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
+	std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
 		std::make_shared<CallbackSink>(loggerSink));
 	callbackLogger->log(ndnlog::NdnLoggerLevelInfo)
 		<< "Setting up Remote Video Stream with base prefix "
@@ -234,7 +262,8 @@ void ndnrtc_startRemoteStreamFetching(ndnrtc::RemoteVideoStream *stream,
 									  BufferAlloc bufferAllocFunc,
 									  FrameFetched frameFetchedFunc)
 {
-	stream->start(threadName, );
+	Renderers[stream->getPrefix()] = std::make_shared<ExternalRendererProxy>(bufferAllocFunc, frameFetchedFunc);
+	stream->start(threadName, Renderers[stream->getPrefix()].get());
 }
 
 const char* ndnrtc_LocalStream_getPrefix(IStream *stream)

@@ -1,4 +1,4 @@
-// 
+//
 // remote-stream.cpp
 //
 //  Created by Peter Gusev on 17 June 2016.
@@ -16,7 +16,7 @@
 using namespace ndnrtc;
 
 //******************************************************************************
-RemoteStream::RemoteStream(boost::asio::io_service& faceIo, 
+RemoteStream::RemoteStream(boost::asio::io_service& faceIo,
 			const std::shared_ptr<ndn::Face>& face,
 			const std::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& basePrefix,
@@ -35,7 +35,7 @@ RemoteStream::isMetaFetched() const
 	return pimpl_->isMetaFetched();
 }
 
-std::vector<std::string> 
+std::vector<std::string>
 RemoteStream::getThreads() const
 {
 	return pimpl_->getThreads();
@@ -53,7 +53,7 @@ RemoteStream::getThread() const
     return pimpl_->getThread();
 }
 
-void 
+void
 RemoteStream::stop()
 {
 	pimpl_->stop();
@@ -107,14 +107,14 @@ RemoteStream::unregisterObserver(IRemoteStreamObserver* o)
     pimpl_->detach(o);
 }
 
-std::shared_ptr<StorageEngine> 
-RemoteStream::getStorage() const 
+std::shared_ptr<StorageEngine>
+RemoteStream::getStorage() const
 {
     throw std::runtime_error("Not implemented");
 }
 
 //******************************************************************************
-RemoteAudioStream::RemoteAudioStream(boost::asio::io_service& faceIo, 
+RemoteAudioStream::RemoteAudioStream(boost::asio::io_service& faceIo,
 			const std::shared_ptr<ndn::Face>& face,
 			const std::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& basePrefix,
@@ -123,7 +123,7 @@ RemoteAudioStream::RemoteAudioStream(boost::asio::io_service& faceIo,
 			const int jitterSizeMs):
 RemoteStream(faceIo, face, keyChain, basePrefix, streamName)
 {
-	pimpl_ = std::make_shared<RemoteAudioStreamImpl>(faceIo, face, keyChain, 
+	pimpl_ = std::make_shared<RemoteAudioStreamImpl>(faceIo, face, keyChain,
                                                        NameComponents::audioStreamPrefix(basePrefix).append(streamName).toUri());
 	pimpl_->setInterestLifetime(interestLifetime);
 	pimpl_->setTargetBufferSize(jitterSizeMs);
@@ -137,17 +137,17 @@ RemoteAudioStream::start(const std::string& threadName)
 }
 
 //******************************************************************************
-RemoteVideoStream::RemoteVideoStream(boost::asio::io_service& faceIo, 
+RemoteVideoStream::RemoteVideoStream(boost::asio::io_service& faceIo,
 			const std::shared_ptr<ndn::Face>& face,
 			const std::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& basePrefix,
 			const std::string& streamName,
 			const int interestLifetime,
-			const int jitterSizeMs):
-RemoteStream(faceIo, face, keyChain, basePrefix, streamName)
+			const int jitterSizeMs)
+: RemoteStream(faceIo, face, keyChain, basePrefix, streamName)
 {
-	pimpl_ = std::make_shared<RemoteVideoStreamImpl>(faceIo, face, keyChain,
-                                                      NameComponents::videoStreamPrefix(basePrefix).append(streamName).toUri());
+	streamPrefix_ = NameComponents::videoStreamPrefix(basePrefix).append(streamName).toUri();
+	pimpl_ = std::make_shared<RemoteVideoStreamImpl>(faceIo, face, keyChain, streamPrefix_);
 	pimpl_->setInterestLifetime(interestLifetime);
 	pimpl_->setTargetBufferSize(jitterSizeMs);
 	pimpl_->fetchMeta();
