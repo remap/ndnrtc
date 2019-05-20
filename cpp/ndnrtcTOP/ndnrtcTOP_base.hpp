@@ -55,24 +55,27 @@ public:
     ndnrtcTOPbase(const OP_NodeInfo *info);
     virtual ~ndnrtcTOPbase();
     
-    virtual void        execute(const TOP_OutputFormatSpecs*,
-                                OP_Inputs*,
-                                TOP_Context* context) override;
+    virtual void        execute(TOP_OutputFormatSpecs*,
+                                const OP_Inputs*,
+                                TOP_Context* context,
+                                void* reserved1) override;
     
-    virtual int32_t     getNumInfoCHOPChans() override { return 0; }
+    virtual int32_t     getNumInfoCHOPChans(void* reserved1) override { return 0; }
     virtual void        getInfoCHOPChan(int32_t index,
-                                        OP_InfoCHOPChan *chan) override {}
+                                        OP_InfoCHOPChan *chan,
+                                        void* reserved1) override {}
     
-    virtual bool        getInfoDATSize(OP_InfoDATSize *infoSize) override;
+    virtual bool        getInfoDATSize(OP_InfoDATSize *infoSize, void* reserved1) override;
     virtual void        getInfoDATEntries(int32_t index,
                                           int32_t nEntries,
-                                          OP_InfoDATEntries *entries) override;
+                                          OP_InfoDATEntries *entries,
+                                          void* reserved1) override;
     
-    virtual void        setupParameters(OP_ParameterManager *manager) override;
-    virtual void        pulsePressed(const char *name) override;
+    virtual void        setupParameters(OP_ParameterManager *manager, void* reserved1) override;
+    virtual void        pulsePressed(const char *name, void* reserved1) override;
     
-    const char*         getWarningString() override;
-    const char*         getErrorString() override;
+    void     getWarningString(OP_String *warning, void* reserved1) override;
+    void     getErrorString(OP_String *warning, void* reserved1) override;
     
     const OP_NodeInfo*  getNodeInfo() const { return nodeInfo_; }
     
@@ -88,8 +91,8 @@ protected:
     // FIFO Queue of callbbacks that will be called from within execute() method.
     // Queue will be executed until empty.
     // Callbacks should follow certain signature
-    typedef std::function<void(const TOP_OutputFormatSpecs*,
-                               OP_Inputs*,
+    typedef std::function<void(TOP_OutputFormatSpecs*,
+                               const OP_Inputs*,
                                TOP_Context *)> ExecuteCallback;
     std::queue<ExecuteCallback> executeQueue_;
     
@@ -103,22 +106,22 @@ protected:
     
     virtual void            init();
     virtual void            initStream() {}
-    void                    initKeyChainManager(const TOP_OutputFormatSpecs*,
-                                                OP_Inputs*,
+    void                    initKeyChainManager(TOP_OutputFormatSpecs*,
+                                                const OP_Inputs*,
                                                 TOP_Context *);
-    void                    initFace(const TOP_OutputFormatSpecs*,
-                                     OP_Inputs*,
+    void                    initFace(TOP_OutputFormatSpecs*,
+                                     const OP_Inputs*,
                                      TOP_Context *);
-    void                    registerPrefix(const TOP_OutputFormatSpecs*,
-                                           OP_Inputs*,
+    void                    registerPrefix(TOP_OutputFormatSpecs*,
+                                           const OP_Inputs*,
                                            TOP_Context *);
     
     // returns inputs names that have new values
-    virtual std::set<std::string> checkInputs(const TOP_OutputFormatSpecs*, OP_Inputs*, TOP_Context *);
+    virtual std::set<std::string> checkInputs(TOP_OutputFormatSpecs*, const OP_Inputs*, TOP_Context *);
 
     std::string             extractOpName(std::string oPpath) const;
     void                    readStreamStats();
-    std::string             readBasePrefix(OP_Inputs* inputs) const;
+    std::string             readBasePrefix(const OP_Inputs* inputs) const;
     void                    logSink(const char *msg);
     
     /**

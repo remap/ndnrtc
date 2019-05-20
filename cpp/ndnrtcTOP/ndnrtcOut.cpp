@@ -60,18 +60,33 @@ default:                                                                        
 extern "C"
 {
 
-DLLEXPORT
-TOP_PluginInfo
-GetTOPPluginInfo(void)
+void
+FillTOPPluginInfo(TOP_PluginInfo *info)
 {
-	TOP_PluginInfo info;
-	// This must always be set to this constant
-	info.apiVersion = TOPCPlusPlusAPIVersion;
-
-	// Change this to change the executeMode behavior of this plugin.
-	info.executeMode = TOP_ExecuteMode::CPUMemWriteOnly;
-
-	return info;
+    // This must always be set to this constant
+    info->apiVersion = TOPCPlusPlusAPIVersion;
+    
+    // Change this to change the executeMode behavior of this plugin.
+    info->executeMode = TOP_ExecuteMode::CPUMemWriteOnly;
+    
+    // The opType is the unique name for this TOP. It must start with a
+    // capital A-Z character, and all the following characters must lower case
+    // or numbers (a-z, 0-9)
+    info->customOPInfo.opType->setString("Ndnrtcout");
+    
+    // The opLabel is the text that will show up in the OP Create Dialog
+    info->customOPInfo.opLabel->setString("NDN-RTC Out");
+    
+    // Will be turned into a 3 letter icon on the nodes
+    info->customOPInfo.opIcon->setString("NRT");
+    
+    // Information about the author of this OP
+    info->customOPInfo.authorName->setString("Peter Gusev");
+    info->customOPInfo.authorEmail->setString("peter@remap.ucla.edu");
+    
+    // This TOP works with 0 or 1 inputs connected
+    info->customOPInfo.minInputs = 0;
+    info->customOPInfo.maxInputs = 1;
 }
 
 DLLEXPORT
@@ -141,7 +156,7 @@ ndnrtcOut::~ndnrtcOut()
 }
 
 void
-ndnrtcOut::getGeneralInfo(TOP_GeneralInfo* ginfo)
+ndnrtcOut::getGeneralInfo(TOP_GeneralInfo* ginfo, const OP_Inputs*, void *reserved1)
 {
 	// Uncomment this line if you want the TOP to cook every frame even
 	// if none of it's inputs/parameters are changing.
@@ -150,7 +165,7 @@ ndnrtcOut::getGeneralInfo(TOP_GeneralInfo* ginfo)
 }
 
 bool
-ndnrtcOut::getOutputFormat(TOP_OutputFormat* format)
+ndnrtcOut::getOutputFormat(TOP_OutputFormat* format, const OP_Inputs*, void *reserved1)
 {
 	// In this function we could assign variable values to 'format' to specify
 	// the pixel format/resolution etc that we want to output to.
@@ -161,11 +176,12 @@ ndnrtcOut::getOutputFormat(TOP_OutputFormat* format)
 }
 
 void
-ndnrtcOut::execute(const TOP_OutputFormatSpecs* outputFormat,
-						OP_Inputs* inputs,
-						TOP_Context *context)
+ndnrtcOut::execute(TOP_OutputFormatSpecs* outputFormat,
+                   const OP_Inputs* inputs,
+                   TOP_Context *context,
+                   void *reserved1)
 {
-    ndnrtcTOPbase::execute(outputFormat, inputs, context);
+    ndnrtcTOPbase::execute(outputFormat, inputs, context, reserved1);
     
     int nInputs = inputs->getNumInputs();
     
@@ -190,13 +206,13 @@ ndnrtcOut::execute(const TOP_OutputFormatSpecs* outputFormat,
 }
 
 int32_t
-ndnrtcOut::getNumInfoCHOPChans()
+ndnrtcOut::getNumInfoCHOPChans(void *reserved1)
 {
 	return (int32_t)ChanNames.size() + (int32_t)statStorage_->getIndicators().size();
 }
 
 void
-ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
+ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan, void *reserved1)
 {
     InfoChopIndex idx = (InfoChopIndex)index;
     
@@ -205,7 +221,7 @@ ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
         switch (idx) {
             case InfoChopIndex::PublishedFrame:
             {
-                chan->name = ChanNames[idx].c_str();
+                chan->name->setString(ChanNames[idx].c_str());
                 chan->value = (float)publbishedFrame_;
             }
                 break;
@@ -223,7 +239,7 @@ ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
         {
             if (idx == statIdx)
             {
-                chan->name = StatisticsStorage::IndicatorKeywords.at(pair.first).c_str();
+            chan->name->setString(StatisticsStorage::IndicatorKeywords.at(pair.first).c_str());
                 chan->value = (float)pair.second;
                 break;
             }
@@ -233,23 +249,24 @@ ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan)
 }
 
 bool
-ndnrtcOut::getInfoDATSize(OP_InfoDATSize* infoSize)
+ndnrtcOut::getInfoDATSize(OP_InfoDATSize* infoSize, void *reserved1)
 {
-    return ndnrtcTOPbase::getInfoDATSize(infoSize);
+    return ndnrtcTOPbase::getInfoDATSize(infoSize, reserved1);
 }
 
 void
 ndnrtcOut::getInfoDATEntries(int32_t index,
-                                 int32_t nEntries,
-                                 OP_InfoDATEntries* entries)
+                             int32_t nEntries,
+                             OP_InfoDATEntries* entries,
+                             void *reserved1)
 {
-    ndnrtcTOPbase::getInfoDATEntries(index, nEntries, entries);
+    ndnrtcTOPbase::getInfoDATEntries(index, nEntries, entries, reserved1);
 }
 
 void
-ndnrtcOut::setupParameters(OP_ParameterManager* manager)
+ndnrtcOut::setupParameters(OP_ParameterManager* manager, void *reserved1)
 {
-    ndnrtcTOPbase::setupParameters(manager);
+    ndnrtcTOPbase::setupParameters(manager, reserved1);
     
     {
         OP_NumericParameter targetBitrate(PAR_TARGET_BITRATE);
@@ -330,9 +347,9 @@ ndnrtcOut::setupParameters(OP_ParameterManager* manager)
 }
 
 void
-ndnrtcOut::pulsePressed(const char* name)
+ndnrtcOut::pulsePressed(const char* name, void *reserved1)
 {
-    ndnrtcTOPbase::pulsePressed(name);
+    ndnrtcTOPbase::pulsePressed(name, reserved1);
     
 	if (!strcmp(name, "Init"))
 	{
@@ -348,7 +365,7 @@ ndnrtcOut::init()
     ndnrtcTOPbase::init();
     
     executeQueue_.push(bind(&ndnrtcOut::registerPrefix, this, _1, _2, _3));
-    executeQueue_.push([this](const TOP_OutputFormatSpecs* outputFormat, OP_Inputs* inputs, TOP_Context *context)
+    executeQueue_.push([this](TOP_OutputFormatSpecs* outputFormat, const OP_Inputs* inputs, TOP_Context *context)
     {
         if (keyChainManager_)
             keyChainManager_->publishCertificates();
@@ -362,8 +379,8 @@ ndnrtcOut::initStream()
 }
 
 std::set<std::string>
-ndnrtcOut::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
-                       OP_Inputs* inputs,
+ndnrtcOut::checkInputs(TOP_OutputFormatSpecs* outputFormat,
+                       const OP_Inputs* inputs,
                        TOP_Context *context)
 {
     set<string> updatedParams = ndnrtcTOPbase::checkInputs(outputFormat, inputs, context);
@@ -433,8 +450,8 @@ ndnrtcOut::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
 }
 
 void
-ndnrtcOut::createLocalStream(const TOP_OutputFormatSpecs *outputFormat,
-                             OP_Inputs *inputs,
+ndnrtcOut::createLocalStream(TOP_OutputFormatSpecs *outputFormat,
+                             const OP_Inputs *inputs,
                              TOP_Context *context)
 {
     if (!(faceProcessor_ && keyChainManager_))
@@ -457,7 +474,7 @@ ndnrtcOut::createLocalStream(const TOP_OutputFormatSpecs *outputFormat,
 }
 
 MediaStreamParams
-ndnrtcOut::readStreamParams(OP_Inputs* inputs) const
+ndnrtcOut::readStreamParams(const OP_Inputs* inputs) const
 {
     MediaStreamParams p;
     p.type_ = MediaStreamParams::MediaStreamTypeVideo;

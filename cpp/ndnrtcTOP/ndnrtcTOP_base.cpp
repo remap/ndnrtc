@@ -92,26 +92,25 @@ ndnrtcTOPbase::~ndnrtcTOPbase()
         delete statStorage_;
 }
 
-const char*
-ndnrtcTOPbase::getWarningString()
+void
+ndnrtcTOPbase::getWarningString(OP_String *warning, void* reserved1)
 {
     if (warningString_.size())
-        return warningString_.c_str();
-    return nullptr;
-}
-
-const char *
-ndnrtcTOPbase::getErrorString()
-{
-    if (errorString_.size())
-        return errorString_.c_str();
-    return nullptr;
+        warning->setString(warningString_.c_str());
 }
 
 void
-ndnrtcTOPbase::execute(const TOP_OutputFormatSpecs *outputFormat,
-                       OP_Inputs *inputs,
-                       TOP_Context *context)
+ndnrtcTOPbase::getErrorString(OP_String *error, void* reserved1)
+{
+    if (errorString_.size())
+        error->setString(errorString_.c_str());
+}
+
+void
+ndnrtcTOPbase::execute(TOP_OutputFormatSpecs *outputFormat,
+                       const OP_Inputs *inputs,
+                       TOP_Context *context,
+                       void* reserved1)
 {
     bool reinit = false;
     std::string opName = extractOpName(nodeInfo_->opPath);
@@ -148,7 +147,7 @@ ndnrtcTOPbase::execute(const TOP_OutputFormatSpecs *outputFormat,
 }
 
 bool
-ndnrtcTOPbase::getInfoDATSize(OP_InfoDATSize* infoSize)
+ndnrtcTOPbase::getInfoDATSize(OP_InfoDATSize* infoSize, void *reserved1)
 {
     infoSize->rows = (int)RowNames.size();
     infoSize->cols = 2;
@@ -158,8 +157,9 @@ ndnrtcTOPbase::getInfoDATSize(OP_InfoDATSize* infoSize)
 
 void
 ndnrtcTOPbase::getInfoDATEntries(int32_t index,
-                             int32_t nEntries,
-                             OP_InfoDATEntries* entries)
+                                 int32_t nEntries,
+                                 OP_InfoDATEntries* entries,
+                                 void *reserved1)
 {
     // It's safe to use static buffers here because Touch will make it's own
     // copies of the strings immediately after this call returns
@@ -198,13 +198,13 @@ ndnrtcTOPbase::getInfoDATEntries(int32_t index,
                 break;
         }
         
-        entries->values[0] = tempBuffer1;
-        entries->values[1] = tempBuffer2;
+        entries->values[0]->setString(tempBuffer1);
+        entries->values[1]->setString(tempBuffer2);
     }
 }
 
 void
-ndnrtcTOPbase::setupParameters(OP_ParameterManager* manager)
+ndnrtcTOPbase::setupParameters(OP_ParameterManager* manager, void *reserved1)
 {
     {
         OP_StringParameter nfdHost(PAR_NFD_HOST);
@@ -238,7 +238,7 @@ ndnrtcTOPbase::setupParameters(OP_ParameterManager* manager)
 }
 
 void
-ndnrtcTOPbase::pulsePressed(const char* name)
+ndnrtcTOPbase::pulsePressed(const char* name, void *reserved1)
 {
     if (!strcmp(name, "Init"))
     {
@@ -248,7 +248,7 @@ ndnrtcTOPbase::pulsePressed(const char* name)
 }
 
 set<string>
-ndnrtcTOPbase::checkInputs(const TOP_OutputFormatSpecs *, OP_Inputs *inputs, TOP_Context *)
+ndnrtcTOPbase::checkInputs(TOP_OutputFormatSpecs *, const OP_Inputs *inputs, TOP_Context *)
 {
     assert(params_);
     set<string> updatedParams;
@@ -296,8 +296,8 @@ ndnrtcTOPbase::init()
 }
 
 void
-ndnrtcTOPbase::initFace(const TOP_OutputFormatSpecs* outputFormat,
-                        OP_Inputs* inputs,
+ndnrtcTOPbase::initFace(TOP_OutputFormatSpecs* outputFormat,
+                        const OP_Inputs* inputs,
                         TOP_Context *context)
 {
     if (FaceProcessor::checkNfdConnection())
@@ -323,8 +323,8 @@ ndnrtcTOPbase::initFace(const TOP_OutputFormatSpecs* outputFormat,
 }
 
 void
-ndnrtcTOPbase::initKeyChainManager(const TOP_OutputFormatSpecs* outputFormat,
-                                   OP_Inputs* inputs,
+ndnrtcTOPbase::initKeyChainManager(TOP_OutputFormatSpecs* outputFormat,
+                                   const OP_Inputs* inputs,
                                    TOP_Context *context)
 {
     if (!faceProcessor_)
@@ -365,8 +365,8 @@ ndnrtcTOPbase::initKeyChainManager(const TOP_OutputFormatSpecs* outputFormat,
 }
 
 void
-ndnrtcTOPbase::registerPrefix(const TOP_OutputFormatSpecs* outputFormat,
-                              OP_Inputs* inputs,
+ndnrtcTOPbase::registerPrefix(TOP_OutputFormatSpecs* outputFormat,
+                              const OP_Inputs* inputs,
                               TOP_Context *context)
 {
     if (!(faceProcessor_ && keyChainManager_))
@@ -410,7 +410,7 @@ ndnrtcTOPbase::readStreamStats()
         *statStorage_ = stream_->getStatistics();
 }
 
-string ndnrtcTOPbase::readBasePrefix(OP_Inputs* inputs) const
+string ndnrtcTOPbase::readBasePrefix(const OP_Inputs* inputs) const
 {
     stringstream basePrefix;
     basePrefix << ndnrtcTOPbase::SigningIdentityName << "/" << opName_;
