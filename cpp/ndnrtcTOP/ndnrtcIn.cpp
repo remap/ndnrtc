@@ -48,18 +48,33 @@ default:                                                                        
 extern "C"
 {
 
-DLLEXPORT
-TOP_PluginInfo
-GetTOPPluginInfo(void)
+void
+FillTOPPluginInfo(TOP_PluginInfo *info)
 {
-    TOP_PluginInfo info;
     // This must always be set to this constant
-    info.apiVersion = TOPCPlusPlusAPIVersion;
+    info->apiVersion = TOPCPlusPlusAPIVersion;
     
     // Change this to change the executeMode behavior of this plugin.
-    info.executeMode = TOP_ExecuteMode::CPUMemWriteOnly;
+    info->executeMode = TOP_ExecuteMode::CPUMemWriteOnly;
     
-    return info;
+    // The opType is the unique name for this TOP. It must start with a
+    // capital A-Z character, and all the following characters must lower case
+    // or numbers (a-z, 0-9)
+    info->customOPInfo.opType->setString("Ndnrtcin");
+    
+    // The opLabel is the text that will show up in the OP Create Dialog
+    info->customOPInfo.opLabel->setString("NDN-RTC In");
+    
+    // Will be turned into a 3 letter icon on the nodes
+    info->customOPInfo.opIcon->setString("NRT");
+    
+    // Information about the author of this OP
+    info->customOPInfo.authorName->setString("Peter Gusev");
+    info->customOPInfo.authorEmail->setString("peter@remap.ucla.edu");
+    
+    // This TOP works with 0 or 1 inputs connected
+    info->customOPInfo.minInputs = 0;
+    info->customOPInfo.maxInputs = 1;
 }
 
 DLLEXPORT
@@ -208,14 +223,14 @@ ndnrtcIn::~ndnrtcIn()
 }
 
 void
-ndnrtcIn::getGeneralInfo(TOP_GeneralInfo *ginfo)
+ndnrtcIn::getGeneralInfo(TOP_GeneralInfo* ginfo, const OP_Inputs*, void *reserved1)
 {
     ginfo->cookEveryFrame = true;
     ginfo->memPixelType = OP_CPUMemPixelType::BGRA8Fixed;
 }
 
 bool
-ndnrtcIn::getOutputFormat(TOP_OutputFormat* format)
+ndnrtcIn::getOutputFormat(TOP_OutputFormat* format, const OP_Inputs*, void *reserved1)
 {
     format->width = streamRenderer_->getWidth();
     format->height = streamRenderer_->getHeight();
@@ -224,11 +239,12 @@ ndnrtcIn::getOutputFormat(TOP_OutputFormat* format)
 }
 
 void
-ndnrtcIn::execute(const TOP_OutputFormatSpecs* outputFormat,
-                  OP_Inputs* inputs,
-                  TOP_Context* context)
+ndnrtcIn::execute(TOP_OutputFormatSpecs* outputFormat,
+                  const OP_Inputs* inputs,
+                  TOP_Context* context,
+                  void *reserved1)
 {
-    ndnrtcTOPbase::execute(outputFormat, inputs, context);
+    ndnrtcTOPbase::execute(outputFormat, inputs, context, reserved1);
 
     if (stream_) // also, maybe, if state is Fetching?
     {
@@ -246,14 +262,15 @@ ndnrtcIn::execute(const TOP_OutputFormatSpecs* outputFormat,
 }
 
 int32_t
-ndnrtcIn::getNumInfoCHOPChans()
+ndnrtcIn::getNumInfoCHOPChans(void *reserved1)
 {
     return (int32_t)ChanNames.size() + (int32_t)statStorage_->getIndicators().size();
 }
 
 void
 ndnrtcIn::getInfoCHOPChan(int32_t index,
-                          OP_InfoCHOPChan *chan)
+                          OP_InfoCHOPChan *chan,
+                          void *reserved1)
 {
     InfoChopIndex idx = (InfoChopIndex)index;
     
@@ -262,19 +279,19 @@ ndnrtcIn::getInfoCHOPChan(int32_t index,
         switch (idx) {
             case InfoChopIndex::ReceivedFrame:
                 {
-                    chan->name = ChanNames[idx].c_str();
+                    chan->name->setString(ChanNames[idx].c_str());
                     chan->value = (float)streamRenderer_->getFrameNo();
                 }
                 break;
             case InfoChopIndex::ReceivedFrameTimestamp:
                 {
-                    chan->name = ChanNames[idx].c_str();
+                    chan->name->setString(ChanNames[idx].c_str());
                     chan->value = (float)streamRenderer_->getTimestamp();
                 }
                 break;
             case InfoChopIndex::State:
                 {
-                    chan->name = ChanNames[idx].c_str();
+                    chan->name->setString(ChanNames[idx].c_str());
                     chan->value = 0;
                 }
                 break;
@@ -292,7 +309,7 @@ ndnrtcIn::getInfoCHOPChan(int32_t index,
         {
             if (idx == statIdx)
             {
-                chan->name = StatisticsStorage::IndicatorKeywords.at(pair.first).c_str();
+            chan->name->setString(StatisticsStorage::IndicatorKeywords.at(pair.first).c_str());
                 chan->value = (float)pair.second;
                 break;
             }
@@ -302,23 +319,24 @@ ndnrtcIn::getInfoCHOPChan(int32_t index,
 }
 
 bool
-ndnrtcIn::getInfoDATSize(OP_InfoDATSize *infoSize)
+ndnrtcIn::getInfoDATSize(OP_InfoDATSize *infoSize, void *reserved1)
 {
-    return ndnrtcTOPbase::getInfoDATSize(infoSize);
+    return ndnrtcTOPbase::getInfoDATSize(infoSize, reserved1);
 }
 
 void
 ndnrtcIn::getInfoDATEntries(int32_t index,
                             int32_t nEntries,
-                            OP_InfoDATEntries *entries)
+                            OP_InfoDATEntries *entries,
+                            void *reserved1)
 {
-    ndnrtcTOPbase::getInfoDATEntries(index, nEntries, entries);
+    ndnrtcTOPbase::getInfoDATEntries(index, nEntries, entries, reserved1);
 }
 
 void
-ndnrtcIn::setupParameters(OP_ParameterManager *manager)
+ndnrtcIn::setupParameters(OP_ParameterManager *manager, void *reserved1)
 {
-    ndnrtcTOPbase::setupParameters(manager);
+    ndnrtcTOPbase::setupParameters(manager, reserved1);
     
     {
         OP_StringParameter streamPrefix(PAR_STREAM_PREFIX);
@@ -359,9 +377,9 @@ ndnrtcIn::setupParameters(OP_ParameterManager *manager)
 }
 
 void
-ndnrtcIn::pulsePressed(const char *name)
+ndnrtcIn::pulsePressed(const char *name, void *reserved1)
 {
-    ndnrtcTOPbase::pulsePressed(name);
+    ndnrtcTOPbase::pulsePressed(name, reserved1);
     
     if (!strcmp(name, "Reset"))
     {
@@ -376,8 +394,8 @@ ndnrtcIn::initStream()
 }
 
 set<string>
-ndnrtcIn::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
-                      OP_Inputs* inputs,
+ndnrtcIn::checkInputs(TOP_OutputFormatSpecs* outputFormat,
+                      const OP_Inputs* inputs,
                       TOP_Context *context)
 {
     set<string> updatedParams = ndnrtcTOPbase::checkInputs(outputFormat, inputs, context);
@@ -404,8 +422,8 @@ ndnrtcIn::checkInputs(const TOP_OutputFormatSpecs* outputFormat,
 }
 
 void
-ndnrtcIn::createRemoteStream(const TOP_OutputFormatSpecs* outputFormat,
-                             OP_Inputs* inputs,
+ndnrtcIn::createRemoteStream(TOP_OutputFormatSpecs* outputFormat,
+                             const OP_Inputs* inputs,
                              TOP_Context *context)
 {
     if (!(faceProcessor_ && keyChainManager_))
