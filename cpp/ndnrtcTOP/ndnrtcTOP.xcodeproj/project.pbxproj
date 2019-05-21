@@ -48,13 +48,6 @@
 			remoteGlobalIDString = AFE43C82202DDCD200072172;
 			remoteInfo = ndnrtcOut;
 		};
-		AFE43C96202E2C5B00072172 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AFE43C7B202DDCD200072172 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AFE43C92202E2BAC00072172;
-			remoteInfo = libndnrtc;
-		};
 		AFE43C9F202E2EEE00072172 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AFE43C7B202DDCD200072172 /* Project object */;
@@ -321,6 +314,8 @@
 			buildPhases = (
 				AF889B4F2037733900F36342 /* Sources */,
 				AF889B532037733900F36342 /* Frameworks */,
+				AF617F062294B73D00D9A661 /* ShellScript */,
+				AF617F072294B73F00D9A661 /* ShellScript */,
 				AF889B572037733900F36342 /* Resources */,
 				AF889B592037733900F36342 /* CopyFiles */,
 				AF889B5B2037733900F36342 /* CopyFiles */,
@@ -343,6 +338,8 @@
 			buildPhases = (
 				AFE43C7F202DDCD200072172 /* Sources */,
 				AFE43C80202DDCD200072172 /* Frameworks */,
+				AF7F4DA322949BD900F8D1C6 /* ShellScript */,
+				AF617F052294B39400D9A661 /* ShellScript */,
 				AFE43C81202DDCD200072172 /* Resources */,
 				AF9431B12033ABDC0042FB3A /* CopyFiles */,
 				AF9431B32033AC040042FB3A /* Copy Files */,
@@ -351,7 +348,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				AFE43C97202E2C5B00072172 /* PBXTargetDependency */,
 			);
 			name = ndnrtcOut;
 			productName = ndnrtcTOP;
@@ -424,6 +420,77 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		AF617F052294B39400D9A661 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n\n    libsDir=${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/libs\n    fwDir=${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Frameworks\n    libs=`ls $libsDir/* $fwDir/*`\n\n    echo \"This will sign all libs in $libsDir and $fwDir\"\n\n    for l in $libs; do\n        codesign -f -v -s $EXPANDED_CODE_SIGN_IDENTITY $l\n    done;\nfi\n";
+		};
+		AF617F062294B73D00D9A661 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "binary=${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\ncurDir=`pwd`\nframeworksDir=${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/libs\ndepsDir=`realpath --relative-to=$curDir $frameworksDir`\nbundler=dylibbundler\n\necho \"HEY YO $curDir AND $depsDir AND $frameworksDir\"\n\n# run dylibbundler\nif [ \"$CONFIGURATION\" = \"Release\" ]; then\ncommand -v $bundler >/dev/null 2>&1 || { echo >&2 \"$bundler is required for bundling dependencies with the plugin.\"; exit 1; }\nprintf '/usr/local/lib ${LIBNDNCPP_INSTALL_DIR}' | $bundler -od -b -x $binary -d $depsDir 2>&1 > /tmp/bundler.log\nelse\necho \"[bundler] Not bundling in Debug configuration\"\nfi\n";
+		};
+		AF617F072294B73F00D9A661 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" = \"Release\" ]; then\n\nlibsDir=${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/libs\nfwDir=${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Frameworks\nlibs=`ls $libsDir/* $fwDir/*`\n\necho \"This will sign all libs in $libsDir and $fwDir\"\n\nfor l in $libs; do\ncodesign -f -v -s $EXPANDED_CODE_SIGN_IDENTITY $l\ndone;\nfi\n";
+		};
+		AF7F4DA322949BD900F8D1C6 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "binary=${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\ncurDir=`pwd`\nframeworksDir=${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/libs\ndepsDir=`realpath --relative-to=$curDir $frameworksDir`\nbundler=dylibbundler\n\n# run dylibbundler\nif [ \"$CONFIGURATION\" = \"Release\" ]; then\n    command -v $bundler >/dev/null 2>&1 || { echo >&2 \"$bundler is required for bundling dependencies with the plugin.\"; exit 1; }\n    printf '/usr/local/lib ${LIBNDNCPP_INSTALL_DIR}' | $bundler -od -b -x $binary -d $depsDir 2>&1 > /tmp/bundler.log\nelse\n    echo \"[bundler] Not bundling in Debug configuration\"\nfi\n\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		AF889B4F2037733900F36342 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -457,11 +524,6 @@
 			isa = PBXTargetDependency;
 			target = AFE43C82202DDCD200072172 /* ndnrtcOut */;
 			targetProxy = AF8EC1612183C81E0082A16D /* PBXContainerItemProxy */;
-		};
-		AFE43C97202E2C5B00072172 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AFE43C92202E2BAC00072172 /* libndnrtc */;
-			targetProxy = AFE43C96202E2C5B00072172 /* PBXContainerItemProxy */;
 		};
 		AFE43CA0202E2EEE00072172 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -570,7 +632,10 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "-Wl,--unresolved-symbols=ignore-all";
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = macosx;
+				WARNING_CFLAGS = "";
 			};
 			name = Debug;
 		};
@@ -631,7 +696,10 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				OTHER_CFLAGS = "-Wl,--unresolved-symbols=ignore-all";
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				SDKROOT = macosx;
+				WARNING_CFLAGS = "";
 			};
 			name = Release;
 		};
@@ -643,6 +711,7 @@
 				DEVELOPMENT_TEAM = SC33BJMPXV;
 				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcOut-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcOut;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -658,6 +727,7 @@
 				DEVELOPMENT_TEAM = SC33BJMPXV;
 				INFOPLIST_FILE = "$(SRCROOT)/ndnrtcOut-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				PRODUCT_BUNDLE_IDENTIFIER = edu.ucla.remap.ndnrtcOut;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

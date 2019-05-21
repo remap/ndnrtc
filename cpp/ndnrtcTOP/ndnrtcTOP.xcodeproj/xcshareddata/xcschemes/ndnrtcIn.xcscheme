@@ -5,6 +5,15 @@
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Run Script"
+               scriptText = "binary=${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}&#10;&#10;# clean old binary&#10;if [ &quot;$CONFIGURATION&quot; = &quot;Release&quot; ]; then&#10;rm $binary 2&gt; /dev/null&#10;fi&#10;">
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
