@@ -458,7 +458,11 @@ ndnrtcIn::createRemoteStream(TOP_OutputFormatSpecs* outputFormat,
                                                     inputs->getParInt(PAR_LIFETIME),
                                                     inputs->getParInt(PAR_JITTER));
     stream_->setLogger(logger_);
-    dynamic_pointer_cast<RemoteStream>(stream_)->registerObserver(this);
+    
+    cout << "here's your remote stream " << stream_ << endl;
+    cout << "also  " << dynamic_pointer_cast<RemoteStream>(stream_) << endl;
+    
+    dynamic_pointer_cast<RemoteVideoStream>(stream_)->registerObserver(this);
     dynamic_pointer_cast<RemoteVideoStream>(stream_)->start(ndnrtcTOPbase::NdnRtcTrheadName, streamRenderer_.get());
 }
 

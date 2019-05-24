@@ -55,7 +55,7 @@
       <PathRunnable
          runnableDebuggingMode = "0"
          BundleIdentifier = "ca.derivative.TouchDesigner099"
-         FilePath = "/Applications/TouchDesigner099.app">
+         FilePath = "/Users/peetonn/Downloads/TouchDesigner099.app">
       </PathRunnable>
       <MacroExpansion>
          <BuildableReference
@@ -77,14 +77,23 @@
          </CommandLineArgument>
       </CommandLineArguments>
       <AdditionalOptions>
+         <AdditionalOption
+            key = "MallocScribble"
+            value = ""
+            isEnabled = "YES">
+         </AdditionalOption>
       </AdditionalOptions>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
       shouldUseLaunchSchemeArgsEnv = "YES"
-      savedToolIdentifier = ""
+      savedToolIdentifier = "Time Profiler"
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
+      <PathRunnable
+         runnableDebuggingMode = "0"
+         FilePath = "/Users/peetonn/Downloads/TouchDesigner099.app">
+      </PathRunnable>
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"

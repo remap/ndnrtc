@@ -353,7 +353,8 @@ ndnrtcOut::pulsePressed(const char* name, void *reserved1)
     
 	if (!strcmp(name, "Init"))
 	{
-        executeQueue_.push(bind(&ndnrtcOut::createLocalStream, this, _1, _2, _3));
+        // no need to re-create the stream, this is called in the base class
+//        executeQueue_.push(bind(&ndnrtcOut::createLocalStream, this, _1, _2, _3));
 	}
 }
 
@@ -370,6 +371,7 @@ ndnrtcOut::init()
         if (keyChainManager_)
             keyChainManager_->publishCertificates();
     });
+    
 }
 
 void

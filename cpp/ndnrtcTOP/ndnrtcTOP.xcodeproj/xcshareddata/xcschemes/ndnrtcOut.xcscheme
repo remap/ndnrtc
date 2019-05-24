@@ -90,7 +90,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "${PROJECT_DIR}/ndnrtcOut.toe"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
       <AdditionalOptions>

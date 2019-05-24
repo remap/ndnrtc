@@ -15,6 +15,7 @@
 #include <ndn-cpp/interest.hpp>
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
+#include <ndn-cpp/util/memory-content-cache.hpp>
 
 #include <ndnrtc/helpers/face-processor.hpp>
 #include <ndnrtc/helpers/key-chain-manager.hpp>
@@ -78,7 +79,7 @@ reinitParams_(ReinitParams)
     description_ = "ndnrtcTOP_base";
 
     Logger::initAsyncLogging();
-    logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
+    logger_ = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
                                          boost::make_shared<CallbackSink>(bind(&ndnrtcTOPbase::logSink, this, _1)));
 }
 
@@ -318,7 +319,7 @@ ndnrtcTOPbase::initFace(TOP_OutputFormatSpecs* outputFormat,
     }
     else
     {
-        errorString_ = "Check if NFD is running";
+        errorString_ = "Can't connect to NFD";
     }
 }
 
@@ -355,8 +356,10 @@ ndnrtcTOPbase::initKeyChainManager(TOP_OutputFormatSpecs* outputFormat,
 //            inputs->enablePar(PAR_SIGNING_IDENTITY, false);
         }
         
-        faceProcessor_->getFace()->setCommandSigningInfo(*keyChainManager_->instanceKeyChain(),
-                                                         keyChainManager_->instanceKeyChain()->getDefaultCertificateName());
+//        LogInfoC << "command signing info: " << keyChainManager_->instanceKeyChain()->getDefaultCertificateName() << endl;
+        
+//        faceProcessor_->getFace()->setCommandSigningInfo(*keyChainManager_->instanceKeyChain(),
+//                                                         keyChainManager_->instanceKeyChain()->getDefaultCertificateName());
     }
     catch(std::exception &e)
     {
@@ -373,6 +376,7 @@ ndnrtcTOPbase::registerPrefix(TOP_OutputFormatSpecs* outputFormat,
         return;
 
     ndn::Name prefix(readBasePrefix(inputs));
+
     faceProcessor_->getFace()->registerPrefix(prefix,
                                               [this](const boost::shared_ptr<const ndn::Name>& prefix,
                                                      const boost::shared_ptr<const ndn::Interest>& interest,
@@ -381,8 +385,7 @@ ndnrtcTOPbase::registerPrefix(TOP_OutputFormatSpecs* outputFormat,
                                                   LogDebugC << "received interest " << interest->getName() << endl;
                                               },
                                               [this](const boost::shared_ptr<const ndn::Name>& prefix){
-                                                  cout << "failed to register" << endl;
-                                                  LogErrorC << "failed to register prefix " << prefix << endl;
+                                                  LogErrorC << "failed to register prefix " << prefix->toUri() << endl;
                                                   errorString_ = "Prefix registration failure: " + prefix->toUri();
                                               },
                                               [this](const boost::shared_ptr<const ndn::Name>& prefix,
