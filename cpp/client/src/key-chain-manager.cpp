@@ -28,7 +28,7 @@ KeyChainManager::KeyChainManager(std::shared_ptr<Face> face,
                                  const std::string &identityNameStr,
                                  const std::string &instanceNameStr,
                                  const std::string &configPolicy,
-                                 unsigned int runTime) 
+                                 unsigned int runTime)
     : face_(face),
     signingIdentity_(identityNameStr),
     instanceName_(instanceNameStr),
@@ -157,7 +157,6 @@ void KeyChainManager::createInstanceIdentityV2()
 
     std::shared_ptr<PibIdentity> instancePibIdentity =
         instanceKeyChain_->createIdentityV2(instanceIdentity);
-    std::cout << "Debug instancePibIdentity " << instancePibIdentity->getName() << std::endl;
     std::shared_ptr<PibKey> instancePibKey =
         instancePibIdentity->getDefaultKey();
     std::shared_ptr<PibKey> signingPibKey = defaultKeyChain_->getPib()

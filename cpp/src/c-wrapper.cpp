@@ -166,6 +166,8 @@ const char* ndnrtc_getVersion()
     return version.c_str();
 }
 
+#include <fstream>
+
 bool ndnrtc_init(const char* hostname, const char* storagePath,
 	const char* signingIdentity, const char * instanceId, LibLog libLog)
 {
@@ -175,17 +177,56 @@ bool ndnrtc_init(const char* hostname, const char* storagePath,
 		std::make_shared<CallbackSink>(libLog));
 	callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up NDN-RTC..." << std::endl;
 
-	try {
-		initKeyChain(storagePath, signingIdentity);
+	// try
+	{
+		{
+			std::string filePath = std::string(storagePath) + "/test-file.txt";
+			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "TEST CREATE FILE " << filePath << std::endl;
+
+			std::ofstream file(filePath.c_str());
+
+			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "CREATED FILE " << filePath << std::endl;
+
+			file << "hello this is a test";
+
+			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "TRYING CHMOD " << filePath << std::endl;
+			::chmod(filePath.c_str(), S_IRUSR);
+			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "ALL IS GOOD " << filePath << std::endl;
+		}
+
+		// initKeyChain(storagePath, signingIdentity);
+		{
+			std::string signingIdentityStr(signingIdentity);
+			std::string privateKeysPath =std::string(storagePath) + "/" + std::string(PrivateDb);
+
+			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "NDN_RTC_INIT privateKeyPath " << storagePath << std::endl;
+
+			LibKeyChain = std::make_shared<KeyChain>(std::make_shared<PibSqlite3>(storagePath, PublicDb),
+			std::make_shared<TpmBackEndFile>(privateKeysPath));
+
+			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "LibKeyChain created " << LibKeyChain << std::endl;
+
+			const Name signingIdentity = Name(signingIdentityStr);
+
+			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "will create identity " << signingIdentity << std::endl;
+
+			LibKeyChain->createIdentityV2(signingIdentity);
+
+			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "signing id created" << std::endl;
+			// LibKeyChain->setDefaultIdentity(*(LibKeyChain->getPib().getIdentity(signingIdentity)));
+			// callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "set default cert" << std::endl;
+		}
+
 		initFace(hostname, callbackLogger, signingIdentity, instanceId);
 	}
-	catch (std::exception &e)
-	{
-		std::stringstream ss;
-		ss << "setup error: " << e.what() << std::endl;
-		libLog(ss.str().c_str());
-		return false;
-	}
+	// catch (std::exception &e)
+	// catch (const std::ios_base::failure& e)
+	// {
+	// 	std::stringstream ss;
+	// 	ss << "setup error: " << e.what() << "(code " << e.code() << ")" << std::endl;
+	// 	libLog(ss.str().c_str());
+	// 	return false;
+	// }
 	return true;
 }
 
@@ -420,19 +461,13 @@ int ndnrtc_LocalVideoStream_incomingArgbFrame(ndnrtc::LocalVideoStream *stream,
 // if signing identity does not exist, creates it
 void initKeyChain(std::string storagePath, std::string signingIdentityStr)
 {
-	std::string databaseFilePath = storagePath + "/" + std::string(PublicDb);
 	std::string privateKeysPath = storagePath + "/" + std::string(PrivateDb);
 
-	std::shared_ptr<IdentityStorage> identityStorage = std::make_shared<BasicIdentityStorage>(databaseFilePath);
-	std::shared_ptr<IdentityManager> identityManager = std::make_shared<IdentityManager>(identityStorage,
-		std::make_shared<FilePrivateKeyStorage>(privateKeysPath));
-	std::shared_ptr<PolicyManager> policyManager = std::make_shared<SelfVerifyPolicyManager>(identityStorage.get());
-
-	LibKeyChain = std::make_shared<KeyChain>(identityManager, policyManager);
-
+	LibKeyChain = std::make_shared<KeyChain>(std::make_shared<PibSqlite3>(storagePath, PublicDb),
+											 std::make_shared<TpmBackEndFile>(privateKeysPath));
 	const Name signingIdentity = Name(signingIdentityStr);
 	LibKeyChain->createIdentityAndCertificate(signingIdentity);
-	identityManager->setDefaultIdentity(signingIdentity);
+	LibKeyChain->getIdentityManager()->setDefaultIdentity(signingIdentity);
 }
 
 // initializes face and face processing thread
