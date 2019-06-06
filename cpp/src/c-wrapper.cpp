@@ -137,7 +137,8 @@ class ExternalRendererProxy : public IExternalRenderer {
 public:
 
 	ExternalRendererProxy(BufferAlloc bufferAllocFunc, FrameFetched frameFetchedFunc):
-		bufferAllocFunc_(bufferAllocFunc), frameFetchedFunc_(frameFetchedFunc_){}
+		bufferAllocFunc_(bufferAllocFunc), frameFetchedFunc_(frameFetchedFunc)
+		{}
 
 private:
 
@@ -149,10 +150,18 @@ private:
 	void renderBGRAFrame(const FrameInfo& fi, int width, int height,
 								 const uint8_t* buffer)
 	{
-		cFrameInfo frameInfo({fi.timestamp_, fi.playbackNo_, (char*)fi.ndnName_.c_str()});
-		frameFetchedFunc_(frameInfo, width, height, buffer);
-	}
+		static char *frameName = nullptr;
+		if (!frameName) frameName = (char*)malloc(4096*sizeof(char));
 
+		memset((void*)frameName, 0, 4096);
+		strcpy(frameName, fi.ndnName_.c_str());
+
+		cFrameInfo frameInfo({fi.timestamp_, fi.playbackNo_, frameName});//(char*)fi.ndnName_.c_str()});
+
+		frameFetchedFunc_(frameInfo,
+						  width, height, buffer);
+	}
+public:
 	BufferAlloc bufferAllocFunc_;
 	FrameFetched frameFetchedFunc_;
 };
@@ -177,56 +186,18 @@ bool ndnrtc_init(const char* hostname, const char* storagePath,
 		std::make_shared<CallbackSink>(libLog));
 	callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up NDN-RTC..." << std::endl;
 
-	// try
+	try
 	{
-		{
-			std::string filePath = std::string(storagePath) + "/test-file.txt";
-			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "TEST CREATE FILE " << filePath << std::endl;
-
-			std::ofstream file(filePath.c_str());
-
-			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "CREATED FILE " << filePath << std::endl;
-
-			file << "hello this is a test";
-
-			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "TRYING CHMOD " << filePath << std::endl;
-			::chmod(filePath.c_str(), S_IRUSR);
-			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "ALL IS GOOD " << filePath << std::endl;
-		}
-
-		// initKeyChain(storagePath, signingIdentity);
-		{
-			std::string signingIdentityStr(signingIdentity);
-			std::string privateKeysPath =std::string(storagePath) + "/" + std::string(PrivateDb);
-
-			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "NDN_RTC_INIT privateKeyPath " << storagePath << std::endl;
-
-			LibKeyChain = std::make_shared<KeyChain>(std::make_shared<PibSqlite3>(storagePath, PublicDb),
-			std::make_shared<TpmBackEndFile>(privateKeysPath));
-
-			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "LibKeyChain created " << LibKeyChain << std::endl;
-
-			const Name signingIdentity = Name(signingIdentityStr);
-
-			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "will create identity " << signingIdentity << std::endl;
-
-			LibKeyChain->createIdentityV2(signingIdentity);
-
-			callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "signing id created" << std::endl;
-			// LibKeyChain->setDefaultIdentity(*(LibKeyChain->getPib().getIdentity(signingIdentity)));
-			// callbackLogger->log(ndnlog::NdnLoggerLevelInfo)  << "set default cert" << std::endl;
-		}
-
+		initKeyChain(storagePath, signingIdentity);
 		initFace(hostname, callbackLogger, signingIdentity, instanceId);
 	}
-	// catch (std::exception &e)
-	// catch (const std::ios_base::failure& e)
-	// {
-	// 	std::stringstream ss;
-	// 	ss << "setup error: " << e.what() << "(code " << e.code() << ")" << std::endl;
-	// 	libLog(ss.str().c_str());
-	// 	return false;
-	// }
+	catch (std::exception &e)
+	{
+		std::stringstream ss;
+		ss << "setup error: " << e.what() << std::endl;
+		libLog(ss.str().c_str());
+		return false;
+	}
 	return true;
 }
 
@@ -308,7 +279,7 @@ ndnrtc::IStream* ndnrtc_createRemoteStream(const char *basePrefix,
 										   const char *streamName,
 										   LibLog loggerSink)
 {
-	std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDebug,
+	std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
 		std::make_shared<CallbackSink>(loggerSink));
 	callbackLogger->log(ndnlog::NdnLoggerLevelInfo)
 		<< "Setting up Remote Video Stream with base prefix "
@@ -331,7 +302,15 @@ void ndnrtc_startRemoteStreamFetching(ndnrtc::RemoteVideoStream *stream,
 									  FrameFetched frameFetchedFunc)
 {
 	Renderers[stream->getPrefix()] = std::make_shared<ExternalRendererProxy>(bufferAllocFunc, frameFetchedFunc);
+
 	stream->start(threadName, Renderers[stream->getPrefix()].get());
+}
+
+void ndnrtc_stopRemoteStreamFetching(ndnrtc::RemoteVideoStream *stream)
+{
+	stream->stop();
+	if (Renderers.find(stream->getPrefix()) != Renderers.end())
+		Renderers.erase(stream->getPrefix());
 }
 
 const char* ndnrtc_LocalStream_getPrefix(IStream *stream)
@@ -407,12 +386,14 @@ void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
                  const FrameInfo fi, int nFetchedFrames,
                  int width, int height, const uint8_t* buffer){
                     cFrameInfo frameInfo({fi.timestamp_, fi.playbackNo_, (char*)fi.ndnName_.c_str()});
-                    frameFetchedFunc(frameInfo, width, height, buffer);
+                    frameFetchedFunc(frameInfo,
+									 width, height, buffer);
                     FrameFetchers.erase(fkey);
               },
               [fkey, frameFetchedFunc](const std::shared_ptr<IFrameFetcher>& ff, std::string reason){
                     cFrameInfo frameInfo({0,0,(char*)fkey.c_str()});
-                    frameFetchedFunc(frameInfo, 0, 0, nullptr);
+                    frameFetchedFunc(frameInfo,
+									 0, 0, nullptr);
                     FrameFetchers.erase(fkey);
               });
 }
@@ -464,10 +445,11 @@ void initKeyChain(std::string storagePath, std::string signingIdentityStr)
 	std::string privateKeysPath = storagePath + "/" + std::string(PrivateDb);
 
 	LibKeyChain = std::make_shared<KeyChain>(std::make_shared<PibSqlite3>(storagePath, PublicDb),
-											 std::make_shared<TpmBackEndFile>(privateKeysPath));
+											 std::make_shared<TpmBackEndMemory>());
+											 // std::make_shared<TpmBackEndFile>(privateKeysPath));
 	const Name signingIdentity = Name(signingIdentityStr);
 	LibKeyChain->createIdentityAndCertificate(signingIdentity);
-	LibKeyChain->getIdentityManager()->setDefaultIdentity(signingIdentity);
+	LibKeyChain->setDefaultIdentity(*(LibKeyChain->getPib().getIdentity(signingIdentity)));
 }
 
 // initializes face and face processing thread
@@ -479,7 +461,8 @@ void initFace(std::string hostname, std::shared_ptr<Logger> logger,
 		LibKeyChain,
 		std::string(signingIdentityStr),
 		std::string(instanceIdStr),
-		std::string("policy-file.conf"),
+		// USE SELF-VERIFY POLICY. because it crashes with file access
+		"", //std::string("policy-file.conf"),
 		3600,
 		logger);
 
@@ -609,9 +592,10 @@ runTime_(instanceCertLifetime)
 
 	if (configPolicy != "")
 	{
-		LogInfoC << "Setting up file-based policy manager from " << configPolicy << std::endl;
-
+		LogInfoC << "Checking policy file exists..." << configPolicy << std::endl;
 		checkExists(configPolicy);
+
+		LogInfoC << "Setting up file-based policy manager from " << configPolicy << std::endl;
 		setupConfigPolicyManager();
 	}
 	else
@@ -623,6 +607,7 @@ runTime_(instanceCertLifetime)
 		configPolicyManager_ = std::make_shared<SelfVerifyPolicyManager>(identityStorage_.get());
 	}
 
+	LogInfoC << "Config policy manager successfully set up. Creating instance KeyChain..." << configPolicy << std::endl;
 	setupInstanceKeyChain();
 }
 

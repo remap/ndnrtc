@@ -54,7 +54,7 @@ void SampleValidator::onNewData(const BufferReceipt &receipt)
 
 ManifestValidator::ManifestValidator(std::shared_ptr<ndn::Face> face,
                                      std::shared_ptr<ndn::KeyChain> keyChain,
-                                     const std::shared_ptr<StatisticsStorage> &statStorage) 
+                                     const std::shared_ptr<StatisticsStorage> &statStorage)
     : StatObject(statStorage), face_(face), keyChain_(keyChain),
     metaFetcherPool_(META_FETCHER_POOL_SIZE)
 {
@@ -78,11 +78,11 @@ void ManifestValidator::onNewRequest(const std::shared_ptr<BufferSlot> &slot)
                             if (info.size())
                             {
                                 // had problems verifying manifest
-                                for (auto &i : info)
-                                    LogWarnC << "manifest verification failure " << i.getData()->getName()
-                                             << " (KeyLocator " << (KeyLocator::getFromSignature(i.getData()->getSignature())).getKeyName()
-                                             << "), reason: "
-                                             << i.getReason() << std::endl;
+                                // for (auto &i : info)
+                                //     LogWarnC << "manifest verification failure " << i.getData()->getName()
+                                //              << " (KeyLocator " << (KeyLocator::getFromSignature(i.getData()->getSignature())).getKeyName()
+                                //              << "), reason: "
+                                //              << i.getReason() << std::endl;
                                 slot->verified_ = BufferSlot::Verification::Failed;
                                 (*me->statStorage_)[Indicator::VerifyFailure]++;
                             }
@@ -104,9 +104,9 @@ void ManifestValidator::onNewRequest(const std::shared_ptr<BufferSlot> &slot)
                             metaFetcherPool_.push(mfetcher);
                         },
                         [mfetcher, slot, me, this](const std::string &) {
-                            LogErrorC << "couldn't fetch manifest for "
-                                      << slot->getNameInfo().getSuffix(suffix_filter::Thread)
-                                      << std::endl;
+                            // LogErrorC << "couldn't fetch manifest for "
+                            //           << slot->getNameInfo().getSuffix(suffix_filter::Thread)
+                            //           << std::endl;
 
                             metaFetcherPool_.push(mfetcher);
                             (*me->statStorage_)[Indicator::VerifyFailure]++;

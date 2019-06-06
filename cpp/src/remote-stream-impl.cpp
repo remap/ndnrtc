@@ -213,13 +213,20 @@ void RemoteStreamImpl::streamMetaFetched(NetworkData &meta)
     std::stringstream ss;
     int64_t metadataRequestedMs = clock::millisecondTimestamp();
 
+    LogInfoC << "received stream meta info. len " << streamMeta_->getLength()
+             << " data size " << streamMeta_->data().size()
+             << " payload size " << streamMeta_->getPayload().size()
+             << " isvalid " << streamMeta_->isValid()
+             << " "
+             << streamMeta_->getThreads().size() << " thread(s): " << ss.str() << std::endl;
+
+    LogInfoC << "stream timestamp " << streamMeta_->getStreamTimestamp() << std::endl;
+
     for (auto &t : streamMeta_->getThreads())
     {
         fetchThreadMeta(t, metadataRequestedMs);
         ss << t << " ";
     }
-    LogInfoC << "received stream meta info. "
-             << streamMeta_->getThreads().size() << " thread(s): " << ss.str() << std::endl;
 }
 
 void RemoteStreamImpl::fetchThreadMeta(const std::string &threadName, const int64_t& metadataRequestedMs)

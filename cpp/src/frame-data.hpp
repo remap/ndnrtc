@@ -52,12 +52,12 @@ struct Immutable
 
 //******************************************************************************
 /**
-     * Network data class is a base class for network data used to transfer binary 
+     * Network data class is a base class for network data used to transfer binary
      * data over the (NDN) network.
      * NetworkDataT is a template class, which can be instantiated in two flavors - mutable
      * data and immutable data. The former can be used for preparing data packets to be
      * sent over the network. For example, one creates empty packet and then adds necessary
-     * payload(s) to it. (One should rather use derived classes, rather than this class 
+     * payload(s) to it. (One should rather use derived classes, rather than this class
      * directly). The payload is stored as a vector of bytes and copied/moved according to
      * the constructor used.
      * The latter (immutable network data) is used for packets, received from the network.
@@ -211,9 +211,9 @@ class DataPacketT : public NetworkDataT<T>
     /**
      * Blob provides read-only interface for immutable data. It is a helper
      * class which makes manipulation of data packet internals easier (such
-     * manipulations as counting number of headers in data packet, their 
-     * sizes, ordering, etc). Blob's constructor takes two const iterators 
-     * or another Blob object. No payload copying is performed during 
+     * manipulations as counting number of headers in data packet, their
+     * sizes, ordering, etc). Blob's constructor takes two const iterators
+     * or another Blob object. No payload copying is performed during
      * construction.
      */
     class Blob
@@ -304,7 +304,7 @@ class DataPacketT : public NetworkDataT<T>
     }
 
     /**
-     * This calculates total wire length for a packet with given 
+     * This calculates total wire length for a packet with given
      * payloadLength and one blob (header) of length blobLength
      */
     static size_t wireLength(size_t payloadLength, size_t blobLength)
@@ -318,7 +318,7 @@ class DataPacketT : public NetworkDataT<T>
     /**
      * This calculates total wire length for a packet with given
      * payloadLength and arbitrary number of blobs (headers), lengths
-     * of which are given in vector blobLengths 
+     * of which are given in vector blobLengths
      */
     static size_t wireLength(size_t payloadLength, std::vector<size_t> blobLengths)
     {
@@ -341,7 +341,7 @@ class DataPacketT : public NetworkDataT<T>
 
     /**
      * This calculates length of byte overhead for adding arbitrary number
-     * of blobs (headers) to a data packet, lenghts of which are given 
+     * of blobs (headers) to a data packet, lenghts of which are given
      * in vector blobLengths
      */
     static size_t wireLength(std::vector<size_t> blobLengths)
@@ -389,7 +389,7 @@ class DataPacketT : public NetworkDataT<T>
         }
 
         if (!invalid)
-            payloadBegin_ = p1;
+            payloadBegin_ = p1; // (this->_data().begin() + 1);
         else
             this->isValid_ = false;
     }
@@ -419,11 +419,11 @@ typedef DataPacketT<> DataPacket;
 
 //******************************************************************************
 /**
- * HeaderPacket extends DataPacket class by adding functionality for a header 
+ * HeaderPacket extends DataPacket class by adding functionality for a header
  * which is usually a structure.
  * Header is appended as the last blob to the packet and one can not set header
  * several times - an exception will be raised. Typically, one whould add header
- * to the packet as the very last step in preparing data to be transfered over 
+ * to the packet as the very last step in preparing data to be transfered over
  * the network.
  */
 template <typename Header, typename T>
@@ -550,12 +550,12 @@ typedef struct _VideoFrameSegmentHeader : public DataSegmentHeader // goes into 
 } __attribute__((packed)) VideoFrameSegmentHeader;
 
 /*******************************************************************************
- * This class represents data segment used for publishing NDN data. Unlike 
- * DataPacket, it doesn't have it's own storage - instead, it must be 
+ * This class represents data segment used for publishing NDN data. Unlike
+ * DataPacket, it doesn't have it's own storage - instead, it must be
  * constructed using existing data. This restriction represents the assumption
- * that data segments can't be created without corresponding data packet. 
- * Usually, one would use slice() static method to generate a vector of 
- * segments that altogether represent given data packet. As data segment 
+ * that data segments can't be created without corresponding data packet.
+ * Usually, one would use slice() static method to generate a vector of
+ * segments that altogether represent given data packet. As data segment
  * doesn't carry additional storage, it's leightweight. A copy of NetworkData
  * is created when getNetworkData() is called. This must be called right before
  * transferring data over the wire (publishing).
@@ -581,7 +581,7 @@ class DataSegment : protected DataPacket::Blob
     size_t size() const { return DataSegment<Header>::wireLength(Blob::size()); }
 
     /**
-     * Creates new NetworkData object which has data copied using begin 
+     * Creates new NetworkData object which has data copied using begin
      * and end iterators passed to this object during creation
      */
     const std::shared_ptr<NetworkData> getNetworkData() const
@@ -593,7 +593,7 @@ class DataSegment : protected DataPacket::Blob
     }
 
     /**
-     * This calculates total wire length for a segment with given payload 
+     * This calculates total wire length for a segment with given payload
      * length
      */
     static size_t wireLength(size_t payloadLength)
@@ -601,7 +601,7 @@ class DataSegment : protected DataPacket::Blob
         return DataPacket::wireLength(payloadLength, sizeof(Header));
     }
     /**
-     * This calculates maximum payload length for a given target wire length 
+     * This calculates maximum payload length for a given target wire length
      * of a data segment
      */
     static size_t payloadLength(size_t wireLength)
@@ -785,7 +785,7 @@ typedef VideoFramePacketT<> VideoFramePacket;
 typedef VideoFramePacketT<Immutable> ImmutableVideoFramePacket;
 
 /*******************************************************************************
- * AudioBundlePacket provides interface for bundling audio samples and 
+ * AudioBundlePacket provides interface for bundling audio samples and
  * preparing them for publishing as a data packet.
  */
 template <typename T>
@@ -933,7 +933,7 @@ typedef AudioBundlePacketT<Immutable> ImmutableAudioBundlePacket;
 
 //******************************************************************************
 /**
- * This is a manifest data packet for (video) samples but can be used for an 
+ * This is a manifest data packet for (video) samples but can be used for an
  * arbitrary array of ndn::Data objects.
  * It stores digests of given data objects and provides methods to check whether
  * a data object is a part of this manifest.
@@ -1011,10 +1011,10 @@ class MediaStreamMeta : public DataPacket
 };
 
 /**
- * WireSegment acts as a wrapper for shared_ptr<ndn:Data> object which is app- 
- * and namespace-aware. I.e. it provides handy methods for retrieving variaous 
- * infomration from the packet and/or it's name. For example, class of sample 
- * can be retrieved from its' name by examining specific component to be either 
+ * WireSegment acts as a wrapper for shared_ptr<ndn:Data> object which is app-
+ * and namespace-aware. I.e. it provides handy methods for retrieving variaous
+ * infomration from the packet and/or it's name. For example, class of sample
+ * can be retrieved from its' name by examining specific component to be either
  * "delta" or "key" or "meta", etc.
  */
 class WireSegment
@@ -1050,7 +1050,7 @@ class WireSegment
 
     /**
      * This returns a percentage of how much does this segment contributes to
-     * the whole packet. For normal data it will be 1/number_of_slices. For 
+     * the whole packet. For normal data it will be 1/number_of_slices. For
      * parity data it corresponds to parityWeight().
      * @see fec::parityWeight()
      */
@@ -1073,7 +1073,7 @@ class WireSegment
     const DataSegmentHeader header() const;
 
     /**
-     * Retrieves packet header from data only if it's a segment 0 
+     * Retrieves packet header from data only if it's a segment 0
      * (getSegNo() == 0) because only segment 0 contains packet header.
      * Operation is expensive as it copies data into temporary storage.
      * One may prefer to extract this information after the whole packet

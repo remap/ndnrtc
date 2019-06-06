@@ -52,7 +52,8 @@ extern "C" {
 
     typedef unsigned char* (*BufferAlloc) (const char* frameName,
                                            int width, int height);
-    typedef void (*FrameFetched) (const cFrameInfo finfo, int width, int height,
+    typedef void (*FrameFetched) (const cFrameInfo finfo,
+                                  int width, int height,
                                   const unsigned char* buffer);
 
 	// params
@@ -109,8 +110,10 @@ extern "C" {
     ndnrtc::IStream* ndnrtc_createRemoteStream(const char *basePrefix, const char *streamName,
         LibLog loggerSink);
     void ndnrtc_startRemoteStreamFetching(ndnrtc::RemoteVideoStream *stream,
+                                          const char *threadName,
                                           BufferAlloc bufferAllocFunc,
                                           FrameFetched frameFetchedFunc);
+    void ndnrtc_stopRemoteStreamFetching(ndnrtc::RemoteVideoStream *stream);
 
 	const char* ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *stream);
 	const char* ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *stream);

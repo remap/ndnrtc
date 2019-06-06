@@ -228,7 +228,9 @@ MediaStreamMeta::getThreads() const
 uint64_t
 MediaStreamMeta::getStreamTimestamp() const
 {
-    return *(uint64_t*)getBlob(0).data();
+    if (getBlobsNum())
+        return *(uint64_t*)getBlob(0).data();
+    return 0;
 }
 
 //******************************************************************************
@@ -241,7 +243,7 @@ WireSegment::WireSegment(const std::shared_ptr<ndn::Data> &data,
     {
         std::stringstream ss;
         ss << "Attempt to create wired data object with "
-           << "unsupported namespace API version: " << dataNameInfo_.apiVersion_ 
+           << "unsupported namespace API version: " << dataNameInfo_.apiVersion_
            << " (current version is " << NameComponents::nameApiVersion() << ")"
            << std::endl;
         throw std::runtime_error(ss.str());
