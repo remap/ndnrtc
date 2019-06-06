@@ -101,6 +101,8 @@ protected:
     
     std::string             errorString_, warningString_;
     
+    std::string logFile_;
+    boost::shared_ptr<ndnlog::new_api::Logger> streamLogger_;
     boost::shared_ptr<ndnrtc::IStream>      stream_;
     ndnrtc::statistics::StatisticsStorage*  statStorage_;
     
@@ -129,6 +131,7 @@ protected:
      */
     void                    flipFrame(int width, int height, uint8_t* buffer,
                                       bool flipH, bool flipV, bool convertToArgb);
+    void                    checkUpdateLogger(std::string logFile, std::string logLevel);
 };
 
 #endif /* ndnrtcTOP_base_hpp */

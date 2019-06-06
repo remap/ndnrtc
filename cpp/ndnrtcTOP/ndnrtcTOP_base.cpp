@@ -39,6 +39,8 @@ namespace ndn {
 #define PAR_NFD_HOST            "Nfdhost"
 #define PAR_USE_MACOS_KEYCHAIN  "Usemacoskeychain"
 #define PAR_INIT                "Init"
+#define PAR_LOGFILE             "Logfile"
+#define PAR_LOGLEVEL            "Loglevel"
 
 //******************************************************************************
 /**
@@ -236,6 +238,26 @@ ndnrtcTOPbase::setupParameters(OP_ParameterManager* manager, void *reserved1)
         OP_ParAppendResult res = manager->appendPulse(np);
         assert(res == OP_ParAppendResult::Success);
     }
+    {
+        OP_StringParameter sp;
+        
+        sp.name = PAR_LOGFILE;
+        sp.label = "Log File";
+        sp.page = "Advanced";
+        logFile_ =("/tmp/"+this->opName_+".log");
+        sp.defaultValue = logFile_.c_str();
+        
+        OP_ParAppendResult res = manager->appendString(sp);
+        assert(res == OP_ParAppendResult::Success);
+        
+        #define NLEVELS 4
+        static const char *logLevels[NLEVELS] = {"Info", "Debug", "All", "None"};
+        
+        sp.name = PAR_LOGLEVEL;
+        sp.label = "Log Level";
+        res = manager->appendMenu(sp, NLEVELS, logLevels, logLevels);
+        assert(res == OP_ParAppendResult::Success);
+    }
 }
 
 void
@@ -268,6 +290,11 @@ ndnrtcTOPbase::checkInputs(TOP_OutputFormatSpecs *, const OP_Inputs *inputs, TOP
         updatedParams.insert(PAR_NFD_HOST);
         params_->nfdHost_ = string(inputs->getParString(PAR_NFD_HOST));
     }
+    
+    string logFile = inputs->getParString(PAR_LOGFILE);
+    string logLevel = inputs->getParString(PAR_LOGLEVEL);
+    
+    checkUpdateLogger(logFile, logLevel);
     
     return updatedParams;
 }
@@ -464,3 +491,27 @@ ndnrtcTOPbase::flipFrame(int width, int height, uint8_t* buf,
         }
 }
 
+void
+ndnrtcTOPbase::checkUpdateLogger(std::string logFile, std::string logLevel)
+{
+    if ((!streamLogger_ || logFile_ != logFile) && stream_)
+    {
+        boost::shared_ptr<ndnlog::new_api::Logger> logger = boost::make_shared<ndnlog::new_api::Logger>(ndnlog::NdnLoggerDetailLevelDefault, logFile);
+        if (stream_) stream_->setLogger(logger);
+        streamLogger_ = logger;
+    }
+    
+    static map<string, ndnlog::NdnLoggerDetailLevel> logLevels = {
+        { "None", ndnlog::NdnLoggerDetailLevelNone },
+        { "Info", ndnlog::NdnLoggerDetailLevelDefault },
+        { "Debug", ndnlog::NdnLoggerDetailLevelDebug },
+        { "All", ndnlog::NdnLoggerDetailLevelAll }
+    };
+    
+    if (logLevels.find(logLevel) != logLevels.end())
+    {
+        ndnlog::NdnLoggerDetailLevel lvl = logLevels[logLevel];
+        if (streamLogger_ && streamLogger_->getLogLevel() != lvl)
+            streamLogger_->setLogLevel(lvl);
+    }
+}
