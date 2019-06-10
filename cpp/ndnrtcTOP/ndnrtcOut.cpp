@@ -473,6 +473,7 @@ ndnrtcOut::createLocalStream(TOP_OutputFormatSpecs *outputFormat,
     stream_ = boost::make_shared<LocalVideoStream>(readBasePrefix(inputs),
                                                    streamSettings,
                                                    inputs->getParInt(PAR_FEC));
+    stream_->setLogger(streamLogger_);
 }
 
 MediaStreamParams

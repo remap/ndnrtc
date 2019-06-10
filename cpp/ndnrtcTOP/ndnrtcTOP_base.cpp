@@ -496,8 +496,9 @@ ndnrtcTOPbase::checkUpdateLogger(std::string logFile, std::string logLevel)
 {
     if ((!streamLogger_ || logFile_ != logFile) && stream_)
     {
-        boost::shared_ptr<ndnlog::new_api::Logger> logger = boost::make_shared<ndnlog::new_api::Logger>(ndnlog::NdnLoggerDetailLevelDefault, logFile);
-        if (stream_) stream_->setLogger(logger);
+        logFile_ = logFile;
+        boost::shared_ptr<ndnlog::new_api::Logger> logger = boost::make_shared<ndnlog::new_api::Logger>(ndnlog::NdnLoggerDetailLevelDefault, logFile_);
+        stream_->setLogger(logger);
         streamLogger_ = logger;
     }
     
