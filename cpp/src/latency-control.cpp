@@ -246,7 +246,7 @@ LatencyControl::DefaultStrategy::getTargetPlayoutSize(const estimators::Average 
                                                       const unsigned int &lowerLimit)
 {
     double d = drd.value() + alpha_ * drd.deviation();
-    return (d > lowerLimit ? (unsigned int)d : lowerLimit);
+    return (d > lowerLimit ? std::min((unsigned int)d, 4*lowerLimit) : lowerLimit);
 }
 
 //******************************************************************************
@@ -255,8 +255,8 @@ LatencyControl::LatencyControl(unsigned int timeoutWindowMs,
                                const boost::shared_ptr<statistics::StatisticsStorage> &storage) 
     :
     stabilityEstimator_(STABILITY_ESTIMATOR_LOW),
-    queueSizeStrategy_(boost::make_shared<DefaultStrategy>()), // default
-    // queueSizeStrategy_(boos::make_shared<DefaultStrategy>(10)), // conservative
+    // queueSizeStrategy_(boost::make_shared<DefaultStrategy>()), // default
+    queueSizeStrategy_(boos::make_shared<DefaultStrategy>(2)),
     drdChangeEstimator_(boost::make_shared<DrdChangeEstimator>(7, 3, 0.12)),
     timestamp_(0),
     waitForChange_(false), waitForStability_(false),

@@ -13,7 +13,7 @@
 #include "estimators.hpp"
 
 #define DEVIATION_ALPHA 1.
-#define MAX_PIPELINE_SIZE_MS 3000 // pipeline size shouldn't be more than this amount of milliseconds
+#define MAX_PIPELINE_SIZE_MS 1000 // pipeline size shouldn't be more than this amount of milliseconds
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;

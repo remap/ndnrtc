@@ -68,3 +68,7 @@ android
 xcuserdata
 build
 loopback
+
+*.pyc
+*.egg*
+env
