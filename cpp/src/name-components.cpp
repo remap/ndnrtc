@@ -249,7 +249,7 @@ bool extractVideoStreamInfo(const ndn::Name& name, NamespaceInfo& info)
             info.segmentClass_ = SegmentClass::Meta;
             if(name.size() > idx-1 && extractMeta(name.getSubName(idx), info))
                 return true;
-            return false;
+            return true;
         }
 
         if (name[idx-1] == Name::Component(NameComponents::NameComponentDelta) || 
@@ -364,7 +364,7 @@ bool extractAudioStreamInfo(const ndn::Name& name, NamespaceInfo& info)
             info.segmentClass_ = SegmentClass::Meta;
             if (name.size() > idx+1 && extractMeta(name.getSubName(idx+1), info))
                 return true;
-            return false;
+            return true;
         }
 
         info.isDelta_ = true;
