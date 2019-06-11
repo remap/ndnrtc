@@ -84,7 +84,7 @@ class DrdChangeEstimator : public ndnlog::new_api::ILoggingObject
 
 //******************************************************************************
 StabilityEstimator::StabilityEstimator(unsigned int sampleSize, unsigned int minStableOccurrences,
-                                       double threshold, double rateSimilarityLevel) 
+                                       double threshold, double rateSimilarityLevel)
     : sampleSize_(sampleSize), minOccurrences_(minStableOccurrences),
       threshold_(threshold), rateSimilarityLevel_(rateSimilarityLevel),
       m1_(Average(boost::make_shared<SampleWindow>(sampleSize_))),
@@ -242,7 +242,7 @@ void DrdChangeEstimator::flush()
 
 //******************************************************************************
 unsigned int
-LatencyControl::DefaultStrategy::getTargetPlayoutSize(const estimators::Average &drd, 
+LatencyControl::DefaultStrategy::getTargetPlayoutSize(const estimators::Average &drd,
                                                       const unsigned int &lowerLimit)
 {
     double d = drd.value() + alpha_ * drd.deviation();
@@ -252,11 +252,11 @@ LatencyControl::DefaultStrategy::getTargetPlayoutSize(const estimators::Average 
 //******************************************************************************
 LatencyControl::LatencyControl(unsigned int timeoutWindowMs,
                                const boost::shared_ptr<const DrdEstimator> &drd,
-                               const boost::shared_ptr<statistics::StatisticsStorage> &storage) 
+                               const boost::shared_ptr<statistics::StatisticsStorage> &storage)
     :
     stabilityEstimator_(STABILITY_ESTIMATOR_LOW),
     // queueSizeStrategy_(boost::make_shared<DefaultStrategy>()), // default
-    queueSizeStrategy_(boos::make_shared<DefaultStrategy>(2)),
+    queueSizeStrategy_(boost::make_shared<DefaultStrategy>(2)),
     drdChangeEstimator_(boost::make_shared<DrdChangeEstimator>(7, 3, 0.12)),
     timestamp_(0),
     waitForChange_(false), waitForStability_(false),
@@ -282,7 +282,7 @@ void LatencyControl::onDrdUpdate()
 
     if (playoutControl_.get())
     {
-        unsigned int targetSize = queueSizeStrategy_->getTargetPlayoutSize(drd_->getOriginalAverage(), 
+        unsigned int targetSize = queueSizeStrategy_->getTargetPlayoutSize(drd_->getOriginalAverage(),
                                                                            DEFAULT_TARGET_QUEUE_SIZE);
 
         if (targetSize != playoutControl_->getThreshold())
@@ -335,7 +335,7 @@ void LatencyControl::sampleArrived(const PacketNumber &playbackNo)
 
             waitForStability_ = false;
             // this needs to be set only if pipeline was actually changed. @see pipelineChanged()
-            // waitForChange_ = true; 
+            // waitForChange_ = true;
             command = DecreasePipeline;
         }
     }
@@ -405,9 +405,9 @@ void LatencyControl::pipelineChanged(int64_t now)
     drdChangeEstimator_->flush();
 
     LogDebugC << "pipeline changed. cmd: "
-              << (currentCommand_ == DecreasePipeline ? "decrease" : 
+              << (currentCommand_ == DecreasePipeline ? "decrease" :
                                     (currentCommand_ == IncreasePipeline ? "increase" : "keep"))
               << " wait for DRD change: " << (waitForChange_ ? "YES" : "NO")
-              << " wait for stabilization: " << (waitForStability_ ? "YES" : "NO") 
+              << " wait for stabilization: " << (waitForStability_ ? "YES" : "NO")
               << std::endl;
 }
