@@ -118,7 +118,8 @@ DestroyTOPInstance(TOP_CPlusPlusBase* instance, TOP_Context *context)
  * (either float or string)
  */
 enum class InfoChopIndex {
-    PublishedFrame
+    PublishedFrame,
+    PrefixRegistered
 };
 
 
@@ -126,7 +127,8 @@ enum class InfoChopIndex {
  * This maps output CHOP's channel names
  */
 static std::map<InfoChopIndex, std::string> ChanNames = {
-    { InfoChopIndex::PublishedFrame, "publishedFrame" }
+    { InfoChopIndex::PublishedFrame, "publishedFrame" },
+    { InfoChopIndex::PrefixRegistered, "prefixRegistered" }
 };
 
 /**
@@ -223,6 +225,12 @@ ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan, void *reserved1
             {
                 chan->name->setString(ChanNames[idx].c_str());
                 chan->value = (float)publbishedFrame_;
+            }
+                break;
+            case InfoChopIndex::PrefixRegistered:
+            {
+                chan->name->setString(ChanNames[idx].c_str());
+                chan->value = (float)prefixRegistered_;
             }
                 break;
             default:

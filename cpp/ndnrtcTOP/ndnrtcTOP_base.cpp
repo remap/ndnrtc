@@ -84,7 +84,8 @@ errorString_(""), warningString_(""),
 statStorage_(nullptr),
 stream_(nullptr),
 opName_(extractOpName(info->opPath)),
-reinitParams_(ReinitParams)
+reinitParams_(ReinitParams),
+prefixRegistered_(0)
 {
     description_ = "ndnrtcTOP_base";
 
@@ -433,7 +434,8 @@ ndnrtcTOPbase::registerPrefix(TOP_OutputFormatSpecs* outputFormat,
 
     ndn::Name prefix(readBasePrefix(inputs));
 
-    faceProcessor_->getFace()->registerPrefix(prefix,
+    prefixRegistered_ = 0;
+    faceProcessor_->registerPrefix(prefix,
                                               [this](const boost::shared_ptr<const ndn::Name>& prefix,
                                                      const boost::shared_ptr<const ndn::Interest>& interest,
                                                      ndn::Face& face, uint64_t interestFilterId,
@@ -447,6 +449,7 @@ ndnrtcTOPbase::registerPrefix(TOP_OutputFormatSpecs* outputFormat,
                                               [this](const boost::shared_ptr<const ndn::Name>& prefix,
                                                      uint64_t registeredPrefixId){
                                                   LogInfoC << "registered prefix " << *prefix << endl;
+                                                  prefixRegistered_ = 1;
                                               });
 }
 

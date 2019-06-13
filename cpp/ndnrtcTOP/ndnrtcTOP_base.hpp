@@ -87,6 +87,7 @@ protected:
     std::string              opName_;
     std::set<std::string>    reinitParams_; // defines parameters that are crucial for reinit
     Params                   *params_;
+    int                      prefixRegistered_;
     
     // FIFO Queue of callbbacks that will be called from within execute() method.
     // Queue will be executed until empty.
