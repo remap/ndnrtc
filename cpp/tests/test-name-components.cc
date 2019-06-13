@@ -1,4 +1,4 @@
-// 
+//
 // test-name-components.cc
 //
 //  Created by Peter Gusev on 22 April 2016.
@@ -361,6 +361,13 @@ TEST(TestNameComponents, TestPrefixFiltering)
 	}
 }
 #endif
+TEST(TestNameCompo, TestNameExtraction)
+{
+	{
+		NamespaceInfo info;
+		ASSERT_TRUE(NameComponents::extractInfo("/icear/user/mt1/ndnrtc/%FD%03/video/back_camera/%FC%00%00%01kG%A2%FB%D4/t/_meta", info));
+	}
+}
 #if 0
 TEST(TestNameComponents, TestSuffixFiltering)
 {
