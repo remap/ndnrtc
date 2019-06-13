@@ -273,6 +273,7 @@ class BootstrappingT : public PipelineControlState,
     void askMetadata()
     {
         // ctrl_->pipeliner_->setNeedMetadata();
+        ctrl_->drdEstimator_->reset();
         ctrl_->pipeliner_->expressBootstrap(ctrl_->threadPrefix_);
     }
 
