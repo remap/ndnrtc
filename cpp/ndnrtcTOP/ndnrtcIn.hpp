@@ -11,6 +11,7 @@
 #include <ndnrtc/params.hpp>
 #include <ndnrtc/interfaces.hpp>
 #include <ndnrtc/remote-stream.hpp>
+#include <ndnrtc/name-components.hpp>
 
 #include <boost/atomic.hpp>
 
@@ -57,6 +58,8 @@ public:
 
 private:
     boost::shared_ptr<RemoteStreamRenderer> streamRenderer_;
+    ndnrtc::FrameInfo  receivedFrameInfo_;
+    int state_;
 
     void                    initStream() override;
     std::set<std::string>   checkInputs(TOP_OutputFormatSpecs*, const OP_Inputs*, TOP_Context *) override;

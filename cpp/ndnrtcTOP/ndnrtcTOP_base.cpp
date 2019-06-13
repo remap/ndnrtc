@@ -53,6 +53,10 @@ enum class InfoDatIndex {
     LibVersion,
     Prefix,
     NdnRtcPrefix,
+    SignIdentity,
+    SignCertificate,
+    InstanceIdentity,
+    InstanceCertificate
 };
 
 /**
@@ -62,7 +66,11 @@ enum class InfoDatIndex {
 static std::map<InfoDatIndex, std::string> RowNames = {
     { InfoDatIndex::LibVersion, "Library Version" },
     { InfoDatIndex::Prefix, "Prefix" },
-    { InfoDatIndex::NdnRtcPrefix, "NDNRTC Prefix" }
+    { InfoDatIndex::NdnRtcPrefix, "NDNRTC Prefix" },
+    { InfoDatIndex::SignIdentity, "Sign Identity" },
+    { InfoDatIndex::SignCertificate, "Sign Certificate" },
+    { InfoDatIndex::InstanceIdentity, "Instance Identity" },
+    { InfoDatIndex::InstanceCertificate, "Instance Certificate" }
 };
 
 const std::string ndnrtcTOPbase::SigningIdentityName = "/touchdesigner";
@@ -195,6 +203,27 @@ ndnrtcTOPbase::getInfoDATEntries(int32_t index,
             {
                 if (stream_)
                     strcpy(tempBuffer2, stream_->getBasePrefix().c_str());
+            }
+                break;
+            case InfoDatIndex::SignIdentity:
+            {
+                std::string identity(keyChainManager_->defaultKeyChain()->getDefaultIdentity().toUri().c_str());
+                strcpy(tempBuffer2, identity.c_str());
+            }
+                break;
+            case InfoDatIndex::SignCertificate:
+            {
+                strcpy(tempBuffer2, keyChainManager_->signingIdentityCertificate()->getName().toUri().c_str());
+            }
+                break;
+            case InfoDatIndex::InstanceIdentity:
+            {
+                strcpy(tempBuffer2, keyChainManager_->instancePrefix().c_str());
+            }
+                break;
+            case InfoDatIndex::InstanceCertificate:
+            {
+                strcpy(tempBuffer2, keyChainManager_->instanceCertificate()->getName().toUri().c_str());
             }
                 break;
             default:
