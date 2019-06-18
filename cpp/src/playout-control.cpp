@@ -28,7 +28,7 @@ PlayoutControl::PlayoutControl(const std::shared_ptr<IPlayout> &playout,
                                const std::shared_ptr<RetransmissionController> &rtxController,
                                unsigned int minimalPlayableLevel)
     : playoutAllowed_(false),
-      ffwdMs_(0), queueCheckMs_(0), 
+      ffwdMs_(0), queueCheckMs_(0),
       playbackQueueSize_(Average(std::make_shared<TimeWindow>(QUEUE_CHECK_INTERVAL))),
       playout_(playout),
       queue_(queue),
@@ -42,7 +42,7 @@ PlayoutControl::PlayoutControl(const std::shared_ptr<IPlayout> &playout,
 void PlayoutControl::allowPlayout(bool allow, int ffwdMs)
 {
     if (allow)
-        LogDebugC << "playout allowed: " << allow 
+        LogDebugC << "playout allowed: " << allow
             << " fast forward: " << ffwdMs << "ms"  << std::endl;
 
     playoutAllowed_ = allow;
@@ -86,7 +86,7 @@ void PlayoutControl::checkPlayout()
                 playout_->start(pqsize - thresholdMs_);
                 rtxController_->setEnabled(true);
 
-                // enable queue checking a bit later - give some time for 
+                // enable queue checking a bit later - give some time for
                 // queue to stabilize (after fastforward)
                 queueCheckMs_ = clock::millisecondTimestamp() + QUEUE_CHECK_INTERVAL;
             }
@@ -103,18 +103,19 @@ void PlayoutControl::checkPlayout()
 void PlayoutControl::checkPlaybackQueueSize()
 {
     int64_t now = clock::millisecondTimestamp();
-    
+
     // check queue size
     if (now - queueCheckMs_ >= QUEUE_CHECK_INTERVAL)
     {
         queueCheckMs_ = now;
-        double diffMs = (double)(thresholdMs_ - playbackQueueSize_.value());
-        double framesDiff = diffMs / queue_->samplePeriod();
+        double diffMs = (double)(thresholdMs_ - (double)queue_->size()); //playbackQueueSize_.value());
+        double framesDiff = fabs(diffMs / queue_->samplePeriod());
+        int dir = (diffMs < 0 ? -1: 1);
 
-        if (fabs(framesDiff) > QUEUE_DIFF_THRESHOLD)
+        if (framesDiff > QUEUE_DIFF_THRESHOLD)
         {
             double maxAdjustment = QUEUE_DIFF_THRESHOLD*queue_->samplePeriod();
-            int64_t adjustmentMs = (int64_t)fmin(diffMs, maxAdjustment);
+            int64_t adjustmentMs = dir * (int64_t)fmin(fabs(diffMs), maxAdjustment);
 
             LogDebugC << "adjusting playback queue by " << adjustmentMs << "ms" << std::endl;
             playout_->addAdjustment(adjustmentMs);
@@ -131,8 +132,8 @@ void PlayoutControl::onOriginalDrdUpdate(double drd, double dev)
         target >= PlayoutControl::MinimalPlayableLevel &&
         thresholdMs_ != userThresholdMs_)
     {
-        LogTraceC << "target playback queue size " << thresholdMs_ 
-                  << " differs from DRD " << drd 
+        LogTraceC << "target playback queue size " << thresholdMs_
+                  << " differs from DRD " << drd
                   << " (by " << diff << ")" << std::endl;
 
         thresholdMs_ = target;
