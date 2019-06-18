@@ -123,8 +123,8 @@ RemoteAudioStream::RemoteAudioStream(boost::asio::io_service& faceIo,
 			const int jitterSizeMs):
 RemoteStream(faceIo, face, keyChain, basePrefix, streamName)
 {
-	pimpl_ = std::make_shared<RemoteAudioStreamImpl>(faceIo, face, keyChain,
-                                                       NameComponents::audioStreamPrefix(basePrefix).append(streamName).toUri());
+	streamPrefix_ = NameComponents::audioStreamPrefix(basePrefix).append(streamName).toUri();
+	pimpl_ = std::make_shared<RemoteAudioStreamImpl>(faceIo, face, keyChain, streamPrefix_);
 	pimpl_->setInterestLifetime(interestLifetime);
 	pimpl_->setTargetBufferSize(jitterSizeMs);
 	pimpl_->fetchMeta();
