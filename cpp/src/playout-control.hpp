@@ -34,7 +34,7 @@ class IPlayoutControl : public IPlaybackQueueObserver,
 
 /**
  * PlayoutControl implements functionality to start/stop samples playout.
- * Playout starts whenever it is allowed AND playback queue size reached 
+ * Playout starts whenever it is allowed AND playback queue size reached
  * or excedes minimal playable level (target size). It will fast forward
  * the excess upon start.
  * Playout stops if is is not allowed.
@@ -50,7 +50,8 @@ class PlayoutControl : public NdnRtcComponent,
 
     void allowPlayout(bool allow, int ffwdMs = 0) override;
     void onNewSampleReady() override;
-    void onQueueEmpty() override { /*ignored*/}
+    void onQueueEmpty() override { /*ignored*/ }
+    // void onSamplePlayed() { /*ignored*/ }
     void setThreshold(unsigned int t) override;
     unsigned int getThreshold() const override { return thresholdMs_; }
 

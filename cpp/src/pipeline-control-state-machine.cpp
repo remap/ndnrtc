@@ -60,7 +60,7 @@ class ReceivedMetadataProcessing
                                                                               initialDrd, initialDrd * 0.05);
 
             LOG_USING(ctrl->pipeliner_, ndnlog::NdnLoggerLevelDebug)
-                << "received metadata. delta seq " << metadata->getSeqNo().first 
+                << "received metadata. delta seq " << metadata->getSeqNo().first
                 << " key seq " << metadata->getSeqNo().second
                 << " gop pos " << (int)gopPos
                 << " gop size " << gopSize
@@ -180,7 +180,7 @@ class ReceivedMetadataProcessing
  * 	- resets control structures (pipeliner, interest control, latency control, etc.)
  * On exit:
  * 	- nothing
- * Processed events: 
+ * Processed events:
  * 	- Start: switches to Bootstrapping
  *  - Init: switches to Adjusting
  * 	- Reset: resets control structures
@@ -203,13 +203,13 @@ class Idle : public PipelineControlState
 };
 
 /**
- * Bootstrapping state. Sytem is in this state while waiting for the answer of 
+ * Bootstrapping state. Sytem is in this state while waiting for the answer of
  * the thread metadata Interest.
  * On entry:
  * 	- sends out metadata Interest (accesses pipeliner)
  * On exit:
  * 	- nothing
- * Processed events: 
+ * Processed events:
  *	- Start: ignored
  *	- Reset: resets to idle
  *	- Starvation: ignored
@@ -226,6 +226,7 @@ class BootstrappingT : public PipelineControlState,
     std::string str() const override { return kStateBootstrapping; }
     void enter() override { askMetadata(); }
     int toInt() override { return (int)StateId::Bootstrapping; }
+    void exit() override { metadata_.reset(); }
 
   protected:
     std::string onTimeout(const std::shared_ptr<const EventTimeout> &ev) override
@@ -282,6 +283,10 @@ class BootstrappingT : public PipelineControlState,
         return kStateBootstrapping;
     }
 
+    bool hasMetadata() {
+        return metadata_.get();
+    }
+
   private:
     std::shared_ptr<MetadataClass> metadata_;
 
@@ -297,7 +302,7 @@ class BootstrappingT : public PipelineControlState,
     ENABLE_IF(MetadataClass, AudioThreadMeta)
     bool checkSampleIsExpected(const std::shared_ptr<const WireSegment> &seg)
     {
-        return (seg->getSampleNo() >= ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber());
+        return hasMetadata() && (seg->getSampleNo() >= ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber());
     }
 
     ENABLE_IF(MetadataClass, AudioThreadMeta)
@@ -316,7 +321,7 @@ class BootstrappingT : public PipelineControlState,
         PacketNumber startOffDeltaSeqNo = ReceivedMetadataProcessing<MetadataClass>::getStartOffSequenceNumber().first;
         PacketNumber startOffKeySeqNo = ReceivedMetadataProcessing<MetadataClass>::getStartOffSequenceNumber().second;
 
-        std::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment = 
+        std::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment =
             std::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(seg);
         ImmutableHeaderPacket<VideoFrameSegmentHeader> segmentPacket = videoFrameSegment->segment();
         PacketNumber currentDeltaSeqNo = seg->isDelta() ? seg->getSampleNo() : segmentPacket.getHeader().pairedSequenceNo_ ;
@@ -328,10 +333,12 @@ class BootstrappingT : public PipelineControlState,
     ENABLE_IF(MetadataClass, VideoThreadMeta)
     bool checkSampleIsExpected(const std::shared_ptr<const WireSegment> &seg)
     {
+        if (!hasMetadata()) return false;
+
         PacketNumber minSequenceNoDelta = ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber().first;
         PacketNumber minSequenceNoKey = ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber().second;
 
-        if (seg->isDelta()) 
+        if (seg->isDelta())
             return (seg->getSampleNo() >= minSequenceNoDelta);
 
         return (seg->getSampleNo() >= minSequenceNoKey);
@@ -340,7 +347,7 @@ class BootstrappingT : public PipelineControlState,
     ENABLE_IF(MetadataClass, VideoThreadMeta)
     int calculatePlaybackFfwdInterval(const std::shared_ptr<const WireSegment> &seg)
     {
-        std::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment = 
+        std::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment =
             std::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(seg);
         ImmutableHeaderPacket<VideoFrameSegmentHeader> segmentPacket = videoFrameSegment->segment();
 
@@ -361,13 +368,13 @@ typedef BootstrappingT<VideoThreadMeta> BootstrappingVideo;
  * 	- does nothing
  * On exit:
  * 	- nothing
- * Processed events: 
+ * Processed events:
  *	- Start: ignored
  *	- Reset: resets to idle
  *	- Starvation: resets to idle
  *	- Timeout: re-issue Interest (accesses pipeliner)
  *  - Nack: re-issue Interest (accesses pipeliner)
- *	- Segment: checks interest control (for pipeline decreases), checks latency 
+ *	- Segment: checks interest control (for pipeline decreases), checks latency
  *		control whether latest data arrival stopped, if so, restores previous
  *		pipeline size and transitions to Fetching state
  */
@@ -389,13 +396,13 @@ class Adjusting : public PipelineControlState
 };
 
 /**
- * Fetching state. System is in this state when it receives latest data and 
+ * Fetching state. System is in this state when it receives latest data and
  * the pipeline size is minimized.
  * On entry:
  * 	- does nothing
  * On exit:
  * 	- nothing
- * Processed events: 
+ * Processed events:
  *	- Start: ignored
  *	- Reset: resets to idle
  *	- Starvation: resets to idle
