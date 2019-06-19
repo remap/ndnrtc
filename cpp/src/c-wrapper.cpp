@@ -269,8 +269,18 @@ void ndnrtc_destroyLocalStream(ndnrtc::IStream* streamObject)
 {
 	if (streamObject)
 	{
+		delete streamObject;
+	}
+}
+
+void ndnrtc_destroyRemoteStream(ndnrtc::RemoteVideoStream* streamObject)
+{
+	if (streamObject)
+	{
+		streamObject->stop();
 		if (Renderers.find(streamObject->getPrefix()) != Renderers.end())
 			Renderers.erase(streamObject->getPrefix());
+
 		delete streamObject;
 	}
 }
@@ -311,6 +321,11 @@ void ndnrtc_stopRemoteStreamFetching(ndnrtc::RemoteVideoStream *stream)
 	stream->stop();
 	if (Renderers.find(stream->getPrefix()) != Renderers.end())
 		Renderers.erase(stream->getPrefix());
+}
+
+void ndnrtc_setRemoteStreamTargetBuffer(ndnrtc::RemoteVideoStream *stream, int32_t bufferSzMs)
+{
+	stream->setTargetBufferSize(bufferSzMs);
 }
 
 const char* ndnrtc_LocalStream_getPrefix(IStream *stream)

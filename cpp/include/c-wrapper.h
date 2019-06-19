@@ -78,7 +78,8 @@ extern "C" {
 	//			drop_frames
 	//	use FEC
 	ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog loggerSink);
-	void ndnrtc_destroyLocalStream(ndnrtc::IStream* localStreamObject);
+	void ndnrtc_destroyLocalStream(ndnrtc::LocalVideoStream* localStreamObject);
+    void ndnrtc_destroyRemoteStream(ndnrtc::RemoteVideoStream* remoteStreamObject);
 
 	int ndnrtc_LocalVideoStream_incomingI420Frame(ndnrtc::LocalVideoStream *stream,
 			const unsigned int width,
@@ -114,6 +115,7 @@ extern "C" {
                                           BufferAlloc bufferAllocFunc,
                                           FrameFetched frameFetchedFunc);
     void ndnrtc_stopRemoteStreamFetching(ndnrtc::RemoteVideoStream *stream);
+    void ndnrtc_setRemoteStreamTargetBuffer(ndnrtc::RemoteVideoStream *stream, int32_t bufferSzMs);
 
 	const char* ndnrtc_LocalStream_getPrefix(ndnrtc::IStream *stream);
 	const char* ndnrtc_LocalStream_getBasePrefix(ndnrtc::IStream *stream);
