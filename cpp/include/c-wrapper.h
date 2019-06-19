@@ -16,6 +16,7 @@
 extern "C" {
 
     typedef void (*LibLog) (const char* message);
+    typedef void (*CodeBlock) ();
     const char* ndnrtc_getVersion();
 
 	// creates Face
@@ -31,6 +32,8 @@ extern "C" {
 	// init can be called again after this
 	void ndnrtc_deinit();
 
+    // returns true if main thread is running
+    bool ndnrtc_dispatchOnLibraryThread(CodeBlock codeBlock);
 
     typedef struct _LocalStreamParams {
         const char *basePrefix;

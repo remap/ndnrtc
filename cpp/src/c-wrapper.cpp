@@ -212,6 +212,19 @@ void ndnrtc_deinit()
 	Renderers.clear();
 }
 
+bool ndnrtc_dispatchOnLibraryThread(CodeBlock codeBlock)
+{
+	if (LibFaceProcessor && LibFaceProcessor->isProcessing())
+	{
+		LibFaceProcessor->dispatchSynchronized([codeBlock](std::shared_ptr<ndn::Face>){
+			codeBlock();
+		});
+		return true;
+	}
+
+	return false;
+}
+
 ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog loggerSink)
 {
 	if (params.typeIsVideo == 1)
