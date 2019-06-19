@@ -47,14 +47,15 @@ class ReceivedMetadataProcessing
   protected:
     ENABLE_IF(MetadataClass, VideoThreadMeta)
     bool processMetadata(std::shared_ptr<VideoThreadMeta> metadata,
-                         std::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
+                         std::shared_ptr<PipelineControlStateMachine::Struct> ctrl,
+                         double initialDrd)
     {
         if (metadata)
         {
             unsigned char gopPos = metadata->getGopPos();
             unsigned int gopSize = metadata->getCoderParams().gop_;
             PacketNumber deltaToFetch, keyToFetch;
-            double initialDrd = ctrl->drdEstimator_->getOriginalEstimation();
+            // double initialDrd = ctrl->drdEstimator_->getOriginalEstimation();
             unsigned int pipelineInitial =
                 ctrl->interestControl_->getCurrentStrategy()->calculateDemand(metadata->getRate(),
                                                                               initialDrd, initialDrd * 0.05);
@@ -125,12 +126,13 @@ class ReceivedMetadataProcessing
     // TODO: update code for audio too
     ENABLE_IF(MetadataClass, AudioThreadMeta)
     bool processMetadata(std::shared_ptr<AudioThreadMeta> metadata,
-                         std::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
+                         std::shared_ptr<PipelineControlStateMachine::Struct> ctrl,
+                         double initialDrd)
     {
         if (metadata)
         {
             PacketNumber bundleNo = metadata->getBundleNo();
-            double initialDrd = ctrl->drdEstimator_->getOriginalEstimation();
+            // double initialDrd = ctrl->drdEstimator_->getOriginalEstimation();
             unsigned int pipelineInitial =
                 ctrl->interestControl_->getCurrentStrategy()->calculateDemand(metadata->getRate(),
                                                                               initialDrd, initialDrd * 0.05);
@@ -271,6 +273,7 @@ class BootstrappingT : public PipelineControlState,
 
     void askMetadata()
     {
+        metadataExpressTs_ = clock::millisecondTimestamp();
         ctrl_->drdEstimator_->reset();
         ctrl_->pipeliner_->setNeedMetadata();
         ctrl_->pipeliner_->express(ctrl_->threadPrefix_);
@@ -279,7 +282,8 @@ class BootstrappingT : public PipelineControlState,
     std::string receivedMetadata(const std::shared_ptr<const EventSegment> &ev)
     {
         metadata_ = ReceivedMetadataProcessing<MetadataClass>::extractMetadata(ev->getSegment());
-        ReceivedMetadataProcessing<MetadataClass>::processMetadata(metadata_, ctrl_);
+        ReceivedMetadataProcessing<MetadataClass>::processMetadata(metadata_, ctrl_,
+                clock::millisecondTimestamp() - metadataExpressTs_);
 
         return kStateBootstrapping;
     }
@@ -289,6 +293,7 @@ class BootstrappingT : public PipelineControlState,
     }
 
   private:
+    int64_t metadataExpressTs_;
     std::shared_ptr<MetadataClass> metadata_;
 
     ENABLE_IF(MetadataClass, AudioThreadMeta)

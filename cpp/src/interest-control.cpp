@@ -13,7 +13,7 @@
 #include "estimators.hpp"
 
 #define DEVIATION_ALPHA 1.
-#define MAX_PIPELINE_SIZE_MS 1000 // pipeline size shouldn't be more than this amount of milliseconds
+#define MAX_PIPELINE_SIZE_MS 500 // pipeline size shouldn't be more than this amount of milliseconds
 
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
@@ -24,8 +24,8 @@ void InterestControl::StrategyDefault::getLimits(double rate,
                                                  std::shared_ptr<DrdEstimator> drdEstimator,
                                                  unsigned int &lowerLimit, unsigned int &upperLimit)
 {
-    int interestDemand = calculateDemand(rate, 
-                                         drdEstimator->getOriginalAverage().value(), 
+    int interestDemand = calculateDemand(rate,
+                                         drdEstimator->getOriginalAverage().value(),
                                          drdEstimator->getOriginalAverage().deviation());
     int maxDemandSize = calculateDemand(rate, MAX_PIPELINE_SIZE_MS, 0);
 
