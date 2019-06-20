@@ -313,7 +313,8 @@ BufferSlot::updateConsistencyState(const std::shared_ptr<SlotSegment>& segment)
     hasOriginalSegments_ = segment->isOriginal();
     assembled_ += segment->getData()->getSegmentWeight();
 
-    if (consistency_&SegmentMeta)
+    // if check only for SegmentMeta then cases where parity segment arrives first won't change slot state
+    if (assembled_ > 0) //consistency_&SegmentMeta)
     {
         updateAssembledLevel();
         state_ = (assembled_ >= nDataSegments_ ? Ready : Assembling);
