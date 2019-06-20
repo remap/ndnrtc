@@ -7,6 +7,7 @@
 //
 
 #include "face-processor.hpp"
+#include <thread>
 #include <boost/asio.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/thread.hpp>
@@ -25,30 +26,30 @@ class FaceProcessorImpl : public std::enable_shared_from_this<FaceProcessorImpl>
 public:
     FaceProcessorImpl(std::string host);
     ~FaceProcessorImpl();
-    
+
     void start();
     void stop();
     bool isProcessing();
-    
+
     // non blocking
     void dispatchSynchronized(std::function<void(std::shared_ptr<ndn::Face>)> dispatchBlock);
     // blocking
     void performSynchronized(std::function<void(std::shared_ptr<ndn::Face>)> dispatchBlock);
-    
+
     bool initFace();
     void runFace();
-    
+
     boost::asio::io_service& getIo() { return io_; }
     std::shared_ptr<Face> getFace() { return face_; }
-    
+
 private:
     std::string host_;
     std::shared_ptr<Face> face_;
-    boost::thread t_;
+    std::thread t_;
     bool isRunningFace_;
     boost::asio::io_service io_;
 #ifdef USE_THREADSAFE_FACE
-    std::shared_ptr<io_service::work> ioWork_;
+    std::shared_ptr<boost::asio::io_service::work> ioWork_;
 #endif
 };
 
@@ -68,13 +69,13 @@ bool FaceProcessor::checkNfdConnection()
     // trying to sign with the default key
     std::shared_ptr<MemoryIdentityStorage> identityStorage = std::make_shared<MemoryIdentityStorage>();
     std::shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage = std::make_shared<MemoryPrivateKeyStorage>();
-    
+
     KeyChain keyChain(std::make_shared<IdentityManager>(identityStorage, privateKeyStorage));
     keyChain.createIdentityAndCertificate("connectivity-check");
     keyChain.getIdentityManager()->setDefaultIdentity("connectivity-check");
 #endif
     Face face;
-    
+
     face.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
     face.registerPrefix(ndn::Name("/nfd-connectivity-check"),
                         [](const std::shared_ptr<const ndn::Name>& prefix,
@@ -93,7 +94,7 @@ bool FaceProcessor::checkNfdConnection()
                         });
     while(!done) face.processEvents();
     if (registeredPrefixId) face.removeRegisteredPrefix(registeredPrefixId);
-    
+
     return (registeredPrefixId != 0);
 }
 
@@ -146,13 +147,13 @@ void FaceProcessorImpl::stop()
     if (isRunningFace_)
     {
         isRunningFace_ = false;
-        
+
 #ifdef USE_THREADSAFE_FACE
         face_->shutdown();
-        
+
         std::cout << "work reset" << std::endl;
         ioWork_.reset();
-        
+
         std::cout << "t join" << std::endl;
         t_.join();
 #else
@@ -185,7 +186,7 @@ void FaceProcessorImpl::performSynchronized(std::function<void (std::shared_ptr<
 {
     if (isRunningFace_)
     {
-        if (boost::this_thread::get_id() == t_.get_id())
+        if (std::this_thread::get_id() == t_.get_id())
             dispatchBlock(face_);
         else
         {
@@ -194,13 +195,13 @@ void FaceProcessorImpl::performSynchronized(std::function<void (std::shared_ptr<
             boost::condition_variable isDone;
             boost::atomic<bool> doneFlag(false);
             std::shared_ptr<Face> face = face_;
-            
+
             io_.dispatch([dispatchBlock, face, &isDone, &doneFlag](){
                 dispatchBlock(face);
                 doneFlag = true;
                 isDone.notify_one();
             });
-            
+
             isDone.wait(lock, [&doneFlag](){ return doneFlag.load(); });
         }
     }
@@ -227,20 +228,20 @@ bool FaceProcessorImpl::initFace()
         // notify about error
         return false;
     }
-    
+
     return true;
 }
 
 void FaceProcessorImpl::runFace()
 {
 #ifdef USE_THREADSAFE_FACE
-    ioWork_ = std::make_shared<io_service::work>(io_);
+    ioWork_ = std::make_shared<boost::asio::io_service::work>(io_);
 #endif
     isRunningFace_ = false;
-    
+
     std::shared_ptr<FaceProcessorImpl> self = shared_from_this();
-    
-    t_ = boost::thread([self](){
+
+    t_ = std::thread([self](){
         self->isRunningFace_ = true;
         while (self->isRunningFace_)
         {
@@ -261,6 +262,6 @@ void FaceProcessorImpl::runFace()
             }
         }
     });
-    
+
     while (!isRunningFace_) usleep(10000);
 }
