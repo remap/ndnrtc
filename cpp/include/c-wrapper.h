@@ -26,7 +26,8 @@ extern "C" {
 	//		optional: local key storage
 	// - runs everything on internal thread
 	bool ndnrtc_init(const char* hostname, const char* storagePath,
-		const char* signingIdentity, const char * instanceId, LibLog libLog);
+		const char* signingIdentity, const char * instanceId, LibLog libLog,
+        bool libThread = true);
 
 	// deinitializes library (removes connection and frees objects)
 	// init can be called again after this
@@ -34,6 +35,10 @@ extern "C" {
 
     // returns true if main thread is running
     bool ndnrtc_dispatchOnLibraryThread(CodeBlock codeBlock);
+
+    // runs processEvents for the library's Face object
+    // the library must be initialized with libThread == false
+    bool ndnrtc_processEvents();
 
     typedef struct _LocalStreamParams {
         const char *basePrefix;

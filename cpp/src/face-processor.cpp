@@ -24,7 +24,7 @@ using namespace ndn;
 
 class FaceProcessorImpl : public std::enable_shared_from_this<FaceProcessorImpl>{
 public:
-    FaceProcessorImpl(std::string host);
+    FaceProcessorImpl(std::string host, bool createThread);
     ~FaceProcessorImpl();
 
     void start();
@@ -43,6 +43,7 @@ public:
     std::shared_ptr<Face> getFace() { return face_; }
 
 private:
+    bool createThread_;
     std::string host_;
     std::shared_ptr<Face> face_;
     std::thread t_;
@@ -51,6 +52,8 @@ private:
 #ifdef USE_THREADSAFE_FACE
     std::shared_ptr<boost::asio::io_service::work> ioWork_;
 #endif
+
+    void processEvents();
 };
 
 std::shared_ptr<FaceProcessor>
@@ -98,8 +101,8 @@ bool FaceProcessor::checkNfdConnection()
     return (registeredPrefixId != 0);
 }
 
-FaceProcessor::FaceProcessor(std::string host):
-_pimpl(std::make_shared<FaceProcessorImpl>(host))
+FaceProcessor::FaceProcessor(std::string host, bool createThread):
+_pimpl(std::make_shared<FaceProcessorImpl>(host, createThread))
 {
     if (_pimpl->initFace())
         _pimpl->runFace();
@@ -114,6 +117,7 @@ FaceProcessor::~FaceProcessor() {
 void FaceProcessor::start() { _pimpl->start(); }
 void FaceProcessor::stop() { _pimpl->stop(); }
 bool FaceProcessor::isProcessing() { return _pimpl->isProcessing(); }
+void FaceProcessor::processEvents() { _pimpl->runFace(); }
 void FaceProcessor::dispatchSynchronized(std::function<void (std::shared_ptr<Face>)> dispatchBlock)
 {
     return _pimpl->dispatchSynchronized(dispatchBlock);
@@ -126,7 +130,14 @@ boost::asio::io_service& FaceProcessor::getIo() { return _pimpl->getIo(); }
 std::shared_ptr<Face> FaceProcessor::getFace() { return _pimpl->getFace(); }
 
 //******************************************************************************
-FaceProcessorImpl::FaceProcessorImpl(std::string host):host_(host), isRunningFace_(false)
+FaceProcessorImpl::FaceProcessorImpl(std::string host, bool createThread)
+: host_(host)
+#ifdef USE_THREADSAFE_FACE
+, createThread_(true)
+#else
+, createThread_(createThread)
+#endif
+, isRunningFace_(false)
 {
 }
 
@@ -186,7 +197,7 @@ void FaceProcessorImpl::performSynchronized(std::function<void (std::shared_ptr<
 {
     if (isRunningFace_)
     {
-        if (std::this_thread::get_id() == t_.get_id())
+        if (std::this_thread::get_id() == t_.get_id() || createThread_ == false)
             dispatchBlock(face_);
         else
         {
@@ -241,27 +252,40 @@ void FaceProcessorImpl::runFace()
 
     std::shared_ptr<FaceProcessorImpl> self = shared_from_this();
 
-    t_ = std::thread([self](){
-        self->isRunningFace_ = true;
-        while (self->isRunningFace_)
-        {
-            try {
-#ifdef USE_THREADSAFE_FACE
-                self->io_.run();
-                self->isRunningFace_ = false;
-#else
-                self->io_.poll_one();
-                self->io_.reset();
-                self->face_->processEvents();
-#endif
+    if (createThread_)
+    {
+        t_ = std::thread([self](){
+            self->isRunningFace_ = true;
+            while (self->isRunningFace_)
+            {
+                self->processEvents();
             }
-            catch (std::exception &e) {
-                // notify about error and try to recover
-                if (!self->initFace())
-                    self->isRunningFace_ = false;
-            }
-        }
-    });
+        });
 
-    while (!isRunningFace_) usleep(10000);
+        while (!isRunningFace_) usleep(10000);
+    }
+    else
+    {
+        isRunningFace_ = true;
+        processEvents();
+    }
+}
+
+void FaceProcessorImpl::processEvents()
+{
+    try {
+#ifdef USE_THREADSAFE_FACE
+        io_.run();
+        isRunningFace_ = false;
+#else
+        io_.poll_one();
+        io_.reset();
+        face_->processEvents();
+#endif
+    }
+    catch (std::exception &e) {
+        // notify about error and try to recover
+        if (!initFace())
+            isRunningFace_ = false;
+    }
 }

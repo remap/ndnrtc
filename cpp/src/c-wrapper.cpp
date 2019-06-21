@@ -59,12 +59,13 @@ static std::shared_ptr<FaceProcessor> LibFaceProcessor;
 static std::shared_ptr<MemoryContentCache> LibContentCache; // for registering a prefix and storing certs
 static std::shared_ptr<KeyChain> LibKeyChain;
 static std::shared_ptr<KeyChainManager> LibKeyChainManager;
+static std::shared_ptr<Logger> CallbackLogger;
 
 static std::map<std::string, std::shared_ptr<ExternalRendererProxy>> Renderers;
 
 void initKeyChain(std::string storagePath, std::string signingIdentity);
 void initFace(std::string hostname, std::shared_ptr<Logger> logger,
-	std::string signingIdentity, std::string instanceId);
+	std::string signingIdentity, std::string instanceId, bool libThread);
 MediaStreamParams prepareMediaStreamParams(LocalStreamParams params);
 void registerPrefix(Name prefix, std::shared_ptr<Logger> logger);
 
@@ -178,18 +179,19 @@ const char* ndnrtc_getVersion()
 #include <fstream>
 
 bool ndnrtc_init(const char* hostname, const char* storagePath,
-	const char* signingIdentity, const char * instanceId, LibLog libLog)
+	const char* signingIdentity, const char * instanceId, LibLog libLog,
+	bool libThread)
 {
 	Logger::initAsyncLogging();
 
-	std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
+	CallbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
 		std::make_shared<CallbackSink>(libLog));
-	callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up NDN-RTC..." << std::endl;
+	CallbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up NDN-RTC..." << std::endl;
 
 	try
 	{
 		initKeyChain(storagePath, signingIdentity);
-		initFace(hostname, callbackLogger, signingIdentity, instanceId);
+		initFace(hostname, CallbackLogger, signingIdentity, instanceId, libThread);
 	}
 	catch (std::exception &e)
 	{
@@ -221,6 +223,20 @@ bool ndnrtc_dispatchOnLibraryThread(CodeBlock codeBlock)
 		});
 		return true;
 	}
+
+	return false;
+}
+
+bool ndnrtc_processEvents()
+{
+	if (LibFaceProcessor && LibFaceProcessor->isProcessing())
+	{
+		LibFaceProcessor->processEvents();
+		return true;
+	}
+
+	if (CallbackLogger)
+		CallbackLogger->log(ndnlog::NdnLoggerLevelWarning) << "NDN-RTC: processEvents() failed" << std::endl;
 
 	return false;
 }
@@ -482,9 +498,9 @@ void initKeyChain(std::string storagePath, std::string signingIdentityStr)
 
 // initializes face and face processing thread
 void initFace(std::string hostname, std::shared_ptr<Logger> logger,
-	std::string signingIdentityStr, std::string instanceIdStr)
+	std::string signingIdentityStr, std::string instanceIdStr, bool libThread)
 {
-	LibFaceProcessor = std::make_shared<FaceProcessor>(hostname);
+	LibFaceProcessor = std::make_shared<FaceProcessor>(hostname, libThread);
 	LibKeyChainManager = std::make_shared<KeyChainManager>(LibFaceProcessor->getFace(),
 		LibKeyChain,
 		std::string(signingIdentityStr),

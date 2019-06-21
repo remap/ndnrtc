@@ -21,24 +21,25 @@ class FaceProcessorImpl;
 
 class FaceProcessor {
 public:
-    FaceProcessor(std::string host);
+    FaceProcessor(std::string host, bool createThread = true);
     ~FaceProcessor();
-    
+
     void start();
     void stop();
     bool isProcessing();
-    
+    void processEvents();
+
     boost::asio::io_service& getIo();
     std::shared_ptr<ndn::Face> getFace();
-    
+
     // non blocking
     void dispatchSynchronized(std::function<void(std::shared_ptr<ndn::Face>)> dispatchBlock);
     // blocking
     void performSynchronized(std::function<void(std::shared_ptr<ndn::Face>)> dispatchBlock);
-    
+
     static std::shared_ptr<FaceProcessor> forLocalhost();
     static bool checkNfdConnection();
-    
+
 private:
     std::shared_ptr<FaceProcessorImpl> _pimpl;
 };
