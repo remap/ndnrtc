@@ -278,7 +278,7 @@ void FaceProcessorImpl::processEvents()
         io_.run();
         isRunningFace_ = false;
 #else
-        io_.poll_one();
+        io_.poll();//poll_one();
         io_.reset();
         face_->processEvents();
 #endif

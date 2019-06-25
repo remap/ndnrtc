@@ -318,7 +318,7 @@ ndnrtc::IStream* ndnrtc_createRemoteStream(const char *basePrefix,
 										   const char *streamName,
 										   LibLog loggerSink)
 {
-	std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDebug,
+	std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDefault,
 		std::make_shared<CallbackSink>(loggerSink));
 	callbackLogger->log(ndnlog::NdnLoggerLevelInfo)
 		<< "Setting up Remote Video Stream with base prefix "
@@ -329,7 +329,7 @@ ndnrtc::IStream* ndnrtc_createRemoteStream(const char *basePrefix,
 
 	RemoteVideoStream *stream = new RemoteVideoStream(LibFaceProcessor->getIo(),
 		LibFaceProcessor->getFace(), LibKeyChainManager->instanceKeyChain(),
-		std::string(basePrefix), std::string(streamName));
+		std::string(basePrefix), std::string(streamName), 5000);
 	stream->setLogger(callbackLogger);
 
 	return stream;
