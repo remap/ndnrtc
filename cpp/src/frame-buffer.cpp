@@ -983,7 +983,7 @@ PlaybackQueue::onNewData(const BufferReceipt& receipt)
         for (auto o:observers_) o->onNewSampleReady();
 
         LogDebugC << "--■ add assembled frame " << receipt.slot_->dump() << std::endl;
-        LogDebugC << "dump " << dump() << buffer_->shortdump() << std::endl;
+        LogInfoC << "dump " << dump() << buffer_->shortdump() << std::endl;
 
         (*sstorage_)[Indicator::BufferPlayableSize] = size();
     }

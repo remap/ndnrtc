@@ -1,4 +1,4 @@
-// 
+//
 // playout-impl.cpp
 //
 //  Created by Peter Gusev on 03 August 2016.
@@ -49,7 +49,7 @@ PlayoutImpl::start(unsigned int fastForwardMs)
     lastDelay_ = -1;
     delayAdjustment_ = -(int)fastForwardMs;
     isRunning_ = true;
-    
+
     LogInfoC << "started (ffwd ‣‣" << fastForwardMs << "ms)" << std::endl;
     extractSample();
 }
@@ -79,8 +79,8 @@ PlayoutImpl::setDescription(const std::string &desc)
     jitterTiming_.setDescription(getDescription()+"-timing");
 }
 
-void 
-PlayoutImpl::attach(IPlayoutObserver* o) 
+void
+PlayoutImpl::attach(IPlayoutObserver* o)
 {
     if (o)
     {
@@ -90,7 +90,7 @@ PlayoutImpl::attach(IPlayoutObserver* o)
 }
 
 void
-PlayoutImpl::detach(IPlayoutObserver* o) 
+PlayoutImpl::detach(IPlayoutObserver* o)
 {
     boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
     observers_.erase(std::find(observers_.begin(), observers_.end(), o));
@@ -100,7 +100,7 @@ PlayoutImpl::detach(IPlayoutObserver* o)
 void PlayoutImpl::extractSample()
 {
     if (!isRunning_) return;
-    
+
     stringstream debugStr;
     int64_t sampleDelay = (int64_t)round(pqueue_->samplePeriod());
     bool validForPlayback = false;
@@ -133,7 +133,9 @@ void PlayoutImpl::extractSample()
     int64_t actualDelay = adjustDelay(sampleDelay);
 
     if (validForPlayback)
-        LogDebugC << "●-- play frame " << debugStr.str() << actualDelay << "ms" << std::endl;
+        LogInfoC << "●-- play frame " << debugStr.str() << actualDelay << "ms" << std::endl;
+    else
+        LogInfoC << "x-- skip frame " << debugStr.str() << actualDelay << "ms" << std::endl;
 
     std::shared_ptr<PlayoutImpl> me = std::dynamic_pointer_cast<PlayoutImpl>(shared_from_this());
     jitterTiming_.updatePlayoutTime(actualDelay);
@@ -145,8 +147,8 @@ void PlayoutImpl::correctAdjustment(int64_t newSampleTimestamp)
     if (lastDelay_ >= 0)
     {
         int64_t prevDelay = newSampleTimestamp-lastTimestamp_;
-        
-        LogTraceC << ". prev delay hard " << prevDelay 
+
+        LogTraceC << ". prev delay hard " << prevDelay
             << " offset " << prevDelay - lastDelay_ << std::endl;
 
         delayAdjustment_ += (prevDelay - lastDelay_);
@@ -169,7 +171,7 @@ int64_t PlayoutImpl::adjustDelay(int64_t delay)
         delayAdjustment_ = 0;
     }
 
-    LogTraceC << ". total adj " << delayAdjustment_ << " delay " 
+    LogTraceC << ". total adj " << delayAdjustment_ << " delay "
     << (delay+adj) << std::endl;
 
     return (delay+adj);

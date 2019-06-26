@@ -60,7 +60,7 @@ class ReceivedMetadataProcessing
                 ctrl->interestControl_->getCurrentStrategy()->calculateDemand(metadata->getRate(),
                                                                               initialDrd, initialDrd * 0.05);
 
-            LOG_USING(ctrl->pipeliner_, ndnlog::NdnLoggerLevelDebug)
+            LOG_USING(ctrl->pipeliner_, ndnlog::NdnLoggerLevelInfo)
                 << "received metadata. delta seq " << metadata->getSeqNo().first
                 << " key seq " << metadata->getSeqNo().second
                 << " gop pos " << (int)gopPos
