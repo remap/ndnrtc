@@ -185,7 +185,7 @@ bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame &frame)
         {
             FutureFramePtr ff =
                 std::make_shared<FutureFrame>(boost::move(boost::async(boost::launch::async,
-                                                                         std::bind(&VideoThread::encode, it.second.get(), 
+                                                                         std::bind(&VideoThread::encode, it.second.get(),
                                                                          (*scalers_[it.first])(frame)))));
             futureFrames[it.first] = ff;
         }
@@ -275,7 +275,7 @@ std::string VideoStreamImpl::publish(const std::string &thread, FramePacketPtr &
 
     size_t nDataSeg = VideoFrameSegment::numSlices(*fp,
                                                    settings_.params_.producerParams_.segmentSize_);
-    size_t nParitySeg = VideoFrameSegment::numSlices(*parityData,
+    size_t nParitySeg = fecEnabled_ && VideoFrameSegment::numSlices(*parityData,
                                                      settings_.params_.producerParams_.segmentSize_);
     std::shared_ptr<VideoStreamImpl> me = std::static_pointer_cast<VideoStreamImpl>(shared_from_this());
     std::shared_ptr<MetaKeeper> keeper = metaKeepers_[thread];
@@ -375,11 +375,11 @@ bool VideoStreamImpl::updateMeta()
                 .appendVersion(it.second->getVersionNumber());
         metadataPublisher_->publish(metaName, it.second->getMeta());
 
-        LogDebugC << "published meta: seginfo " 
+        LogDebugC << "published meta: seginfo "
                   << it.second->getMeta().getSegInfo().deltaAvgSegNum_ << " "
                   << it.second->getMeta().getSegInfo().deltaAvgParitySegNum_ << " "
                   << it.second->getMeta().getSegInfo().keyAvgSegNum_ << " "
-                  << it.second->getMeta().getSegInfo().keyAvgParitySegNum_ 
+                  << it.second->getMeta().getSegInfo().keyAvgParitySegNum_
                   << " seq " << it.second->getMeta().getSeqNo().first << " "
                   << it.second->getMeta().getSeqNo().second << " "
                   << " gop pos " << (int)it.second->getMeta().getGopPos()
