@@ -27,13 +27,13 @@ using namespace boost;
 RemoteVideoStreamImpl::RemoteVideoStreamImpl(boost::asio::io_service &io,
                                              const std::shared_ptr<ndn::Face> &face,
                                              const std::shared_ptr<ndn::KeyChain> &keyChain,
-                                             const std::string &streamPrefix) 
+                                             const std::string &streamPrefix)
     : RemoteStreamImpl(io, face, keyChain, streamPrefix)
 {
     type_ = MediaStreamParams::MediaStreamType::MediaStreamTypeVideo;
 
     PipelinerSettings pps;
-    pps.interestLifetimeMs_ = 2000;
+    pps.interestLifetimeMs_ = 4000;
     pps.sampleEstimator_ = sampleEstimator_;
     pps.buffer_ = buffer_;
     pps.interestControl_ = interestControl_;
@@ -115,7 +115,7 @@ void RemoteVideoStreamImpl::setupDecoder()
     VideoThreadMeta meta(threadsMeta_[threadName_]->data());
     std::shared_ptr<VideoDecoder> decoder =
         std::make_shared<VideoDecoder>(meta.getCoderParams(),
-                                         [this, me](const FrameInfo& finfo, const WebRtcVideoFrame &frame) 
+                                         [this, me](const FrameInfo& finfo, const WebRtcVideoFrame &frame)
                                          {
                                             feedFrame(finfo, frame);
                                          });
