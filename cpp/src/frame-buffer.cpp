@@ -556,6 +556,9 @@ Buffer::reset()
     for (auto s:activeSlots_)
         pool_->push(s.second);
     activeSlots_.clear();
+    for (auto s:reservedSlots_)
+        pool_->push(s.second);
+    reservedSlots_.clear();
 
      LogDebugC << "slot pool capacity " << pool_->capacity()
         << " pool size " << pool_->size() << " "
