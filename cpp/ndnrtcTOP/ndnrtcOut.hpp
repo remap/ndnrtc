@@ -8,6 +8,7 @@
 #include "ndnrtcTOP_base.hpp"
 
 #include <ndnrtc/params.hpp>
+#include <ndnrtc/interfaces.hpp>
 
 namespace ndnrtc {
     namespace statistics {
@@ -56,7 +57,8 @@ public:
     virtual void        pulsePressed(const char *name, void* reserved1) override;
     
 private:
-    int                 publbishedFrame_;
+    int                 publishedFrame_;
+    ndnrtc::FrameInfo   publishedFrameInfo_;
     
     int                     incomingFrameBufferSize_, incomingFrameWidth_, incomingFrameHeight_;
     unsigned char*          incomingFrameBuffer_;

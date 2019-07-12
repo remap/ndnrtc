@@ -132,6 +132,19 @@ static std::map<InfoChopIndex, std::string> ChanNames = {
 };
 
 /**
+ * This maps output DAT's fields onto their textual representation
+ */
+enum class InfoDatIndex {
+    PublishedFrameName,
+    PublishedFrameTimestamp
+};
+
+static std::map<InfoDatIndex, std::string> RowNames = {
+    { InfoDatIndex::PublishedFrameName, "Published Frame Name" },
+    { InfoDatIndex::PublishedFrameTimestamp, "Published Frame Timestamp" }
+};
+
+/**
  * These are the parameters that will affect whether TOP must be re-initialized or not
  */
 #if USE_ENCODE_RESOLUTION
@@ -201,8 +214,15 @@ ndnrtcOut::execute(TOP_OutputFormatSpecs* outputFormat,
             // TODO: to update preview, need to get frame sizes from the input and then set them for outputFormat
             // on the next run (need to save input sizes, like "prevInputWidth = topInput->width;")
 //            memcpy(outputFormat->cpuPixelData[0], incomingFrameBuffer_, incomingFrameBufferSize_);
-            boost::dynamic_pointer_cast<LocalVideoStream>(stream_)->incomingBgraFrame(topInput->width, topInput->height,
+            int fNo = boost::dynamic_pointer_cast<LocalVideoStream>(stream_)->incomingBgraFrame(topInput->width, topInput->height,
                                                                                       incomingFrameBuffer_, incomingFrameBufferSize_);
+            if (fNo >= 0)
+            {
+                publishedFrame_ = fNo;
+                map<string, FrameInfo> m = boost::dynamic_pointer_cast<LocalVideoStream>(stream_)->getLastPublishedInfo();
+                publishedFrameInfo_ = m.begin()->second;
+            }
+            
         }
     }
 }
@@ -224,7 +244,7 @@ ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan, void *reserved1
             case InfoChopIndex::PublishedFrame:
             {
                 chan->name->setString(ChanNames[idx].c_str());
-                chan->value = (float)publbishedFrame_;
+                chan->value = (float)publishedFrame_;
             }
                 break;
             case InfoChopIndex::PrefixRegistered:
@@ -259,7 +279,9 @@ ndnrtcOut::getInfoCHOPChan(int32_t index, OP_InfoCHOPChan* chan, void *reserved1
 bool
 ndnrtcOut::getInfoDATSize(OP_InfoDATSize* infoSize, void *reserved1)
 {
-    return ndnrtcTOPbase::getInfoDATSize(infoSize, reserved1);
+    ndnrtcTOPbase::getInfoDATSize(infoSize, reserved1);
+    infoSize->rows += RowNames.size();
+    return true;
 }
 
 void
@@ -268,7 +290,34 @@ ndnrtcOut::getInfoDATEntries(int32_t index,
                              OP_InfoDATEntries* entries,
                              void *reserved1)
 {
-    ndnrtcTOPbase::getInfoDATEntries(index, nEntries, entries, reserved1);
+    if (index >= RowNames.size())
+        ndnrtcTOPbase::getInfoDATEntries(index-(int32_t)RowNames.size(), nEntries, entries, reserved1);
+    else
+    {
+        InfoDatIndex idx = (InfoDatIndex)index;
+        
+        if (RowNames.find(idx) != RowNames.end())
+        {
+            entries->values[0]->setString(RowNames[idx].c_str());
+            switch (idx)
+            {
+                case InfoDatIndex::PublishedFrameName:
+                {
+                    entries->values[1]->setString(publishedFrameInfo_.ndnName_.c_str());
+                }
+                    break;
+                case InfoDatIndex::PublishedFrameTimestamp:
+                {
+                    static char tempBuffer[4096];
+                    memset(tempBuffer, 0, 4096);
+                    sprintf(tempBuffer, "%f", ((double)publishedFrameInfo_.timestamp_/1000.));
+                    entries->values[1]->setString(tempBuffer);
+                }
+                    break;
+                default: break;
+            }
+        }
+    }
 }
 
 void
