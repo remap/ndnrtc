@@ -102,25 +102,25 @@ void PlayoutControl::checkPlayout()
 
 void PlayoutControl::checkPlaybackQueueSize()
 {
-    int64_t now = clock::millisecondTimestamp();
-
-    // check queue size
-    if (now - queueCheckMs_ >= QUEUE_CHECK_INTERVAL)
-    {
-        queueCheckMs_ = now;
-        double diffMs = (double)(thresholdMs_ - (double)queue_->size()); //playbackQueueSize_.value());
-        double framesDiff = fabs(diffMs / queue_->samplePeriod());
-        int dir = (diffMs < 0 ? -1: 1);
-
-        if (framesDiff > QUEUE_DIFF_THRESHOLD)
-        {
-            double maxAdjustment = QUEUE_DIFF_THRESHOLD*queue_->samplePeriod();
-            int64_t adjustmentMs = dir * (int64_t)fmin(fabs(diffMs), maxAdjustment);
-
-            LogDebugC << "adjusting playback queue by " << adjustmentMs << "ms" << std::endl;
-            playout_->addAdjustment(adjustmentMs);
-        }
-    }
+    // int64_t now = clock::millisecondTimestamp();
+    //
+    // // check queue size
+    // if (now - queueCheckMs_ >= QUEUE_CHECK_INTERVAL)
+    // {
+    //     queueCheckMs_ = now;
+    //     double diffMs = (double)(thresholdMs_ - (double)queue_->size()); //playbackQueueSize_.value());
+    //     double framesDiff = fabs(diffMs / queue_->samplePeriod());
+    //     int dir = (diffMs < 0 ? -1: 1);
+    //
+    //     if (framesDiff > QUEUE_DIFF_THRESHOLD)
+    //     {
+    //         double maxAdjustment = QUEUE_DIFF_THRESHOLD*queue_->samplePeriod();
+    //         int64_t adjustmentMs = dir * (int64_t)fmin(fabs(diffMs), maxAdjustment);
+    //
+    //         LogDebugC << "adjusting playback queue by " << adjustmentMs << "ms" << std::endl;
+    //         playout_->addAdjustment(adjustmentMs);
+    //     }
+    // }
 }
 
 void PlayoutControl::onOriginalDrdUpdate(double drd, double dev)
