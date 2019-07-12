@@ -81,7 +81,7 @@ class PacketPublisher : public NdnRtcComponent
         assert(settings_.statStorage_);
     }
 
-    PublishedDataPtrVector publish(const ndn::Name &name, const MutableNetworkData &data, 
+    PublishedDataPtrVector publish(const ndn::Name &name, const MutableNetworkData &data,
                                    int freshnessMs = -1,
                                    bool forcePitClean = false, bool banPitClean = false)
     {
@@ -90,7 +90,7 @@ class PacketPublisher : public NdnRtcComponent
         // as shared_ptr so it's released automatically upon completion
         boost::shared_ptr<uint8_t[]> dummyHeader(new uint8_t[SegmentType::headerSize()]);
         memset(dummyHeader.get(), SegmentType::headerSize(), 0);
-        return publish(name, data, (_DataSegmentHeader &)*dummyHeader.get(), 
+        return publish(name, data, (_DataSegmentHeader &)*dummyHeader.get(),
                        freshnessMs, forcePitClean, banPitClean);
     }
 
@@ -144,8 +144,8 @@ class PacketPublisher : public NdnRtcComponent
             cleanPit(name, forcePitClean);
 
         (*settings_.statStorage_)[statistics::Indicator::PublishedSegmentsNum] += segments.size();
-        
-        if (settings_.onSegmentsCached_) 
+
+        if (settings_.onSegmentsCached_)
             settings_.onSegmentsCached_(ndnSegments);
 
         return ndnSegments;
@@ -266,7 +266,7 @@ class PacketPublisher : public NdnRtcComponent
         nack->getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);
         nack->setContent((const uint8_t *)"nack", 4);
         nack->getMetaInfo().setType(ndn_ContentType_NACK);
-        settings_.memoryCache_->add(*nack);
+        // settings_.memoryCache_->add(*nack);
     }
 };
 
