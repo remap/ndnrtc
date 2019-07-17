@@ -68,6 +68,8 @@ void PlayoutControl::setThreshold(unsigned int t)
         thresholdMs_ = fmax(userThresholdMs_, PlayoutControl::MinimalPlayableLevel);
     else
         thresholdMs_ = userThresholdMs_;
+
+    LogDebugC << thresholdMs_ << "ms" << std::endl;
 }
 
 void PlayoutControl::checkPlayout()

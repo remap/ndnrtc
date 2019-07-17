@@ -285,7 +285,7 @@ void LatencyControl::onDrdUpdate()
         unsigned int targetSize = queueSizeStrategy_->getTargetPlayoutSize(drd_->getOriginalAverage(),
                                                                            DEFAULT_TARGET_QUEUE_SIZE);
 
-        if (targetSize != playoutControl_->getThreshold())
+        if (targetSize > playoutControl_->getThreshold())
         {
             LogDebugC << "updating target playback queue size to " << targetSize << std::endl;
             playoutControl_->setThreshold(targetSize);
