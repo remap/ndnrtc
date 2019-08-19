@@ -71,6 +71,8 @@ class Frame(CommandBase):
                 for i in range(0, nParity):
                     p = Name(framePrefix).append('_parity').appendSegment(i)
                     self.fetchPacket(p, onParitySegment)
+                if nParity == 0:
+                    self.fetched_['p-segments'] = True
             if self.options['--meta']:
                 self.logMultiline('meta',
                                 'seq #: '+str(metaNmspc.getName()[-2].toSequenceNumber()),

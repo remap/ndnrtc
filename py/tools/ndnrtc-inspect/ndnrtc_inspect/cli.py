@@ -58,11 +58,14 @@ Help:
 from inspect import getmembers, isclass
 from docopt import docopt
 from . import __version__ as VERSION
+from pyndn import Interest
 
 def main():
     """Main CLI entrypoint."""
     import ndnrtc_inspect.commands
     options = docopt(__doc__, version=VERSION)
+    # silence the warning from Interest wire encode
+    Interest.setDefaultCanBePrefix(True)
 
     for (k, v) in options.items():
         if hasattr(ndnrtc_inspect.commands, k) and v:

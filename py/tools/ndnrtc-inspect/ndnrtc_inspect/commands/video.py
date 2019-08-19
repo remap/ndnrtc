@@ -58,10 +58,9 @@ class Video(CommandBase):
 
         stream = Namespace(streamName)
         stream.setFace(self.face_)
-        pipelineSize = int(self.options['--pipeline'])
-        self.log('fetching', stream.getName().toUri())
-        handlers[0] = GeneralizedObjectStreamHandler(pipelineSize, onNewFrame)
-        stream.setHandler(handlers[0]).objectNeeded()
+        ppSize = int(self.options['--pipeline'])
+        self.log('fetching', stream.getName().toUri(), 'pipeline size', ppSize)
+        GeneralizedObjectStreamHandler(stream, ppSize, onNewFrame).objectNeeded()
         stream.addOnStateChanged(namespaceStateChanged)
 
     def dumpFrame(self, frameNmspc):

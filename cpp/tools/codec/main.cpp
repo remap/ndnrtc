@@ -39,7 +39,7 @@ R"(NdnRtc Codec.
     input and outputs decoded raw frames.
 
     Usage:
-      ndnrtc-codec encode <in_file>  --size=<WxH> --bitrate=<bitrate> [--gop=<gop>] [--fps=<fps>] [--no-drop] [--i420] ( <out_file> | - ) [--csv=<csv_file>] [--verbose]
+      ndnrtc-codec encode <in_file> ( - | <out_file> ) --size=<WxH> --bitrate=<bitrate> [--gop=<gop>] [--fps=<fps>] [--no-drop] [--i420] [--csv=<csv_file>] [--verbose]
       ndnrtc-codec decode (<in_file> | - ) ( - | <out_file>) [--csv=<csv_file>] [--verbose]
 
     Arguments:
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
                              << endl;
 
                 codec.initEncoder(codecSettings);
-                runEncoder(codec, args["<in_file>"].asString(), args["<out_file>"].asString(),
+                runEncoder(codec, args["<in_file>"].asString(), args["-"].asLong() ? "-" : args["<out_file>"].asString(),
                            args["--csv"] ? args["--csv"].asString() : "" );
             }
             else
@@ -167,7 +167,7 @@ int main(int argc, char **argv)
             LogDebug("") << "initializing decoder" << endl;
 
             codec.initDecoder(codecSettings);
-            runDecoder(codec, args["<in_file>"].asString(), args["<out_file>"].asString(),
+            runDecoder(codec, args["<in_file>"].asString(), args["-"].asLong() ? "-" : args["<out_file>"].asString(),
                        args["--csv"] ? args["--csv"].asString() : "");
         }
     }
@@ -195,8 +195,17 @@ void runEncoder(VideoCodec& codec, string inFile, string outFile, string statFil
     if (!(f = fopen(inFile.c_str(), "rb")))
         throw runtime_error("failed to open video file for reading");
 
-    if (!(fOut = fopen(outFile.c_str(), "wb")))
-        throw runtime_error("failed to open output video file");
+    bool noStats = false;
+    if (outFile == "-")
+    {
+        ndnlog::new_api::Logger::getLoggerPtr("")->
+            setLogLevel((ndnlog::NdnLoggerDetailLevel)ndnlog::NdnLoggerLevelError);
+        noStats = true;
+        fOut = stdout;
+    }
+    else
+        if (!(fOut = fopen(outFile.c_str(), "wb")))
+            throw runtime_error("failed to open output video file");
 
     VideoCodec::Image raw(codec.getSettings().spec_.encoder_.width_,
                           codec.getSettings().spec_.encoder_.height_,
@@ -217,7 +226,54 @@ void runEncoder(VideoCodec& codec, string inFile, string outFile, string statFil
             LogError("") << "failed encoding for frame "
                          << codec.getStats().nFrames_ << endl;
 
-        printStats(codec.getStats(), statFile);
+        if (!noStats) printStats(codec.getStats(), statFile);
+        usleep(5);
+    }
+
+    fclose(fOut);
+    fclose(f);
+}
+
+void runDecoder(VideoCodec& codec, string inFile, string outFile, string statFile)
+{
+    // open file
+    FILE *f, *fOut;
+
+    bool noStats = false;
+
+    if (inFile == "-")
+        f = stdin;
+    else if (!(f = fopen(inFile.c_str(), "rb")))
+            throw runtime_error("failed to open video file for reading");
+
+    if (outFile == "-")
+    {
+        if (inFile == "-")
+            throw runtime_error("can't have STDIN input and STDOUT output at the same time");
+
+        ndnlog::new_api::Logger::getLoggerPtr("")->
+            setLogLevel((ndnlog::NdnLoggerDetailLevel)ndnlog::NdnLoggerLevelError);
+        noStats = true;
+        fOut = stdout;
+    }
+    else if (!(fOut = fopen(outFile.c_str(), "wb")))
+            throw runtime_error("failed to open output video file");
+
+    EncodedFrame frame;
+    frame.data_ = nullptr;
+
+    while (!mustExit && readFrame(frame, f))
+    {
+        LogDebug("") << "read frame of size " << frame.length_ << " " << frame.data_ << endl;
+
+        int res = codec.decode(frame, [fOut](const VideoCodec::Image &image){
+            image.write(fOut);
+        });
+
+        if (res)
+            LogError("") << "error decoding frame (" << res << "): " << codec.getStats().nFrames_ << endl;
+
+        if (!noStats) printStats(codec.getStats(), statFile);
         usleep(5);
     }
 
@@ -254,42 +310,10 @@ void printStats(const VideoCodec::Stats& codecStats, string statFile)
          << codecStats.nKey_ << "k"
          << " bytes in " << codecStats.bytesIn_
          << " bytes out " << codecStats.bytesOut_
-         << " (compression " << (float)codecStats.bytesIn_/(float)codecStats.bytesOut_*100 << "%)"
+         << setprecision(4)
+         << " (compression x" << (float)codecStats.bytesIn_/(float)codecStats.bytesOut_ << ")"
          << " (effective " << 0 << "Kbps)"
          << " ]" << flush;
-}
-
-void runDecoder(VideoCodec& codec, string inFile, string outFile, string statFile)
-{
-    // open file
-    FILE *f, *fOut;
-
-    if (!(f = fopen(inFile.c_str(), "rb")))
-        throw runtime_error("failed to open video file for reading");
-
-    if (!(fOut = fopen(outFile.c_str(), "wb")))
-        throw runtime_error("failed to open output video file");
-
-    EncodedFrame frame;
-    frame.data_ = nullptr;
-
-    while (!mustExit && readFrame(frame, f))
-    {
-        LogDebug("") << "read frame of size " << frame.length_ << " " << frame.data_ << endl;
-
-        int res = codec.decode(frame, [fOut](const VideoCodec::Image &image){
-            image.write(fOut);
-        });
-
-        if (res)
-            LogError("") << "error decoding frame (" << res << "): " << codec.getStats().nFrames_ << endl;
-
-        printStats(codec.getStats(), statFile);
-        usleep(5);
-    }
-
-    fclose(fOut);
-    fclose(f);
 }
 
 int getSize(string sizeStr, uint16_t& w, uint16_t& h)

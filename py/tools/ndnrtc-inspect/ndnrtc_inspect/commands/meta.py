@@ -3,7 +3,7 @@
 import time, sys
 from .base import CommandBase
 from json import dumps
-from pyndn import Name, Face, DelegationSet
+from pyndn import Name, Face, DelegationSet, Interest
 from pycnl import Namespace, NamespaceState
 from pycnl.generalized_object.content_meta_info import ContentMetaInfo
 from .ndnrtc_pb2 import LiveMeta, StreamMeta, FrameMeta
