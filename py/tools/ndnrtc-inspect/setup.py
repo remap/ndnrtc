@@ -43,7 +43,7 @@ setup(
     ],
     keywords = 'NDN ndnrtc ndnrtc-stream ndnrtc-inspect',
     packages = find_packages(exclude=['docs', 'tests*']),
-    install_requires = ['docopt', 'docopt', 'termcolor', 'cryptography', 'protobuf'],
+    install_requires = ['docopt', 'docopt', 'termcolor', 'cryptography', 'protobuf', 'pyndn'],
     dependency_links = [
         'https://github.com/named-data/PyNDN2/tarball/master',
         'https://github.com/named-data/PyCNL/tarball/master'
