@@ -47,13 +47,13 @@ export NDNRTC_ENV=`pwd`
 </details>
 
 ```Shell
-brew install boost cmake wget autoconf automake libtool openssl libconfig nanomsg rocksdb libvpx
+brew install boost cmake wget autoconf automake libtool openssl libconfig nanomsg rocksdb libvpx protobuf
 ```
 
 -- or (for Ubuntu) --
 
 ```Shell
-sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool git protobuf protobuf-compiler libconfig++-dev libconfig++9v5
+sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool git protobuf-compiler libconfig++-dev libconfig++9v5
 ```
 
 ## Compiled prerequisites
