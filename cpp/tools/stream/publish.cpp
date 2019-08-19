@@ -46,7 +46,7 @@ runPublishing(boost::asio::io_service &io,
               string signingIdentity,
               const VideoStream::Settings& settings,
               bool needRvp,
-              bool isLooped,
+              int nLoops,
               string csv,
               string stats)
 {
@@ -104,7 +104,7 @@ runPublishing(boost::asio::io_service &io,
             {
                 if(feof(fIn))
                 {
-                    if (isLooped)
+                    if (isLooped || --nLoops > 0)
                     {
                         rewind(fIn);
                         res = readYUV420(fIn, w, h, &imgData);

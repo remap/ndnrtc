@@ -21,7 +21,7 @@ void runPublishing(boost::asio::io_service &io,
                    std::string signingIdentity,
                    const ndnrtc::VideoStream::Settings&,
                    bool needRvp = false,
-                   bool isLooped = false,
+                   int nLoops = 1,
                    std::string csv = "",
                    std::string stats = "");
 
