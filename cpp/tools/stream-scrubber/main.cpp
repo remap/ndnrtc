@@ -13,8 +13,8 @@
 #include <execinfo.h>
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread.hpp>
+#include <mutex>
+
 #include <ndn-cpp/threadsafe-face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/certificate/identity-certificate.hpp>
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 
     int err = 0;
     boost::asio::io_service io;
-    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+    std::shared_ptr<boost::asio::io_service::work> work(std::make_shared<boost::asio::io_service::work>(io));
     boost::thread t([&io, &err]() {
         try
         {
@@ -115,11 +115,11 @@ int main(int argc, char **argv)
     });
 
     // setup face and keychain
-    boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
+    std::shared_ptr<Face> face(std::make_shared<ThreadsafeFace>(io));
     // TODO: setup verify/noverify properly
-    boost::shared_ptr<KeyChain> keyChain(boost::make_shared<KeyChain>(boost::make_shared<PibMemory>(),
-                                         boost::make_shared<TpmBackEndMemory>(),
-                                         boost::make_shared<NoVerifyPolicyManager>()));
+    std::shared_ptr<KeyChain> keyChain(std::make_shared<KeyChain>(std::make_shared<PibMemory>(),
+                                         std::make_shared<TpmBackEndMemory>(),
+                                         std::make_shared<NoVerifyPolicyManager>()));
 
 
 

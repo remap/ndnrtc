@@ -14,8 +14,8 @@
 #include <execinfo.h>
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread.hpp>
+#include <mutex>
+
 #include <ndn-cpp/threadsafe-face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/certificate/identity-certificate.hpp>
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 
     int err = 0;
     boost::asio::io_service io;
-    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+    std::shared_ptr<boost::asio::io_service::work> work(std::make_shared<boost::asio::io_service::work>(io));
     boost::thread t([&io, &err]() {
         try
         {
@@ -113,8 +113,8 @@ int main(int argc, char **argv)
         }
     });
 
-    boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
-    boost::shared_ptr<KeyChain> keyChain = boost::make_shared<KeyChain>();
+    std::shared_ptr<Face> face(std::make_shared<ThreadsafeFace>(io));
+    std::shared_ptr<KeyChain> keyChain = std::make_shared<KeyChain>();
 
     {
         static uint8_t *frameBuffer = nullptr;
@@ -124,7 +124,7 @@ int main(int argc, char **argv)
             ffetcher.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 
         ffetcher.fetch(prefixInfo.getPrefix(prefix_filter::Sample),
-                [](const boost::shared_ptr<IFrameFetcher>&, int width, int height, IExternalRenderer::BufferType *bufferType)
+                [](const std::shared_ptr<IFrameFetcher>&, int width, int height, IExternalRenderer::BufferType *bufferType)
                 {
                     LogTrace("") << "allocating buffer for "
                                  << width << "x" << height << " frame" << std::endl;
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
                     frameBuffer = (uint8_t*)malloc(width*height*4);
                     return frameBuffer;
             },
-                [&args](const boost::shared_ptr<IFrameFetcher>&, const FrameInfo&, int nFramesFetched,
+                [&args](const std::shared_ptr<IFrameFetcher>&, const FrameInfo&, int nFramesFetched,
                    int width, int height, const uint8_t* buffer)
                 {
                     LogTrace("") << "received frame" << std::endl;
@@ -151,7 +151,7 @@ int main(int argc, char **argv)
                     else
                         fwrite(buffer, 1, width*height*4, stdout);
                 },
-                [&err](const boost::shared_ptr<IFrameFetcher>&, std::string reason)
+                [&err](const std::shared_ptr<IFrameFetcher>&, std::string reason)
                 {
                     LogError("") << "failed to retrieve frame: " << reason << std::endl;
                     err = 1;

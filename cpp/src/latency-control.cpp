@@ -7,8 +7,8 @@
 
 #include "latency-control.hpp"
 #if 0
-#include <boost/make_shared.hpp>
-#include <boost/thread/lock_guard.hpp>
+
+
 
 #include "estimators.hpp"
 #include "clock.hpp"
@@ -354,7 +354,7 @@ void LatencyControl::sampleArrived(const PacketNumber &playbackNo)
     currentCommand_ = command;
 
     {
-        boost::lock_guard<boost::mutex> scopedLock(mutex_);
+        std::lock_guard<std::mutex> scopedLock(mutex_);
         if (observer_ && observer_->needPipelineAdjustment(command))
             pipelineChanged(now);
     }
@@ -378,13 +378,13 @@ void LatencyControl::reset()
 
 void LatencyControl::registerObserver(ILatencyControlObserver *o)
 {
-    boost::lock_guard<boost::mutex> scopedLock(mutex_);
+    std::lock_guard<std::mutex> scopedLock(mutex_);
     observer_ = o;
 }
 
 void LatencyControl::unregisterObserver()
 {
-    boost::lock_guard<boost::mutex> scopedLock(mutex_);
+    std::lock_guard<std::mutex> scopedLock(mutex_);
     observer_ = nullptr;
 }
 

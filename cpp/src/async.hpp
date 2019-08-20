@@ -8,7 +8,7 @@
 #ifndef __async_h__
 #define __async_h__
 
-#include <boost/function.hpp>
+
 #include <boost/asio.hpp>
 
 namespace ndnrtc {

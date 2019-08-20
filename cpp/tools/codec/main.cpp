@@ -16,8 +16,8 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
-#include <boost/thread/mutex.hpp>
-// #include <boost/thread.hpp>
+#include <mutex>
+//
 
 #include "../../contrib/docopt/docopt.h"
 #include "../../include/simple-log.hpp"
@@ -95,9 +95,7 @@ int main(int argc, char **argv)
     signal(SIGUSR1, handler);
 
     ndnlog::new_api::Logger::initAsyncLogging();
-
-    std::map<std::string, docopt::value> args
-        = docopt::docopt(USAGE,
+    std::map<std::string, docopt::value> args =docopt::docopt(USAGE,
                          { argv + 1, argv + argc },
                          true,               // show help if requested
                          (string(TOOL_NAME)+string(PACKAGE_VERSION)).c_str());  // version string

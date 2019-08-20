@@ -8,7 +8,7 @@
 #ifndef __latency_control_h__
 #define __latency_control_h__
 #if 0
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 
 #include "drd-estimator.hpp"
 #include "segment-controller.hpp"
@@ -112,7 +112,7 @@ class LatencyControl : public NdnRtcComponent,
         double alpha_;
     };
 
-    boost::mutex mutex_;
+    std::mutex mutex_;
     std::shared_ptr<StabilityEstimator> stabilityEstimator_;
     std::shared_ptr<DrdChangeEstimator> drdChangeEstimator_;
     std::shared_ptr<IPlayoutControl> playoutControl_;

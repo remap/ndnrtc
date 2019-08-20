@@ -10,8 +10,7 @@
 #include "async.hpp"
 #include "clock.hpp"
 
-#include <boost/thread/lock_guard.hpp>
-
+using namespace std::placeholders;
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 using namespace ndn;
@@ -41,7 +40,7 @@ class SegmentControllerImpl : public NdnRtcComponent,
 
   private:
     bool active_;
-    boost::mutex mutex_;
+    std::mutex mutex_;
     unsigned int maxIdleTimeMs_;
     std::vector<ISegmentControllerObserver *> observers_;
     int64_t lastDataTimestampMs_;
@@ -117,7 +116,7 @@ void SegmentController::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logge
 #pragma mark - pimpl
 SegmentControllerImpl::SegmentControllerImpl(boost::asio::io_service &faceIo,
                                              unsigned int maxIdleTimeMs,
-                                             const std::shared_ptr<StatisticsStorage> &storage) 
+                                             const std::shared_ptr<StatisticsStorage> &storage)
     : Periodic(faceIo),
     maxIdleTimeMs_(maxIdleTimeMs),
     lastDataTimestampMs_(0),
@@ -148,33 +147,33 @@ void SegmentControllerImpl::setIsActive(bool active)
     {
         lastDataTimestampMs_ = clock::millisecondTimestamp();
         setupInvocation(maxIdleTimeMs_,
-                        boost::bind(&SegmentControllerImpl::periodicInvocation, this));
+                        std::bind(&SegmentControllerImpl::periodicInvocation, this));
     }
 }
 
 OnData SegmentControllerImpl::getOnDataCallback()
 {
     std::shared_ptr<SegmentControllerImpl> me = std::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
-    return boost::bind(&SegmentControllerImpl::onData, me, _1, _2);
+    return std::bind(&SegmentControllerImpl::onData, me, _1, _2);
 }
 
 OnTimeout SegmentControllerImpl::getOnTimeoutCallback()
 {
     std::shared_ptr<SegmentControllerImpl> me = std::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
-    return boost::bind(&SegmentControllerImpl::onTimeout, me, _1);
+    return std::bind(&SegmentControllerImpl::onTimeout, me, _1);
 }
 
 OnNetworkNack SegmentControllerImpl::getOnNetworkNackCallback()
 {
     std::shared_ptr<SegmentControllerImpl> me = std::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
-    return boost::bind(&SegmentControllerImpl::onNetworkNack, me, _1, _2);
+    return std::bind(&SegmentControllerImpl::onNetworkNack, me, _1, _2);
 }
 
 void SegmentControllerImpl::attach(ISegmentControllerObserver *o)
 {
     if (o)
     {
-        boost::lock_guard<boost::mutex> scopedLock(mutex_);
+        std::lock_guard<std::mutex> scopedLock(mutex_);
         observers_.push_back(o);
     }
 }
@@ -184,7 +183,7 @@ void SegmentControllerImpl::detach(ISegmentControllerObserver *o)
     std::vector<ISegmentControllerObserver *>::iterator it = std::find(observers_.begin(), observers_.end(), o);
     if (it != observers_.end())
     {
-        boost::lock_guard<boost::mutex> scopedLock(mutex_);
+        std::lock_guard<std::mutex> scopedLock(mutex_);
         observers_.erase(it);
     }
 }
@@ -202,7 +201,7 @@ unsigned int SegmentControllerImpl::periodicInvocation()
 
             starvationFired_ = true;
             {
-                boost::lock_guard<boost::mutex> scopedLock(mutex_);
+                std::lock_guard<std::mutex> scopedLock(mutex_);
                 for (auto &o : observers_)
                     o->segmentStarvation();
             }
@@ -242,7 +241,7 @@ void SegmentControllerImpl::onData(const std::shared_ptr<const Interest> &intere
             LogTraceC << data->getName() << " "
                       << data->getContent().size() << " bytes" << std::endl;
             {
-                boost::lock_guard<boost::mutex> scopedLock(mutex_);
+                std::lock_guard<std::mutex> scopedLock(mutex_);
                 for (auto &o : observers_)
                     o->segmentArrived(segment);
             }
@@ -273,7 +272,7 @@ void SegmentControllerImpl::onTimeout(const std::shared_ptr<const Interest> &int
         LogTraceC << interest->getName() << std::endl;
 
         {
-            boost::lock_guard<boost::mutex> scopedLock(mutex_);
+            std::lock_guard<std::mutex> scopedLock(mutex_);
             for (auto &o : observers_)
                 o->segmentRequestTimeout(info, interest);
         }
@@ -302,7 +301,7 @@ void SegmentControllerImpl::onNetworkNack(const std::shared_ptr<const Interest> 
         LogTraceC << interest->getName() << std::endl;
 
         {
-            boost::lock_guard<boost::mutex> scopedLock(mutex_);
+            std::lock_guard<std::mutex> scopedLock(mutex_);
             int reason = (networkNack->getReason() == ndn_NetworkNackReason_OTHER_CODE ? networkNack->getOtherReasonCode() : networkNack->getReason());
 
             for (auto &o : observers_)

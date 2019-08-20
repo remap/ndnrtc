@@ -13,8 +13,8 @@
 #include <execinfo.h>
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread.hpp>
+#include <mutex>
+
 #include <ndn-cpp/threadsafe-face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/certificate/identity-certificate.hpp>
@@ -47,8 +47,8 @@ using namespace ndnrtc;
 
 static bool mustExit = false;
 
-void registerPrefix(boost::shared_ptr<Face> &face, const Name &prefix,
-                    boost::shared_ptr<StorageEngine> storage);
+void registerPrefix(std::shared_ptr<Face> &face, const Name &prefix,
+                    std::shared_ptr<StorageEngine> storage);
 
 void handler(int sig)
 {
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 
     int err = 0;
     boost::asio::io_service io;
-    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+    std::shared_ptr<boost::asio::io_service::work> work(std::make_shared<boost::asio::io_service::work>(io));
     boost::thread t([&io, &err]() {
         try
         {
@@ -105,12 +105,12 @@ int main(int argc, char **argv)
     });
 
     // setup storage
-    boost::shared_ptr<StorageEngine> storage = 
-        boost::make_shared<StorageEngine>(args["<db_path>"].asString(), true);
+    std::shared_ptr<StorageEngine> storage = 
+        std::make_shared<StorageEngine>(args["<db_path>"].asString(), true);
 
     // setup face and keychain
-    boost::shared_ptr<Face> face = boost::make_shared<ThreadsafeFace>(io);
-    boost::shared_ptr<KeyChain> keyChain = boost::make_shared<KeyChain>();
+    std::shared_ptr<Face> face = std::make_shared<ThreadsafeFace>(io);
+    std::shared_ptr<KeyChain> keyChain = std::make_shared<KeyChain>();
 
     face->setCommandSigningInfo(*keyChain, keyChain->getDefaultCertificateName());
 
@@ -146,17 +146,17 @@ int main(int argc, char **argv)
     LogInfo("") << "done" << endl;
 }
 
-void registerPrefix(boost::shared_ptr<Face> &face, const Name &prefix, 
-    boost::shared_ptr<StorageEngine> storage)
+void registerPrefix(std::shared_ptr<Face> &face, const Name &prefix, 
+    std::shared_ptr<StorageEngine> storage)
 {
     LogInfo("") << "Registering prefix " << prefix << std::endl;
     face->registerPrefix(prefix,
-                         [storage](const boost::shared_ptr<const Name> &prefix,
-                            const boost::shared_ptr<const Interest> &interest,
-                            Face &face, uint64_t, const boost::shared_ptr<const InterestFilter> &) 
+                         [storage](const std::shared_ptr<const Name> &prefix,
+                            const std::shared_ptr<const Interest> &interest,
+                            Face &face, uint64_t, const std::shared_ptr<const InterestFilter> &) 
                             {
                              LogTrace("") << "Incoming interest " << interest->getName() << std::endl;
-                             boost::shared_ptr<Data> d = storage->read(*interest);
+                             std::shared_ptr<Data> d = storage->read(*interest);
 
                              if (d)
                              {
@@ -167,11 +167,11 @@ void registerPrefix(boost::shared_ptr<Face> &face, const Name &prefix,
                              else
                                 LogTrace("") << "no data for " << interest->getName() << std::endl;
                          },
-                         [](const boost::shared_ptr<const Name> &prefix) 
+                         [](const std::shared_ptr<const Name> &prefix) 
                          {
                              LogError("") << "Prefix registration failure (" << prefix << ")" << std::endl;
                          },
-                         [](const boost::shared_ptr<const Name> &p, uint64_t) 
+                         [](const std::shared_ptr<const Name> &p, uint64_t) 
                          {
                              LogInfo("") << "Successfully registered prefix " << *p << std::endl;
                          });

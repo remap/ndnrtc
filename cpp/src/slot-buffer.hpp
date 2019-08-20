@@ -8,8 +8,8 @@
 #ifndef __slot_buffer_h__
 #define __slot_buffer_h__
 
-#include <boost/shared_ptr.hpp>
-#include <boost/function.hpp>
+
+
 
 namespace ndnrtc {
 	class ISlot {

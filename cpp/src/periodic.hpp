@@ -8,9 +8,9 @@
 #ifndef __periodic_h__
 #define __periodic_h__
 
-#include <boost/shared_ptr.hpp>
+
 #include <boost/asio.hpp>
-#include <boost/function.hpp>
+
 
 namespace ndnrtc 
 {

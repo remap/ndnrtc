@@ -9,7 +9,7 @@
 #define __drd_estimator_h__
 
 #include <vector>
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 
 #include "estimators.hpp"
 
@@ -44,7 +44,7 @@ class DrdEstimator
     void detach(IDrdEstimatorObserver *o);
 
   private:
-    boost::mutex mutex_;
+    std::mutex mutex_;
     std::vector<IDrdEstimatorObserver *> observers_;
     unsigned int windowSize_, initialEstimation_;
     estimators::Average cachedDrd_, originalDrd_;

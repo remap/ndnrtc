@@ -12,8 +12,8 @@
 #include <stdio.h>
 #include <vector>
 #include <type_traits>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+
+
 
 namespace ndnrtc
 {

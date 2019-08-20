@@ -5,8 +5,8 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include <boost/thread/lock_guard.hpp>
-#include <boost/make_shared.hpp>
+
+
 
 #include "drd-estimator.hpp"
 
@@ -41,7 +41,7 @@ DrdEstimator::newValue(double drd, bool isOriginal, double dGen)
 	
 	if (oldValue != newValue)
 	{
-		boost::lock_guard<boost::mutex> scopedLock(mutex_);
+		std::lock_guard<std::mutex> scopedLock(mutex_);
 		for (auto& o:observers_) {
 			if (isOriginal)
 				o->onOriginalDrdUpdate(newValue, deviation);
@@ -71,7 +71,7 @@ void DrdEstimator::attach(IDrdEstimatorObserver* o)
 {
     if (o)
     {
-        boost::lock_guard<boost::mutex> scopedLock(mutex_);
+        std::lock_guard<std::mutex> scopedLock(mutex_);
         observers_.push_back(o);
     }
 }
@@ -81,7 +81,7 @@ void DrdEstimator::detach(IDrdEstimatorObserver* o)
     std::vector<IDrdEstimatorObserver*>::iterator it = std::find(observers_.begin(), observers_.end(), o);
     if (it != observers_.end())
     {
-        boost::lock_guard<boost::mutex> scopedLock(mutex_);
+        std::lock_guard<std::mutex> scopedLock(mutex_);
         observers_.erase(it);
     }
 }

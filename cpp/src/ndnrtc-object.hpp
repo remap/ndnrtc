@@ -12,7 +12,7 @@
 #ifndef __ndnrtc__ndnrtc_object__
 #define __ndnrtc__ndnrtc_object__
 
-#include <boost/enable_shared_from_this.hpp>
+
 #include "simple-log.hpp"
 
 namespace ndnrtc {

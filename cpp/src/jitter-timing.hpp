@@ -11,9 +11,6 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/thread/condition_variable.hpp>
-#include <boost/thread/recursive_mutex.hpp>
-#include <boost/function.hpp>
 
 #include "ndnrtc-common.hpp"
 
@@ -40,16 +37,16 @@ namespace ndnrtc {
     public:
         JitterTiming(boost::asio::io_service& io);
         ~JitterTiming();
-        
+
         void flush();
         void stop();
-        
+
         /**
          * Should be called in the beginning of the each playout iteration
          * @return current time in microseconds
          */
         int64_t startFramePlayout();
-        
+
         /**
          * Should be called whenever playout time (as provided by producer) is
          * known by the consumer. Usually, jitter buffer provides this value as
@@ -58,7 +55,7 @@ namespace ndnrtc {
          *                         between conqequent frame's timestamps)
          */
         void updatePlayoutTime(int framePlayoutTime);
-        
+
         /**
          * Sets up playback timer asynchronously.
          * @param callback A callback to call when timer is fired
@@ -67,7 +64,7 @@ namespace ndnrtc {
 
         void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
         void setDescription(const std::string& desc);
-        
+
     private:
         JitterTiming(const JitterTiming&) = delete;
 

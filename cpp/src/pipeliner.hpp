@@ -11,7 +11,7 @@
 #ifndef __ndnrtc__pipeliner__
 #define __ndnrtc__pipeliner__
 #if 0
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 
 #include "ndnrtc-object.hpp"
 #include "name-components.hpp"

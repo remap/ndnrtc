@@ -8,7 +8,7 @@
 #ifndef __validator_h__
 #define __validator_h__
 
-#include <boost/shared_ptr.hpp>
+
 #include "simple-log.hpp"
 
 namespace ndn {

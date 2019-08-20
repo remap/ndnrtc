@@ -8,7 +8,7 @@
 #ifndef __packets_hpp__
 #define __packets_hpp__
 
-#include <boost/shared_ptr.hpp>
+
 #include <ndn-cpp/delegation-set.hpp>
 #include <ndn-cpp-tools/usersync/content-meta-info.hpp>
 

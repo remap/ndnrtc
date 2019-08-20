@@ -10,8 +10,6 @@
 #include <type_traits>
 
 #include <boost/crc.hpp>
-#include <boost/move/move.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/signals2.hpp>
@@ -231,7 +229,7 @@ class NetworkDataT
     }
 
     ENABLE_IF(T, Mutable)
-    NetworkDataT(std::vector<uint8_t> &data) : data_(boost::move(data)), isValid_(true) {}
+    NetworkDataT(std::vector<uint8_t> &data) : data_(std::move(data)), isValid_(true) {}
 
     virtual ~NetworkDataT() {}
 
@@ -418,7 +416,7 @@ class DataPacketT : public NetworkDataT<T>
     }
 
     ENABLE_IF(T, Mutable)
-    DataPacketT(NetworkDataT<T> &&networkData) : NetworkDataT<T>(boost::move(networkData))
+    DataPacketT(NetworkDataT<T> &&networkData) : NetworkDataT<T>(std::move(networkData))
     {
         this->reinit();
     }
@@ -594,7 +592,7 @@ class HeaderPacketT : public DataPacketT<T>
     }
 
     ENABLE_IF(T, Mutable)
-    HeaderPacketT(NetworkData &&networkData) : DataPacket(boost::move(networkData))
+    HeaderPacketT(NetworkData &&networkData) : DataPacket(std::move(networkData))
     {
         if (this->blobs_.size() > 0)
         {
@@ -757,7 +755,7 @@ class MediaStreamMeta : public DataPacket
   public:
     MediaStreamMeta(uint64_t timestamp);
     MediaStreamMeta(uint64_t timestamp, std::vector<std::string> threads);
-    MediaStreamMeta(NetworkData &&nd) : DataPacket(boost::move(nd)) {}
+    MediaStreamMeta(NetworkData &&nd) : DataPacket(std::move(nd)) {}
 
     void addThread(const std::string &threadName);
     void addSyncStream(const std::string &syncStream);

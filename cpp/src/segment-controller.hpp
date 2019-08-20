@@ -8,8 +8,10 @@
 #ifndef __segment_controller_h__
 #define __segment_controller_h__
 
+#define BOOST_BIND_NO_PLACEHOLDERS
+
 #include <boost/asio.hpp>
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 #include <ndn-cpp/face.hpp>
 
 #include "ndnrtc-object.hpp"
@@ -52,7 +54,7 @@ class ISegmentController
  * which is passed further to any attached observer. SegmentController provides
  * OnData and OnTimeout callbacks that should be used for Interests expression.
  * SegmentController also checks for incoming data flow interruptions - it will
- * notify all attached observers if data has not arrived during specified period 
+ * notify all attached observers if data has not arrived during specified period
  * of time.
  */
 class SegmentController : public ISegmentController
@@ -95,7 +97,7 @@ class ISegmentControllerObserver
     /**
      * Called whenever interest has timed out
      */
-    virtual void segmentRequestTimeout(const NamespaceInfo &, 
+    virtual void segmentRequestTimeout(const NamespaceInfo &,
                                        const std::shared_ptr<const ndn::Interest> &) = 0;
 
     /**

@@ -7,7 +7,7 @@
 
 #include "pipeline-control-state-machine.hpp"
 #if 0
-#include <boost/make_shared.hpp>
+
 #include <boost/assign.hpp>
 #include <ndn-cpp/delegation-set.hpp>
 

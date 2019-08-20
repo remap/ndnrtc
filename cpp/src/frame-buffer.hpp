@@ -11,8 +11,11 @@
 #ifndef __ndnrtc__frame_buffer__
 #define __ndnrtc__frame_buffer__
 
-#include <boost/thread/mutex.hpp>
-#include <boost/thread.hpp>
+#define BOOST_BIND_NO_PLACEHOLDERS
+
+#include <mutex>
+#include <set>
+
 #include <boost/signals2.hpp>
 #include <ndn-cpp/name.hpp>
 
@@ -163,7 +166,7 @@ namespace ndnrtc
         { return (slotState_ >= PipelineSlotState::Assembling ? firstDataTsUsec_-firstRequestTsUsec_ : 0); }
         int64_t getLongestDrd() const
         { return (slotState_ == PipelineSlotState::Ready ? lastDataTsUsec_ - firstRequestTsUsec_ : 0); }
-        
+
         uint64_t getFirstRequestTsUsec() const { return (uint64_t)firstRequestTsUsec_; }
         uint64_t getFirstDataTsUsec() const { return (uint64_t)firstDataTsUsec_; }
         uint64_t getLastDataTsUsec() const { return (uint64_t)lastDataTsUsec_;}
@@ -413,21 +416,21 @@ namespace ndnrtc
     typedef BufferSlotUpdateTrigger OnSlotUnfetchable;
     typedef BufferSlotUpdateTrigger OnSlotReady;
     typedef BufferSlotUpdateTrigger OnSlotDiscard;
-    
+
     class Buffer : public NdnRtcComponent, public IBuffer {
     public:
         Buffer(std::shared_ptr<RequestQueue> interestQ,
                uint64_t slotRetainIntervalUsec = 3E6,
                std::shared_ptr<statistics::StatisticsStorage> storage =
                 std::shared_ptr<statistics::StatisticsStorage>(statistics::StatisticsStorage::createConsumerStatistics()));
-        
+
         void newSlot(std::shared_ptr<IPipelineSlot>);
         void removeSlot(const PacketNumber&);
         double getDelayEstimate() const { return delayEstimate_; }
-        
+
         bool getIsJitterCompensationOn() const { return isJitterCompensationOn_; }
         void setIsJitterCompensationOn(bool jitterCompensation) { isJitterCompensationOn_ = jitterCompensation; }
-        
+
         OnSlotUnfetchable onSlotUnfetchable;
         OnSlotReady onSlotReady;
         // signal which will be called when an old undecodable slot is discarded
@@ -435,14 +438,14 @@ namespace ndnrtc
         // ready for decoding, it will be discarded
         // this signal should be used for recylcing slots (i.e. returning them to the pool)
         OnSlotDiscard onSlotDiscard;
-    
+
         void reset();
-        
+
         std::string
         dump() const;
-        
+
         // CODE BELOW IS DEPRECATED
-        
+
 //        Buffer(std::shared_ptr<statistics::StatisticsStorage> storage,
 //               std::shared_ptr<SlotPool> pool =
 //                std::shared_ptr<SlotPool>(new SlotPool()));
@@ -464,7 +467,7 @@ namespace ndnrtc
             uint64_t insertedUsec_, pushDeadlineUsec_;
             bool pushedForDecode_;
         } SlotEntry;
-        
+
 //        class FrameGop {
 //        public:
 //            void add(std::shared_ptr<BufferSlot> slot);
@@ -473,7 +476,7 @@ namespace ndnrtc
 //            size_t size() const;
 //
 //        };
-        
+
         // jitter buffer delay is calculated according to the formula:
         //      B(i) = Dqav(i) + gamma * Jitter
         //  where Jitter is a network jitter estimation from RequestQueue and
@@ -484,24 +487,24 @@ namespace ndnrtc
         estimators::Filter dqFilter_;
         bool isJitterCompensationOn_;
         uint64_t cleanupIntervalUsec_, lastCleanupUsec_, slotRetainIntervalUsec_;
-        
+
 //        typedef struct _SlotQ {
 //            std::map<PacketNumber, SlotEntry> pending_, ready_, unfetchable_;
 //        } SlotQ;
-        
+
         std::map<PacketNumber, SlotEntry> slots_;
         std::map<int32_t, PacketNumber> gopDecodeMap_;
         std::shared_ptr<BufferSlot> lastPushedSlot_;
-        
+
         std::shared_ptr<statistics::StatisticsStorage> sstorage_;
         std::shared_ptr<RequestQueue> requestQ_;
         boost::asio::steady_timer slotPushTimer_;
         uint64_t slotPushFireTime_;
         int64_t slotPushDelay_;
-        
+
         std::string
         shortdump() const;
-        
+
         void
         calculateDelay(double dQ);
         void
@@ -512,15 +515,15 @@ namespace ndnrtc
         setSlotPushDeadline(const std::shared_ptr<BufferSlot>&, uint64_t ts);
         void
         setupPushTimer(uint64_t);
-        
+
         // CODE BELOW IS DEPRECATED
         friend PlaybackQueue;
 
-        mutable boost::recursive_mutex mutex_;
+        mutable std::recursive_mutex mutex_;
         std::shared_ptr<SlotPool> pool_;
         std::map<ndn::Name, std::shared_ptr<BufferSlot>> activeSlots_, reservedSlots_;
         std::vector<IBufferObserver*> observers_;
-    
+
         void
         dumpSlotDictionary(std::stringstream&,
             const std::map<ndn::Name, std::shared_ptr<BufferSlot>> &) const;
@@ -605,7 +608,7 @@ namespace ndnrtc
             std::shared_ptr<const BufferSlot> slot_;
         };
 
-        mutable boost::recursive_mutex mutex_;
+        mutable std::recursive_mutex mutex_;
         ndn::Name streamPrefix_;
         std::shared_ptr<Buffer> buffer_;
         double packetRate_;

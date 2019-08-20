@@ -8,8 +8,8 @@
 #define __frame_fetcher_hpp__
 #ifndef __frame_fetcher_hpp__
 
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
+
+
 
 #include "interfaces.hpp"
 #include "params.hpp"
