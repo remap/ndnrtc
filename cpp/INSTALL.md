@@ -59,11 +59,9 @@ sudo apt-get install libboost-all-dev cmake wget autoconf automake libtool git p
 ## Compiled prerequisites
 
 <details>
-  <summary>#1 <b>NDN-CPP </b><i>(expand for more info)</i></summary>
-
-  > NDN-RTC uses Boost shared pointers. As NDN-RTC highly relies on NDN-CPP, types of shared pointers used in NDN-CPP and NDN-RTC should be the same.
-  > In order to build NDN-CPP with boost shared pointers it's not enough to install them on the system, as NDN-CPP gives priority to `std::shared_ptr` by default.
-
+  <summary>#1 <b>NDN-CPP </b></summary>
+  
+  > Nothing's here :grin:
 </details>
 
 ```Shell
@@ -93,7 +91,7 @@ cd deps/ndn-cpp
 </details>
 
 ```Shell
-./configure --with-std-shared-ptr=no --with-std-function=no --prefix=$(pwd)/../build
+./configure --prefix=$(pwd)/../build
 make && make install
 ```
 
