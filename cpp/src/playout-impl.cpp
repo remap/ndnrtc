@@ -84,7 +84,7 @@ PlayoutImpl::attach(IPlayoutObserver* o)
 {
     if (o)
     {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        std::lock_guard<std::recursive_mutex> scopedLock(mutex_);
         observers_.push_back(o);
     }
 }
@@ -92,7 +92,7 @@ PlayoutImpl::attach(IPlayoutObserver* o)
 void
 PlayoutImpl::detach(IPlayoutObserver* o) 
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    std::lock_guard<std::recursive_mutex> scopedLock(mutex_);
     observers_.erase(std::find(observers_.begin(), observers_.end(), o));
 }
 
@@ -124,7 +124,7 @@ void PlayoutImpl::extractSample()
         lastTimestamp_ += sampleDelay;
         LogWarnC << "playback queue is empty" << std::endl;
         {
-            boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+            std::lock_guard<std::recursive_mutex> scopedLock(mutex_);
             for (auto o:observers_) o->onQueueEmpty();
         }
     }
@@ -136,13 +136,13 @@ void PlayoutImpl::extractSample()
     {
         LogDebugC << "●-- play frame " << debugStr.str() << actualDelay << "ms" << std::endl;
         
-        // boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        // std::lock_guard<std::recursive_mutex> scopedLock(mutex_);
         // for (auto o:observers_) o->onSamplePlayed();
     }
 
     std::shared_ptr<PlayoutImpl> me = std::dynamic_pointer_cast<PlayoutImpl>(shared_from_this());
     jitterTiming_.updatePlayoutTime(actualDelay);
-    jitterTiming_.run(boost::bind(&PlayoutImpl::extractSample, me));
+    jitterTiming_.run(std::bind(&PlayoutImpl::extractSample, me));
 }
 
 void PlayoutImpl::correctAdjustment(int64_t newSampleTimestamp)

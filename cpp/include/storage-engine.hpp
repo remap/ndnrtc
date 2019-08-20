@@ -8,9 +8,9 @@
 #ifndef __storage_engine_hpp__
 #define __storage_engine_hpp__
 
-#include <boost/shared_ptr.hpp>
+
 #include <boost/asio.hpp>
-#include <boost/function.hpp>
+
 #include <ndn-cpp/name.hpp>
 
 namespace ndn {
@@ -22,7 +22,7 @@ namespace ndnrtc {
     class StorageEngineImpl;
 
     /**
-     * This is a wrapper for the persistent key-value storage of data packets.  
+     * This is a wrapper for the persistent key-value storage of data packets.
      */
     class StorageEngine {
     public:
@@ -38,30 +38,30 @@ namespace ndnrtc {
         void put(const ndn::Data& data);
 
         /**
-         * Tries to retrieve data from persistent storage. 
-         * The call is synchronous. 
+         * Tries to retrieve data from persistent storage.
+         * The call is synchronous.
          * If data is not present in the persistent storage, returned pointer
          * is invalid.
          */
         std::shared_ptr<ndn::Data> get(const ndn::Name& dataName);
 
         /**
-         * Tries to retrieve data from persistent storage according to the 
-         * interest received. 
-         * The call is synchronous. 
+         * Tries to retrieve data from persistent storage according to the
+         * interest received.
+         * The call is synchronous.
          * If data is not present in the persistent storage, returned pointer
          * is invalid.
          */
         std::shared_ptr<ndn::Data> read(const ndn::Interest& interest);
 
         /**
-         * Scans DB for longest common prefixes. May take a while, depending on 
+         * Scans DB for longest common prefixes. May take a while, depending on
          * DB size.
          * @param io io_service to use for asynchronous scanning
-         * @param onCompleted Callback called upon completion. Passes list of 
+         * @param onCompleted Callback called upon completion. Passes list of
          *                    longest common prefixes discovered in the database.
-         */ 
-        void scanForLongestPrefixes(boost::asio::io_service& io, 
+         */
+        void scanForLongestPrefixes(boost::asio::io_service& io,
             std::function<void(const std::vector<ndn::Name>&)> onCompleted);
 
         /**

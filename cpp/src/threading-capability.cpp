@@ -10,8 +10,12 @@
 
 #include "threading-capability.hpp"
 
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+
 using namespace ndnrtc;
-using namespace boost;
+using namespace std;
 
 //******************************************************************************
 void ThreadingCapability::startMyThread()
@@ -26,7 +30,9 @@ void ThreadingCapability::stopMyThread()
 {
     threadWork_.reset();
     ioService_.stop();
-    thread_.try_join_for(chrono::milliseconds(500));
+    // TODO: test this change
+    thread_.join();
+    // thread_.try_join_for(chrono::milliseconds(500));
 }
 
 void ThreadingCapability::dispatchOnMyThread(std::function<void(void)> dispatchBlock)
@@ -54,9 +60,9 @@ void ThreadingCapability::performOnMyThread(std::function<void(void)> dispatchBl
             unique_lock<mutex> lock(m);
             condition_variable isDone;
             // doneFlag is needed to prevent situations where the block passed to ioService_
-            // finishes before current thread reaches isDone.wait() call 
-            boost::atomic<bool> doneFlag(false);
-            
+            // finishes before current thread reaches isDone.wait() call
+            atomic<bool> doneFlag(false);
+
             ioService_.dispatch([dispatchBlock,&isDone, &doneFlag]{
                 dispatchBlock();
                 doneFlag = true;

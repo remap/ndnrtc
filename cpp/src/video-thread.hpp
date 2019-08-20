@@ -12,7 +12,7 @@
 #ifndef __ndnrtc__video_thread__
 #define __ndnrtc__video_thread__
 
-#include <boost/shared_ptr.hpp>
+
 
 #include "video-coder.hpp"
 

@@ -8,7 +8,7 @@
 #ifndef __packet_publisher_h__
 #define __packet_publisher_h__
 
-#include <boost/shared_ptr.hpp>
+
 #include <ndn-cpp/c/common.h>
 #include <ndn-cpp/interest.hpp>
 #include <ndn-cpp/security/key-chain.hpp>

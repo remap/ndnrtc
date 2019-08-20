@@ -9,7 +9,7 @@
 //
 
 #if 0
-#include <boost/make_shared.hpp>
+
 #include <ndn-cpp/data.hpp>
 
 #include "video-thread.hpp"
@@ -41,7 +41,7 @@ VideoThread::encode(const WebRtcVideoFrame &frame)
     // result should be delivered using onEncodedFrame or onDroppedFrame
     // callbacks which prepare videoFramePacket_ accordingly
     // here, we just need to return this packet back to a caller
-    return boost::move(videoFramePacket_);
+    return std::move(videoFramePacket_);
 }
 
 void VideoThread::setDescription(const std::string &desc)

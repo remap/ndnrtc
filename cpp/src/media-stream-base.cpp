@@ -5,8 +5,8 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include <boost/smart_ptr/shared_ptr.hpp>
-#include <boost/thread/lock_guard.hpp>
+#define BOOST_BIND_NO_PLACEHOLDERS
+
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/util/memory-content-cache.hpp>
 
@@ -21,6 +21,7 @@
 
 using namespace ndnrtc;
 using namespace std;
+using namespace std::placeholders;
 using namespace ndn;
 
 // how often is thread meta information published
@@ -66,7 +67,7 @@ MediaStreamBase::MediaStreamBase(const std::string &basePrefix,
     if (settings_.storagePath_ != "")
     {
         storage_ = std::make_shared<StorageEngine>(settings_.storagePath_);
-        ps.onSegmentsCached_ = boost::bind(&MediaStreamBase::onSegmentsCached, this, _1);
+        ps.onSegmentsCached_ = std::bind(&MediaStreamBase::onSegmentsCached, this, _1);
     }
 
     metadataPublisher_ = std::make_shared<CommonPacketPublisher>(ps);

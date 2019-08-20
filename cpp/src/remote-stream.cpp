@@ -7,7 +7,7 @@
 
 #include "remote-stream.hpp"
 #if 0
-#include <boost/make_shared.hpp>
+
 #include <ndn-cpp/name.hpp>
 
 #include "remote-stream-impl.hpp"

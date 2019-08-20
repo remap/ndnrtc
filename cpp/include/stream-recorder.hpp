@@ -8,7 +8,9 @@
 #ifndef __stream_recorder_hpp__
 #define __stream_recorder_hpp__
 
-#include <boost/shared_ptr.hpp>
+#include <stdlib.h>
+#include <functional>
+#include <memory>
 
 namespace ndn {
     class Face;
@@ -29,21 +31,21 @@ namespace ndnrtc {
     class StreamRecorderImpl;
 
     /**
-     * This class fetches (live) ndnrtc stream and stores all associated data packets 
+     * This class fetches (live) ndnrtc stream and stores all associated data packets
      * into persistent storage for later retrieval.
      * StreamRecorder may operate in several modes:
      *  -- ffwd: fetch stream starting from the most recent data, until stopped
      *  -- bckwd: fetch stream startging from the most recent data moving backwards
-     *  -- ffwd && bckwd: fetch stream strarting from the most recent data, in 
+     *  -- ffwd && bckwd: fetch stream strarting from the most recent data, in
      *      both directions (forward and backwards)
-     * StreamRecorder can be initialized with a seed frame, which will be 
-     * used to as a starting frame for fetching (instead of using most recent 
+     * StreamRecorder can be initialized with a seed frame, which will be
+     * used to as a starting frame for fetching (instead of using most recent
      * frame).
      * StreamRecroder can be intialized for fetching N frames. In this case, only
      * data packets associated with N frames (Key and Delta) will be fetched.
      */
     class StreamRecorder {
-        public: 
+        public:
 
         typedef enum _FetchDirection {
             Forward = 1 << 0,
@@ -80,12 +82,12 @@ namespace ndnrtc {
          * @param storageEngine Persisten storage engine to store data in.
          * @param streamPrefix ndnrtc stream prefix.
          * @param face Face object used for expressing interests.
-         * @param keyChain KeyChain object used to verify incoming data. If ommitted, 
+         * @param keyChain KeyChain object used to verify incoming data. If ommitted,
          *                  a default keychain with NoVerify policy will be used.
          */
-        StreamRecorder(StoreData storeDataFun, 
+        StreamRecorder(StoreData storeDataFun,
                         const NamespaceInfo& ninfo,
-                        const std::shared_ptr<ndn::Face>& face, 
+                        const std::shared_ptr<ndn::Face>& face,
                         const std::shared_ptr<ndn::KeyChain> keyChain);
         ~StreamRecorder(){ pimpl_.reset(); }
 

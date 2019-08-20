@@ -13,8 +13,8 @@
 #include <execinfo.h>
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread.hpp>
+#include <mutex>
+
 #include <ndn-cpp/threadsafe-face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 #include <ndn-cpp/security/certificate/identity-certificate.hpp>
@@ -75,7 +75,7 @@ void handler(int sig)
         mustExit = true;
 }
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
     signal(SIGABRT, handler);
     signal(SIGSEGV, handler);
@@ -106,8 +106,8 @@ int main(int argc, char **argv)
 
     int err = 0;
     boost::asio::io_service io;
-    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
-    boost::thread t([&io, &err]() {
+    std::shared_ptr<boost::asio::io_service::work> work(std::make_shared<boost::asio::io_service::work>(io));
+    thread t([&io, &err]() {
         try
         {
             io.run();
@@ -120,25 +120,25 @@ int main(int argc, char **argv)
     });
 
     // setup storage
-    boost::shared_ptr<StorageEngine> storage = 
-        boost::make_shared<StorageEngine>(args["--db-path"].asString());
+    std::shared_ptr<StorageEngine> storage =
+        std::make_shared<StorageEngine>(args["--db-path"].asString());
 
     // setup face and keychain
     // TODO: keychain setup for verification
-    boost::shared_ptr<Face> face(boost::make_shared<ThreadsafeFace>(io));
-    boost::shared_ptr<KeyChain> keyChain(boost::make_shared<KeyChain>(boost::make_shared<PibMemory>(), boost::make_shared<TpmBackEndMemory>(),
-                                        boost::make_shared<NoVerifyPolicyManager>()));
+    std::shared_ptr<Face> face(std::make_shared<ThreadsafeFace>(io));
+    std::shared_ptr<KeyChain> keyChain(std::make_shared<KeyChain>(std::make_shared<PibMemory>(), std::make_shared<TpmBackEndMemory>(),
+                                        std::make_shared<NoVerifyPolicyManager>()));
 
     // TODO: support other than forward direction for fetching
     // setup settings for stream recorder
     // uint8_t directionMask;
     // StreamRecorder::FetchDirection::Forward
     {
-        StreamRecorder recorder([storage](const boost::shared_ptr<const ndn::Data> &d){ storage->put(d); }, 
+        StreamRecorder recorder([storage](const std::shared_ptr<const ndn::Data> &d){ storage->put(d); },
                                 prefixInfo, face, keyChain);
         recorder.setLogger(ndnlog::new_api::Logger::getLoggerPtr(""));
 
-        LogInfo("") << "Will fetch stream " << prefixInfo.getPrefix(prefix_filter::Stream) 
+        LogInfo("") << "Will fetch stream " << prefixInfo.getPrefix(prefix_filter::Stream)
             << " (thread " << prefixInfo.threadName_ << ")" << endl;
 
         StreamRecorder::FetchSettings settings = StreamRecorder::Default;
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
             settings.direction_ = StreamRecorder::FetchDirection::Backward;
         if (args["--direction"].asString() == "both")
             settings.direction_ = StreamRecorder::FetchDirection::Forward | StreamRecorder::FetchDirection::Backward;
-        
+
         recorder.start(settings);
 
         StreamRecorder::Stats stats;
@@ -165,7 +165,7 @@ int main(int argc, char **argv)
                 cout << "\r"
                      << "[ " << stats.deltaStored_+stats.keyStored_
                      << " (key " << stats.keyStored_ << " / delta " << stats.deltaStored_ << ")"
-                     << " err " << stats.keyFailed_+stats.deltaFailed_ 
+                     << " err " << stats.keyFailed_+stats.deltaFailed_
                      << " (key " << stats.keyFailed_ << " / delta " << stats.deltaFailed_ << ")"
                      << " mnfst: " << stats.manifestsStored_
                      << " smeta: " << stats.streamMetaStored_

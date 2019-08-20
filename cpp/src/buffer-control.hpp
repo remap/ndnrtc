@@ -8,7 +8,7 @@
 #ifndef __buffer_control_h__
 #define __buffer_control_h__
 
-#include <boost/shared_ptr.hpp>
+
 
 #include "ndnrtc-common.hpp"
 #include "segment-controller.hpp"

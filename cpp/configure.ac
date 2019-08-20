@@ -293,15 +293,15 @@ AX_BOOST_BASE([1.54])
 
 AX_BOOST_SYSTEM
 AX_BOOST_ASIO
-AX_BOOST_CHRONO
-AX_BOOST_REGEX
+#AX_BOOST_CHRONO
+#AX_BOOST_REGEX
 
 # this is because AX_BOOST_TIMER and AX_BOOST_FILESYSTEM fail when cross-compiling
 # I've added libboost_timer to ndnrtc_client_LDADD in Makefile.am manually (for android)
 if test "$cross_compiling" != "yes"
 then
-    AX_BOOST_THREAD
-    AX_BOOST_TIMER
+    #AX_BOOST_THREAD
+    #AX_BOOST_TIMER
     AX_BOOST_FILESYSTEM
 fi
 

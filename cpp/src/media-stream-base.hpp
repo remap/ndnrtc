@@ -8,7 +8,7 @@
 #ifndef __media_stream_base_h__
 #define __media_stream_base_h__
 
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 #include <ndn-cpp/name.hpp>
 
 #include "local-stream.hpp"
@@ -75,7 +75,7 @@ class MediaStreamBase : public NdnRtcComponent,
         const MediaThreadParams *params_;
     };
 
-    mutable boost::mutex internalMutex_;
+    mutable std::mutex internalMutex_;
     MediaStreamSettings settings_;
     std::string basePrefix_;
     ndn::Name streamPrefix_;

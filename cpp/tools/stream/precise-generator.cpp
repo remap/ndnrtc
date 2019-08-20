@@ -7,18 +7,17 @@
 
 // #define DEBUG_PG
 #include "precise-generator.hpp"
-#include <boost/make_shared.hpp>
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/atomic.hpp>
-#include <boost/thread/recursive_mutex.hpp>
-#include <boost/thread/lock_guard.hpp>
+
+
+#include <mutex>
+#include <atomic>
 
 #define STEADY_TIMER
 
 #ifdef STEADY_TIMER
 
 #include <boost/asio/steady_timer.hpp>
+
 typedef boost::asio::steady_timer timer_type;
 typedef lib_chrono::milliseconds ms;
 typedef lib_chrono::nanoseconds ns;
@@ -54,7 +53,7 @@ typedef boost::posix_time::time_duration duration_type;
 using namespace std;
 using namespace std::placeholders;
 
-class PreciseGeneratorImpl : public boost::enable_shared_from_this<PreciseGeneratorImpl>
+class PreciseGeneratorImpl : public enable_shared_from_this<PreciseGeneratorImpl>
 {
   public:
     PreciseGeneratorImpl(boost::asio::io_service &io, const double &ratePerSec,
@@ -67,8 +66,8 @@ class PreciseGeneratorImpl : public boost::enable_shared_from_this<PreciseGenera
     double getMeanProcessingOverheadNs() { return (meanProcOverheadNs_); } // - meanTaskTimeNs_); }
     double getMeanTaskTimeNs() { return meanTaskTimeNs_; }
 
-    boost::recursive_mutex setupMutex_;
-    boost::atomic<bool> isRunning_;
+    std::recursive_mutex setupMutex_;
+    std::atomic<bool> isRunning_;
     long long fireCount_;
     double meanProcOverheadNs_, meanTaskTimeNs_;
     double rate_;
@@ -91,7 +90,7 @@ class PreciseGeneratorImpl : public boost::enable_shared_from_this<PreciseGenera
 
 //******************************************************************************
 PreciseGenerator::PreciseGenerator(boost::asio::io_service &io, const double &ratePerSec,
-                                   const Task &task) : pimpl_(boost::make_shared<PreciseGeneratorImpl>(io, ratePerSec, task)) {}
+                                   const Task &task) : pimpl_(make_shared<PreciseGeneratorImpl>(io, ratePerSec, task)) {}
 PreciseGenerator::~PreciseGenerator() { pimpl_->stop(); }
 
 void PreciseGenerator::start() { pimpl_->start(); }
@@ -123,7 +122,7 @@ void PreciseGeneratorImpl::stop()
 {
     if (isRunning_)
     {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(setupMutex_);
+        std::lock_guard<std::recursive_mutex> scopedLock(setupMutex_);
         isRunning_ = false;
         timer_.cancel();
     }
@@ -144,7 +143,7 @@ void PreciseGeneratorImpl::onFire(const boost::system::error_code &code)
 {
     if (!code)
     {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(setupMutex_);
+        std::lock_guard<std::recursive_mutex> scopedLock(setupMutex_);
 
         if (isRunning_)
         {

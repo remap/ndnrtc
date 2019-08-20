@@ -18,7 +18,6 @@
 // #include <webrtc/common_video/libyuv/include/webrtc_libyuv.h>
 #include <ndn-cpp/name.hpp>
 #include <ndn-cpp/data.hpp>
-#include <boost/move/move.hpp>
 #include <map>
 
 #include "network-data.hpp"
@@ -161,7 +160,7 @@ class VideoFramePacketT : public HeaderPacketT<CommonHeader, T>
     }
 
     ENABLE_IF(T, Mutable)
-    VideoFramePacketT(NetworkData &&networkData) : CommonSamplePacket(boost::move(networkData)) {}
+    VideoFramePacketT(NetworkData &&networkData) : CommonSamplePacket(std::move(networkData)) {}
 
     const webrtc::EncodedImage &getFrame()
     {
@@ -189,7 +188,7 @@ class VideoFramePacketT : public HeaderPacketT<CommonHeader, T>
              blob + 1 < this->blobs_.end(); blob += 2)
             syncList[std::string((const char *)blob->data(), blob->size())] = *(PacketNumber *)(blob + 1)->data();
 
-        return boost::move(syncList);
+        return std::move(syncList);
     }
 
     ENABLE_IF(T, Mutable)
@@ -212,7 +211,7 @@ class VideoFramePacketT : public HeaderPacketT<CommonHeader, T>
         // expand data with zeros
         this->_data().resize(nDataSegmets * segmentLength, 0);
         if (enc.encode(this->_data().data(), fecData.data()) >= 0)
-            parityData = std::make_shared<NetworkData>(boost::move(fecData));
+            parityData = std::make_shared<NetworkData>(std::move(fecData));
         // shrink data back
         this->_data().resize(this->getLength() - padding);
         this->reinit(); // data may have been relocated, so we need to reinit blobs
@@ -320,7 +319,7 @@ class AudioBundlePacketT : public HeaderPacketT<CommonHeader, T>
     }
 
     ENABLE_IF(T, Mutable)
-    AudioBundlePacketT(NetworkData &&bundle) : HeaderPacketT<CommonHeader, T>(boost::move(bundle)) {}
+    AudioBundlePacketT(NetworkData &&bundle) : HeaderPacketT<CommonHeader, T>(std::move(bundle)) {}
 
     bool hasSpace(const AudioSampleBlob &sampleBlob) const
     {

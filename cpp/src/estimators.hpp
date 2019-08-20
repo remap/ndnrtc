@@ -1,4 +1,4 @@
-// 
+//
 // estimators.hpp
 //
 //  Created by Peter Gusev on 19 April 2016.
@@ -10,21 +10,20 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <cmath>
 #include <deque>
-#include <boost/shared_ptr.hpp>
-#include <boost/move/move.hpp>
 
 #include "ndnrtc-defines.hpp"
 
 namespace ndnrtc {
 	namespace estimators {
 		/**
-		 * Interface for estimator window class. 
-		 * An estimator window defines an interval in some dimension, over 
-		 * which estimator is operating. For instance, if 
-		 * estimator window is in time dimension and has value of 5 seconds, 
+		 * Interface for estimator window class.
+		 * An estimator window defines an interval in some dimension, over
+		 * which estimator is operating. For instance, if
+		 * estimator window is in time dimension and has value of 5 seconds,
 		 * then estimator is operating over window of 5 seconds. Likewise,
-		 * if window's dimension is the number of samples, then estimator is 
+		 * if window's dimension is the number of samples, then estimator is
 		 * operating over the window of 5 samples.
 		 */
 		class IEstimatorWindow {
@@ -35,7 +34,7 @@ namespace ndnrtc {
 			 * @return true if window limit has been reached, false otherwise
 			 */
 			virtual bool isLimitReached() = 0;
-            
+
             /**
              * Cuts provided sample array to be of window size
              */
@@ -71,7 +70,7 @@ namespace ndnrtc {
 		public:
 			Estimator(std::shared_ptr<IEstimatorWindow> window):
 				nValues_(0), value_(0), jitter_(0), window_(window) {}
-			
+
 			virtual void newValue(double value) = 0;
 			virtual double value() const { return value_; }
 			unsigned int count() const { return nValues_; }
@@ -85,7 +84,7 @@ namespace ndnrtc {
 
 
 		/**
-		 * Sliding window estimator calculates average and deviation over time 
+		 * Sliding window estimator calculates average and deviation over time
 		 * window
 		 */
 		class Average : public Estimator {
@@ -93,7 +92,7 @@ namespace ndnrtc {
 			Average(std::shared_ptr<IEstimatorWindow> window);
 
 			void newValue(double value);
-			double deviation() const { return sqrt(variance_); }
+			double deviation() const { return std::sqrt(variance_); }
 			double variance() const { return variance_; }
             double oldestValue() const { return (samples_.size() ? samples_.front() : 0); }
             double latestValue() const { return (samples_.size() ? samples_.back() : 0); }
@@ -105,7 +104,7 @@ namespace ndnrtc {
 		};
 
 		/**
-		 * Frequency estimator measures average frequency (per second) of new value 
+		 * Frequency estimator measures average frequency (per second) of new value
 		 * appearings. Meter value is updated every window interval.
 		 */
 		class FreqMeter : public Estimator {
@@ -113,7 +112,7 @@ namespace ndnrtc {
 			FreqMeter(std::shared_ptr<IEstimatorWindow> window);
 
 			/**
-			 * Passed value is ignored. This call is used to calculate frequency of 
+			 * Passed value is ignored. This call is used to calculate frequency of
 			 * calling this method over the estimator window.
 			 */
 			void newValue(double value);
@@ -138,7 +137,7 @@ namespace ndnrtc {
 			double value() const { return value_; }
             double variation() const { return variation_; }
 			void newValue(double value);
-		
+
 		private:
             unsigned int nValues_;
 			double smoothing_, vsmoothing_, value_, variation_;

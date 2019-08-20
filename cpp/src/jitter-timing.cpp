@@ -6,11 +6,11 @@
 //  Copyright 2013-2015 Regents of the University of California
 //
 
-#include <boost/make_shared.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/lock_guard.hpp>
+
+#include <mutex>
+
 #include <boost/asio/steady_timer.hpp>
-#include <boost/function.hpp>
+
 
 #include "jitter-timing.hpp"
 #include "clock.hpp"

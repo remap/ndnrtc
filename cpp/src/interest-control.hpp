@@ -9,7 +9,7 @@
 #define __interest_control_h__
 #if 0
 #include <deque>
-#include <boost/atomic.hpp>
+#include <atomic>
 
 #include "ndnrtc-common.hpp"
 #include "ndnrtc-object.hpp"
@@ -191,9 +191,9 @@ class InterestControl : public NdnRtcComponent,
 
   private:
     std::shared_ptr<IInterestControlStrategy> strategy_;
-    boost::atomic<bool> initialized_, limitSet_;
+    std::atomic<bool> initialized_, limitSet_;
     unsigned int lowerLimit_, limit_, upperLimit_;
-    boost::atomic<int> pipeline_;
+    std::atomic<int> pipeline_;
     std::shared_ptr<DrdEstimator> drdEstimator_;
     double targetRate_;
     std::shared_ptr<statistics::StatisticsStorage> sstorage_;

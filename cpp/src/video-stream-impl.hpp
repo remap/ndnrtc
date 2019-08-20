@@ -10,9 +10,9 @@
 #define __video_stream_impl_h__
 
 #include <boost/asio.hpp>
-#include <boost/thread.hpp>
+
 #include <boost/asio/steady_timer.hpp>
-#include <boost/atomic.hpp>
+#include <atomic>
 
 #include "interfaces.hpp"
 #include "media-stream-base.hpp"
@@ -92,7 +92,7 @@ class VideoStreamImpl : public MediaStreamBase
     };
 
     bool fecEnabled_;
-    boost::atomic<int> busyPublishing_;
+    std::atomic<int> busyPublishing_;
     RawFrameConverter conv_;
     std::map<std::string, std::shared_ptr<VideoThread>> threads_;
     std::map<std::string, std::shared_ptr<FrameScaler>> scalers_;

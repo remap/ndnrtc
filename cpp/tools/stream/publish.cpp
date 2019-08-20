@@ -9,7 +9,7 @@
 
 #include <chrono>
 #include <mutex>
-#include <boost/chrono.hpp>
+
 #include <execinfo.h>
 
 #include <ndn-cpp/threadsafe-face.hpp>

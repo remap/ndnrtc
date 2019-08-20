@@ -5,7 +5,7 @@
 //  Copyright 2013 Regents of the University of California
 //  For licensing details see the LICENSE file.
 //
-//  Author:  Peter Gusev 
+//  Author:  Peter Gusev
 //  Created: 8/8/13
 //
 
@@ -15,13 +15,11 @@
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
-#include <boost/thread/recursive_mutex.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/enable_shared_from_this.hpp>
 
 #include <iostream>
 #include <string>
 #include <map>
+#include <mutex>
 #include <fstream>
 
 #include "params.hpp"
@@ -116,7 +114,7 @@ namespace ndnlog {
         class CallbackSink;
 
         // log record sink receives composed log record from a logger
-        class ILogRecordSink 
+        class ILogRecordSink
         {
         public:
             virtual void finalizeRecord(const std::string& record) = 0;
@@ -151,8 +149,8 @@ namespace ndnlog {
             }
 
         private:
-            static boost::recursive_mutex stdOutMutex_;
-            boost::recursive_mutex logMutex_;
+            static std::recursive_mutex stdOutMutex_;
+            std::recursive_mutex logMutex_;
 
             bool isStdOut_;
             std::string logFile_;
@@ -160,7 +158,7 @@ namespace ndnlog {
 
             std::ostream&
             getOutStream() { return *outStream_; }
-            
+
             std::ofstream&
             getOutFileStream()
             {
@@ -170,26 +168,26 @@ namespace ndnlog {
         };
 
         /**
-         * Logger object. Performs thread-safe logging into a file or standard 
+         * Logger object. Performs thread-safe logging into a file or standard
          * output.
          */
         class Logger : public std::enable_shared_from_this<Logger>
         {
         private:
             using endl_type = std::ostream&(std::ostream&);
-            
+
         public:
             // interval at which logger is flushing data on disk (if file logging
             // was chosen)
             static unsigned int FlushIntervalMs;
-            
+
             /**
-             * Creates an instance of logger with specified logging level and 
-             * file name. By default, creates logger wich logs everything into 
+             * Creates an instance of logger with specified logging level and
+             * file name. By default, creates logger wich logs everything into
              * the console.
-             * @param logLevel Minimal logging level for current instance. Eny 
+             * @param logLevel Minimal logging level for current instance. Eny
              * log wich has level less than specified will br ignored.
-             * @param logFileFmt Format for the logging file name. If NULL - 
+             * @param logFileFmt Format for the logging file name. If NULL -
              * logging is performed into standard output.
              */
             Logger(const NdnLoggerDetailLevel& logLevel = NdnLoggerDetailLevelAll,
@@ -201,7 +199,7 @@ namespace ndnlog {
              * Releases current instance and all associated resources
              */
             ~Logger();
-            
+
             /**
              * Starts new logging entry with the header. Logging entry
              * can be completed with the "endl" function or by another new call
@@ -221,14 +219,14 @@ namespace ndnlog {
                 const ILoggingObject* loggingInstance = 0,
                 const std::string& locationFunc = "",
                 const int& locationLine = -1);
-            
+
             /**
              * Stream operator << implementation
-             * Any consequent call appends data to the previously created log 
+             * Any consequent call appends data to the previously created log
              * entry. Specific log entry can be created using "log" call,
-             * otherwise - if no previous log call was made, calling this 
-             * operator creates a new deafult log entry with INFO log level and 
-             * with no logging instance (set to nullptr) which results in poor 
+             * otherwise - if no previous log call was made, calling this
+             * operator creates a new deafult log entry with INFO log level and
+             * with no logging instance (set to nullptr) which results in poor
              * undetailed logging. However can be usfeul for system-wide logging.
              */
             template<typename T>
@@ -239,10 +237,10 @@ namespace ndnlog {
                 {
                     currentLogRecord_ << data;
                 }
-                
+
                 return *this;
             }
-            
+
             /**
              * Overload for std::endl explicitly
              * Closes current logging entry
@@ -255,38 +253,38 @@ namespace ndnlog {
                 {
                     isWritingLogEntry_ = false;
                     currentEntryLogType_ = NdnLoggerLevelTrace;
-                    
+
                     currentLogRecord_ << endl;
                     finalizeLogRecord();
                     sink_->unlock();
                 }
-                
+
                 return *this;
             }
-            
+
             void
             setLogLevel(const NdnLoggerDetailLevel& logLevel)
             { logLevel_ = logLevel; }
-            
+
             NdnLoggerDetailLevel
             getLogLevel()
             { return logLevel_; }
-            
+
             static void
             initAsyncLogging();
-            
+
             static void
             releaseAsyncLogging();
-            
+
             static Logger&
             getLogger(const std::string &logFile);
-            
+
             static std::shared_ptr<Logger>
             getLoggerPtr(const std::string &logFile);
-            
+
             static void
             destroyLogger(const std::string &logFile);
-            
+
             static Logger& log(const std::string &logFile,
                                const NdnLogType& logType,
                                const std::string& locationFunc = "",
@@ -296,62 +294,62 @@ namespace ndnlog {
                 return getLogger(logFile).log(logType, loggingInstance,
                                        locationFunc, locationLine);
             }
-            
-            
+
+
             static void
             initializeSharedInstance(const NdnLoggerDetailLevel& logLevel,
                                      const std::string& logFile)
             {
                 if (sharedInstance_)
                     delete sharedInstance_;
-                
+
                 sharedInstance_ = new Logger(logLevel, logFile);
             }
-            
+
             static Logger&
             sharedInstance()
             { return *sharedInstance_; }
-            
+
             static std::string
             stringify(NdnLoggerLevel lvl);
-            
+
             void
             flush();
-            
+
         private:
             NdnLoggerDetailLevel logLevel_;
             std::shared_ptr<ILogRecordSink> sink_;
             int64_t lastFlushTimestampMs_;
-            
+
             bool isWritingLogEntry_;
             NdnLogType currentEntryLogType_;
             pthread_t current_;
-            
+
             static std::map<std::string, std::shared_ptr<Logger>> loggers_;
             static Logger* sharedInstance_;
-            
+
             std::atomic<bool> isProcessing_;
             std::stringstream currentLogRecord_;
             typedef boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> LogRecordQueue;
             LogRecordQueue recordsQueue_;
-            
+
             void
             processLogRecords();
-            
+
             void
             startLogRecord();
-            
+
             void
             finalizeLogRecord();
-            
+
             int64_t
             getMillisecondTimestamp();
-            
+
             // int i = 0;
         };
-        
+
         /**
-         * Interface for logging objects - instances, that can do logging 
+         * Interface for logging objects - instances, that can do logging
          * should implement this interface
          */
         class ILoggingObject
@@ -359,61 +357,61 @@ namespace ndnlog {
         public:
             /**
              * Instance short description
-             * @return Description of the current instance - should contain 
-             * short string representing just enough information about the 
+             * @return Description of the current instance - should contain
+             * short string representing just enough information about the
              * instance, which preforms logging
              */
             virtual std::string
             getDescription() const
             { return description_; }
-            
+
             virtual void
             setDescription(const std::string& desc)
             { description_ = desc; }
-            
+
             virtual bool
             isLoggingEnabled() const
             { return true; }
-            
+
             ILoggingObject(){}
-            
+
             virtual ~ILoggingObject()
             {
                 if (logger_)
                     logger_->flush();
             }
-            
+
             virtual void
             setLogger(std::shared_ptr<Logger> logger) { logger_ = logger; }
-            
+
             virtual std::shared_ptr<Logger>
             getLogger() const
             { return logger_; }
-            
+
         protected:
             std::shared_ptr<Logger> logger_;
             std::string description_ = "<no description>";
         };
-        
+
         // nil-logger
         class NilLogger : public Logger {
         private:
             using endl_type = std::ostream&(std::ostream&);
-            
+
         public:
             template<typename T>
             NilLogger& operator<<(T const&)
-            { 
+            {
                 return *this;
             }
-            
+
             NilLogger& operator<< (endl_type endl)
             {
                 return *this;
             }
-            
+
             static NilLogger& get() { return nilLogger_; }
-            
+
         private:
             static NilLogger nilLogger_;
         };
@@ -435,7 +433,7 @@ namespace ndnlog {
             void unlock();
 
         private:
-            boost::recursive_mutex mutex_;
+            std::recursive_mutex mutex_;
             LoggerSinkCallback callback_;
             LoggerSinkCallbackFun callbackFun_;
 

@@ -15,7 +15,7 @@
 #ifndef ndnrtc_webrtc_h
 #define ndnrtc_webrtc_h
 
-#include <boost/shared_ptr.hpp>
+
 #include <interfaces.hpp>
 
 #include "ndnrtc-common.hpp"

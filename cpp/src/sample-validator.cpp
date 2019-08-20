@@ -98,7 +98,7 @@ void ManifestValidator::onNewRequest(const std::shared_ptr<BufferSlot> &slot)
 
                                 if (true)//slot->getState() >= BufferSlot::State::New)
                                 {
-                                    //slot->manifest_ = std::make_shared<Manifest>(boost::move(nd));
+                                    //slot->manifest_ = std::make_shared<Manifest>(std::move(nd));
                                     if (true) //slot->getState() >= BufferSlot::State::Ready)
                                         verifySlot(slot);
                                 }

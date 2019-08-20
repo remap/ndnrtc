@@ -29,12 +29,7 @@
 #include <ndn-cpp/threadsafe-face.hpp>
 #include <ndn-cpp/util/memory-content-cache.hpp>
 
-#include <boost/chrono.hpp>
 #include <boost/asio.hpp>
-#include <boost/thread.hpp>
-#include <boost/thread/lock_guard.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
 
 #include "local-stream.hpp"
 #include "simple-log.hpp"
@@ -46,7 +41,7 @@
 using namespace ndn;
 using namespace ndnrtc;
 using namespace ndnrtc::helpers;
-using namespace boost::chrono;
+using namespace std::chrono;
 using namespace ndnlog::new_api;
 
 static const char *PublicDb = "public-info.db";

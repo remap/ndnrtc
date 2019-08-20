@@ -28,25 +28,25 @@ gopCount_(0), frameConsumer_(nullptr)
 
 void VideoPlayoutImpl::registerFrameConsumer(IEncodedFrameConsumer* frameConsumer)
 { 
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    std::lock_guard<std::recursive_mutex> scopedLock(mutex_);
     frameConsumer_ = frameConsumer; 
 }
 
 void VideoPlayoutImpl::deregisterFrameConsumer()
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    std::lock_guard<std::recursive_mutex> scopedLock(mutex_);
     frameConsumer_ = nullptr;
 }
 
 void VideoPlayoutImpl::attach(IVideoPlayoutObserver* observer)
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    std::lock_guard<std::recursive_mutex> scopedLock(mutex_);
     PlayoutImpl::attach(observer);
 }
 
 void VideoPlayoutImpl::detach(IVideoPlayoutObserver* observer)
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+    std::lock_guard<std::recursive_mutex> scopedLock(mutex_);
     PlayoutImpl::detach(observer);
 }
 
@@ -106,7 +106,7 @@ bool VideoPlayoutImpl::processSample(const std::shared_ptr<const BufferSlot>& sl
                 gopIsValid_ = false;
 
                 {
-                    boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+                    std::lock_guard<std::recursive_mutex> scopedLock(mutex_);
                     for (auto o : observers_)
                         ((IVideoPlayoutObserver *)o)->frameSkipped(hdr.playbackNo_, !slot->getNameInfo().isDelta_);
                 }
@@ -120,7 +120,7 @@ bool VideoPlayoutImpl::processSample(const std::shared_ptr<const BufferSlot>& sl
         if (gopIsValid_)
         {
             {
-                boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+                std::lock_guard<std::recursive_mutex> scopedLock(mutex_);
                 if (frameConsumer_)
                 {
                     if (framePacket->isValid())
@@ -160,7 +160,7 @@ bool VideoPlayoutImpl::processSample(const std::shared_ptr<const BufferSlot>& sl
     }
     else
     {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(mutex_);
+        std::lock_guard<std::recursive_mutex> scopedLock(mutex_);
         LogWarnC << "failed recovery " << slot->dump() << std::endl;
 
         for (auto o:observers_) 

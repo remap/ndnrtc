@@ -289,7 +289,7 @@ Manifest::Manifest(const std::vector<std::shared_ptr<const ndn::Data>> &dataObje
     }
 }
 
-Manifest::Manifest(NetworkData &&nd) : DataPacket(boost::move(nd)) {}
+Manifest::Manifest(NetworkData &&nd) : DataPacket(std::move(nd)) {}
 
 bool Manifest::hasData(const ndn::Data &data) const
 {
@@ -316,7 +316,7 @@ AudioThreadMeta::AudioThreadMeta(double rate, uint64_t bundleNo, const std::stri
         isValid_ = false;
 }
 
-AudioThreadMeta::AudioThreadMeta(NetworkData &&data) : DataPacket(boost::move(data))
+AudioThreadMeta::AudioThreadMeta(NetworkData &&data) : DataPacket(std::move(data))
 {
     isValid_ = (blobs_.size() == 3 &&
                 blobs_[0].size() == sizeof(double) &&
@@ -353,7 +353,7 @@ VideoThreadMeta::VideoThreadMeta(double rate, PacketNumber deltaSeqNo, PacketNum
     addBlob(sizeof(m), (uint8_t *)&m);
 }
 
-VideoThreadMeta::VideoThreadMeta(NetworkData &&data) : DataPacket(boost::move(data))
+VideoThreadMeta::VideoThreadMeta(NetworkData &&data) : DataPacket(std::move(data))
 {
     isValid_ = (blobs_.size() == 1 && blobs_[0].size() == sizeof(Meta));
 }

@@ -6,7 +6,7 @@
 //
 
 #include "meta-fetcher.hpp"
-#include <boost/thread.hpp>
+
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
 

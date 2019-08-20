@@ -8,8 +8,8 @@
 #ifndef __segment_fetcher_h__
 #define __segment_fetcher_h__
 
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/function.hpp>
+
+
 
 #include "ndnrtc-object.hpp"
 #include "data-validator.hpp"

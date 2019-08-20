@@ -9,7 +9,9 @@
 //
 
 #include "interest-queue.hpp"
-#include <boost/thread/lock_guard.hpp>
+
+#include <mutex>
+
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/interest.hpp>
 
@@ -37,27 +39,27 @@ public:
                      ndn::Face *face,
                      const std::shared_ptr<statistics::StatisticsStorage>& statStorage);
     ~RequestQueueImpl();
-    
+
     void
     enqueueInterest(const std::shared_ptr<const Interest>& interest,
                     std::shared_ptr<DeadlinePriority> priority,
                     OnData onData,
                     OnTimeout onTimeout,
                     OnNetworkNack onNetworkNack);
-    
+
     void
     enqueueRequest(std::shared_ptr<DataRequest>& request,
                    std::shared_ptr<DeadlinePriority> priority);
-    
+
     void reset();
     void registerObserver(IInterestQueueObserver *observer) { observer_ = observer; }
     void unregisterObserver() { observer_ = nullptr; }
     size_t size() const { return queue_.size(); }
     const estimators::Filter& getEstimator() const { return drdEstimator_; }
-    
+
     boost::asio::io_service& getFaceIo() const { return faceIo_; }
     void callLater(uint64_t usecDelay, DelayedCallback callback);
-    
+
 private:
     class QueueEntry
     {
@@ -66,17 +68,17 @@ private:
         {
         public:
             Comparator(bool inverted):inverted_(inverted){}
-            
+
             bool operator() (const QueueEntry& q1,
                              const QueueEntry& q2) const
             {
                 return inverted_^(q1.getValue() < q2.getValue());
             }
-            
+
         private:
             bool inverted_;
         };
-        
+
         QueueEntry(const std::shared_ptr<const ndn::Interest>& interest,
                    const std::shared_ptr<RequestQueue::IPriority>& priority,
                    OnData onData,
@@ -84,10 +86,10 @@ private:
                    OnNetworkNack onNetworkNack,
                    OnExpressInterest onExpressInterest = OnExpressInterest());
         QueueEntry(QueueEntry&& qe) = default;
-        
+
         int64_t
         getValue() const { return priority_->getValue(); }
-        
+
         QueueEntry& operator=(const QueueEntry& entry)
         {
             interest_ = entry.interest_; // we just copy the pointer, since it's a pointer to a const
@@ -98,10 +100,10 @@ private:
             onExpressInterest_ = entry.onExpressInterest_;
             return *this;
         }
-        
+
     private:
         friend RequestQueueImpl;
-        
+
         std::shared_ptr<const ndn::Interest> interest_;
         std::shared_ptr<RequestQueue::IPriority> priority_;
         OnData onDataCallback_;
@@ -109,19 +111,19 @@ private:
         OnNetworkNack onNetworkNack_;
         OnExpressInterest onExpressInterest_;
     };
-    
+
     typedef std::priority_queue<QueueEntry, std::vector<QueueEntry>,
     QueueEntry::Comparator> PriorityQueue;
-    
+
     ndn::Face *face_;
     boost::asio::io_service& faceIo_;
-    boost::recursive_mutex queueAccess_;
+    recursive_mutex queueAccess_;
     PriorityQueue queue_;
     IInterestQueueObserver *observer_;
     bool isDrainingQueue_;
     estimators::Filter drdEstimator_;
     uint64_t lastRequestId_, lastRcvdRequestId_;
-    
+
     void enqueue(QueueEntry&, std::shared_ptr<DeadlinePriority> priority);
     void drainQueueSafe();
     void drainQueue();
@@ -275,39 +277,39 @@ RequestQueueImpl::enqueueRequest(std::shared_ptr<DataRequest> &request,
                                  std::shared_ptr<DeadlinePriority> priority)
 {
     assert(request.get());
-    
+
     std::shared_ptr<InterestQueue> me = std::dynamic_pointer_cast<InterestQueue>(shared_from_this());
     QueueEntry entry(request->getInterest(), priority,
                      [request, me, this](const std::shared_ptr<const Interest>&,
                                const std::shared_ptr<Data>& d){
                          request->timestampReply();
                          request->setData(d);
-                         
+
                          if (request->getId() < lastRcvdRequestId_)
                              (*statStorage_)[Indicator::OutOfOrderNum]++;
                          else
                              lastRcvdRequestId_ = request->getId();
-                         
+
                          drdEstimator_.newValue(request->getDrdUsec());
-                         
+
                          if (d->getMetaInfo().getType() == ndn_ContentType_NACK)
                          {
                              LogTraceC << "app nack " << d->getName() << endl;
-                             
+
                              request->setStatus(DataRequest::Status::AppNack);
                              request->triggerEvent(DataRequest::Status::AppNack);
                          }
                          else
                          {
                              LogTraceC << "data " << d->getName() << endl;
-                             
+
                              request->setStatus(DataRequest::Status::Data);
                              request->triggerEvent(DataRequest::Status::Data);
                          }
                      },
                      [request, me, this](const std::shared_ptr<const Interest>& i){
                          LogTraceC << "timeout " << i->getName() << endl;
-                         
+
                          request->timestampReply();
                          request->setTimeout();
                          request->setStatus(DataRequest::Status::Timeout);
@@ -316,7 +318,7 @@ RequestQueueImpl::enqueueRequest(std::shared_ptr<DataRequest> &request,
                      [request, me, this](const std::shared_ptr<const ndn::Interest>& interest,
                                const std::shared_ptr<ndn::NetworkNack>& networkNack){
                          LogTraceC << "network nack " << interest->getName() << " - " << networkNack->getReason() << endl;
-                         
+
                          request->timestampReply();
                          request->setNack(networkNack);
                          request->setStatus(DataRequest::Status::NetworkNack);
@@ -339,7 +341,7 @@ void
 RequestQueueImpl::reset()
 {
     {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
+        lock_guard<recursive_mutex> scopedLock(queueAccess_);
         queue_ = PriorityQueue(QueueEntry::Comparator(true));
     }
 
@@ -359,15 +361,15 @@ RequestQueueImpl::enqueue(QueueEntry &qe, std::shared_ptr<DeadlinePriority> prio
 {
     priority->setEnqueueTimestamp(clock::millisecondTimestamp());
     {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
+        lock_guard<recursive_mutex> scopedLock(queueAccess_);
         queue_.emplace(move(qe));
-        
+
         if (!isDrainingQueue_)
         {
             isDrainingQueue_ = true;
             std::shared_ptr<RequestQueueImpl> me =
                 std::dynamic_pointer_cast<RequestQueueImpl>(shared_from_this());
-            async::dispatchAsync(faceIo_, boost::bind(&RequestQueueImpl::drainQueueSafe, me));
+            async::dispatchAsync(faceIo_, bind(&RequestQueueImpl::drainQueueSafe, me));
         }
     }
 }
@@ -375,15 +377,15 @@ RequestQueueImpl::enqueue(QueueEntry &qe, std::shared_ptr<DeadlinePriority> prio
 void
 RequestQueueImpl::drainQueueSafe()
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(queueAccess_);
-    drainQueue();    
+    lock_guard<recursive_mutex> scopedLock(queueAccess_);
+    drainQueue();
 }
 
-void 
+void
 RequestQueueImpl::drainQueue()
 {
     isDrainingQueue_ = (queue_.size() > 0);
-    
+
     while (isDrainingQueue_)
     {
         processEntry(queue_.top());
@@ -394,20 +396,20 @@ RequestQueueImpl::drainQueue()
 
 void
 RequestQueueImpl::processEntry(const RequestQueueImpl::QueueEntry &entry)
-{    
+{
     LogTraceC << " pri " << entry.getValue()
               << " " << entry.interest_->getInterestLifetimeMilliseconds()
               << "ms qsz " << queue_.size()
               << " mbf " << entry.interest_->getMustBeFresh()
               << " " << entry.interest_->getName()
               << std::endl;
-    
+
     face_->expressInterest(*(entry.interest_), entry.onDataCallback_,
         entry.onTimeoutCallback_, entry.onNetworkNack_);
 
     if (entry.onExpressInterest_)
         entry.onExpressInterest_(entry.interest_);
-    
+
     (*statStorage_)[Indicator::QueueSize] = queue_.size();
     (*statStorage_)[Indicator::InterestsSentNum]++;
 

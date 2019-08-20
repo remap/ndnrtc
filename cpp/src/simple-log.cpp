@@ -9,10 +9,10 @@
 //  Created: 8/8/13
 //
 
-#include <boost/chrono.hpp>
-#include <boost/thread.hpp>
+#include <mutex>
+#include <thread>
 #include <boost/asio.hpp>
-#include <boost/make_shared.hpp>
+
 
 #include <sys/time.h>
 
@@ -28,7 +28,8 @@
 
 using namespace ndnlog;
 using namespace ndnlog::new_api;
-using namespace boost::chrono;
+using namespace std;
+using namespace std::chrono;
 
 static char tempBuf[MAX_BUF_SIZE];
 #if defined __APPLE__
@@ -52,7 +53,7 @@ static std::string lvlToString[] = {
 #endif
 
 static boost::asio::io_service LogIoService;
-static boost::thread LogThread;
+static std::thread LogThread;
 static std::shared_ptr<boost::asio::io_service::work> LogThreadWork;
 
 NilLogger NilLogger::nilLogger_;
@@ -62,7 +63,7 @@ void startLogThread();
 void stopLogThread();
 
 //******************************************************************************
-boost::recursive_mutex DefaultSink::stdOutMutex_;
+recursive_mutex DefaultSink::stdOutMutex_;
 std::map<std::string, std::shared_ptr<Logger>> Logger::loggers_;
 
 unsigned int Logger::FlushIntervalMs = 100;
@@ -75,7 +76,7 @@ currentEntryLogType_(NdnLoggerLevelTrace),
 logLevel_(logLevel),
 sink_(std::make_shared<DefaultSink>(logFile))
 {
-    lastFlushTimestampMs_ = getMillisecondTimestamp();   
+    lastFlushTimestampMs_ = getMillisecondTimestamp();
     isProcessing_ = true;
 }
 
@@ -86,7 +87,7 @@ currentEntryLogType_(NdnLoggerLevelTrace),
 logLevel_(logLevel),
 sink_(sink)
 {
-    lastFlushTimestampMs_ = getMillisecondTimestamp();   
+    lastFlushTimestampMs_ = getMillisecondTimestamp();
     isProcessing_ = true;
 }
 
@@ -103,43 +104,43 @@ Logger::log(const NdnLogType& logType,
                      const std::string& locationFunc,
                      const int& locationLine)
 {
-    
+
     if (logType < (NdnLogType)logLevel_)
         return NilLogger::get();
-    
+
     sink_->lockExclusively();
-    
+
     if (isWritingLogEntry_ &&
         currentEntryLogType_ >= (NdnLogType)logLevel_)
         throw std::runtime_error("Previous log entry wasn't closed");
-    
+
     sink_->unlock();
-    
+
     bool shouldIgnore = (loggingInstance != 0 &&
                             !loggingInstance->isLoggingEnabled());
-    
+
     if (!shouldIgnore &&
         logType >= (NdnLogType)logLevel_)
     {
         sink_->lockExclusively();
         startLogRecord();
-        
+
         isWritingLogEntry_ = true;
         currentEntryLogType_ = logType;
-        
+
         // LogEntry header has the following format:
         // <timestamp> <log_level> - <logging_instance> [<location_file>:<location_line>] ":"
         // log location info is enabled only for debug levels less than INFO
         currentLogRecord_ << getMillisecondTimestamp() << "\t[" << stringify(logType) << "]";
-        
+
         if (loggingInstance)
             currentLogRecord_
             << "[" << std::setw(20) << loggingInstance->getDescription() << "]-"
             << std::setw(20) << locationFunc;
-        
+
         currentLogRecord_ << ": ";
     }
-    
+
     return *this;
 }
 
@@ -147,11 +148,15 @@ void
 Logger::flush()
 {
     sink_->flush();
-    // getOutStream().flush();    
+    // getOutStream().flush();
 }
 
 //******************************************************************************
 #pragma mark - static
+static struct _LogThreadReleaser {
+    ~_LogThreadReleaser() { Logger::releaseAsyncLogging(); }
+} LogThreadReleaser;
+
 void
 Logger::initAsyncLogging()
 {
@@ -175,12 +180,12 @@ std::shared_ptr<Logger>
 Logger::getLoggerPtr(const std::string &logFile)
 {
     std::map<std::string, std::shared_ptr<Logger> >::iterator it = loggers_.find(logFile);
-    
+
     if (it == loggers_.end())
         return loggers_[logFile] = std::make_shared<Logger>(NdnLoggerDetailLevelAll, logFile);
     else
         return it->second;
-    
+
     return std::shared_ptr<Logger>();
 }
 
@@ -188,7 +193,7 @@ void
 Logger::destroyLogger(const std::string &logFile)
 {
     std::map<std::string, std::shared_ptr<Logger> >::iterator it = loggers_.find(logFile);
-    
+
     if (it != loggers_.end())
         loggers_.erase(it);
 }
@@ -242,7 +247,7 @@ Logger::finalizeLogRecord()
         sink_->finalizeRecord("[CRITICAL]\tlog queue is full");
         // getOutFileStream() << "[CRITICAL]\tlog queue is full" << std::endl;
     else
-        LogIoService.post(boost::bind(&Logger::processLogRecords, shared_from_this()));
+        LogIoService.post(bind(&Logger::processLogRecords, shared_from_this()));
 }
 
 //******************************************************************************
@@ -252,7 +257,8 @@ void startLogThread()
     {
         LogThreadWork.reset(new boost::asio::io_service::work(LogIoService));
         LogIoService.reset();
-        LogThread = boost::thread([](){
+        LogThread = std::thread([](){
+            // cout << "YO LOG THREAD RUN" << endl;
             LogIoService.run();
         });
     }
@@ -264,7 +270,9 @@ void stopLogThread()
     {
         LogThreadWork.reset();
         LogIoService.stop();
-        LogThread.try_join_for(boost::chrono::milliseconds(100));
+        // TODO: test this change
+        LogThread.join();
+        // LogThread.try_join_for(chrono::milliseconds(100));
     }
 }
 
@@ -288,18 +296,18 @@ DefaultSink::finalizeRecord(const std::string& record)
     getOutFileStream() << record;
 }
 
-void 
+void
 DefaultSink::flush()
 {
     if (&getOutStream() != &std::cout)
         getOutFileStream().flush();
 }
 
-void 
+void
 DefaultSink::close()
 {
     if (&getOutStream() != &std::cout)
-        getOutFileStream().close();    
+        getOutFileStream().close();
 }
 
 //******************************************************************************
@@ -324,7 +332,7 @@ CallbackSink::~CallbackSink(){}
 void
 CallbackSink::finalizeRecord(const std::string& record)
 {
-    // callback_(record.c_str()); 
+    // callback_(record.c_str());
     triggerCallbackImpl_(record);
 }
 

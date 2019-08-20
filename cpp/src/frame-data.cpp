@@ -30,8 +30,8 @@ VideoFramePacket::merge(const std::vector<ImmutableHeaderPacket<VideoFrameSegmen
         packetBytes.insert(packetBytes.end(),
                            s.getPayload().begin(), s.getPayload().end());
 
-    NetworkData packetData(boost::move(packetBytes));
-    return std::make_shared<VideoFramePacket>(boost::move(packetData));
+    NetworkData packetData(std::move(packetBytes));
+    return std::make_shared<VideoFramePacket>(std::move(packetData));
 }
 
 //******************************************************************************
@@ -44,8 +44,8 @@ AudioBundlePacket::merge(const std::vector<ImmutableHeaderPacket<DataSegmentHead
         packetBytes.insert(packetBytes.end(),
                            s.getPayload().begin(), s.getPayload().end());
 
-    NetworkData packetData(boost::move(packetBytes));
-    return std::make_shared<AudioBundlePacket>(boost::move(packetData));
+    NetworkData packetData(std::move(packetBytes));
+    return std::make_shared<AudioBundlePacket>(std::move(packetData));
 }
 
 }

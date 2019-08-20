@@ -1,4 +1,4 @@
-// 
+//
 // periodic.cpp
 //
 //  Created by Peter Gusev on 05 June 2016.
@@ -7,11 +7,8 @@
 
 #include "periodic.hpp"
 
+#include <atomic>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/chrono.hpp>
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/atomic.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/bind.hpp>
 
 #if BOOST_ASIO_HAS_STD_CHRONO
@@ -28,7 +25,7 @@ namespace lib_chrono=boost::chrono;
 using namespace ndnrtc;
 
 namespace ndnrtc {
-	class PeriodicImpl : public std::enable_shared_from_this<PeriodicImpl> 
+	class PeriodicImpl : public std::enable_shared_from_this<PeriodicImpl>
 	{
 	public:
 		PeriodicImpl(boost::asio::io_service& io);
@@ -38,7 +35,7 @@ namespace ndnrtc {
 		void fire(const boost::system::error_code& e);
 		void cancel();
 
-		boost::atomic<bool> isRunning_;
+		std::atomic<bool> isRunning_;
 		boost::asio::io_service& io_;
 		std::function<unsigned int(void)> workFunc_;
 		boost::asio::steady_timer timer_;
@@ -55,8 +52,8 @@ Periodic::~Periodic()
 	pimpl_->cancel();
 }
 
-void 
-Periodic::setupInvocation(unsigned int intervalMs, 
+void
+Periodic::setupInvocation(unsigned int intervalMs,
 	std::function<unsigned int(void)> callback)
 {
 	if (!pimpl_->isRunning_)
@@ -95,11 +92,11 @@ void
 PeriodicImpl::setupTimer(unsigned int intervalMs)
 {
 	timer_.expires_from_now(lib_chrono::milliseconds(intervalMs));
-	timer_.async_wait(boost::bind(&PeriodicImpl::fire, shared_from_this(), 
+	timer_.async_wait(boost::bind(&PeriodicImpl::fire, shared_from_this(),
 		boost::asio::placeholders::error));
 }
 
-void 
+void
 PeriodicImpl::fire(const boost::system::error_code& e)
 {
 	if (!e)
@@ -109,13 +106,13 @@ PeriodicImpl::fire(const boost::system::error_code& e)
 			unsigned int nextIntervalMs = workFunc_();
 			if (nextIntervalMs)
 				setupTimer(nextIntervalMs);
-			else 
+			else
                 cancel();
 		}
 	}
 }
 
-void 
+void
 PeriodicImpl::cancel()
 {
 	isRunning_ = false;
