@@ -40,7 +40,7 @@ namespace ndnrtc {
         void stop();
         int64_t startFramePlayout();
         void updatePlayoutTime(int framePlayoutTime);
-        void run(boost::function<void()> callback);
+        void run(std::function<void()> callback);
 
 
     private:
@@ -57,14 +57,14 @@ namespace ndnrtc {
 
 //******************************************************************************
 JitterTiming::JitterTiming(boost::asio::io_service& io):
-pimpl_(boost::make_shared<JitterTimingImpl>(io)){}
+pimpl_(std::make_shared<JitterTimingImpl>(io)){}
 JitterTiming::~JitterTiming() { pimpl_->timer_.cancel(); }
 void JitterTiming::flush() { pimpl_->flush(); }
 void JitterTiming::stop() { pimpl_->stop(); }
 int64_t JitterTiming::startFramePlayout() { return pimpl_->startFramePlayout(); }
 void JitterTiming::updatePlayoutTime(int framePlayoutTime) { pimpl_->updatePlayoutTime(framePlayoutTime); }
-void JitterTiming::run(boost::function<void()> callback) { pimpl_->run(callback); }
-void JitterTiming::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) { pimpl_->setLogger(logger); }
+void JitterTiming::run(std::function<void()> callback) { pimpl_->run(callback); }
+void JitterTiming::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger) { pimpl_->setLogger(logger); }
 void JitterTiming::setDescription(const std::string& desc) { pimpl_->setDescription(desc); }
 
 //******************************************************************************
@@ -166,7 +166,7 @@ void JitterTimingImpl::updatePlayoutTime(int framePlayoutTime)
     framePlayoutTimeMs_ = playoutTimeUsec/1000;
 }
 
-void JitterTimingImpl::run(boost::function<void()> callback)
+void JitterTimingImpl::run(std::function<void()> callback)
 {
     assert(framePlayoutTimeMs_ >= 0);
     

@@ -32,7 +32,7 @@ namespace ndnrtc
 		 * @param callback Callback to call periodically
 		 */
 		void setupInvocation(unsigned int intervalMs, 
-			boost::function<unsigned int(void)> callback);
+			std::function<unsigned int(void)> callback);
 
 		/**
 		 * This cancels periodic invocation
@@ -45,7 +45,7 @@ namespace ndnrtc
 		bool isPeriodicInvocationSet() const;
 
 	private:
-		boost::shared_ptr<PeriodicImpl> pimpl_;
+		std::shared_ptr<PeriodicImpl> pimpl_;
 	};
 }
 

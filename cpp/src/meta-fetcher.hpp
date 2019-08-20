@@ -34,18 +34,18 @@ namespace ndnrtc {
 	 */
 	class MetaFetcher : public NdnRtcComponent {
 	public:
-		typedef boost::function<void(NetworkDataAlias&, 
+		typedef std::function<void(NetworkDataAlias&, 
 			const std::vector<ValidationErrorInfo>,
-            const std::vector<boost::shared_ptr<ndn::Data>>& contentData)>
+            const std::vector<std::shared_ptr<ndn::Data>>& contentData)>
 			OnMeta;
-		typedef boost::function<void(const std::string&)>
+		typedef std::function<void(const std::string&)>
 			OnError;
 
-		MetaFetcher(const boost::shared_ptr<ndn::Face>& face, const boost::shared_ptr<ndn::KeyChain>& keyChain):
+		MetaFetcher(const std::shared_ptr<ndn::Face>& face, const std::shared_ptr<ndn::KeyChain>& keyChain):
             face_(face), keyChain_(keyChain){ description_ = "meta-fetcher"; }
         MetaFetcher(){ description_ = "meta-fetcher"; }
 
-		void fetch(boost::shared_ptr<ndn::Face>, boost::shared_ptr<ndn::KeyChain>, 
+		void fetch(std::shared_ptr<ndn::Face>, std::shared_ptr<ndn::KeyChain>, 
 			const ndn::Name&, const OnMeta&, const OnError&);
         void fetch(const ndn::Name&, const OnMeta&, const OnError&);
 
@@ -53,8 +53,8 @@ namespace ndnrtc {
 
 	private:
 		bool isPending_;
-        boost::shared_ptr<ndn::Face> face_;
-        boost::shared_ptr<ndn::KeyChain> keyChain_;
+        std::shared_ptr<ndn::Face> face_;
+        std::shared_ptr<ndn::KeyChain> keyChain_;
 	};
 }
 

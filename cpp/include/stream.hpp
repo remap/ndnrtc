@@ -57,12 +57,12 @@ namespace ndnrtc {
          * Sets logger for this stream. By default, logger is nil - no logging is
          * performed.
          */
-		virtual void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) = 0;
+		virtual void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger) = 0;
 
         /**
          * Returns stream's storage, if it was set up.
          */
-        virtual boost::shared_ptr<StorageEngine> getStorage() const = 0;
+        virtual std::shared_ptr<StorageEngine> getStorage() const = 0;
 
         virtual ~IStream() {}
 	};
@@ -74,34 +74,34 @@ namespace ndnrtc {
 	public:
 		typedef struct _Settings {
 			size_t segmentSize_;
-			boost::shared_ptr<ndn::MemoryContentCache> memCache_;
+			std::shared_ptr<ndn::MemoryContentCache> memCache_;
 			bool useFec_, storeInMemCache_;
 			CodecSettings codecSettings_;
 		} Settings;
 
 		VideoStream(std::string basePrefix, std::string streamName,
 					Settings settings,
-					boost::shared_ptr<ndn::KeyChain> keyChain);
+					std::shared_ptr<ndn::KeyChain> keyChain);
 		~VideoStream();
 
-		std::vector<boost::shared_ptr<ndn::Data>> processImage(const ImageFormat& fmt, uint8_t *imageData);
+		std::vector<std::shared_ptr<ndn::Data>> processImage(const ImageFormat& fmt, uint8_t *imageData);
 
 		std::string getBasePrefix() const;
 		std::string getStreamName() const;
 		std::string getPrefix() const;
-        
+
         uint64_t getSeqNo() const;
         uint64_t getGopNo() const;
         uint64_t getGopPos() const;
-        
+
 		statistics::StatisticsStorage getStatistics() const;
-		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
-		boost::shared_ptr<StorageEngine> getStorage() const;
+		void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
+		std::shared_ptr<StorageEngine> getStorage() const;
 
 		static Settings& defaultSettings();
 
 	private:
-		boost::shared_ptr<VideoStreamImpl2> pimpl_;
+		std::shared_ptr<VideoStreamImpl2> pimpl_;
 	};
 }
 

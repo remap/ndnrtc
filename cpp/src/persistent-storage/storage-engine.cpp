@@ -19,7 +19,7 @@
 #if HAVE_PERSISTENT_STORAGE
 
 #ifndef __ANDROID__ // use RocksDB on linux and macOS
-    
+
     #include <rocksdb/db.h>
     namespace db_namespace = rocksdb;
 
@@ -32,9 +32,9 @@
 
 #endif
 
+using namespace std;
 using namespace ndnrtc;
 using namespace ndn;
-using namespace boost;
 
 //******************************************************************************
 namespace ndnrtc {
@@ -71,7 +71,7 @@ class StorageEngineImpl : public enable_shared_from_this<StorageEngineImpl>
     shared_ptr<Data> get(const Name &dataName);
     shared_ptr<Data> read(const Interest &interest);
 
-    void getLongestPrefixes(asio::io_service &io,
+    void getLongestPrefixes(boost::asio::io_service &io,
                             function<void(const std::vector<Name> &)> onCompletion);
     const Stats &getStats() const { return stats_; }
 
@@ -147,7 +147,7 @@ class StorageEngineImpl : public enable_shared_from_this<StorageEngineImpl>
 
 
 //******************************************************************************
-StorageEngine::StorageEngine(std::string dbPath, bool readOnly) : pimpl_(boost::make_shared<StorageEngineImpl>(dbPath))
+StorageEngine::StorageEngine(std::string dbPath, bool readOnly) : pimpl_(std::make_shared<StorageEngineImpl>(dbPath))
 {
     try
     {
@@ -186,7 +186,7 @@ StorageEngine::read(const Interest &interest)
     return pimpl_->read(interest);
 }
 
-void StorageEngine::scanForLongestPrefixes(asio::io_service &io,
+void StorageEngine::scanForLongestPrefixes(boost::asio::io_service &io,
                                            function<void(const std::vector<ndn::Name> &)> onCompleted)
 {
     pimpl_->getLongestPrefixes(io, onCompleted);
@@ -301,13 +301,13 @@ shared_ptr<Data> StorageEngineImpl::read(const Interest &interest)
                 int nSuffixComponents = keyName.size() - prefix.size();
                 bool passCheck = false;
 
-                if (checkMaxSuffixComponents && 
+                if (checkMaxSuffixComponents &&
                     nSuffixComponents <= interest.getMaxSuffixComponents())
                     passCheck = true;
                 if (checkMinSuffixComponents &&
                     nSuffixComponents >= interest.getMinSuffixComponents())
                     passCheck = true;
-                
+
                 if (passCheck)
                     key = it->key().ToString();
             }
@@ -326,7 +326,7 @@ shared_ptr<Data> StorageEngineImpl::read(const Interest &interest)
     return data;
 }
 
-void StorageEngineImpl::getLongestPrefixes(asio::io_service &io,
+void StorageEngineImpl::getLongestPrefixes(boost::asio::io_service &io,
                                            function<void(const std::vector<Name> &)> onCompletion)
 {
     // if (!keysTrieBuilt_)

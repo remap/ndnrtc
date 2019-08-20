@@ -128,12 +128,12 @@ namespace ndnrtc {
         virtual void unregisterObserver(IRemoteStreamObserver* observer);
 
 		statistics::StatisticsStorage getStatistics() const;
-		void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+		void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
 
 		std::string getPrefix() const { return streamPrefix_; }
 		std::string getBasePrefix() const { return basePrefix_; }
 		std::string getStreamName() const { return streamName_; }
-		boost::shared_ptr<StorageEngine> getStorage() const;
+		std::shared_ptr<StorageEngine> getStorage() const;
 
 	protected:
         /**
@@ -147,14 +147,14 @@ namespace ndnrtc {
          * @param streamName Stream name
          */
         RemoteStream(boost::asio::io_service& faceIo,
-                     const boost::shared_ptr<ndn::Face>& face,
-                     const boost::shared_ptr<ndn::KeyChain>& keyChain,
+                     const std::shared_ptr<ndn::Face>& face,
+                     const std::shared_ptr<ndn::KeyChain>& keyChain,
                      const std::string& basePrefix,
                      const std::string& streamName);
         virtual ~RemoteStream();
         
 		std::string streamPrefix_, basePrefix_, streamName_;
-		boost::shared_ptr<RemoteStreamImpl> pimpl_;
+		std::shared_ptr<RemoteStreamImpl> pimpl_;
 	};
 
     /**
@@ -163,8 +163,8 @@ namespace ndnrtc {
 	class RemoteAudioStream: public RemoteStream {
 	public:
 		RemoteAudioStream(boost::asio::io_service& faceIo,
-			const boost::shared_ptr<ndn::Face>& face,
-			const boost::shared_ptr<ndn::KeyChain>& keyChain,
+			const std::shared_ptr<ndn::Face>& face,
+			const std::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& basePrefix,
 			const std::string& streamName,
             const int interestLifeTime = 2000,
@@ -186,8 +186,8 @@ namespace ndnrtc {
          * Creates RemoteVideoStream to fetch live content 
          */
 		RemoteVideoStream(boost::asio::io_service& faceIo,
-			const boost::shared_ptr<ndn::Face>& face,
-			const boost::shared_ptr<ndn::KeyChain>& keyChain,
+			const std::shared_ptr<ndn::Face>& face,
+			const std::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& basePrefix,
 			const std::string& streamName,
             const int interestLifeTime = 2000,
@@ -203,8 +203,8 @@ namespace ndnrtc {
          * @param jitterSizeMs Size of the playback buffer in milliseconds
          */ 
         RemoteVideoStream(boost::asio::io_service& faceIo,
-			const boost::shared_ptr<ndn::Face>& face,
-			const boost::shared_ptr<ndn::KeyChain>& keyChain,
+			const std::shared_ptr<ndn::Face>& face,
+			const std::shared_ptr<ndn::KeyChain>& keyChain,
 			const std::string& threadPrefix,
             const int jitterSizeMs = 150);
 

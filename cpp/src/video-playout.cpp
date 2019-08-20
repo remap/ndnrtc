@@ -12,9 +12,9 @@
 using namespace ndnrtc;
 
 VideoPlayout::VideoPlayout(boost::asio::io_service& io,
-    const boost::shared_ptr<IPlaybackQueue>& queue,
-    const boost::shared_ptr<StatStorage>& statStorage):
-Playout(boost::make_shared<VideoPlayoutImpl>(io, queue, statStorage)){}
+    const std::shared_ptr<IPlaybackQueue>& queue,
+    const std::shared_ptr<StatStorage>& statStorage):
+Playout(std::make_shared<VideoPlayoutImpl>(io, queue, statStorage)){}
 
 void VideoPlayout::stop() 
 { pimpl()->stop(); } 

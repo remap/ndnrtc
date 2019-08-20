@@ -15,9 +15,9 @@
 using namespace ndnrtc;
 using namespace ndnrtc::statistics;
 
-BufferControl::BufferControl(const boost::shared_ptr<DrdEstimator> &drdEstimator,
-                             const boost::shared_ptr<IBuffer> &buffer,
-                             const boost::shared_ptr<statistics::StatisticsStorage> &storage) : drdEstimator_(drdEstimator), buffer_(buffer), sstorage_(storage)
+BufferControl::BufferControl(const std::shared_ptr<DrdEstimator> &drdEstimator,
+                             const std::shared_ptr<IBuffer> &buffer,
+                             const std::shared_ptr<statistics::StatisticsStorage> &storage) : drdEstimator_(drdEstimator), buffer_(buffer), sstorage_(storage)
 {
     description_ = "buffer-control";
 }
@@ -35,7 +35,7 @@ void BufferControl::detach(IBufferControlObserver *o)
         observers_.erase(it);
 }
 
-void BufferControl::segmentArrived(const boost::shared_ptr<WireSegment> &segment)
+void BufferControl::segmentArrived(const std::shared_ptr<WireSegment> &segment)
 {
     if ((segment->getSampleClass() == SampleClass::Key ||
          segment->getSampleClass() == SampleClass::Delta) &&

@@ -173,7 +173,7 @@ namespace ndnlog {
          * Logger object. Performs thread-safe logging into a file or standard 
          * output.
          */
-        class Logger : public boost::enable_shared_from_this<Logger>
+        class Logger : public std::enable_shared_from_this<Logger>
         {
         private:
             using endl_type = std::ostream&(std::ostream&);
@@ -196,7 +196,7 @@ namespace ndnlog {
                    const std::string& logFile = "");
 
             Logger(const NdnLoggerDetailLevel& logLevel,
-                   const boost::shared_ptr<ILogRecordSink> sink);
+                   const std::shared_ptr<ILogRecordSink> sink);
             /**
              * Releases current instance and all associated resources
              */
@@ -281,7 +281,7 @@ namespace ndnlog {
             static Logger&
             getLogger(const std::string &logFile);
             
-            static boost::shared_ptr<Logger>
+            static std::shared_ptr<Logger>
             getLoggerPtr(const std::string &logFile);
             
             static void
@@ -320,14 +320,14 @@ namespace ndnlog {
             
         private:
             NdnLoggerDetailLevel logLevel_;
-            boost::shared_ptr<ILogRecordSink> sink_;
+            std::shared_ptr<ILogRecordSink> sink_;
             int64_t lastFlushTimestampMs_;
             
             bool isWritingLogEntry_;
             NdnLogType currentEntryLogType_;
             pthread_t current_;
             
-            static std::map<std::string, boost::shared_ptr<Logger>> loggers_;
+            static std::map<std::string, std::shared_ptr<Logger>> loggers_;
             static Logger* sharedInstance_;
             
             std::atomic<bool> isProcessing_;
@@ -384,14 +384,14 @@ namespace ndnlog {
             }
             
             virtual void
-            setLogger(boost::shared_ptr<Logger> logger) { logger_ = logger; }
+            setLogger(std::shared_ptr<Logger> logger) { logger_ = logger; }
             
-            virtual boost::shared_ptr<Logger>
+            virtual std::shared_ptr<Logger>
             getLogger() const
             { return logger_; }
             
         protected:
-            boost::shared_ptr<Logger> logger_;
+            std::shared_ptr<Logger> logger_;
             std::string description_ = "<no description>";
         };
         

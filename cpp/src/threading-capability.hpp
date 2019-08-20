@@ -24,12 +24,12 @@ namespace ndnrtc {
         void startMyThread();
         void stopMyThread();
             // asynchronous
-        void dispatchOnMyThread(boost::function<void(void)> dispatchBlock);
+        void dispatchOnMyThread(std::function<void(void)> dispatchBlock);
             // synchronous
-        void performOnMyThread(boost::function<void(void)> dispatchBlock);
+        void performOnMyThread(std::function<void(void)> dispatchBlock);
         
     private:
-        boost::shared_ptr<boost::asio::io_service::work> threadWork_;
+        std::shared_ptr<boost::asio::io_service::work> threadWork_;
         boost::asio::io_service ioService_;
         boost::thread thread_;
     };

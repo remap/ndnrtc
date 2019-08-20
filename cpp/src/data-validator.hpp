@@ -24,18 +24,18 @@ namespace ndnrtc {
 
     class ValidationErrorInfo {
     public:
-        ValidationErrorInfo(const boost::shared_ptr<const ndn::Data>& data,
+        ValidationErrorInfo(const std::shared_ptr<const ndn::Data>& data,
                             const std::string reason = ""):
             failedData_(data), reason_(reason){}
 
-        boost::shared_ptr<const ndn::Data> getData() const
+        std::shared_ptr<const ndn::Data> getData() const
         { return failedData_; }
         const std::string& getReason() const
         { return reason_; }
 
     private:
         std::string reason_;
-        boost::shared_ptr<const ndn::Data> failedData_;
+        std::shared_ptr<const ndn::Data> failedData_;
     };
 #if 0
     template<typename KeyChainType>
@@ -45,17 +45,17 @@ namespace ndnrtc {
         DataValidator(KeyChainType* keyChain, ISlotBuffer* buffer);
         ~DataValidator();
 
-        void validate(const boost::shared_ptr<ndn::Data>& data);
+        void validate(const std::shared_ptr<ndn::Data>& data);
 
     private:
         KeyChainType* keyChain_;
         ISlotBuffer* buffer_;
 
-        void onVerifySuccess(const boost::shared_ptr<ndn::Data>& data);
-        void onVerifyFailure(const boost::shared_ptr<ndn::Data>& data,
+        void onVerifySuccess(const std::shared_ptr<ndn::Data>& data);
+        void onVerifyFailure(const std::shared_ptr<ndn::Data>& data,
             const std::string& reason);
 
-        void markBufferData(const boost::shared_ptr<ndn::Data>& data, bool verified);
+        void markBufferData(const std::shared_ptr<ndn::Data>& data, bool verified);
 	};
 #endif
 };

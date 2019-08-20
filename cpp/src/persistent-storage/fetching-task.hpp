@@ -8,8 +8,6 @@
 #ifndef __fetching_task_hpp__
 #define __fetching_task_hpp__
 
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <ndn-cpp/name.hpp>
 #include <ndn-cpp/face.hpp>
 
@@ -30,15 +28,15 @@ namespace ndnrtc {
     class StorageEngine;
     class FetchingTask;
 
-    typedef boost::function<void(const boost::shared_ptr<const FetchingTask>&, 
+    typedef std::function<void(const std::shared_ptr<const FetchingTask>&,
                                  std::string)> OnFetchingFailed;
-    typedef boost::function<void(const boost::shared_ptr<const FetchingTask>&, 
-                                 const boost::shared_ptr<const BufferSlot>&)> OnFetchingComplete;
-    typedef boost::function<void(const boost::shared_ptr<const FetchingTask>&, 
-                                 const boost::shared_ptr<const SlotSegment>&)> OnSegment;
+    typedef std::function<void(const std::shared_ptr<const FetchingTask>&,
+                                 const std::shared_ptr<const BufferSlot>&)> OnFetchingComplete;
+    typedef std::function<void(const std::shared_ptr<const FetchingTask>&,
+                                 const std::shared_ptr<const SlotSegment>&)> OnSegment;
 
     class FetchingTask {
-        public: 
+        public:
             typedef struct _Settings {
                 int nRtx_;
                 int interestLifeTimeMs_;
@@ -50,7 +48,7 @@ namespace ndnrtc {
 
     class FrameFetchingTask : public FetchingTask,
                               public ndnlog::new_api::ILoggingObject,
-                              public boost::enable_shared_from_this<FrameFetchingTask> {
+                              public std::enable_shared_from_this<FrameFetchingTask> {
     public:
         enum State {
             Created = 0,
@@ -69,12 +67,12 @@ namespace ndnrtc {
          * @param onFirstSegment Callback which is called when first segment (regardless of its' number) arrives
          * @param onZeroSegment Called when segment #0 is fetched
          */
-        FrameFetchingTask(const ndn::Name&, 
-                          const boost::shared_ptr<IFetchMethod>& fetchMethod,
-                          OnFetchingComplete, 
+        FrameFetchingTask(const ndn::Name&,
+                          const std::shared_ptr<IFetchMethod>& fetchMethod,
+                          OnFetchingComplete,
                           OnFetchingFailed,
                           const FetchingTask::Settings& settings = {0, 1000},
-                          OnSegment = OnSegment(), 
+                          OnSegment = OnSegment(),
                           OnSegment = OnSegment());
         ~FrameFetchingTask();
 
@@ -85,7 +83,7 @@ namespace ndnrtc {
         int getNacksNum() const { return nNacks_; }
         int getTimeoutsNum() const { return nTimeouts_; }
         ndn::Name getFrameName() const override { return frameNameInfo_.getPrefix(prefix_filter::Sample); }
-        const boost::shared_ptr<const BufferSlot> getSlot() const { return slot_; }
+        const std::shared_ptr<const BufferSlot> getSlot() const { return slot_; }
 
     private:
         FetchingTask::Settings settings_;
@@ -93,26 +91,26 @@ namespace ndnrtc {
         int nNacks_, nTimeouts_;
         State state_;
 
-        boost::shared_ptr<BufferSlot> slot_;
+        std::shared_ptr<BufferSlot> slot_;
         NamespaceInfo frameNameInfo_;
-        boost::shared_ptr<IFetchMethod> fetchMethod_;
-        boost::shared_ptr<BufferSlot> frameSlot_;
+        std::shared_ptr<IFetchMethod> fetchMethod_;
+        std::shared_ptr<BufferSlot> frameSlot_;
         OnFetchingComplete onFetchingComplete_;
         OnFetchingFailed onFetchingFailed_;
         OnSegment onFirstSegment_, onZeroSegment_;
 
-        std::vector<boost::shared_ptr<const ndn::Interest>> 
+        std::vector<std::shared_ptr<const ndn::Interest>>
         prepareBatch(ndn::Name n, bool noParity = false) const;
 
-        void requestSegment(const boost::shared_ptr<const ndn::Interest>& interest);
+        void requestSegment(const std::shared_ptr<const ndn::Interest>& interest);
         void checkMissingSegments();
         void checkCompletion();
-        boost::shared_ptr<const ndn::Interest> makeInterest(const ndn::Name& name) const;
+        std::shared_ptr<const ndn::Interest> makeInterest(const ndn::Name& name) const;
     };
 
     class IFetchMethod {
     public:
-        virtual void express(const boost::shared_ptr<const ndn::Interest>&,
+        virtual void express(const std::shared_ptr<const ndn::Interest>&,
                              ndn::OnData,
                              ndn::OnTimeout,
                              ndn::OnNetworkNack) = 0;
@@ -120,29 +118,29 @@ namespace ndnrtc {
 
     class FetchMethodLocal : public IFetchMethod {
     public:
-        FetchMethodLocal(const boost::shared_ptr<StorageEngine>& storage) : storage_(storage) {}
+        FetchMethodLocal(const std::shared_ptr<StorageEngine>& storage) : storage_(storage) {}
         ~FetchMethodLocal(){}
 
-        void express(const boost::shared_ptr<const ndn::Interest>&,
+        void express(const std::shared_ptr<const ndn::Interest>&,
                              ndn::OnData,
                              ndn::OnTimeout,
                              ndn::OnNetworkNack) override;
 
     private:
-        boost::shared_ptr<StorageEngine> storage_;
+        std::shared_ptr<StorageEngine> storage_;
     };
 
     class FetchMethodRemote : public IFetchMethod {
     public:
-        FetchMethodRemote(const boost::shared_ptr<ndn::Face>& face):face_(face){}
+        FetchMethodRemote(const std::shared_ptr<ndn::Face>& face):face_(face){}
 
-        void express(const boost::shared_ptr<const ndn::Interest>&,
+        void express(const std::shared_ptr<const ndn::Interest>&,
                              ndn::OnData,
                              ndn::OnTimeout,
                              ndn::OnNetworkNack) override;
 
     private:
-        boost::shared_ptr<ndn::Face> face_;
+        std::shared_ptr<ndn::Face> face_;
     };
 }
 

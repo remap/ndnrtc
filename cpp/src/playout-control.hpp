@@ -45,9 +45,9 @@ class PlayoutControl : public NdnRtcComponent,
                        public IPlayoutControl
 {
   public:
-    PlayoutControl(const boost::shared_ptr<IPlayout> &playout,
-                   const boost::shared_ptr<IPlaybackQueue> &queue,
-                   const boost::shared_ptr<RetransmissionController> &rtxController,
+    PlayoutControl(const std::shared_ptr<IPlayout> &playout,
+                   const std::shared_ptr<IPlaybackQueue> &queue,
+                   const std::shared_ptr<RetransmissionController> &rtxController,
                    unsigned int minimalPlayableLevel = PlayoutControl::MinimalPlayableLevel);
 
     void allowPlayout(bool allow, int ffwdMs = 0);
@@ -59,8 +59,8 @@ class PlayoutControl : public NdnRtcComponent,
     void setAdjustQueue(bool adjustQueue) { adjustQueue_ = adjustQueue; }
     bool getAdjustQueue() const { return adjustQueue_; }
 
-    const boost::shared_ptr<const IPlayout> getPlayoutMechanism() const { return playout_; }
-    const boost::shared_ptr<const IPlaybackQueue> getPlaybackQueue() const { return queue_; }
+    const std::shared_ptr<const IPlayout> getPlayoutMechanism() const { return playout_; }
+    const std::shared_ptr<const IPlaybackQueue> getPlaybackQueue() const { return queue_; }
 
     static unsigned int MinimalPlayableLevel;
   private:
@@ -68,9 +68,9 @@ class PlayoutControl : public NdnRtcComponent,
     int ffwdMs_;
     int64_t queueCheckMs_;
     estimators::Average playbackQueueSize_;
-    boost::shared_ptr<IPlayout> playout_;
-    boost::shared_ptr<IPlaybackQueue> queue_;
-    boost::shared_ptr<RetransmissionController> rtxController_;
+    std::shared_ptr<IPlayout> playout_;
+    std::shared_ptr<IPlaybackQueue> queue_;
+    std::shared_ptr<RetransmissionController> rtxController_;
     unsigned int userThresholdMs_, thresholdMs_;
 
     void onDrdUpdate() override {}

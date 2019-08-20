@@ -47,9 +47,9 @@ class SegmentsManifest {
 public:
     static size_t DigestSize;
 
-    static boost::shared_ptr<ndn::Data>
+    static std::shared_ptr<ndn::Data>
         packManifest(const ndn::Name&,
-                     const std::vector<boost::shared_ptr<ndn::Data>>& segments);
+                     const std::vector<std::shared_ptr<ndn::Data>>& segments);
     static bool hasData(const ndn::Data& manifest, const ndn::Data& d);
 };
 
@@ -72,40 +72,40 @@ public:
         Data = 1<<5
     };
 
-    DataRequest(const boost::shared_ptr<const ndn::Interest> &interest);
-    // DataRequest(const boost::shared_ptr<ndn::Data> &data,
-    //             const boost::shared_ptr<const ndn::Interest> &interest);
+    DataRequest(const std::shared_ptr<const ndn::Interest> &interest);
+    // DataRequest(const std::shared_ptr<ndn::Data> &data,
+    //             const std::shared_ptr<const ndn::Interest> &interest);
 
     Status getStatus() const { return status_; }
     const NamespaceInfo& getNamespaceInfo() const { return namespaceInfo_; }
 
-    boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
-    boost::shared_ptr<const ndn::Data> getData() const { return data_; }
-    boost::shared_ptr<const ndn::NetworkNack> getNack() const { return nack_; }
+    std::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
+    std::shared_ptr<const ndn::Data> getData() const { return data_; }
+    std::shared_ptr<const ndn::NetworkNack> getNack() const { return nack_; }
 
     int64_t getDrdUsec() const { return (replyTsUsec_ ? replyTsUsec_ - requestTsUsec_ : -1); }
     uint64_t getRequestTimestampUsec() const { return requestTsUsec_; }
     uint64_t getReplyTimestampUsec() const { return replyTsUsec_; }
     uint64_t getId() const { return id_; }
-    
+
     size_t getRtxNum() const { return rtxNum_; }
     size_t getTimeoutNum() const { return timeoutNum_; }
     size_t getNetworkNackNum() const { return netwNackNum_; }
     size_t getAppNackNum() const { return appNackNum_; }
 
-    const boost::shared_ptr<const packets::BasePacket>& getNdnrtcPacket() const
+    const std::shared_ptr<const packets::BasePacket>& getNdnrtcPacket() const
         { return packet_; }
 
     RequestTriggerConnection subscribe(Status, OnRequestUpdate);
 
     // helpers for handling results from multiple requests
-    typedef std::function<void(std::vector<boost::shared_ptr<DataRequest>>)>
+    typedef std::function<void(std::vector<std::shared_ptr<DataRequest>>)>
         OnRequestsReady;
 
-    static void invokeWhenAll(std::vector<boost::shared_ptr<DataRequest>> requests,
+    static void invokeWhenAll(std::vector<std::shared_ptr<DataRequest>> requests,
                               DataRequest::Status status,
                               OnRequestsReady onRequestsReady);
-    static void invokeIfAny(std::vector<boost::shared_ptr<DataRequest>> requests,
+    static void invokeIfAny(std::vector<std::shared_ptr<DataRequest>> requests,
                             uint8_t statusMask,
                             OnRequestsReady onRequestsReady);
 
@@ -119,8 +119,8 @@ protected:
     void timestampRequest();
     void timestampReply();
 
-    void setData(const boost::shared_ptr<const ndn::Data>& data);
-    void setNack(const boost::shared_ptr<const ndn::NetworkNack>& nack);
+    void setData(const std::shared_ptr<const ndn::Data>& data);
+    void setNack(const std::shared_ptr<const ndn::NetworkNack>& nack);
     void setTimeout();
     // sets request ID (for tracking out-of-order delivery)
     void setId(uint64_t id) { id_ = id; }
@@ -137,10 +137,10 @@ private:
 
     Status status_;
     NamespaceInfo namespaceInfo_;
-    boost::shared_ptr<const ndn::Interest> interest_;
-    boost::shared_ptr<const ndn::Data> data_;
-    boost::shared_ptr<const ndn::NetworkNack> nack_;
-    boost::shared_ptr<const packets::BasePacket> packet_;
+    std::shared_ptr<const ndn::Interest> interest_;
+    std::shared_ptr<const ndn::Data> data_;
+    std::shared_ptr<const ndn::NetworkNack> nack_;
+    std::shared_ptr<const packets::BasePacket> packet_;
 };
 
 std::ostream& operator<<(std::ostream& out, const DataRequest::Status v);
@@ -182,7 +182,7 @@ struct Mutable
 
 struct Immutable
 {
-    typedef boost::shared_ptr<const std::vector<uint8_t>> storage;
+    typedef std::shared_ptr<const std::vector<uint8_t>> storage;
     typedef std::vector<uint8_t>::const_iterator payload_iter;
 };
 
@@ -209,7 +209,7 @@ class NetworkDataT
 {
   public:
     ENABLE_IF(T, Immutable)
-    NetworkDataT(const boost::shared_ptr<const std::vector<uint8_t>> &data) : data_(data) {}
+    NetworkDataT(const std::shared_ptr<const std::vector<uint8_t>> &data) : data_(data) {}
 
     ENABLE_IF(T, Mutable)
     NetworkDataT(unsigned int dataLength, const uint8_t *rawData) : isValid_(true)
@@ -397,7 +397,7 @@ class DataPacketT : public NetworkDataT<T>
     }
 
     ENABLE_IF(T, Immutable)
-    DataPacketT(const boost::shared_ptr<const std::vector<uint8_t>> &data) : NetworkDataT<T>(data)
+    DataPacketT(const std::shared_ptr<const std::vector<uint8_t>> &data) : NetworkDataT<T>(data)
     {
         this->isValid_ = true;
         this->reinit();
@@ -570,7 +570,7 @@ class HeaderPacketT : public DataPacketT<T>
 {
   public:
     ENABLE_IF(T, Immutable)
-    HeaderPacketT(const boost::shared_ptr<const std::vector<uint8_t>> &data) : DataPacketT<T>(data)
+    HeaderPacketT(const std::shared_ptr<const std::vector<uint8_t>> &data) : DataPacketT<T>(data)
     {
         isHeaderSet_ = this->isValid_ && (this->blobs_.size() >= 1) &&
                        (this->blobs_.back().size() == sizeof(Header));
@@ -698,7 +698,7 @@ typedef struct _VideoFrameSegmentHeader : public DataSegmentHeader // goes into 
 class Manifest : public DataPacket
 {
   public:
-    Manifest(const std::vector<boost::shared_ptr<const ndn::Data>> &dataObjects);
+    Manifest(const std::vector<std::shared_ptr<const ndn::Data>> &dataObjects);
     Manifest(NetworkData &&nd);
 
     /**
@@ -777,8 +777,8 @@ class MediaStreamMeta : public DataPacket
 class WireSegment
 {
   public:
-    WireSegment(const boost::shared_ptr<ndn::Data> &data,
-                const boost::shared_ptr<const ndn::Interest> &interest);
+    WireSegment(const std::shared_ptr<ndn::Data> &data,
+                const std::shared_ptr<const ndn::Interest> &interest);
     WireSegment(const WireSegment &data);
 
     virtual ~WireSegment() {}
@@ -786,8 +786,8 @@ class WireSegment
     bool isValid() { return isValid_; }
     size_t getSlicesNum() const;
 
-    boost::shared_ptr<ndn::Data> getData() const { return data_; }
-    boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
+    std::shared_ptr<ndn::Data> getData() const { return data_; }
+    std::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
 
     ndn::Name getBasePrefix() const { return dataNameInfo_.basePrefix_; }
     unsigned int getApiVersion() const { return dataNameInfo_.apiVersion_; }
@@ -843,28 +843,28 @@ class WireSegment
     bool isOriginal() const;
 
     // method implementation in frame-data.cpp
-    static boost::shared_ptr<WireSegment>
+    static std::shared_ptr<WireSegment>
     createSegment(const NamespaceInfo &namespaceInfo,
-                  const boost::shared_ptr<ndn::Data> &data,
-                  const boost::shared_ptr<const ndn::Interest> &interest);
+                  const std::shared_ptr<ndn::Data> &data,
+                  const std::shared_ptr<const ndn::Interest> &interest);
 
   protected:
     NamespaceInfo dataNameInfo_;
     bool isValid_;
-    boost::shared_ptr<ndn::Data> data_;
-    boost::shared_ptr<const ndn::Interest> interest_;
+    std::shared_ptr<ndn::Data> data_;
+    std::shared_ptr<const ndn::Interest> interest_;
 
     WireSegment(const NamespaceInfo &info,
-                const boost::shared_ptr<ndn::Data> &data,
-                const boost::shared_ptr<const ndn::Interest> &interest);
+                const std::shared_ptr<ndn::Data> &data,
+                const std::shared_ptr<const ndn::Interest> &interest);
 };
 
 template <typename SegmentHeader>
 class WireData : public WireSegment
 {
   public:
-    WireData(const boost::shared_ptr<ndn::Data> &data,
-             const boost::shared_ptr<const ndn::Interest> &interest) : WireSegment(data, interest) {}
+    WireData(const std::shared_ptr<ndn::Data> &data,
+             const std::shared_ptr<const ndn::Interest> &interest) : WireSegment(data, interest) {}
     WireData(const WireData<SegmentHeader> &data) : WireSegment(data) {}
 
     const ImmutableHeaderPacket<SegmentHeader> segment() const
@@ -878,14 +878,15 @@ class WireData : public WireSegment
     }
 
   private:
-    friend boost::shared_ptr<WireData<SegmentHeader>>
-    boost::make_shared<WireData<SegmentHeader>>(const ndnrtc::NamespaceInfo &,
-                                                const boost::shared_ptr<ndn::Data> &,
-                                                const boost::shared_ptr<const ndn::Interest> &);
+      friend class WireSegment;
+    // friend std::shared_ptr<WireData<SegmentHeader>>
+    // std::make_shared<WireData<SegmentHeader>>(const ndnrtc::NamespaceInfo &,
+    //                                             const std::shared_ptr<ndn::Data> &,
+    //                                             const std::shared_ptr<const ndn::Interest> &);
 
     WireData(const NamespaceInfo &info,
-             const boost::shared_ptr<ndn::Data> &data,
-             const boost::shared_ptr<const ndn::Interest> &interest) : WireSegment(info, data, interest) {}
+             const std::shared_ptr<ndn::Data> &data,
+             const std::shared_ptr<const ndn::Interest> &interest) : WireSegment(info, data, interest) {}
 
     ENABLE_IF(SegmentHeader, _DataSegmentHeader)
     PacketNumber playbackNo(ENABLE_FOR(_DataSegmentHeader)) const

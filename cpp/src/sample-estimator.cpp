@@ -18,15 +18,15 @@ using namespace estimators;
 
 //******************************************************************************
 SampleEstimator::Estimators::_Estimators():
-segNum_(Average(boost::make_shared<SampleWindow>(30))),
-segSize_(Average(boost::make_shared<SampleWindow>(30)))
+segNum_(Average(std::make_shared<SampleWindow>(30))),
+segSize_(Average(std::make_shared<SampleWindow>(30)))
 {}
 
 SampleEstimator::Estimators::~_Estimators()
 {}
 
 //******************************************************************************
-SampleEstimator::SampleEstimator(const boost::shared_ptr<statistics::StatisticsStorage>& storage):
+SampleEstimator::SampleEstimator(const std::shared_ptr<statistics::StatisticsStorage>& storage):
 sstorage_(storage)
 {
 	reset();
@@ -47,7 +47,7 @@ void SampleEstimator::bootstrapSegmentSize(double value, SampleClass st, Segment
 }
 
 void 
-SampleEstimator::segmentArrived(const boost::shared_ptr<WireSegment>& segment)
+SampleEstimator::segmentArrived(const std::shared_ptr<WireSegment>& segment)
 {
     if (segment->getSampleClass() == SampleClass::Key ||
         segment->getSampleClass() == SampleClass::Delta)

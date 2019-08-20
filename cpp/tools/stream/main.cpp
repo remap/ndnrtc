@@ -117,6 +117,7 @@ R"(NdnRtc Stream.
 )";
 
 using namespace std;
+using namespace std::placeholders;
 using namespace ndnrtc;
 
 bool MustTerminate = false;

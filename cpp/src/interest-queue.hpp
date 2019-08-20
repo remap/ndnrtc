@@ -43,37 +43,37 @@ namespace ndnrtc {
     class DataRequest;
     class RequestQueueImpl;
 
-    typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&,
-                                    const boost::shared_ptr<ndn::Data>&)> OnData;
-    typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&)>
+    typedef std::function<void(const std::shared_ptr<const ndn::Interest>&,
+                                    const std::shared_ptr<ndn::Data>&)> OnData;
+    typedef std::function<void(const std::shared_ptr<const ndn::Interest>&)>
             OnTimeout;
-    typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>& interest,
-        const boost::shared_ptr<ndn::NetworkNack>& networkNack)> OnNetworkNack;
-    typedef boost::function<void(const boost::shared_ptr<const ndn::Interest>&)>
+    typedef std::function<void(const std::shared_ptr<const ndn::Interest>& interest,
+        const std::shared_ptr<ndn::NetworkNack>& networkNack)> OnNetworkNack;
+    typedef std::function<void(const std::shared_ptr<const ndn::Interest>&)>
             OnExpressInterest;
-    typedef boost::function<void()> DelayedCallback;
+    typedef std::function<void()> DelayedCallback;
 
     class IInterestQueueObserver {
     public:
-        virtual void onInterestIssued(const boost::shared_ptr<const ndn::Interest>&) = 0;
+        virtual void onInterestIssued(const std::shared_ptr<const ndn::Interest>&) = 0;
     };
 
     class IInterestQueue {
     public:
         virtual void
-        enqueueInterest(const boost::shared_ptr<const ndn::Interest>& interest,
-                        boost::shared_ptr<DeadlinePriority> priority,
+        enqueueInterest(const std::shared_ptr<const ndn::Interest>& interest,
+                        std::shared_ptr<DeadlinePriority> priority,
                         OnData onData,
                         OnTimeout onTimeout,
                         OnNetworkNack onNetworkNack) = 0;
 
         virtual void
-        enqueueRequest(boost::shared_ptr<DataRequest>& request,
-                       boost::shared_ptr<DeadlinePriority> priority) = 0;
+        enqueueRequest(std::shared_ptr<DataRequest>& request,
+                       std::shared_ptr<DeadlinePriority> priority) = 0;
 
         virtual void
-        enqueueRequests(std::vector<boost::shared_ptr<DataRequest>>& requests,
-                        boost::shared_ptr<DeadlinePriority> priority) = 0;
+        enqueueRequests(std::vector<std::shared_ptr<DataRequest>>& requests,
+                        std::shared_ptr<DeadlinePriority> priority) = 0;
 
         virtual void reset() = 0;
     };
@@ -92,15 +92,15 @@ namespace ndnrtc {
         };
 
         RequestQueue(boost::asio::io_service& io,
-                     const boost::shared_ptr<ndn::Face> &face,
-                     const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
+                     const std::shared_ptr<ndn::Face> &face,
+                     const std::shared_ptr<statistics::StatisticsStorage>& statStorage);
         RequestQueue(boost::asio::io_service& io,
                      ndn::Face *face,
-                     const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
+                     const std::shared_ptr<statistics::StatisticsStorage>& statStorage);
         RequestQueue(boost::asio::io_service& io,
                      ndn::Face *face);
 //        InterestQueue(const ndn::Face &face,
-//                      const boost::shared_ptr<statistics::StatisticsStorage>& statStorage){}
+//                      const std::shared_ptr<statistics::StatisticsStorage>& statStorage){}
         ~RequestQueue();
 
         /**
@@ -111,8 +111,8 @@ namespace ndnrtc {
          * @param onTimeout OnTimeout callback
          */
         void
-        enqueueInterest(const boost::shared_ptr<const ndn::Interest>& interest,
-                        boost::shared_ptr<DeadlinePriority> priority,
+        enqueueInterest(const std::shared_ptr<const ndn::Interest>& interest,
+                        std::shared_ptr<DeadlinePriority> priority,
                         OnData onData,
                         OnTimeout onTimeout,
                         OnNetworkNack = OnNetworkNack()) DEPRECATED;
@@ -123,14 +123,14 @@ namespace ndnrtc {
          * @param priority DataRequest priority
          */
         void
-        enqueueRequest(boost::shared_ptr<DataRequest>& request,
-                       boost::shared_ptr<DeadlinePriority> priority =
-                            boost::make_shared<DeadlinePriority>(REQ_DL_PRI_DEFAULT));
+        enqueueRequest(std::shared_ptr<DataRequest>& request,
+                       std::shared_ptr<DeadlinePriority> priority =
+                            std::make_shared<DeadlinePriority>(REQ_DL_PRI_DEFAULT));
 
         void
-        enqueueRequests(std::vector<boost::shared_ptr<DataRequest>>& requests,
-                        boost::shared_ptr<DeadlinePriority> priority =
-                            boost::make_shared<DeadlinePriority>(REQ_DL_PRI_DEFAULT));
+        enqueueRequests(std::vector<std::shared_ptr<DataRequest>>& requests,
+                        std::shared_ptr<DeadlinePriority> priority =
+                            std::make_shared<DeadlinePriority>(REQ_DL_PRI_DEFAULT));
         /**
          * Only call that if interest queue was not initialized using io_service
          */
@@ -144,7 +144,7 @@ namespace ndnrtc {
 
 
         size_t size() const;
-        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+        void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
         double getDrdEstimate() const;
         double getJitterEstimate() const;
         const statistics::StatisticsStorage& getStatistics() const;
@@ -154,7 +154,7 @@ namespace ndnrtc {
         void registerObserver(IInterestQueueObserver *observer) DEPRECATED;
         void unregisterObserver() DEPRECATED;
     private:
-        boost::shared_ptr<RequestQueueImpl> pimpl_;
+        std::shared_ptr<RequestQueueImpl> pimpl_;
     };
 
     typedef RequestQueue InterestQueue;
@@ -172,8 +172,8 @@ namespace ndnrtc {
         int64_t getValue() const;
         void setEnqueueTimestamp(int64_t timestamp) { enqueuedMs_ = timestamp; }
 
-        static boost::shared_ptr<DeadlinePriority>
-        fromNow(int64_t delayMs) { return boost::make_shared<DeadlinePriority>(delayMs); }
+        static std::shared_ptr<DeadlinePriority>
+        fromNow(int64_t delayMs) { return std::make_shared<DeadlinePriority>(delayMs); }
 
     private:
         int64_t enqueuedMs_, arrivalDelayMs_;

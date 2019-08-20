@@ -29,7 +29,7 @@ void ThreadingCapability::stopMyThread()
     thread_.try_join_for(chrono::milliseconds(500));
 }
 
-void ThreadingCapability::dispatchOnMyThread(boost::function<void(void)> dispatchBlock)
+void ThreadingCapability::dispatchOnMyThread(std::function<void(void)> dispatchBlock)
 {
     if (threadWork_.get())
     {
@@ -42,7 +42,7 @@ void ThreadingCapability::dispatchOnMyThread(boost::function<void(void)> dispatc
     }
 }
 
-void ThreadingCapability::performOnMyThread(boost::function<void(void)> dispatchBlock)
+void ThreadingCapability::performOnMyThread(std::function<void(void)> dispatchBlock)
 {
     if (threadWork_.get())
     {

@@ -349,27 +349,27 @@ AC_MSG_CHECKING([for NDN-CPP library...])
 # 		[AC_MSG_RESULT([yes])],
 # 		[AC_MSG_FAILURE([can't find NDN-CPP lib])]
 #)
-
-AC_MSG_CHECKING([if NDN-CPP library was compiled for using boost::shared_ptr])
 AC_CHECK_LIB([ndn-cpp], [ndn_getNowMilliseconds])
 
-if test "$build_os" == "$host_os"; then
-	AC_RUN_IFELSE(
-		[AC_LANG_PROGRAM([
-			#include <ndn-cpp/interest.hpp>
-			#include <boost/shared_ptr.hpp>
-			],
-			[
-				ndn::ptr_lib::shared_ptr<int> ptrlibPtr(new int(5));
-				boost::shared_ptr<int> boostPtr(new int(6));
-				ptrlibPtr = boostPtr;
-			]
-		)],
-		[AC_MSG_RESULT([yes])],
-		[AC_MSG_RESULT([no])]
-		[AC_MSG_FAILURE([NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr])]
-	)
-fi
+#AC_MSG_CHECKING([if NDN-CPP library was compiled for using boost::shared_ptr])
+
+#if test "$build_os" == "$host_os"; then
+#	AC_RUN_IFELSE(
+#		[AC_LANG_PROGRAM([
+#			#include <ndn-cpp/interest.hpp>
+#			#include <boost/shared_ptr.hpp>
+#			],
+#			[
+#				ndn::ptr_lib::shared_ptr<int> ptrlibPtr(new int(5));
+#				boost::shared_ptr<int> boostPtr(new int(6));
+#				ptrlibPtr = boostPtr;
+#			]
+#		)],
+#		[AC_MSG_RESULT([yes])],
+#		[AC_MSG_RESULT([no])]
+#		[AC_MSG_FAILURE([NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr])]
+#	)
+#fi
 
 AC_CHECK_LIB([ndn-cpp-tools], [ndntools_getGeneralizedContentMetaComponent])
 

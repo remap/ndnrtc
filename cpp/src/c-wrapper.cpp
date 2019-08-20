@@ -52,16 +52,16 @@ using namespace ndnlog::new_api;
 static const char *PublicDb = "public-info.db";
 static const char *PrivateDb = "keys";
 
-static boost::shared_ptr<FaceProcessor> LibFaceProcessor;
-static boost::shared_ptr<MemoryContentCache> LibContentCache; // for registering a prefix and storing certs
-static boost::shared_ptr<KeyChain> LibKeyChain;
-static boost::shared_ptr<KeyChainManager> LibKeyChainManager;
+static std::shared_ptr<FaceProcessor> LibFaceProcessor;
+static std::shared_ptr<MemoryContentCache> LibContentCache; // for registering a prefix and storing certs
+static std::shared_ptr<KeyChain> LibKeyChain;
+static std::shared_ptr<KeyChainManager> LibKeyChainManager;
 
 void initKeyChain(const char* storagePath, std::string signingIdentity);
-void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
+void initFace(std::string hostname, std::shared_ptr<Logger> logger,
 	std::string configPolicyFilePath, std::string signingIdentity, std::string instanceId);
 MediaStreamParams prepareMediaStreamParams(LocalStreamParams params);
-void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger);
+void registerPrefix(Name prefix, std::shared_ptr<Logger> logger);
 
 //******************************************************************************
 const char* ndnrtc_getVersion()
@@ -72,7 +72,7 @@ const char* ndnrtc_getVersion()
 
 void ndnrtc_get_identities_list(char*** identities, int* nIdentities)
 {
-	boost::shared_ptr<ndn::KeyChain> defaultKeyChain = boost::make_shared<ndn::KeyChain>();
+	std::shared_ptr<ndn::KeyChain> defaultKeyChain = std::make_shared<ndn::KeyChain>();
 	std::vector<Name> identitiesList;
 
 	if (defaultKeyChain->getIsSecurityV1()) {
@@ -100,8 +100,8 @@ bool ndnrtc_init(const char* hostname, const char* storagePath,
 {
 	Logger::initAsyncLogging();
 
-	boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
-		boost::make_shared<CallbackSink>(libLog));
+	std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelAll,
+		std::make_shared<CallbackSink>(libLog));
 	callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up NDN-RTC..." << std::endl;
 
 	try {
@@ -139,8 +139,8 @@ ndnrtc::IStream* ndnrtc_createLocalStream(LocalStreamParams params, LibLog logge
 		settings.keyChain_ = LibKeyChainManager->instanceKeyChain().get();
         settings.storagePath_ = (params.storagePath ? std::string(params.storagePath) : "");
 
-		boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
-			boost::make_shared<CallbackSink>(loggerSink));
+		std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelNone,
+			std::make_shared<CallbackSink>(loggerSink));
 		callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up Local Video Stream with params ("
 			<< "signing " << (settings.sign_ ? "ON" : "OFF")
 	 		<< "):" << settings.params_ << std::endl;
@@ -235,14 +235,14 @@ double ndnrtc_getStatistic(ndnrtc::IStream *stream, const char* statName)
     return 0;
 }
 
-static std::map<std::string, boost::shared_ptr<FrameFetcher>> FrameFetchers;
+static std::map<std::string, std::shared_ptr<FrameFetcher>> FrameFetchers;
 void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
                                const char* frameName,
                                BufferAlloc bufferAllocFunc,
                                FrameFetched frameFetchedFunc)
 {
-    boost::shared_ptr<StorageEngine> storage = ((LocalVideoStream*)stream)->getStorage();
-    boost::shared_ptr<FrameFetcher> ff = boost::make_shared<FrameFetcher>(storage);
+    std::shared_ptr<StorageEngine> storage = ((LocalVideoStream*)stream)->getStorage();
+    std::shared_ptr<FrameFetcher> ff = std::make_shared<FrameFetcher>(storage);
 
     std::string fkey(frameName);
     FrameFetchers[fkey] = ff;
@@ -251,20 +251,20 @@ void ndnrtc_FrameFetcher_fetch(ndnrtc::IStream *stream,
 
     ff->setLogger(((LocalVideoStream*)stream)->getLogger());
     ff->fetch(Name(frameName),
-              [fkey, bufferAllocFunc](const boost::shared_ptr<IFrameFetcher>& fetcher,
+              [fkey, bufferAllocFunc](const std::shared_ptr<IFrameFetcher>& fetcher,
                                       int width, int height,
                                       IExternalRenderer::BufferType *bufferType)->uint8_t*
               {
                   return bufferAllocFunc(fkey.c_str(), width, height);
               },
-              [fkey, frameFetchedFunc](const boost::shared_ptr<IFrameFetcher>& fetcher,
+              [fkey, frameFetchedFunc](const std::shared_ptr<IFrameFetcher>& fetcher,
                  const FrameInfo fi, int nFetchedFrames,
                  int width, int height, const uint8_t* buffer){
                     cFrameInfo frameInfo({fi.timestamp_, fi.playbackNo_, (char*)fi.ndnName_.c_str()});
                     frameFetchedFunc(frameInfo, width, height, buffer);
                     FrameFetchers.erase(fkey);
               },
-              [fkey, frameFetchedFunc](const boost::shared_ptr<IFrameFetcher>& ff, std::string reason){
+              [fkey, frameFetchedFunc](const std::shared_ptr<IFrameFetcher>& ff, std::string reason){
                     cFrameInfo frameInfo({0,0,(char*)fkey.c_str()});
                     frameFetchedFunc(frameInfo, 0, 0, nullptr);
                     FrameFetchers.erase(fkey);
@@ -312,8 +312,8 @@ int ndnrtc_LocalVideoStream_incomingArgbFrame(ndnrtc::LocalVideoStream *stream,
 
 ndnrtc::IStream* ndnrtc_createRemoteStream(RemoteStreamParams params, LibLog loggerSink)
 {
-	boost::shared_ptr<Logger> callbackLogger = boost::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDebug,
-		boost::make_shared<CallbackSink>(loggerSink));
+	std::shared_ptr<Logger> callbackLogger = std::make_shared<Logger>(ndnlog::NdnLoggerDetailLevelDebug,
+		std::make_shared<CallbackSink>(loggerSink));
 	callbackLogger->log(ndnlog::NdnLoggerLevelInfo) << "Setting up Remote Video Stream for "
 		<< params.basePrefix << ":" << params.streamName
 		<< " (jitter size " << params.jitterSizeMs
@@ -346,29 +346,29 @@ void initKeyChain(const char* storagePath, std::string signingIdentityStr)
 		std::string databaseFilePath = std::string(storagePath) + "/" + std::string(PublicDb);
 		std::string privateKeysPath = std::string(storagePath) + "/" + std::string(PrivateDb);
 
-		boost::shared_ptr<IdentityStorage> identityStorage = boost::make_shared<BasicIdentityStorage>(databaseFilePath);
-		boost::shared_ptr<IdentityManager> identityManager = boost::make_shared<IdentityManager>(identityStorage,
-			boost::make_shared<FilePrivateKeyStorage>(privateKeysPath));
-		boost::shared_ptr<PolicyManager> policyManager = boost::make_shared<SelfVerifyPolicyManager>(identityStorage.get());
+		std::shared_ptr<IdentityStorage> identityStorage = std::make_shared<BasicIdentityStorage>(databaseFilePath);
+		std::shared_ptr<IdentityManager> identityManager = std::make_shared<IdentityManager>(identityStorage,
+			std::make_shared<FilePrivateKeyStorage>(privateKeysPath));
+		std::shared_ptr<PolicyManager> policyManager = std::make_shared<SelfVerifyPolicyManager>(identityStorage.get());
 
-		LibKeyChain = boost::make_shared<KeyChain>(identityManager, policyManager);
+		LibKeyChain = std::make_shared<KeyChain>(identityManager, policyManager);
 		const Name signingIdentity = Name(signingIdentityStr);
 		LibKeyChain->createIdentityAndCertificate(signingIdentity);
 		identityManager->setDefaultIdentity(signingIdentity);
 	}
 	else
 	{
-		LibKeyChain = boost::make_shared<KeyChain>();
+		LibKeyChain = std::make_shared<KeyChain>();
 	}
 }
 
 // initializes face and face processing thread
-void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
+void initFace(std::string hostname, std::shared_ptr<Logger> logger,
 	std::string configPolicyFilePath, std::string signingIdentityStr,
 	std::string instanceIdStr)
 {
-	LibFaceProcessor = boost::make_shared<FaceProcessor>(hostname);
-	LibKeyChainManager = boost::make_shared<KeyChainManager>(LibFaceProcessor->getFace(),
+	LibFaceProcessor = std::make_shared<FaceProcessor>(hostname);
+	LibKeyChainManager = std::make_shared<KeyChainManager>(LibFaceProcessor->getFace(),
 		LibKeyChain,
 		signingIdentityStr,
 		instanceIdStr,
@@ -376,13 +376,13 @@ void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
 		3600,
 		logger);
 
-	LibFaceProcessor->performSynchronized([logger](boost::shared_ptr<Face> face){
+	LibFaceProcessor->performSynchronized([logger](std::shared_ptr<Face> face){
 		logger->log(ndnlog::NdnLoggerLevelInfo) << "Setting command signing info with certificate: "
 			<< LibKeyChainManager->signingIdentityCertificate()->getName() << std::endl;
 
 		face->setCommandSigningInfo(*(LibKeyChainManager->defaultKeyChain()),
 			LibKeyChainManager->signingIdentityCertificate()->getName());
-		LibContentCache = boost::make_shared<MemoryContentCache>(face.get());
+		LibContentCache = std::make_shared<MemoryContentCache>(face.get());
 	});
 
 	{ // registering prefix for serving signing identity: <signing-identity>/KEY
@@ -401,18 +401,18 @@ void initFace(std::string hostname, boost::shared_ptr<Logger> logger,
 	LibContentCache->add(*(LibKeyChainManager->instanceCertificate()));
 }
 
-void registerPrefix(Name prefix, boost::shared_ptr<Logger> logger)
+void registerPrefix(Name prefix, std::shared_ptr<Logger> logger)
 {
 	LibContentCache->registerPrefix(prefix,
-		[logger](const boost::shared_ptr<const Name> &p){
+		[logger](const std::shared_ptr<const Name> &p){
 			logger->log(ndnlog::NdnLoggerLevelError) << "Prefix registration failure: " << p << std::endl;
 		},
-		[logger](const boost::shared_ptr<const Name>& p, uint64_t id){
+		[logger](const std::shared_ptr<const Name>& p, uint64_t id){
 			logger->log(ndnlog::NdnLoggerLevelInfo) << "Prefix registration success: " << p << std::endl;
 		},
-		[logger](const boost::shared_ptr<const Name>& p,
-			const boost::shared_ptr<const Interest> &i,
-			Face& f, uint64_t, const boost::shared_ptr<const InterestFilter>&){
+		[logger](const std::shared_ptr<const Name>& p,
+			const std::shared_ptr<const Interest> &i,
+			Face& f, uint64_t, const std::shared_ptr<const InterestFilter>&){
 			logger->log(ndnlog::NdnLoggerLevelWarning) << "Unexpected interest received " << i->getName()
 				<< std::endl;
 

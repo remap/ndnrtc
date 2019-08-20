@@ -34,22 +34,22 @@ public:
     {
         capacity_ = capacity;
         for (int i = 0; i < capacity; ++i)
-            pool_.push_back(boost::make_shared<T>());
+            pool_.push_back(std::make_shared<T>());
     }
     
-    boost::shared_ptr<T> pop()
+    std::shared_ptr<T> pop()
     {
         if (pool_.size())
         {
-            boost::shared_ptr<T> slot = pool_.back();
+            std::shared_ptr<T> slot = pool_.back();
             pool_.pop_back();
             return slot;
         }
         
-        return boost::shared_ptr<T>();
+        return std::shared_ptr<T>();
     }
     
-    bool push(const boost::shared_ptr<T>& slot)
+    bool push(const std::shared_ptr<T>& slot)
     {
         if (pool_.size() < capacity_)
         {
@@ -68,7 +68,7 @@ private:
     Pool(const Pool&) = delete;
     
     size_t capacity_;
-    std::vector<boost::shared_ptr<T>> pool_;
+    std::vector<std::shared_ptr<T>> pool_;
 };
     
 }

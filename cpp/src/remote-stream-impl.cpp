@@ -156,7 +156,7 @@ void RemoteStreamImpl::setPipelineSize(unsigned int pipelineSizeSamples)
         LogWarnC << "attempting to setPipelineSize() but pipeliner_ is null" << std::endl;
 }
 
-void RemoteStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void RemoteStreamImpl::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     NdnRtcComponent::setLogger(logger);
     dynamic_pointer_cast<NdnRtcComponent>(buffer_)->setLogger(logger);
@@ -214,7 +214,7 @@ void RemoteStreamImpl::fetchMeta()
     metaFetcher_->fetch(Name(streamPrefix_).append(NameComponents::NameComponentMeta),
                         [me, this](NetworkData &meta,
                                    const std::vector<ValidationErrorInfo> &validationInfo,
-                                   const std::vector<boost::shared_ptr<Data>>&) {
+                                   const std::vector<std::shared_ptr<Data>>&) {
                             me->addValidationInfo(validationInfo);
                             me->streamMetaFetched(meta);
                         },
@@ -254,7 +254,7 @@ void RemoteStreamImpl::fetchThreadMeta(const std::string &threadName, const int6
     metaFetcher_->fetch(metaPrefix,
                         [threadName, me, metadataRequestedMs, this](NetworkData &meta,
                                                const std::vector<ValidationErrorInfo> &validationInfo,
-                                               const std::vector<boost::shared_ptr<Data>>&) {
+                                               const std::vector<std::shared_ptr<Data>>&) {
                             int64_t metadataRtt = clock::millisecondTimestamp() - metadataRequestedMs;
                             // if (metadataRtt > drdEstimator_->getOriginalEstimation()) // this is to be conservative
                                 drdEstimator_->setInitialEstimation(metadataRtt);

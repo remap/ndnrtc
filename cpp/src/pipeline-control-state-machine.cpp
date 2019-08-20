@@ -36,10 +36,10 @@ const std::string kStateFetching = "Fetching";
 #define MAKE_TRANSITION(s, t) (StateEventPair(s, t))
 #define ENABLE_IF(T, M) template <typename U = T, typename boost::enable_if<typename boost::is_same<M, U>>::type... X>
 
-#define LOG_USING(ptr, lvl) if (boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr) && \
- boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr)->getLogger())\
- boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr)->getLogger()->log((ndnlog::NdnLogType)lvl, \
- boost::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr).get(), __FUNCTION__)
+#define LOG_USING(ptr, lvl) if (std::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr) && \
+ std::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr)->getLogger())\
+ std::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr)->getLogger()->log((ndnlog::NdnLogType)lvl, \
+ std::dynamic_pointer_cast<ndnlog::new_api::ILoggingObject>(ptr).get(), __FUNCTION__)
 
 template <typename MetadataClass>
 class ReceivedMetadataProcessing
@@ -49,9 +49,9 @@ class ReceivedMetadataProcessing
 
   protected:
     ENABLE_IF(MetadataClass, VideoThreadMeta)
-    bool processPointer(const boost::shared_ptr<const WireSegment>& segment,
-                        const boost::shared_ptr<MetadataClass>& metadata,
-                        boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
+    bool processPointer(const std::shared_ptr<const WireSegment>& segment,
+                        const std::shared_ptr<MetadataClass>& metadata,
+                        std::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
     {
         ndn::DelegationSet pointers;
         pointers.wireDecode(segment->getData()->getContent());
@@ -141,9 +141,9 @@ class ReceivedMetadataProcessing
 
     // TODO: update code for audio too
     ENABLE_IF(MetadataClass, AudioThreadMeta)
-    bool processPointer(const boost::shared_ptr<const WireSegment>& segment,
-                        const boost::shared_ptr<MetadataClass>& metadata,
-                        boost::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
+    bool processPointer(const std::shared_ptr<const WireSegment>& segment,
+                        const std::shared_ptr<MetadataClass>& metadata,
+                        std::shared_ptr<PipelineControlStateMachine::Struct> ctrl)
     {
         if (metadata)
         {
@@ -199,10 +199,10 @@ class ReceivedMetadataProcessing
 class Idle : public PipelineControlState
 {
   public:
-    Idle(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
+    Idle(const std::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
 
     std::string str() const override { return kStateIdle; }
-    void enter(const boost::shared_ptr<const PipelineControlEvent> &ev) override
+    void enter(const std::shared_ptr<const PipelineControlEvent> &ev) override
     {
         ctrl_->buffer_->reset();
         ctrl_->pipeliner_->reset();
@@ -232,35 +232,35 @@ class BootstrappingT : public PipelineControlState,
                        public ReceivedMetadataProcessing<MetadataClass>
 {
   public:
-    BootstrappingT(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
+    BootstrappingT(const std::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
 
     std::string str() const override { return kStateBootstrapping; }
-    void enter(const boost::shared_ptr<const PipelineControlEvent> &ev) override {
-        boost::shared_ptr<const EventStart> s = boost::dynamic_pointer_cast<const EventStart>(ev);
-        metadata_ = boost::make_shared<MetadataClass>(s->getMetadata()->data());
+    void enter(const std::shared_ptr<const PipelineControlEvent> &ev) override {
+        std::shared_ptr<const EventStart> s = std::dynamic_pointer_cast<const EventStart>(ev);
+        metadata_ = std::make_shared<MetadataClass>(s->getMetadata()->data());
         askLatest(); 
     }
     int toInt() override { return (int)StateId::Bootstrapping; }
 
   protected:
-    std::string onTimeout(const boost::shared_ptr<const EventTimeout> &ev) override
+    std::string onTimeout(const std::shared_ptr<const EventTimeout> &ev) override
     {
         if (ev->getInfo().segmentClass_ == SegmentClass::Pointer)
             askLatest();
         return str();
     }
 
-    std::string onNack(const boost::shared_ptr<const EventNack> &ev) override
+    std::string onNack(const std::shared_ptr<const EventNack> &ev) override
     {
         if (ev->getInfo().segmentClass_ == SegmentClass::Pointer)
             askLatest();
         return str();
     }
 
-    std::string onSegment(const boost::shared_ptr<const EventSegment> &ev) override
+    std::string onSegment(const std::shared_ptr<const EventSegment> &ev) override
     {
         if (ev->getSegment()->isPointer())
-            return receivedLatestPointer(boost::dynamic_pointer_cast<const EventSegment>(ev));
+            return receivedLatestPointer(std::dynamic_pointer_cast<const EventSegment>(ev));
         else
         { // process frame segments
             // check if we are receiving expected frames
@@ -289,7 +289,7 @@ class BootstrappingT : public PipelineControlState,
         ctrl_->pipeliner_->expressBootstrap(ctrl_->threadPrefix_);
     }
 
-    std::string receivedLatestPointer(const boost::shared_ptr<const EventSegment> &ev)
+    std::string receivedLatestPointer(const std::shared_ptr<const EventSegment> &ev)
     {
         ReceivedMetadataProcessing<MetadataClass>::processPointer(ev->getSegment(), metadata_, ctrl_);
 
@@ -297,10 +297,10 @@ class BootstrappingT : public PipelineControlState,
     }
 
   private:
-    boost::shared_ptr<MetadataClass> metadata_;
+    std::shared_ptr<MetadataClass> metadata_;
 
     ENABLE_IF(MetadataClass, AudioThreadMeta)
-    bool receivedStartOffSegment(const boost::shared_ptr<const WireSegment> &seg)
+    bool receivedStartOffSegment(const std::shared_ptr<const WireSegment> &seg)
     {
         PacketNumber startOffDeltaSeqNo = ReceivedMetadataProcessing<MetadataClass>::getStartOffSequenceNumber();
         PacketNumber currentDeltaSeqNo = seg->getSampleNo();
@@ -309,13 +309,13 @@ class BootstrappingT : public PipelineControlState,
     }
 
     ENABLE_IF(MetadataClass, AudioThreadMeta)
-    bool checkSampleIsExpected(const boost::shared_ptr<const WireSegment> &seg)
+    bool checkSampleIsExpected(const std::shared_ptr<const WireSegment> &seg)
     {
         return (seg->getSampleNo() >= ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber());
     }
 
     ENABLE_IF(MetadataClass, AudioThreadMeta)
-    int calculatePlaybackFfwdInterval(const boost::shared_ptr<const WireSegment> &seg)
+    int calculatePlaybackFfwdInterval(const std::shared_ptr<const WireSegment> &seg)
     {
         PacketNumber currentDeltaSeqNo = seg->getSampleNo();
 
@@ -324,14 +324,14 @@ class BootstrappingT : public PipelineControlState,
     }
 
     ENABLE_IF(MetadataClass, VideoThreadMeta)
-    bool receivedStartOffSegment(const boost::shared_ptr<const WireSegment> &seg)
+    bool receivedStartOffSegment(const std::shared_ptr<const WireSegment> &seg)
     {
         // compare sequence number of received sample with saved start off sequence numbers
         PacketNumber startOffDeltaSeqNo = ReceivedMetadataProcessing<MetadataClass>::getStartOffSequenceNumber().first;
         PacketNumber startOffKeySeqNo = ReceivedMetadataProcessing<MetadataClass>::getStartOffSequenceNumber().second;
 
-        boost::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment = 
-            boost::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(seg);
+        std::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment = 
+            std::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(seg);
         ImmutableHeaderPacket<VideoFrameSegmentHeader> segmentPacket = videoFrameSegment->segment();
         PacketNumber currentDeltaSeqNo = seg->isDelta() ? seg->getSampleNo() : segmentPacket.getHeader().pairedSequenceNo_ ;
         PacketNumber currentKeySeqNo = seg->isDelta() ? segmentPacket.getHeader().pairedSequenceNo_ : seg->getSampleNo() ;
@@ -340,7 +340,7 @@ class BootstrappingT : public PipelineControlState,
     }
 
     ENABLE_IF(MetadataClass, VideoThreadMeta)
-    bool checkSampleIsExpected(const boost::shared_ptr<const WireSegment> &seg)
+    bool checkSampleIsExpected(const std::shared_ptr<const WireSegment> &seg)
     {
         PacketNumber minSequenceNoDelta = ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber().first;
         PacketNumber minSequenceNoKey = ReceivedMetadataProcessing<MetadataClass>::getBootstrapSequenceNumber().second;
@@ -352,10 +352,10 @@ class BootstrappingT : public PipelineControlState,
     }
 
     ENABLE_IF(MetadataClass, VideoThreadMeta)
-    int calculatePlaybackFfwdInterval(const boost::shared_ptr<const WireSegment> &seg)
+    int calculatePlaybackFfwdInterval(const std::shared_ptr<const WireSegment> &seg)
     {
-        boost::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment = 
-            boost::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(seg);
+        std::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment = 
+            std::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(seg);
         ImmutableHeaderPacket<VideoFrameSegmentHeader> segmentPacket = videoFrameSegment->segment();
 
         PacketNumber currentDeltaSeqNo = seg->isDelta() ? seg->getSampleNo() : segmentPacket.getHeader().pairedSequenceNo_;
@@ -374,29 +374,29 @@ typedef BootstrappingT<VideoThreadMeta> BootstrappingVideo;
 class SeedBootstrapping : public PipelineControlState {
   public:
     SeedBootstrapping(RemoteVideoStream::FetchingRuleSet ruleset,
-                      const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
+                      const std::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
     : PipelineControlState(ctrl) 
     , ruleset_(ruleset)
     {}
 
     std::string str() const override { return kStateBootstrapping; }
-    void enter(const boost::shared_ptr<const PipelineControlEvent> &ev) override { askSeedFrame(); }
+    void enter(const std::shared_ptr<const PipelineControlEvent> &ev) override { askSeedFrame(); }
     int toInt() override { return (int)StateId::Bootstrapping; }
 
   protected:
-    std::string onTimeout(const boost::shared_ptr<const EventTimeout> &ev) override
+    std::string onTimeout(const std::shared_ptr<const EventTimeout> &ev) override
     {
         askSeedFrame();
         return str();
     }
 
-    std::string onNack(const boost::shared_ptr<const EventNack> &ev) override
+    std::string onNack(const std::shared_ptr<const EventNack> &ev) override
     {
         askSeedFrame();
         return str();
     }
 
-    std::string onSegment(const boost::shared_ptr<const EventSegment> &ev) override
+    std::string onSegment(const std::shared_ptr<const EventSegment> &ev) override
     {
         // TODO: intialize interestControl
         // get rate and pipeline size
@@ -406,8 +406,8 @@ class SeedBootstrapping : public PipelineControlState {
 
         if (ev->getSegment()->getSampleClass() == SampleClass::Key)
         {
-            boost::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment =
-                boost::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(ev->getSegment());
+            std::shared_ptr<const WireData<VideoFrameSegmentHeader>> videoFrameSegment =
+                std::dynamic_pointer_cast<const WireData<VideoFrameSegmentHeader>>(ev->getSegment());
 
             ctrl_->pipeliner_->setSequenceNumber(videoFrameSegment->getSampleNo()+1, SampleClass::Key);
             ctrl_->pipeliner_->setSequenceNumber(videoFrameSegment->segment().getHeader().pairedSequenceNo_, SampleClass::Delta);
@@ -454,18 +454,18 @@ class SeedBootstrapping : public PipelineControlState {
 class Adjusting : public PipelineControlState
 {
   public:
-    Adjusting(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
+    Adjusting(const std::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
 
     std::string str() const override { return kStateAdjusting; }
-    void enter(const boost::shared_ptr<const PipelineControlEvent> &ev) override;
+    void enter(const std::shared_ptr<const PipelineControlEvent> &ev) override;
     int toInt() override { return (int)StateId::Adjusting; }
 
   private:
     unsigned int pipelineLowerLimit_;
 
-    std::string onSegment(const boost::shared_ptr<const EventSegment> &ev) override;
-    std::string onTimeout(const boost::shared_ptr<const EventTimeout> &ev) override;
-    std::string onNack(const boost::shared_ptr<const EventNack> &ev) override;
+    std::string onSegment(const std::shared_ptr<const EventSegment> &ev) override;
+    std::string onTimeout(const std::shared_ptr<const EventTimeout> &ev) override;
+    std::string onNack(const std::shared_ptr<const EventNack> &ev) override;
 };
 
 /**
@@ -487,15 +487,15 @@ class Adjusting : public PipelineControlState
 class Fetching : public PipelineControlState
 {
   public:
-    Fetching(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
+    Fetching(const std::shared_ptr<PipelineControlStateMachine::Struct> &ctrl) : PipelineControlState(ctrl) {}
 
     std::string str() const override { return kStateFetching; }
     int toInt() override { return (int)StateId::Fetching; }
 
   private:
-    std::string onSegment(const boost::shared_ptr<const EventSegment> &ev) override;
-    std::string onTimeout(const boost::shared_ptr<const EventTimeout> &ev) override;
-    std::string onNack(const boost::shared_ptr<const EventNack> &ev) override;
+    std::string onSegment(const std::shared_ptr<const EventSegment> &ev) override;
+    std::string onTimeout(const std::shared_ptr<const EventTimeout> &ev) override;
+    std::string onNack(const std::shared_ptr<const EventNack> &ev) override;
 };
 
 //******************************************************************************
@@ -523,16 +523,16 @@ PipelineControlEvent::toString() const
 PipelineControlStateMachine
 PipelineControlStateMachine::defaultStateMachine(PipelineControlStateMachine::Struct ctrl)
 {
-    boost::shared_ptr<PipelineControlStateMachine::Struct>
-        pctrl(boost::make_shared<PipelineControlStateMachine::Struct>(ctrl));
+    std::shared_ptr<PipelineControlStateMachine::Struct>
+        pctrl(std::make_shared<PipelineControlStateMachine::Struct>(ctrl));
     return PipelineControlStateMachine(pctrl, defaultConsumerStatesMap(pctrl));
 }
 
 PipelineControlStateMachine
 PipelineControlStateMachine::videoStateMachine(Struct ctrl)
 {
-    boost::shared_ptr<PipelineControlStateMachine::Struct>
-        pctrl(boost::make_shared<PipelineControlStateMachine::Struct>(ctrl));
+    std::shared_ptr<PipelineControlStateMachine::Struct>
+        pctrl(std::make_shared<PipelineControlStateMachine::Struct>(ctrl));
     return PipelineControlStateMachine(pctrl, videoConsumerStatesMap(pctrl));
 }
 
@@ -540,43 +540,43 @@ PipelineControlStateMachine
 PipelineControlStateMachine::playbackDrivenStateMachine(const RemoteVideoStream::FetchingRuleSet& ruleset, 
                                                         Struct ctrl)
 {
-    boost::shared_ptr<PipelineControlStateMachine::Struct>
-        pctrl(boost::make_shared<PipelineControlStateMachine::Struct>(ctrl));
+    std::shared_ptr<PipelineControlStateMachine::Struct>
+        pctrl(std::make_shared<PipelineControlStateMachine::Struct>(ctrl));
     return PipelineControlStateMachine(pctrl, playbackDrivenConsumerStatesMap(ruleset, pctrl));
 }
 
 PipelineControlStateMachine::StatesMap
-PipelineControlStateMachine::defaultConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
+PipelineControlStateMachine::defaultConsumerStatesMap(const std::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
 {
     return {
-        {kStateIdle, boost::make_shared<Idle>(ctrl)},
-        {kStateBootstrapping, boost::make_shared<BootstrappingAudio>(ctrl)},
-        {kStateAdjusting, boost::make_shared<Adjusting>(ctrl)},
-        {kStateFetching, boost::make_shared<Fetching>(ctrl)}};
+        {kStateIdle, std::make_shared<Idle>(ctrl)},
+        {kStateBootstrapping, std::make_shared<BootstrappingAudio>(ctrl)},
+        {kStateAdjusting, std::make_shared<Adjusting>(ctrl)},
+        {kStateFetching, std::make_shared<Fetching>(ctrl)}};
 }
 
 PipelineControlStateMachine::StatesMap
-PipelineControlStateMachine::videoConsumerStatesMap(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
+PipelineControlStateMachine::videoConsumerStatesMap(const std::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
 {
     return {
-        {kStateIdle, boost::make_shared<Idle>(ctrl)},
-        {kStateBootstrapping, boost::make_shared<BootstrappingVideo>(ctrl)},
-        {kStateAdjusting, boost::make_shared<Adjusting>(ctrl)},
-        {kStateFetching, boost::make_shared<Fetching>(ctrl)}};
+        {kStateIdle, std::make_shared<Idle>(ctrl)},
+        {kStateBootstrapping, std::make_shared<BootstrappingVideo>(ctrl)},
+        {kStateAdjusting, std::make_shared<Adjusting>(ctrl)},
+        {kStateFetching, std::make_shared<Fetching>(ctrl)}};
 }
 
 PipelineControlStateMachine::StatesMap
 PipelineControlStateMachine::playbackDrivenConsumerStatesMap(const RemoteVideoStream::FetchingRuleSet& ruleset,
-                                                             const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
+                                                             const std::shared_ptr<PipelineControlStateMachine::Struct> &ctrl)
 {
     return {
-        {kStateIdle, boost::make_shared<Idle>(ctrl)},
-        {kStateBootstrapping, boost::make_shared<SeedBootstrapping>(ruleset, ctrl)},
-        {kStateFetching, boost::make_shared<Fetching>(ctrl)}};
+        {kStateIdle, std::make_shared<Idle>(ctrl)},
+        {kStateBootstrapping, std::make_shared<SeedBootstrapping>(ruleset, ctrl)},
+        {kStateFetching, std::make_shared<Fetching>(ctrl)}};
 }
 
 //******************************************************************************
-PipelineControlStateMachine::PipelineControlStateMachine(const boost::shared_ptr<PipelineControlStateMachine::Struct> &ctrl,
+PipelineControlStateMachine::PipelineControlStateMachine(const std::shared_ptr<PipelineControlStateMachine::Struct> &ctrl,
                                                          PipelineControlStateMachine::StatesMap statesMap)
     : ppCtrl_(ctrl),
       states_(statesMap),
@@ -589,7 +589,7 @@ PipelineControlStateMachine::PipelineControlStateMachine(const boost::shared_ptr
     assert(ppCtrl_->latencyControl_.get());
     assert(ppCtrl_->playoutControl_.get());
 
-    currentState_->enter(boost::shared_ptr<const PipelineControlEvent>());
+    currentState_->enter(std::shared_ptr<const PipelineControlEvent>());
     description_ = "state-machine";
 
     // add indirection to avoid confusion in C++11 (Ubuntu)
@@ -615,7 +615,7 @@ PipelineControlStateMachine::getState() const
     return currentState_->str();
 }
 
-void PipelineControlStateMachine::dispatch(const boost::shared_ptr<const PipelineControlEvent> &ev)
+void PipelineControlStateMachine::dispatch(const std::shared_ptr<const PipelineControlEvent> &ev)
 {
     // dispatchEvent allows current state to react to the event.
     // if state need to be switched, then next state name is returned.
@@ -655,7 +655,7 @@ void PipelineControlStateMachine::detach(IPipelineControlStateMachineObserver *o
 }
 
 #pragma mark - private
-bool PipelineControlStateMachine::transition(const boost::shared_ptr<const PipelineControlEvent> &ev)
+bool PipelineControlStateMachine::transition(const std::shared_ptr<const PipelineControlEvent> &ev)
 {
     if (stateMachineTable_.find(MAKE_TRANSITION(currentState_->str(), ev->getType())) ==
         stateMachineTable_.end())
@@ -667,8 +667,8 @@ bool PipelineControlStateMachine::transition(const boost::shared_ptr<const Pipel
     return true;
 }
 
-void PipelineControlStateMachine::switchToState(const boost::shared_ptr<PipelineControlState> &state,
-                                                const boost::shared_ptr<const PipelineControlEvent> &event)
+void PipelineControlStateMachine::switchToState(const std::shared_ptr<PipelineControlState> &state,
+                                                const std::shared_ptr<const PipelineControlEvent> &event)
 {
     int64_t now = clock::millisecondTimestamp();
     int64_t stateDuration = (lastEventTimestamp_ ? now - lastEventTimestamp_ : 0);
@@ -685,14 +685,14 @@ void PipelineControlStateMachine::switchToState(const boost::shared_ptr<Pipeline
     for (auto o : observers_)
         o->onStateMachineChangedState(event, currentState_->str());
 
-    if (event->toString() == boost::make_shared<EventStarvation>(0)->toString())
+    if (event->toString() == std::make_shared<EventStarvation>(0)->toString())
         (*ppCtrl_->sstorage_)[Indicator::RebufferingsNum]++;
     (*ppCtrl_->sstorage_)[Indicator::State] = (double)state->toInt();
 }
 
 //******************************************************************************
 std::string
-PipelineControlState::dispatchEvent(const boost::shared_ptr<const PipelineControlEvent> &ev)
+PipelineControlState::dispatchEvent(const std::shared_ptr<const PipelineControlEvent> &ev)
 {
     switch (ev->getType())
     {
@@ -701,24 +701,24 @@ PipelineControlState::dispatchEvent(const boost::shared_ptr<const PipelineContro
     case PipelineControlEvent::Reset:
         return onReset(ev);
     case PipelineControlEvent::Starvation:
-        return onStarvation(boost::dynamic_pointer_cast<const EventStarvation>(ev));
+        return onStarvation(std::dynamic_pointer_cast<const EventStarvation>(ev));
     case PipelineControlEvent::Timeout:
-        return onTimeout(boost::dynamic_pointer_cast<const EventTimeout>(ev));
+        return onTimeout(std::dynamic_pointer_cast<const EventTimeout>(ev));
     case PipelineControlEvent::Segment:
-        return onSegment(boost::dynamic_pointer_cast<const EventSegment>(ev));
+        return onSegment(std::dynamic_pointer_cast<const EventSegment>(ev));
     default:
         return str();
     }
 }
 
 //******************************************************************************
-void Adjusting::enter(const boost::shared_ptr<const PipelineControlEvent> &ev)
+void Adjusting::enter(const std::shared_ptr<const PipelineControlEvent> &ev)
 {
     pipelineLowerLimit_ = ctrl_->interestControl_->pipelineLimit();
 }
 
 std::string
-Adjusting::onSegment(const boost::shared_ptr<const EventSegment> &ev)
+Adjusting::onSegment(const std::shared_ptr<const EventSegment> &ev)
 {
     ctrl_->pipeliner_->fillUpPipeline(ctrl_->threadPrefix_);
 
@@ -737,14 +737,14 @@ Adjusting::onSegment(const boost::shared_ptr<const EventSegment> &ev)
 }
 
 std::string
-Adjusting::onTimeout(const boost::shared_ptr<const EventTimeout> &ev)
+Adjusting::onTimeout(const std::shared_ptr<const EventTimeout> &ev)
 {
     ctrl_->pipeliner_->express({ ev->getInterest() });
     return str();
 }
 
 std::string
-Adjusting::onNack(const boost::shared_ptr<const EventNack> &ev)
+Adjusting::onNack(const std::shared_ptr<const EventNack> &ev)
 {
     ctrl_->pipeliner_->express({ ev->getInterest() });
     return str();
@@ -752,7 +752,7 @@ Adjusting::onNack(const boost::shared_ptr<const EventNack> &ev)
 
 //******************************************************************************
 std::string
-Fetching::onSegment(const boost::shared_ptr<const EventSegment> &ev)
+Fetching::onSegment(const std::shared_ptr<const EventSegment> &ev)
 {
     ctrl_->pipeliner_->fillUpPipeline(ctrl_->threadPrefix_);
 
@@ -766,14 +766,14 @@ Fetching::onSegment(const boost::shared_ptr<const EventSegment> &ev)
 }
 
 std::string
-Fetching::onTimeout(const boost::shared_ptr<const EventTimeout> &ev)
+Fetching::onTimeout(const std::shared_ptr<const EventTimeout> &ev)
 {
     ctrl_->pipeliner_->express({ ev->getInterest() });
     return str();
 }
 
 std::string
-Fetching::onNack(const boost::shared_ptr<const EventNack> &ev)
+Fetching::onNack(const std::shared_ptr<const EventNack> &ev)
 {
     ctrl_->pipeliner_->express({ ev->getInterest() });
     return str();

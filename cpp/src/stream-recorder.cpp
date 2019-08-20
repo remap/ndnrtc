@@ -23,7 +23,7 @@ using namespace std;
 using namespace ndnrtc;
 using namespace ndn;
 
-const StreamRecorder::FetchSettings 
+const StreamRecorder::FetchSettings
 StreamRecorder::Default = {3000, StreamRecorder::FetchDirection::Forward, 0, 0, 5, 100, 30};
 
 namespace ndnrtc {
@@ -31,10 +31,10 @@ namespace ndnrtc {
     {
         friend class StreamRecorder;
         public:
-            StreamRecorderImpl(StreamRecorder::StoreData storeDataFun, 
+            StreamRecorderImpl(StreamRecorder::StoreData storeDataFun,
                             const NamespaceInfo& ninfo,
-                            const boost::shared_ptr<Face>& face, 
-                            const boost::shared_ptr<KeyChain> keyChain);
+                            const std::shared_ptr<Face>& face,
+                            const std::shared_ptr<KeyChain> keyChain);
             ~StreamRecorderImpl(){}
 
             /**
@@ -50,16 +50,16 @@ namespace ndnrtc {
         private:
             const NamespaceInfo ninfo_;
             StreamRecorder::StoreData storeDataFun_;
-            boost::shared_ptr<Face> face_;
-            boost::shared_ptr<KeyChain> keyChain_;
+            std::shared_ptr<Face> face_;
+            std::shared_ptr<KeyChain> keyChain_;
             bool isFetching_, isFetchingStream_;
             StreamRecorder::FetchSettings settings_;
             int32_t pipelineReserve_;
             pair<uint32_t, uint32_t> fetchIndex_;
 
             FetchingTask::Settings fetchTaskSettings_;
-            boost::shared_ptr<IFetchMethod> frameFetchMethod_;
-            map<Name, boost::shared_ptr<FrameFetchingTask>> fetchingTasks_;
+            std::shared_ptr<IFetchMethod> frameFetchMethod_;
+            map<Name, std::shared_ptr<FrameFetchingTask>> fetchingTasks_;
             StreamRecorder::Stats stats_;
 
             void fetchStreamMeta();
@@ -69,29 +69,29 @@ namespace ndnrtc {
             void requestFrame(const NamespaceInfo& frameInfo);
             void requestNextFrame(const NamespaceInfo& fetchedFrame);
 
-            void store(const boost::shared_ptr<const Data>&d);
+            void store(const std::shared_ptr<const Data>&d);
     };
 }
 
 // ***
-StreamRecorder::StreamRecorder(StreamRecorder::StoreData storeDataFun, 
+StreamRecorder::StreamRecorder(StreamRecorder::StoreData storeDataFun,
                         const NamespaceInfo& ninfo,
-                        const boost::shared_ptr<Face>& face, 
-                        const boost::shared_ptr<KeyChain> keyChain):
-pimpl_(boost::make_shared<StreamRecorderImpl>(storeDataFun, ninfo, face, keyChain)){}
+                        const std::shared_ptr<Face>& face,
+                        const std::shared_ptr<KeyChain> keyChain):
+pimpl_(std::make_shared<StreamRecorderImpl>(storeDataFun, ninfo, face, keyChain)){}
 void StreamRecorder::start(const StreamRecorder::FetchSettings& settings) { pimpl_->start(settings); }
 void StreamRecorder::stop() { pimpl_->stop(); }
 bool StreamRecorder::isFetching() { return pimpl_->isFetching_; }
 const string StreamRecorder::getStreamPrefix() const { return pimpl_->ninfo_.getPrefix(prefix_filter::Stream).toUri(); }
 const string StreamRecorder::getThreadName() const { return pimpl_->ninfo_.threadName_; }
-void StreamRecorder::setLogger(const boost::shared_ptr<ndnlog::new_api::Logger>& logger) { pimpl_->setLogger(logger); }
+void StreamRecorder::setLogger(const std::shared_ptr<ndnlog::new_api::Logger>& logger) { pimpl_->setLogger(logger); }
 const StreamRecorder::Stats& StreamRecorder::getCurrentStats() const { return pimpl_->stats_; }
 // ***
 
-StreamRecorderImpl::StreamRecorderImpl(StreamRecorder::StoreData storeDataFun, 
+StreamRecorderImpl::StreamRecorderImpl(StreamRecorder::StoreData storeDataFun,
                         const NamespaceInfo& ninfo,
-                        const boost::shared_ptr<Face>& face, 
-                        const boost::shared_ptr<KeyChain> keyChain):
+                        const std::shared_ptr<Face>& face,
+                        const std::shared_ptr<KeyChain> keyChain):
     storeDataFun_(storeDataFun), face_(face), keyChain_(keyChain),
     ninfo_(ninfo), isFetching_(false), isFetchingStream_(false)
 {
@@ -99,10 +99,10 @@ StreamRecorderImpl::StreamRecorderImpl(StreamRecorder::StoreData storeDataFun,
         throw runtime_error("audio streams are not supported yet");
 
     description_ = "recorder-"+ninfo.streamName_+":"+ninfo.threadName_;
-    frameFetchMethod_ = boost::make_shared<FetchMethodRemote>(face_);
+    frameFetchMethod_ = std::make_shared<FetchMethodRemote>(face_);
 }
 
-void 
+void
 StreamRecorderImpl::start(const StreamRecorder::FetchSettings& settings)
 {
     if (isFetching_ || isFetchingStream_)
@@ -113,8 +113,8 @@ StreamRecorderImpl::start(const StreamRecorder::FetchSettings& settings)
     fetchTaskSettings_ = {3, settings_.lifetime_};
     memset((void*)&stats_, 0, sizeof(StreamRecorder::Stats));
 
-    LogInfoC << "recording direction: " 
-        << ((settings_.direction_ & StreamRecorder::FetchDirection::Forward) && (settings_.direction_ & StreamRecorder::FetchDirection::Backward) ? "both" : 
+    LogInfoC << "recording direction: "
+        << ((settings_.direction_ & StreamRecorder::FetchDirection::Forward) && (settings_.direction_ & StreamRecorder::FetchDirection::Backward) ? "both" :
             (settings_.direction_ & StreamRecorder::FetchDirection::Forward ? "forward" : "backward"))
         << ", seed frame: " << settings_.seedFrame_
         << ", record length: " << settings_.recordLength_
@@ -139,7 +139,7 @@ StreamRecorderImpl::start(const StreamRecorder::FetchSettings& settings)
         bootstrap();
 }
 
-void 
+void
 StreamRecorderImpl::stop()
 {
     isFetching_ = false;
@@ -148,50 +148,50 @@ StreamRecorderImpl::stop()
         t.second->cancel();
 }
 
-void 
+void
 StreamRecorderImpl::fetchStreamMeta(){
     Interest i(ninfo_.getPrefix(prefix_filter::Stream).append(NameComponents::NameComponentMeta), settings_.lifetime_);
-    boost::shared_ptr<StreamRecorderImpl> me = dynamic_pointer_cast<StreamRecorderImpl>(shared_from_this());
+    std::shared_ptr<StreamRecorderImpl> me = dynamic_pointer_cast<StreamRecorderImpl>(shared_from_this());
 
     LogTraceC << "fetching " << i.getName() << endl;
 
-    SegmentFetcher::fetch(*face_, i, keyChain_.get(), 
+    SegmentFetcher::fetch(*face_, i, keyChain_.get(),
                         [me,this](const Blob &content,
                                   const vector<ValidationErrorInfo>&,
-                                  const vector<boost::shared_ptr<Data>>& contentData){
+                                  const vector<std::shared_ptr<Data>>& contentData){
                                     for (auto d:contentData)
                                     {
-                                        LogTraceC << "store " << d->getName() << endl; 
+                                        LogTraceC << "store " << d->getName() << endl;
                                         store(d);
                                     }
                                     stats_.streamMetaStored_++;
 
                                     if (isFetching_)
-                                        face_->callLater(settings_.streamMetaFetchInterval_, 
-                                                         boost::bind(&StreamRecorderImpl::fetchStreamMeta, me));
+                                        face_->callLater(settings_.streamMetaFetchInterval_,
+                                                         std::bind(&StreamRecorderImpl::fetchStreamMeta, me));
                                   },
-                        [me, this](SegmentFetcher::ErrorCode code, 
+                        [me, this](SegmentFetcher::ErrorCode code,
                                    const string& msg){
                                        LogErrorC << "failed to fetch stream meta: " << msg << endl;
-                                       if (isFetching_) 
+                                       if (isFetching_)
                                             me->fetchStreamMeta();
                                    });
 }
 
-void 
+void
 StreamRecorderImpl::fetchThreadMeta(){
     Interest i(ninfo_.getPrefix(prefix_filter::ThreadNT).append(NameComponents::NameComponentMeta), settings_.lifetime_);
-    boost::shared_ptr<StreamRecorderImpl> me = dynamic_pointer_cast<StreamRecorderImpl>(shared_from_this());
+    std::shared_ptr<StreamRecorderImpl> me = dynamic_pointer_cast<StreamRecorderImpl>(shared_from_this());
 
     LogTraceC << "fetching " << i.getName() << endl;
 
-    SegmentFetcher::fetch(*face_, i, keyChain_.get(), 
+    SegmentFetcher::fetch(*face_, i, keyChain_.get(),
                         [me,this](const Blob &content,
                                   const vector<ValidationErrorInfo>&,
-                                  const vector<boost::shared_ptr<Data>>& contentData){
+                                  const vector<std::shared_ptr<Data>>& contentData){
                                     for (auto d:contentData)
                                     {
-                                        LogTraceC << "store " << d->getName() << endl; 
+                                        LogTraceC << "store " << d->getName() << endl;
                                         store(d);
                                     }
                                     stats_.threadMetaStored_++;
@@ -200,14 +200,14 @@ StreamRecorderImpl::fetchThreadMeta(){
                                     {
                                         // if (!isFetchingStream_)
                                         //     initiateStreamFetching(content);
-                                        face_->callLater(settings_.threadMetaFetchInterval_, 
-                                                         boost::bind(&StreamRecorderImpl::fetchThreadMeta, me));
+                                        face_->callLater(settings_.threadMetaFetchInterval_,
+                                                         std::bind(&StreamRecorderImpl::fetchThreadMeta, me));
                                     }
                                   },
-                        [me, this](SegmentFetcher::ErrorCode code, 
+                        [me, this](SegmentFetcher::ErrorCode code,
                                    const string& msg){
                                        LogErrorC << "failed to fetch stream meta: " << msg << endl;
-                                       if (isFetching_) 
+                                       if (isFetching_)
                                             me->fetchStreamMeta();
                                    });
 }
@@ -217,13 +217,13 @@ StreamRecorderImpl::bootstrap()
 {
     // fetch _latest pointers
     Interest i(ninfo_.getPrefix(prefix_filter::ThreadNT).append(NameComponents::NameComponentRdrLatest), settings_.lifetime_);
-    boost::shared_ptr<StreamRecorderImpl> me = dynamic_pointer_cast<StreamRecorderImpl>(shared_from_this());
+    std::shared_ptr<StreamRecorderImpl> me = dynamic_pointer_cast<StreamRecorderImpl>(shared_from_this());
 
     LogTraceC << i.getName() << std::endl;
 
     face_->expressInterest(i,
-        [me,this](const boost::shared_ptr<const Interest>& interest,
-                  const boost::shared_ptr<Data>& data)
+        [me,this](const std::shared_ptr<const Interest>& interest,
+                  const std::shared_ptr<Data>& data)
         {
             DelegationSet pointers;
             pointers.wireDecode(data->getContent());
@@ -244,14 +244,14 @@ StreamRecorderImpl::bootstrap()
                 fetchIndex_.first = deltaFrameName[-1].toSequenceNumber();
                 fetchIndex_.second = keyFrameName[-1].toSequenceNumber();
 
-                LogTraceC << "received _latest pointers, delta - " 
+                LogTraceC << "received _latest pointers, delta - "
                           << fetchIndex_.first
                           << ", key - " << fetchIndex_.second << std::endl;
 
                 initiateStreamFetching();
             }
         },
-        [me,this](const boost::shared_ptr<const Interest>& interest)
+        [me,this](const std::shared_ptr<const Interest>& interest)
         {
             LogErrorC << "failed to bootstrap from " << interest->getName() << std::endl;
             if (isFetching_)
@@ -292,7 +292,7 @@ StreamRecorderImpl::initiateStreamFetching()
 
 void StreamRecorderImpl::requestFrame(const NamespaceInfo& frameInfo)
 {
-    LogDebugC << "request " << frameInfo.getSuffix(suffix_filter::Thread) 
+    LogDebugC << "request " << frameInfo.getSuffix(suffix_filter::Thread)
              << "(" << frameInfo.sampleNo_ << ")" << endl;
 
     if (frameInfo.class_ == SampleClass::Key)
@@ -300,14 +300,14 @@ void StreamRecorderImpl::requestFrame(const NamespaceInfo& frameInfo)
     else
         stats_.latestDeltaRequested_ = frameInfo.sampleNo_;
 
-    boost::shared_ptr<StreamRecorderImpl> me = dynamic_pointer_cast<StreamRecorderImpl>(shared_from_this());
+    std::shared_ptr<StreamRecorderImpl> me = dynamic_pointer_cast<StreamRecorderImpl>(shared_from_this());
     Name fName = frameInfo.getPrefix(prefix_filter::Sample);
-    boost::shared_ptr<FrameFetchingTask> task = 
-        boost::make_shared<FrameFetchingTask>(
+    std::shared_ptr<FrameFetchingTask> task =
+        std::make_shared<FrameFetchingTask>(
             fName,
-            frameFetchMethod_, 
-            [this, me, frameInfo](const boost::shared_ptr<const FetchingTask>& t, 
-             const boost::shared_ptr<const BufferSlot>& slot)
+            frameFetchMethod_,
+            [this, me, frameInfo](const std::shared_ptr<const FetchingTask>& t,
+             const std::shared_ptr<const BufferSlot>& slot)
             { // onComplete
                 fetchingTasks_.erase(frameInfo.getSuffix(suffix_filter::Thread));
                 pipelineReserve_++;
@@ -326,16 +326,16 @@ void StreamRecorderImpl::requestFrame(const NamespaceInfo& frameInfo)
                     stats_.keyStored_++;
                 }
 
-                LogDebugC << "stored frame " << frameInfo.getSuffix(suffix_filter::Thread) 
+                LogDebugC << "stored frame " << frameInfo.getSuffix(suffix_filter::Thread)
                          << "(" << frameInfo.sampleNo_ << ")" << endl;
 
                 if (isFetching_)
                     requestNextFrame(frameInfo);
             },
-            [this, me, frameInfo](const boost::shared_ptr<const FetchingTask>& t, 
+            [this, me, frameInfo](const std::shared_ptr<const FetchingTask>& t,
              std::string msg)
             { // onFailed
-                LogErrorC << "couldn't fetch frame " << t->getFrameName() 
+                LogErrorC << "couldn't fetch frame " << t->getFrameName()
                             << ": " << msg << endl;
 
                 fetchingTasks_.erase(frameInfo.getSuffix(suffix_filter::Thread));
@@ -351,10 +351,10 @@ void StreamRecorderImpl::requestFrame(const NamespaceInfo& frameInfo)
             },
             fetchTaskSettings_,
             [this, me]
-            (const boost::shared_ptr<const FetchingTask>&, 
-             const boost::shared_ptr<const SlotSegment>&)
+            (const std::shared_ptr<const FetchingTask>&,
+             const std::shared_ptr<const SlotSegment>&)
             { // onFirstSegment
-                
+
             });
     fetchingTasks_[frameInfo.getSuffix(suffix_filter::Thread)] = task;
     task->setLogger(logger_);
@@ -364,19 +364,19 @@ void StreamRecorderImpl::requestFrame(const NamespaceInfo& frameInfo)
 
     // fetch manifest, too
     Interest i(fName.append(NameComponents::NameComponentManifest), settings_.lifetime_);
-    SegmentFetcher::fetch(*face_, i, keyChain_.get(), 
+    SegmentFetcher::fetch(*face_, i, keyChain_.get(),
                         [me, this, frameInfo](const Blob &content,
                                   const vector<ValidationErrorInfo>&,
-                                  const vector<boost::shared_ptr<Data>>& contentData){
+                                  const vector<std::shared_ptr<Data>>& contentData){
                                     for (auto d:contentData)
                                         store(d);
                                     stats_.manifestsStored_++;
 
                                     LogDebugC << "stored manifest for " << frameInfo.getSuffix(suffix_filter::Sample) << endl;
                                   },
-                        [me, this, frameInfo](SegmentFetcher::ErrorCode code, 
+                        [me, this, frameInfo](SegmentFetcher::ErrorCode code,
                                    const string& msg){
-                                       LogWarnC << "failed to fetch manifest for " << frameInfo.getSuffix(suffix_filter::Sample) 
+                                       LogWarnC << "failed to fetch manifest for " << frameInfo.getSuffix(suffix_filter::Sample)
                                                 << " :" << msg << endl;
                                    });
 }
@@ -394,7 +394,7 @@ StreamRecorderImpl::requestNextFrame(const NamespaceInfo& fetchedFrame)
 }
 
 void
-StreamRecorderImpl::store(const boost::shared_ptr<const Data>&d)
+StreamRecorderImpl::store(const std::shared_ptr<const Data>&d)
 {
     storeDataFun_(d);
     stats_.totalSegmentsStored_++;

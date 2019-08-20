@@ -50,8 +50,8 @@ template <typename T>
 class NetworkDataT;
 struct _DataSegmentHeader;
 typedef NetworkDataT<Mutable> MutableNetworkData;
-typedef std::vector<boost::shared_ptr<const ndn::Data>> PublishedDataPtrVector;
-typedef boost::function<void(PublishedDataPtrVector)> OnSegmentsCached;
+typedef std::vector<std::shared_ptr<const ndn::Data>> PublishedDataPtrVector;
+typedef std::function<void(PublishedDataPtrVector)> OnSegmentsCached;
 
 template <typename KeyChain, typename MemoryCache>
 struct _PublisherSettings
@@ -82,7 +82,7 @@ class PacketPublisher : public NdnRtcComponent
     }
 
     // just sign, set freshness period & publish a data packet
-    void publish(boost::shared_ptr<ndn::Data>& d, int freshnessMs = -1) 
+    void publish(std::shared_ptr<ndn::Data>& d, int freshnessMs = -1)
     {
         freshnessMs = (freshnessMs == -1 ? settings_.freshnessPeriodMs_ : freshnessMs);
         d->getMetaInfo().setFreshnessPeriod(freshnessMs);
@@ -93,16 +93,17 @@ class PacketPublisher : public NdnRtcComponent
         (*settings_.statStorage_)[statistics::Indicator::PublishedSegmentsNum]++;
     }
 
-    PublishedDataPtrVector publish(const ndn::Name &name, const MutableNetworkData &data, 
+    PublishedDataPtrVector publish(const ndn::Name &name, const MutableNetworkData &data,
                                    int freshnessMs = -1,
                                    bool forcePitClean = false, bool banPitClean = false)
     {
         // provide dummy memory of the size of the segment header to publish function
         // we don't care of bytes that will be saved in this memory, so allocate it
-        // as shared_ptr so it's released automatically upon completion
-        boost::shared_ptr<uint8_t[]> dummyHeader(new uint8_t[SegmentType::headerSize()]);
+        // as unique_ptr so it's released automatically upon completion
+        // (more info https://stackoverflow.com/a/13062069/846340)
+        std::unique_ptr<uint8_t[]> dummyHeader(new uint8_t[SegmentType::headerSize()]);
         memset(dummyHeader.get(), SegmentType::headerSize(), 0);
-        return publish(name, data, (_DataSegmentHeader &)*dummyHeader.get(), 
+        return publish(name, data, (_DataSegmentHeader &)*dummyHeader.get(),
                        freshnessMs, forcePitClean, banPitClean);
     }
 
@@ -132,8 +133,8 @@ class PacketPublisher : public NdnRtcComponent
             checkForPendingInterests(segmentName, commonHeader);
             segment.setHeader(commonHeader);
 
-            boost::shared_ptr<MutableNetworkData> segmentData = segment.getNetworkData();
-            boost::shared_ptr<ndn::Data> ndnSegment(boost::make_shared<ndn::Data>(segmentName));
+            std::shared_ptr<MutableNetworkData> segmentData = segment.getNetworkData();
+            std::shared_ptr<ndn::Data> ndnSegment(std::make_shared<ndn::Data>(segmentName));
             ndnSegment->getMetaInfo().setFreshnessPeriod(freshnessMs);
             ndnSegment->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size() - 1));
             ndnSegment->setContent(segmentData->getData(), segment.size());
@@ -156,8 +157,8 @@ class PacketPublisher : public NdnRtcComponent
             cleanPit(name, forcePitClean);
 
         (*settings_.statStorage_)[statistics::Indicator::PublishedSegmentsNum] += segments.size();
-        
-        if (settings_.onSegmentsCached_) 
+
+        if (settings_.onSegmentsCached_)
             settings_.onSegmentsCached_(ndnSegments);
 
         return ndnSegments;
@@ -169,7 +170,7 @@ class PacketPublisher : public NdnRtcComponent
 
     void checkForPendingInterests(const ndn::Name &name, _DataSegmentHeader &commonHeader)
     {
-        std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest>> pendingInterests;
+        std::vector<std::shared_ptr<const ndn::MemoryContentCache::PendingInterest>> pendingInterests;
         settings_.memoryCache_->getPendingInterestsForName(name, pendingInterests);
 
         if (pendingInterests.size())
@@ -184,7 +185,7 @@ class PacketPublisher : public NdnRtcComponent
         }
     }
 
-    void sign(boost::shared_ptr<ndn::Data> segment)
+    void sign(std::shared_ptr<ndn::Data> segment)
     {
         if (settings_.sign_)
         {
@@ -207,7 +208,7 @@ class PacketPublisher : public NdnRtcComponent
      */
     void cleanPit(const ndn::Name &name, bool forceFullPitClean = false)
     {
-        std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest>> pendingInterests;
+        std::vector<std::shared_ptr<const ndn::MemoryContentCache::PendingInterest>> pendingInterests;
         settings_.memoryCache_->getPendingInterestsWithPrefix(name, pendingInterests);
 
         if (pendingInterests.size())
@@ -244,7 +245,7 @@ class PacketPublisher : public NdnRtcComponent
         if (info.isMeta_)
             return;
 
-        std::vector<boost::shared_ptr<const ndn::MemoryContentCache::PendingInterest>> pendingInterests;
+        std::vector<std::shared_ptr<const ndn::MemoryContentCache::PendingInterest>> pendingInterests;
 
         // extract all pending interests for this stream
         settings_.memoryCache_->getPendingInterestsWithPrefix(info.getPrefix(prefix_filter::Stream), pendingInterests);
@@ -278,9 +279,9 @@ class PacketPublisher : public NdnRtcComponent
         // EB-Workshop update: disable NACKS. for the use case where repo is present alongside the producer
         // if producer gets to answer historical requests first, they'll be NACKed, thus
         // preventing receiving valid historical data from the repo
- 
+
         /*
-        boost::shared_ptr<ndn::Data> nack(boost::make_shared<ndn::Data>(name));
+        std::shared_ptr<ndn::Data> nack(std::make_shared<ndn::Data>(name));
         nack->getMetaInfo().setFreshnessPeriod(settings_.freshnessPeriodMs_);
         nack->setContent((const uint8_t *)"nack", 4);
         nack->getMetaInfo().setType(ndn_ContentType_NACK);

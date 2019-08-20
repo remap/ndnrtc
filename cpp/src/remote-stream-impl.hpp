@@ -53,8 +53,8 @@ class RemoteStreamImpl : public NdnRtcComponent
 {
   public:
     RemoteStreamImpl(boost::asio::io_service &io,
-                     const boost::shared_ptr<ndn::Face> &face,
-                     const boost::shared_ptr<ndn::KeyChain> &keyChain,
+                     const std::shared_ptr<ndn::Face> &face,
+                     const std::shared_ptr<ndn::KeyChain> &keyChain,
                      const std::string &streamPrefix);
 
     bool isMetaFetched() const;
@@ -69,7 +69,7 @@ class RemoteStreamImpl : public NdnRtcComponent
     void setInterestLifetime(unsigned int lifetimeMs);
     void setTargetBufferSize(unsigned int bufferSizeMs);
     void setPipelineSize(unsigned int pipelineSizeSamples);
-    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+    void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
 
     bool isVerified() const;
     bool isRunning() const { return isRunning_; };
@@ -85,31 +85,31 @@ class RemoteStreamImpl : public NdnRtcComponent
     boost::asio::io_service &io_;
     bool needMeta_, isRunning_, cuedToRun_;
     int64_t metadataRequestedMs_;
-    boost::shared_ptr<ndn::Face> face_;
-    boost::shared_ptr<ndn::KeyChain> keyChain_;
+    std::shared_ptr<ndn::Face> face_;
+    std::shared_ptr<ndn::KeyChain> keyChain_;
     ndn::Name streamPrefix_;
     std::string threadName_;
-    boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
+    std::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
     std::vector<IRemoteStreamObserver *> observers_;
-    boost::shared_ptr<MetaFetcher> metaFetcher_;
-    boost::shared_ptr<MediaStreamMeta> streamMeta_;
-    std::map<std::string, boost::shared_ptr<NetworkDataAlias>> threadsMeta_;
+    std::shared_ptr<MetaFetcher> metaFetcher_;
+    std::shared_ptr<MediaStreamMeta> streamMeta_;
+    std::map<std::string, std::shared_ptr<NetworkDataAlias>> threadsMeta_;
 
-    boost::shared_ptr<IBuffer> buffer_;
-    boost::shared_ptr<DrdEstimator> drdEstimator_;
-    boost::shared_ptr<SegmentController> segmentController_;
-    boost::shared_ptr<PipelineControl> pipelineControl_;
-    boost::shared_ptr<BufferControl> bufferControl_;
-    boost::shared_ptr<SampleEstimator> sampleEstimator_;
-    boost::shared_ptr<IPlayoutControl> playoutControl_;
-    boost::shared_ptr<IInterestQueue> interestQueue_;
-    boost::shared_ptr<IPipeliner> pipeliner_;
-    boost::shared_ptr<ILatencyControl> latencyControl_;
-    boost::shared_ptr<IInterestControl> interestControl_;
-    boost::shared_ptr<IPlayout> playout_;
-    boost::shared_ptr<IPlaybackQueue> playbackQueue_;
-    boost::shared_ptr<RetransmissionController> rtxController_;
+    std::shared_ptr<IBuffer> buffer_;
+    std::shared_ptr<DrdEstimator> drdEstimator_;
+    std::shared_ptr<SegmentController> segmentController_;
+    std::shared_ptr<PipelineControl> pipelineControl_;
+    std::shared_ptr<BufferControl> bufferControl_;
+    std::shared_ptr<SampleEstimator> sampleEstimator_;
+    std::shared_ptr<IPlayoutControl> playoutControl_;
+    std::shared_ptr<IInterestQueue> interestQueue_;
+    std::shared_ptr<IPipeliner> pipeliner_;
+    std::shared_ptr<ILatencyControl> latencyControl_;
+    std::shared_ptr<IInterestControl> interestControl_;
+    std::shared_ptr<IPlayout> playout_;
+    std::shared_ptr<IPlaybackQueue> playbackQueue_;
+    std::shared_ptr<RetransmissionController> rtxController_;
 
     std::vector<ValidationErrorInfo> validationInfo_;
 

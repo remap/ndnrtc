@@ -33,14 +33,14 @@ class MetaFetcher;
 class SampleValidator : public NdnRtcComponent, public IBufferObserver, statistics::StatObject
 {
   public:
-    SampleValidator(boost::shared_ptr<ndn::KeyChain> keyChain,
-                    const boost::shared_ptr<statistics::StatisticsStorage> &statStorage) : 
+    SampleValidator(std::shared_ptr<ndn::KeyChain> keyChain,
+                    const std::shared_ptr<statistics::StatisticsStorage> &statStorage) : 
                     StatObject(statStorage), keyChain_(keyChain) {}
 
   private:
-    boost::shared_ptr<ndn::KeyChain> keyChain_;
+    std::shared_ptr<ndn::KeyChain> keyChain_;
 
-    void onNewRequest(const boost::shared_ptr<BufferSlot> &);
+    void onNewRequest(const std::shared_ptr<BufferSlot> &);
     void onNewData(const BufferReceipt &receipt);
     void onReset() {}
 };
@@ -51,9 +51,9 @@ class SampleValidator : public NdnRtcComponent, public IBufferObserver, statisti
 class ManifestValidator : public NdnRtcComponent, public IBufferObserver, statistics::StatObject
 {
   public:
-    ManifestValidator(boost::shared_ptr<ndn::Face> face,
-                      boost::shared_ptr<ndn::KeyChain> keyChain,
-                      const boost::shared_ptr<statistics::StatisticsStorage> &statStorage);
+    ManifestValidator(std::shared_ptr<ndn::Face> face,
+                      std::shared_ptr<ndn::KeyChain> keyChain,
+                      const std::shared_ptr<statistics::StatisticsStorage> &statStorage);
 
   private:
     template <typename T>
@@ -65,18 +65,18 @@ class ManifestValidator : public NdnRtcComponent, public IBufferObserver, statis
         size_t capacity() const { return capacity_; }
         size_t size() const { return pool_.size(); }
 
-        boost::shared_ptr<T> pop()
+        std::shared_ptr<T> pop()
         {
             if (pool_.size())
             {
-                boost::shared_ptr<T> el = pool_.back();
+                std::shared_ptr<T> el = pool_.back();
                 pool_.pop_back();
                 return el;
             }
-            return boost::shared_ptr<T>();
+            return std::shared_ptr<T>();
         }
 
-        bool push(const boost::shared_ptr<T> &el)
+        bool push(const std::shared_ptr<T> &el)
         {
             if (pool_.size() < capacity_)
             {
@@ -89,7 +89,7 @@ class ManifestValidator : public NdnRtcComponent, public IBufferObserver, statis
         void enlarge(const size_t &capacity)
         {
             for (int i = 0; i < capacity; ++i)
-                pool_.push_back(boost::make_shared<T>());
+                pool_.push_back(std::make_shared<T>());
             capacity_ += capacity;
         }
 
@@ -97,17 +97,17 @@ class ManifestValidator : public NdnRtcComponent, public IBufferObserver, statis
         Pool(const Pool<T> &) = delete;
 
         size_t capacity_;
-        std::vector<boost::shared_ptr<T>> pool_;
+        std::vector<std::shared_ptr<T>> pool_;
     };
 
-    boost::shared_ptr<ndn::Face> face_;
-    boost::shared_ptr<ndn::KeyChain> keyChain_;
+    std::shared_ptr<ndn::Face> face_;
+    std::shared_ptr<ndn::KeyChain> keyChain_;
     Pool<MetaFetcher> metaFetcherPool_;
 
-    void onNewRequest(const boost::shared_ptr<BufferSlot> &);
+    void onNewRequest(const std::shared_ptr<BufferSlot> &);
     void onNewData(const BufferReceipt &receipt);
     void onReset() {}
-    void verifySlot(const boost::shared_ptr<const BufferSlot> slot);
+    void verifySlot(const std::shared_ptr<const BufferSlot> slot);
 };
 }
 

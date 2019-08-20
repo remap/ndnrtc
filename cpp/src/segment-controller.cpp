@@ -24,7 +24,7 @@ class SegmentControllerImpl : public NdnRtcComponent,
 {
   public:
     SegmentControllerImpl(boost::asio::io_service &faceIo, unsigned int maxIdleTimeMs,
-                          const boost::shared_ptr<StatisticsStorage> &storage);
+                          const std::shared_ptr<StatisticsStorage> &storage);
     ~SegmentControllerImpl();
 
     unsigned int getCurrentIdleTime() const;
@@ -46,21 +46,21 @@ class SegmentControllerImpl : public NdnRtcComponent,
     std::vector<ISegmentControllerObserver *> observers_;
     int64_t lastDataTimestampMs_;
     bool starvationFired_;
-    boost::shared_ptr<StatisticsStorage> sstorage_;
+    std::shared_ptr<StatisticsStorage> sstorage_;
 
     unsigned int periodicInvocation();
 
-    void onData(const boost::shared_ptr<const ndn::Interest> &,
-                const boost::shared_ptr<ndn::Data> &);
-    void onTimeout(const boost::shared_ptr<const ndn::Interest> &);
-    void onNetworkNack(const boost::shared_ptr<const ndn::Interest> &interest,
-                       const boost::shared_ptr<ndn::NetworkNack> &networkNack);
+    void onData(const std::shared_ptr<const ndn::Interest> &,
+                const std::shared_ptr<ndn::Data> &);
+    void onTimeout(const std::shared_ptr<const ndn::Interest> &);
+    void onNetworkNack(const std::shared_ptr<const ndn::Interest> &interest,
+                       const std::shared_ptr<ndn::NetworkNack> &networkNack);
 };
 }
 
 #pragma mark - public
 SegmentController::SegmentController(boost::asio::io_service &faceIo,
-                                     unsigned int maxIdleTimeMs, StatStoragePtr storage) : pimpl_(boost::make_shared<SegmentControllerImpl>(faceIo, maxIdleTimeMs, storage))
+                                     unsigned int maxIdleTimeMs, StatStoragePtr storage) : pimpl_(std::make_shared<SegmentControllerImpl>(faceIo, maxIdleTimeMs, storage))
 {
 }
 
@@ -109,7 +109,7 @@ void SegmentController::detach(ISegmentControllerObserver *o)
     pimpl_->detach(o);
 }
 
-void SegmentController::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void SegmentController::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     pimpl_->setLogger(logger);
 }
@@ -117,7 +117,7 @@ void SegmentController::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> log
 #pragma mark - pimpl
 SegmentControllerImpl::SegmentControllerImpl(boost::asio::io_service &faceIo,
                                              unsigned int maxIdleTimeMs,
-                                             const boost::shared_ptr<StatisticsStorage> &storage) 
+                                             const std::shared_ptr<StatisticsStorage> &storage) 
     : Periodic(faceIo),
     maxIdleTimeMs_(maxIdleTimeMs),
     lastDataTimestampMs_(0),
@@ -154,19 +154,19 @@ void SegmentControllerImpl::setIsActive(bool active)
 
 OnData SegmentControllerImpl::getOnDataCallback()
 {
-    boost::shared_ptr<SegmentControllerImpl> me = boost::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
+    std::shared_ptr<SegmentControllerImpl> me = std::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
     return boost::bind(&SegmentControllerImpl::onData, me, _1, _2);
 }
 
 OnTimeout SegmentControllerImpl::getOnTimeoutCallback()
 {
-    boost::shared_ptr<SegmentControllerImpl> me = boost::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
+    std::shared_ptr<SegmentControllerImpl> me = std::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
     return boost::bind(&SegmentControllerImpl::onTimeout, me, _1);
 }
 
 OnNetworkNack SegmentControllerImpl::getOnNetworkNackCallback()
 {
-    boost::shared_ptr<SegmentControllerImpl> me = boost::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
+    std::shared_ptr<SegmentControllerImpl> me = std::dynamic_pointer_cast<SegmentControllerImpl>(shared_from_this());
     return boost::bind(&SegmentControllerImpl::onNetworkNack, me, _1, _2);
 }
 
@@ -213,8 +213,8 @@ unsigned int SegmentControllerImpl::periodicInvocation()
     return (maxIdleTimeMs_ - (now - lastDataTimestampMs_));
 }
 
-void SegmentControllerImpl::onData(const boost::shared_ptr<const Interest> &interest,
-                                   const boost::shared_ptr<Data> &data)
+void SegmentControllerImpl::onData(const std::shared_ptr<const Interest> &interest,
+                                   const std::shared_ptr<Data> &data)
 {
     if (!active_)
     {
@@ -235,7 +235,7 @@ void SegmentControllerImpl::onData(const boost::shared_ptr<const Interest> &inte
 
     if (NameComponents::extractInfo(data->getName(), info))
     {
-        boost::shared_ptr<WireSegment> segment = WireSegment::createSegment(info, data, interest);
+        std::shared_ptr<WireSegment> segment = WireSegment::createSegment(info, data, interest);
 
         if (segment->isValid())
         {
@@ -258,7 +258,7 @@ void SegmentControllerImpl::onData(const boost::shared_ptr<const Interest> &inte
         LogWarnC << "bad name: " << data->getName() << std::endl;
 }
 
-void SegmentControllerImpl::onTimeout(const boost::shared_ptr<const Interest> &interest)
+void SegmentControllerImpl::onTimeout(const std::shared_ptr<const Interest> &interest)
 {
     if (!active_)
     {
@@ -284,8 +284,8 @@ void SegmentControllerImpl::onTimeout(const boost::shared_ptr<const Interest> &i
         LogWarnC << "badly named Interest " << interest->getName() << std::endl;
 }
 
-void SegmentControllerImpl::onNetworkNack(const boost::shared_ptr<const Interest> &interest,
-                                          const boost::shared_ptr<NetworkNack> &networkNack)
+void SegmentControllerImpl::onNetworkNack(const std::shared_ptr<const Interest> &interest,
+                                          const std::shared_ptr<NetworkNack> &networkNack)
 {
     if (!active_)
     {

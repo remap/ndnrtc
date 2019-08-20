@@ -31,15 +31,15 @@ class RemoteVideoStreamImpl : public RemoteStreamImpl
      * Constructor for metadata-bootstrap remote stream (for live playback)
      */
     RemoteVideoStreamImpl(boost::asio::io_service &io,
-                          const boost::shared_ptr<ndn::Face> &face,
-                          const boost::shared_ptr<ndn::KeyChain> &keyChain,
+                          const std::shared_ptr<ndn::Face> &face,
+                          const std::shared_ptr<ndn::KeyChain> &keyChain,
                           const std::string &streamPrefix);
     /**
      * Constructor for seed-bootstrap remote stream (for historical playback)
      */
     RemoteVideoStreamImpl(boost::asio::io_service &io,
-                          const boost::shared_ptr<ndn::Face> &face,
-                          const boost::shared_ptr<ndn::KeyChain> &keyChain,
+                          const std::shared_ptr<ndn::Face> &face,
+                          const std::shared_ptr<ndn::KeyChain> &keyChain,
                           const std::string &streamPrefix,
                           const std::string &threadName);
     ~RemoteVideoStreamImpl();
@@ -48,17 +48,17 @@ class RemoteVideoStreamImpl : public RemoteStreamImpl
     void start(const RemoteVideoStream::FetchingRuleSet& ruleset, IExternalRenderer *render);
     void initiateFetching();
     void stopFetching();
-    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+    void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
 
   private:
     bool isPlaybackDriven_;
-    // boost::shared_ptr<IVideoPlayoutObserver> playbackObserver_;
-    boost::shared_ptr<IBufferObserver> bufferObserver_;
+    // std::shared_ptr<IVideoPlayoutObserver> playbackObserver_;
+    std::shared_ptr<IBufferObserver> bufferObserver_;
     RemoteVideoStream::FetchingRuleSet ruleset_;
 
-    boost::shared_ptr<ManifestValidator> validator_;
+    std::shared_ptr<ManifestValidator> validator_;
     IExternalRenderer *renderer_;
-    boost::shared_ptr<VideoDecoder> decoder_;
+    std::shared_ptr<VideoDecoder> decoder_;
 
     void construct();
     void feedFrame(const FrameInfo&, const WebRtcVideoFrame &);

@@ -32,20 +32,20 @@ namespace packets
 
 class BasePacket {
 public:
-    static boost::shared_ptr<BasePacket> ndnrtcPacketFromRequest(const DataRequest& request);
+    static std::shared_ptr<BasePacket> ndnrtcPacketFromRequest(const DataRequest& request);
     virtual ~BasePacket(){}
 
 protected:
-    boost::shared_ptr<const ndn::Data> data_;
+    std::shared_ptr<const ndn::Data> data_;
 
     BasePacket(const NamespaceInfo& ninfo,
-               const boost::shared_ptr<const ndn::Data>& data);
+               const std::shared_ptr<const ndn::Data>& data);
 };
 
 class Meta : public BasePacket {
 public:
     Meta(const NamespaceInfo& ninfo,
-         const boost::shared_ptr<const ndn::Data>& data);
+         const std::shared_ptr<const ndn::Data>& data);
 
     const StreamMeta& getStreamMeta() const { return streamMeta_; }
     const LiveMeta& getLiveMeta() const { return liveMeta_; }
@@ -63,7 +63,7 @@ private:
 class Pointer : public BasePacket {
 public:
     Pointer(const NamespaceInfo& ninfo,
-            const boost::shared_ptr<const ndn::Data>& data);
+            const std::shared_ptr<const ndn::Data>& data);
 
     const ndn::DelegationSet& getDelegationSet() const { return set_; }
 
@@ -74,7 +74,7 @@ private:
 class Manifest : public BasePacket {
 public:
     Manifest(const NamespaceInfo& ninfo,
-             const boost::shared_ptr<const ndn::Data>& data);
+             const std::shared_ptr<const ndn::Data>& data);
 
     bool hasData(ndn::Data& d) const;
     size_t getSize() const;
@@ -85,7 +85,7 @@ private:
 class Segment : public BasePacket {
 public:
     Segment(const NamespaceInfo& ninfo,
-            const boost::shared_ptr<const ndn::Data>& data);
+            const std::shared_ptr<const ndn::Data>& data);
 
     size_t getTotalSegmentsNum() const { return totalSegmentsNum_; }
 
