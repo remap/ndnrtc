@@ -101,7 +101,7 @@ int main(int argc, char **argv)
     int err = 0;
     boost::asio::io_service io;
     std::shared_ptr<boost::asio::io_service::work> work(std::make_shared<boost::asio::io_service::work>(io));
-    boost::thread t([&io, &err]() {
+    thread t([&io, &err]() {
         try
         {
             io.run();
