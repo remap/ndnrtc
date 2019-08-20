@@ -13,8 +13,6 @@
 
 #include <queue>
 #include <boost/asio.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/function.hpp>
 
 #include "ndnrtc-object.hpp"
 #include "statistics.hpp"

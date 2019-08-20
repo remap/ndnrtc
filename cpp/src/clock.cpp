@@ -5,11 +5,11 @@
 //  Copyright 2013-2016 Regents of the University of California
 //
 
-#include <boost/chrono.hpp>
-
 #include "clock.hpp"
 
-using namespace boost::chrono;
+#include <chrono>
+
+using namespace std::chrono;
 using namespace ndnrtc;
 
 namespace ndnrtc {
@@ -31,7 +31,7 @@ namespace ndnrtc {
 		// monotonic clock
 		int64_t nanosecondTimestamp()
 		{
-			boost::chrono::nanoseconds nsec = steady_clock::now().time_since_epoch();
+			nanoseconds nsec = steady_clock::now().time_since_epoch();
 			return nsec.count();
 		};
 
@@ -39,7 +39,7 @@ namespace ndnrtc {
 		double unixTimestamp()
 		{
 			auto now = system_clock::now().time_since_epoch();
-			boost::chrono::duration<double> sec = now;
+			duration<double> sec = now;
 			return sec.count();
 		}
 

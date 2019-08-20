@@ -34,8 +34,9 @@ static const char USAGE[] =
 R"(NdnRtc Codec.
     This app is for testing encoder/decoder of NDN-RTC.
     In encoder mode, it takes raw video (yuv420 as default) as an input and
-    encodes it according to the settings. Outputs encoded video in IVF format
-    (see vpx IVF for more info). In decoder mode, takes encoded IVF video as an
+    encodes it according to the settings. Outputs encoded video in a simple
+    format: frame by frame, where first 4 bytes tell the size of the compressed
+    data that follows. In decoder mode, takes encoded video as an
     input and outputs decoded raw frames.
 
     Usage:

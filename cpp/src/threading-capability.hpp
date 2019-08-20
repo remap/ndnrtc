@@ -11,8 +11,7 @@
 #ifndef __threading_capability_h__
 #define __threading_capability_h__
 
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
+#include <thread>
 #include <boost/asio.hpp>
 
 namespace ndnrtc {
@@ -20,18 +19,18 @@ namespace ndnrtc {
     protected:
         ThreadingCapability(){}
         ~ThreadingCapability(){}
-        
+
         void startMyThread();
         void stopMyThread();
             // asynchronous
         void dispatchOnMyThread(std::function<void(void)> dispatchBlock);
             // synchronous
         void performOnMyThread(std::function<void(void)> dispatchBlock);
-        
+
     private:
         std::shared_ptr<boost::asio::io_service::work> threadWork_;
         boost::asio::io_service ioService_;
-        boost::thread thread_;
+        std::thread thread_;
     };
 }
 
