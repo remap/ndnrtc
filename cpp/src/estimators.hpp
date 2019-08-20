@@ -69,7 +69,7 @@ namespace ndnrtc {
 		 */
 		class Estimator {
 		public:
-			Estimator(boost::shared_ptr<IEstimatorWindow> window):
+			Estimator(std::shared_ptr<IEstimatorWindow> window):
 				nValues_(0), value_(0), jitter_(0), window_(window) {}
 			
 			virtual void newValue(double value) = 0;
@@ -80,7 +80,7 @@ namespace ndnrtc {
 		protected:
 			unsigned int nValues_;
 			double value_, jitter_;
-			boost::shared_ptr<IEstimatorWindow> window_;
+			std::shared_ptr<IEstimatorWindow> window_;
 		};
 
 
@@ -90,7 +90,7 @@ namespace ndnrtc {
 		 */
 		class Average : public Estimator {
 		public:
-			Average(boost::shared_ptr<IEstimatorWindow> window);
+			Average(std::shared_ptr<IEstimatorWindow> window);
 
 			void newValue(double value);
 			double deviation() const { return sqrt(variance_); }
@@ -110,7 +110,7 @@ namespace ndnrtc {
 		 */
 		class FreqMeter : public Estimator {
 		public:
-			FreqMeter(boost::shared_ptr<IEstimatorWindow> window);
+			FreqMeter(std::shared_ptr<IEstimatorWindow> window);
 
 			/**
 			 * Passed value is ignored. This call is used to calculate frequency of 

@@ -17,7 +17,7 @@ using namespace ndnrtc;
 namespace ndnrtc {
 namespace packets {
 
-boost::shared_ptr<BasePacket>
+std::shared_ptr<BasePacket>
 BasePacket::ndnrtcPacketFromRequest(const DataRequest& request)
 {
 
@@ -25,22 +25,22 @@ BasePacket::ndnrtcPacketFromRequest(const DataRequest& request)
 
     switch (ninfo.segmentClass_)
     {
-        case SegmentClass::Meta: return boost::make_shared<Meta>(ninfo, request.getData());
-        case SegmentClass::Pointer: return boost::make_shared<Pointer>(ninfo, request.getData());
-        case SegmentClass::Manifest: return boost::make_shared<Manifest>(ninfo, request.getData());
+        case SegmentClass::Meta: return std::make_shared<Meta>(ninfo, request.getData());
+        case SegmentClass::Pointer: return std::make_shared<Pointer>(ninfo, request.getData());
+        case SegmentClass::Manifest: return std::make_shared<Manifest>(ninfo, request.getData());
         case SegmentClass::Data:  // fall through
-        case SegmentClass::Parity: return boost::make_shared<Segment>(ninfo, request.getData());
+        case SegmentClass::Parity: return std::make_shared<Segment>(ninfo, request.getData());
         default:
             break;
     }
 
-    return boost::shared_ptr<BasePacket>();
+    return std::shared_ptr<BasePacket>();
 }
 
-BasePacket::BasePacket(const NamespaceInfo& ninfo, const boost::shared_ptr<const ndn::Data>& data) : data_(data) {}
+BasePacket::BasePacket(const NamespaceInfo& ninfo, const std::shared_ptr<const ndn::Data>& data) : data_(data) {}
 
 //***
-Meta::Meta(const NamespaceInfo& ninfo, const boost::shared_ptr<const ndn::Data>& data)
+Meta::Meta(const NamespaceInfo& ninfo, const std::shared_ptr<const ndn::Data>& data)
 : BasePacket(ninfo, data)
 {
     assert(ninfo.segmentClass_ == SegmentClass::Meta);
@@ -65,14 +65,14 @@ Meta::Meta(const NamespaceInfo& ninfo, const boost::shared_ptr<const ndn::Data>&
 }
 
 //***
-Pointer::Pointer(const NamespaceInfo& ninfo, const boost::shared_ptr<const ndn::Data>& data)
+Pointer::Pointer(const NamespaceInfo& ninfo, const std::shared_ptr<const ndn::Data>& data)
 : BasePacket(ninfo, data)
 {
     set_.wireDecode(data_->getContent().buf(), data_->getContent().size());
 }
 
 //***
-Manifest::Manifest(const NamespaceInfo& ninfo, const boost::shared_ptr<const ndn::Data>& data)
+Manifest::Manifest(const NamespaceInfo& ninfo, const std::shared_ptr<const ndn::Data>& data)
 : BasePacket(ninfo, data)
 {}
 
@@ -88,7 +88,7 @@ Manifest::getSize() const
     return data_->getContent().size() / SegmentsManifest::DigestSize;
 }
 
-Segment::Segment(const NamespaceInfo& ninfo, const boost::shared_ptr<const ndn::Data>& data)
+Segment::Segment(const NamespaceInfo& ninfo, const std::shared_ptr<const ndn::Data>& data)
 : BasePacket(ninfo, data)
 {
     assert(ninfo.hasSegNo_);

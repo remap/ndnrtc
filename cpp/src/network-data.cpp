@@ -35,7 +35,7 @@ ostream& operator<<(ostream& out, const DataRequest::Status v)
         {DataRequest::Status::NetworkNack, "NetworkNack"},
         {DataRequest::Status::Data, "Data"},
     };
-    
+
     out << Labels[v];
     return out;
 }
@@ -51,7 +51,7 @@ vector<DataRequest::Status> fromMask(uint8_t statusMask)
         DataRequest::Status::Data
     };
     vector<DataRequest::Status>::iterator it = statuses.begin();
-    
+
     while (it != statuses.end())
     {
         if (! (*it & statusMask))
@@ -67,13 +67,13 @@ uint8_t toMask(DataRequest::Status s)
 {
     return static_cast<uint8_t>(s);
 }
-    
+
 }
 
-boost::shared_ptr<ndn::Data>
-SegmentsManifest::packManifest(const Name& n, const vector<boost::shared_ptr<Data>>& segments)
+std::shared_ptr<ndn::Data>
+SegmentsManifest::packManifest(const Name& n, const vector<std::shared_ptr<Data>>& segments)
 {
-    boost::shared_ptr<Data> manifest = boost::make_shared<Data>(n);
+    std::shared_ptr<Data> manifest = std::make_shared<Data>(n);
 
     vector<uint8_t> payload(DigestSize*segments.size(), 0);
     uint8_t *ptr = payload.data();
@@ -108,7 +108,7 @@ SegmentsManifest::hasData(const Data& manifest, const Data& d)
     return false;
 }
 
-DataRequest::DataRequest(const boost::shared_ptr<const Interest>& interest)
+DataRequest::DataRequest(const std::shared_ptr<const Interest>& interest)
 : interest_(interest)
 , requestTsUsec_(0)
 , replyTsUsec_(0)
@@ -183,7 +183,7 @@ DataRequest::timestampReply()
 }
 
 void
-DataRequest::setData(const boost::shared_ptr<const Data>& data)
+DataRequest::setData(const std::shared_ptr<const Data>& data)
 {
     if (!interest_->getName().isPrefixOf(data->getName()))
         throw runtime_error("DataRequest::setData: interest name is not a "
@@ -191,7 +191,7 @@ DataRequest::setData(const boost::shared_ptr<const Data>& data)
 
     data_ = data;
     NameComponents::extractInfo(data->getName(), namespaceInfo_);
-    
+
     if (data->getMetaInfo().getType() == ndn_ContentType_NACK)
         appNackNum_++;
     else
@@ -199,7 +199,7 @@ DataRequest::setData(const boost::shared_ptr<const Data>& data)
 }
 
 void
-DataRequest::setNack(const boost::shared_ptr<const ndn::NetworkNack> &nack)
+DataRequest::setNack(const std::shared_ptr<const ndn::NetworkNack> &nack)
 {
     netwNackNum_++;
     nack_ = nack;
@@ -212,17 +212,17 @@ DataRequest::setTimeout()
 }
 
 void
-DataRequest::invokeWhenAll(vector<boost::shared_ptr<DataRequest> > requests,
+DataRequest::invokeWhenAll(vector<std::shared_ptr<DataRequest> > requests,
                            DataRequest::Status status,
                            OnRequestsReady onRequestsReady)
 {
     // up to 64 requests is supported
     uint64_t unusedBitMask = (~0) << requests.size();
-    boost::shared_ptr<bitset<64>> rBitset = boost::make_shared<bitset<64>>(unusedBitMask);
+    std::shared_ptr<bitset<64>> rBitset = std::make_shared<bitset<64>>(unusedBitMask);
     auto onStatusUpdate = [rBitset, requests, onRequestsReady](const DataRequest& r){
         bool gotResult = false;
         int rPos = 0;
-        
+
         for (auto &dr:requests)
         {
             if ((gotResult = (dr.get() == &r)))
@@ -231,29 +231,29 @@ DataRequest::invokeWhenAll(vector<boost::shared_ptr<DataRequest> > requests,
         }
         assert(gotResult);
         rBitset->set(rPos);
-        
+
         // check if all requests are ready
         if (rBitset->all())
             onRequestsReady(requests);
     };
-    
+
     for (auto &r:requests)
         r->subscribe(status, onStatusUpdate);
 }
 
 void
-DataRequest::invokeIfAny(std::vector<boost::shared_ptr<DataRequest> > requests,
+DataRequest::invokeIfAny(std::vector<std::shared_ptr<DataRequest> > requests,
                          uint8_t statusMask,
                          OnRequestsReady onRequestsReady)
 {
     // up to 64 requests is supported
-    boost::shared_ptr<bitset<64>> rBitset = boost::make_shared<bitset<64>>(0);
+    std::shared_ptr<bitset<64>> rBitset = std::make_shared<bitset<64>>(0);
     vector<DataRequest::Status> statuses = fromMask(statusMask);
-    auto completed = boost::make_shared<vector<boost::shared_ptr<DataRequest>>>();
+    auto completed = std::make_shared<vector<std::shared_ptr<DataRequest>>>();
     auto onStatusUpdate = [rBitset, requests, onRequestsReady, completed](const DataRequest& r){
         bool gotResult = false;
         int rPos = 0;
-        
+
         for (auto &dr:requests)
         {
             if ((gotResult = (dr.get() == &r)))
@@ -262,7 +262,7 @@ DataRequest::invokeIfAny(std::vector<boost::shared_ptr<DataRequest> > requests,
         }
         assert(gotResult);
         rBitset->set(rPos);
-        
+
         if (rBitset->any())
         {
             // invoke with array of completed requests
@@ -270,7 +270,7 @@ DataRequest::invokeIfAny(std::vector<boost::shared_ptr<DataRequest> > requests,
             onRequestsReady(*completed);
         }
     };
-    
+
     for (auto &s:statuses)
         for (auto &r:requests)
             r->subscribe(s, onStatusUpdate);
@@ -279,7 +279,7 @@ DataRequest::invokeIfAny(std::vector<boost::shared_ptr<DataRequest> > requests,
 //******************************************************************************
 // CODE BELOW IS DEPRECATED
 //******************************************************************************
-Manifest::Manifest(const std::vector<boost::shared_ptr<const ndn::Data>> &dataObjects)
+Manifest::Manifest(const std::vector<std::shared_ptr<const ndn::Data>> &dataObjects)
     : DataPacket(std::vector<uint8_t>())
 {
     for (auto &d : dataObjects)
@@ -460,8 +460,8 @@ MediaStreamMeta::getStreamTimestamp() const
     return *(uint64_t*)getBlob(0).data();
 }
 
-WireSegment::WireSegment(const boost::shared_ptr<ndn::Data> &data,
-                         const boost::shared_ptr<const ndn::Interest> &interest)
+WireSegment::WireSegment(const std::shared_ptr<ndn::Data> &data,
+                         const std::shared_ptr<const ndn::Interest> &interest)
     : data_(data), interest_(interest),
       isValid_(NameComponents::extractInfo(data->getName(), dataNameInfo_))
 {
@@ -477,8 +477,8 @@ WireSegment::WireSegment(const boost::shared_ptr<ndn::Data> &data,
 }
 
 WireSegment::WireSegment(const NamespaceInfo &info,
-                         const boost::shared_ptr<ndn::Data> &data,
-                         const boost::shared_ptr<const ndn::Interest> &interest)
+                         const std::shared_ptr<ndn::Data> &data,
+                         const std::shared_ptr<const ndn::Interest> &interest)
     : dataNameInfo_(info), data_(data), interest_(interest), isValid_(true)
 {
     if (dataNameInfo_.apiVersion_ != NameComponents::nameApiVersion())
@@ -516,7 +516,7 @@ WireSegment::packetHeader() const
                                  "non-zero segment is not allowed");
 
     ImmutableHeaderPacket<DataSegmentHeader> s0(data_->getContent());
-    boost::shared_ptr<std::vector<uint8_t>> data(boost::make_shared<std::vector<uint8_t>>(s0.getPayload().begin(),
+    std::shared_ptr<std::vector<uint8_t>> data(std::make_shared<std::vector<uint8_t>>(s0.getPayload().begin(),
                                                                                           s0.getPayload().end()));
     ImmutableHeaderPacket<CommonHeader> p0(data);
     return p0.getHeader();
@@ -540,4 +540,17 @@ double
 WireSegment::getSegmentWeight() const
 {
     return (dataNameInfo_.isParity_ ? fec::parityWeight() : 1);
+}
+
+std::shared_ptr<WireSegment>
+WireSegment::createSegment(const NamespaceInfo &namespaceInfo,
+                           const std::shared_ptr<ndn::Data> &data,
+                           const std::shared_ptr<const ndn::Interest> &interest)
+{
+    if (namespaceInfo.streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo &&
+        (namespaceInfo.segmentClass_ == SegmentClass::Data || namespaceInfo.segmentClass_ == SegmentClass::Parity))
+        return std::shared_ptr<WireData<VideoFrameSegmentHeader>>(new WireData<VideoFrameSegmentHeader>(namespaceInfo, data, interest));
+
+    return std::shared_ptr<WireData<DataSegmentHeader>>(new WireData<DataSegmentHeader>(namespaceInfo, data, interest));
+    ;
 }

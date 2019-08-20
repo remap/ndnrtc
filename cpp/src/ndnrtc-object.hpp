@@ -17,7 +17,7 @@
 
 namespace ndnrtc {
     class NdnRtcComponent : public ndnlog::new_api::ILoggingObject,
-                            public boost::enable_shared_from_this<NdnRtcComponent>
+                            public std::enable_shared_from_this<NdnRtcComponent>
     {
     public:
             // construction/desctruction

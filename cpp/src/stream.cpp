@@ -59,7 +59,7 @@ namespace ndnrtc {
     class VideoStreamImpl2 : public NdnRtcComponent, public StatObject {
     public:
         VideoStreamImpl2(string basePrefix, string streamName, VideoStream::Settings settings,
-                         boost::shared_ptr<KeyChain> kc);
+                         std::shared_ptr<KeyChain> kc);
         ~VideoStreamImpl2();
 
         string getBasePrefix() const { return prefixInfo_.basePrefix_.toUri(); }
@@ -73,7 +73,7 @@ namespace ndnrtc {
         NamespaceInfo getPrefixInfo() const { return prefixInfo_; }
         StatisticsStorage getStatistics() const;
 
-        vector<boost::shared_ptr<Data>> processImage(const ImageFormat&, uint8_t *imgData);
+        vector<std::shared_ptr<Data>> processImage(const ImageFormat&, uint8_t *imgData);
 
 
     private:
@@ -102,15 +102,15 @@ namespace ndnrtc {
 
         // these are the packets that were generated outside of "processImage"
         // call and will be added to the output of the next  "processImage" call
-        vector<boost::shared_ptr<Data>> queued_;
+        vector<std::shared_ptr<Data>> queued_;
         // stream metadata
-        boost::shared_ptr<Data> meta_;
+        std::shared_ptr<Data> meta_;
         // latest generated "latest_" and "live_" packets
-        boost::shared_ptr<Data> latest_;
-        boost::shared_ptr<Data> live_;
+        std::shared_ptr<Data> latest_;
+        std::shared_ptr<Data> live_;
 
         VideoStream::Settings settings_;
-        boost::shared_ptr<KeyChain> keyChain_;
+        std::shared_ptr<KeyChain> keyChain_;
 
         VideoCodec codec_;
 
@@ -118,11 +118,11 @@ namespace ndnrtc {
 
         Name publishFrameGobj(const EncodedFrame&);
         vector<uint8_t> generateFecData(const EncodedFrame&, size_t, size_t, size_t);
-        boost::shared_ptr<Data> generateFrameMeta(uint64_t,
+        std::shared_ptr<Data> generateFrameMeta(uint64_t,
                                                   const Name&, const FrameType &,
                                                   size_t, size_t);
         Name publishGop(const Name&, const Name&,
-                        vector<boost::shared_ptr<Data>>&);
+                        vector<std::shared_ptr<Data>>&);
 
         // signs with keychain or phony signature depending on the flag passed
         void sign(Data& d, bool phony = false);
@@ -134,33 +134,33 @@ namespace ndnrtc {
             return ceil(liveMetadata_.getFrameSizeEstimate().value() + FSIZE_EST_K * liveMetadata_.getFrameSizeEstimate().variation());
         }
 
-        void onLiveMetadataRequest(const boost::shared_ptr<const Name>& prefix,
-                               const boost::shared_ptr<const Interest>& interest, Face& face,
+        void onLiveMetadataRequest(const std::shared_ptr<const Name>& prefix,
+                               const std::shared_ptr<const Interest>& interest, Face& face,
                                uint64_t interestFilterId,
-                               const boost::shared_ptr<const InterestFilter>& filter);
+                               const std::shared_ptr<const InterestFilter>& filter);
 
-        void onLatestMetaRequest(const boost::shared_ptr<const Name>& prefix,
-                                 const boost::shared_ptr<const Interest>& interest, Face& face,
+        void onLatestMetaRequest(const std::shared_ptr<const Name>& prefix,
+                                 const std::shared_ptr<const Interest>& interest, Face& face,
                                  uint64_t interestFilterId,
-                                 const boost::shared_ptr<const InterestFilter>& filter);
+                                 const std::shared_ptr<const InterestFilter>& filter);
 
-        void onStreamMetaRequest(const boost::shared_ptr<const Name>& prefix,
-                                  const boost::shared_ptr<const Interest>& interest, Face& face,
+        void onStreamMetaRequest(const std::shared_ptr<const Name>& prefix,
+                                  const std::shared_ptr<const Interest>& interest, Face& face,
                                   uint64_t interestFilterId,
-                                  const boost::shared_ptr<const InterestFilter>& filter);
+                                  const std::shared_ptr<const InterestFilter>& filter);
 
-        boost::shared_ptr<Data> generateLatestPacket();
-        boost::shared_ptr<Data> generateLivePacket();
+        std::shared_ptr<Data> generateLatestPacket();
+        std::shared_ptr<Data> generateLivePacket();
     };
 }
 
 //******************************************************************************
 LiveMetadata::LiveMetadata()
-    : rateMeter_(estimators::FreqMeter(boost::make_shared<estimators::TimeWindow>(1000)))
-    , deltaData_(estimators::Average(boost::make_shared<estimators::TimeWindow>(100)))
-    , deltaParity_(estimators::Average(boost::make_shared<estimators::TimeWindow>(100)))
-    , keyData_(estimators::Average(boost::make_shared<estimators::SampleWindow>(2)))
-    , keyParity_(estimators::Average(boost::make_shared<estimators::SampleWindow>(2)))
+    : rateMeter_(estimators::FreqMeter(std::make_shared<estimators::TimeWindow>(1000)))
+    , deltaData_(estimators::Average(std::make_shared<estimators::TimeWindow>(100)))
+    , deltaParity_(estimators::Average(std::make_shared<estimators::TimeWindow>(100)))
+    , keyData_(estimators::Average(std::make_shared<estimators::SampleWindow>(2)))
+    , keyParity_(estimators::Average(std::make_shared<estimators::SampleWindow>(2)))
     , frameSizeFilter_(15./16., 15./16.)
 {}
 
@@ -201,10 +201,10 @@ LiveMetadata::getSegmentsNumEstimate(FrameType ft, SegmentClass cls) const
 
 //******************************************************************************
 VideoStream::VideoStream(std::string basePrefix, std::string streamName,
-    VideoStream::Settings settings, boost::shared_ptr<ndn::KeyChain> keyChain)
-: pimpl_(boost::make_shared<VideoStreamImpl2>(basePrefix, streamName, settings, keyChain)){}
+    VideoStream::Settings settings, std::shared_ptr<ndn::KeyChain> keyChain)
+: pimpl_(std::make_shared<VideoStreamImpl2>(basePrefix, streamName, settings, keyChain)){}
 VideoStream::~VideoStream(){}
-vector<boost::shared_ptr<Data>>
+vector<std::shared_ptr<Data>>
 VideoStream::processImage(const ImageFormat& fmt, uint8_t *imageData)
     { return pimpl_->processImage(fmt, imageData); }
 string VideoStream::getBasePrefix() const{ return pimpl_->getBasePrefix(); }
@@ -215,14 +215,14 @@ uint64_t VideoStream::getGopNo() const { return pimpl_->getGopNo(); }
 uint64_t VideoStream::getGopPos() const { return pimpl_->getGopPos(); }
 statistics::StatisticsStorage
 VideoStream::getStatistics() const { return pimpl_->getStatistics(); }
-void VideoStream::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void VideoStream::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
     { pimpl_->setLogger(logger); }
 
-boost::shared_ptr<StorageEngine>
+std::shared_ptr<StorageEngine>
 VideoStream::getStorage() const
 {
     // TODO:
-    return boost::shared_ptr<StorageEngine>();
+    return std::shared_ptr<StorageEngine>();
 }
 
 VideoStream::Settings&
@@ -239,8 +239,8 @@ VideoStream::defaultSettings()
 
 //******************************************************************************
 VideoStreamImpl2::VideoStreamImpl2(string basePrefix, string streamName,
-    VideoStream::Settings settings, boost::shared_ptr<KeyChain> kc)
-    : StatObject(boost::shared_ptr<StatisticsStorage>(StatisticsStorage::createProducerStatistics()))
+    VideoStream::Settings settings, std::shared_ptr<KeyChain> kc)
+    : StatObject(std::shared_ptr<StatisticsStorage>(StatisticsStorage::createProducerStatistics()))
     , settings_(settings)
     , keyChain_(kc)
     , lastCycleMonotonicNs_(0)
@@ -308,14 +308,14 @@ VideoStreamImpl2::getStatistics() const
     return *statStorage_;
 }
 
-vector<boost::shared_ptr<Data>>
+vector<std::shared_ptr<Data>>
 VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
 {
     LogDebugC << "⤹ incoming frame #" << frameSeq_ << endl;
 
     lastPublishEpochMs_ = ndn_getNowMilliseconds();
     thisCycleMonotonicNs_ = clock::nanosecondTimestamp();
-    vector<boost::shared_ptr<Data>> packets;
+    vector<std::shared_ptr<Data>> packets;
 
     // encode frame
     VideoCodec::Image raw(settings_.codecSettings_.spec_.encoder_.width_,
@@ -325,7 +325,7 @@ VideoStreamImpl2::processImage(const ImageFormat& fmt, uint8_t *imgData)
 
     LogDebugC << "↓ feeding #" << frameSeq_ << " into encoder..." << endl;
 
-    boost::shared_ptr<VideoStreamImpl2> self = dynamic_pointer_cast<VideoStreamImpl2>(shared_from_this());
+    std::shared_ptr<VideoStreamImpl2> self = dynamic_pointer_cast<VideoStreamImpl2>(shared_from_this());
     codec_.encode(raw, false,
         [this, self, &packets](const EncodedFrame &frame){
             uint64_t t = clock::nanosecondTimestamp();
@@ -382,7 +382,7 @@ VideoStreamImpl2::addMeta()
     // only one meta per stream
     assert(!meta_);
 
-    meta_ = boost::make_shared<Data>(Name(getPrefix()).append(NameComponents::Meta));
+    meta_ = std::make_shared<Data>(Name(getPrefix()).append(NameComponents::Meta));
     meta_->getMetaInfo().setFreshnessPeriod(freshness_.meta_);
 
     StreamMeta meta;
@@ -408,7 +408,7 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
 {
 //    lastPublishEpochMs_ = ndn_getNowMilliseconds();
     Name frameName = Name(lastFramePrefix_.getPrefix(-1)).appendSequenceNumber(frameSeq_);
-    vector<boost::shared_ptr<Data>> *packets = (vector<boost::shared_ptr<Data>>*)frame.userData_;
+    vector<std::shared_ptr<Data>> *packets = (vector<std::shared_ptr<Data>>*)frame.userData_;
     size_t payloadSegmentSize = getPayloadSegmentSize();
     size_t nDataSegments = frame.length_ / payloadSegmentSize + (frame.length_ % payloadSegmentSize ? 1 : 0);
     size_t nParitySegments = ceil(PARITY_RATIO * nDataSegments);
@@ -431,7 +431,7 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
     for (int seg = 0; seg < nDataSegments; ++seg)
     {
         // TODO: explore NDN-CPP Lite API for zerocopy
-        boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(frameName).appendSegment(seg));
+        std::shared_ptr<Data> d = std::make_shared<Data>(Name(frameName).appendSegment(seg));
         d->getMetaInfo().setFreshnessPeriod(sampleFreshness);
         d->getMetaInfo().setFinalBlockId(dataFinalBlockId);
         d->setContent(slice, (seg == nDataSegments-1 ? lastSegSize : payloadSegmentSize));
@@ -446,7 +446,7 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
     slice = fecData.data();
     for (int seg = 0; seg < nParitySegments; ++seg)
     {
-        boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(frameName)
+        std::shared_ptr<Data> d = std::make_shared<Data>(Name(frameName)
             .append(NameComponents::Parity).appendSegment(seg));
         d->getMetaInfo().setFreshnessPeriod(sampleFreshness);
         d->getMetaInfo().setFinalBlockId(parityFinalBlockId);
@@ -463,7 +463,7 @@ VideoStreamImpl2::publishFrameGobj(const EncodedFrame& frame)
     LogTraceC << "▻▻▻ generated " << packets->size() << " segments ("
               << nDataSegments << " data " << nParitySegments << " parity)" << endl;
 
-    boost::shared_ptr<Data> manifest = SegmentsManifest::packManifest(Name(frameName).append(NameComponents::Manifest),
+    std::shared_ptr<Data> manifest = SegmentsManifest::packManifest(Name(frameName).append(NameComponents::Manifest),
                                                                      *packets);
     manifest->getMetaInfo().setFreshnessPeriod(sampleFreshness);
     sign(*manifest);
@@ -507,7 +507,7 @@ VideoStreamImpl2::generateFecData(const EncodedFrame &frame,
     return fecData;
 }
 
-boost::shared_ptr<Data>
+std::shared_ptr<Data>
 VideoStreamImpl2::generateFrameMeta(uint64_t nowMs,
                                     const Name &frameName, const FrameType &ft,
                                     size_t nDataSegments,
@@ -529,11 +529,11 @@ VideoStreamImpl2::generateFrameMeta(uint64_t nowMs,
     meta.set_type(ft == FrameType::Key ? FrameMeta_FrameType_Key : FrameMeta_FrameType_Delta);
     meta.set_generation_delay(0);
 
-    boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(frameName).append(NameComponents::Meta));
+    std::shared_ptr<Data> d = std::make_shared<Data>(Name(frameName).append(NameComponents::Meta));
 
     if (settings_.memCache_)
     {
-        vector<boost::shared_ptr<const MemoryContentCache::PendingInterest>> pis;
+        vector<std::shared_ptr<const MemoryContentCache::PendingInterest>> pis;
         settings_.memCache_->getPendingInterestsForName(d->getName(), pis);
 
         if (pis.size())
@@ -562,7 +562,7 @@ VideoStreamImpl2::generateFrameMeta(uint64_t nowMs,
 
 Name
 VideoStreamImpl2::publishGop(const Name &framePrefix, const Name &prevFramePrefix,
-                             vector<boost::shared_ptr<Data>> &packets)
+                             vector<std::shared_ptr<Data>> &packets)
 {
     Name gopPrefix = Name(framePrefix.getPrefix(-1)).append(NameComponents::Gop);
 
@@ -575,7 +575,7 @@ VideoStreamImpl2::publishGop(const Name &framePrefix, const Name &prevFramePrefi
         DelegationSet set;
         set.add(0, prevFramePrefix);
 
-        boost::shared_ptr<Data> d = boost::make_shared<Data>(endGopName);
+        std::shared_ptr<Data> d = std::make_shared<Data>(endGopName);
         d->getMetaInfo().setFreshnessPeriod(freshness_.gop_);
         d->setContent(set.wireEncode());
         sign(*d);
@@ -590,7 +590,7 @@ VideoStreamImpl2::publishGop(const Name &framePrefix, const Name &prevFramePrefi
     DelegationSet set;
     set.add(0, framePrefix);
 
-    boost::shared_ptr<Data> d = boost::make_shared<Data>(startGopName);
+    std::shared_ptr<Data> d = std::make_shared<Data>(startGopName);
     d->getMetaInfo().setFreshnessPeriod(freshness_.gop_);
     d->setContent(set.wireEncode());
     sign(*d);
@@ -624,12 +624,12 @@ VideoStreamImpl2::sign(Data& d, bool phony)
 }
 
 void
-VideoStreamImpl2::onLiveMetadataRequest(const boost::shared_ptr<const Name>& prefix,
-                                    const boost::shared_ptr<const Interest>& interest, Face& face,
+VideoStreamImpl2::onLiveMetadataRequest(const std::shared_ptr<const Name>& prefix,
+                                    const std::shared_ptr<const Interest>& interest, Face& face,
                                     uint64_t interestFilterId,
-                                    const boost::shared_ptr<const InterestFilter>& filter)
+                                    const std::shared_ptr<const InterestFilter>& filter)
 {
-    boost::shared_ptr<Data> d = generateLivePacket();
+    std::shared_ptr<Data> d = generateLivePacket();
     face.putData(*d);
 
     {
@@ -642,12 +642,12 @@ VideoStreamImpl2::onLiveMetadataRequest(const boost::shared_ptr<const Name>& pre
 }
 
 void
-VideoStreamImpl2::onLatestMetaRequest(const boost::shared_ptr<const Name>& prefix,
-                                      const boost::shared_ptr<const Interest>& interest, Face& face,
+VideoStreamImpl2::onLatestMetaRequest(const std::shared_ptr<const Name>& prefix,
+                                      const std::shared_ptr<const Interest>& interest, Face& face,
                                       uint64_t interestFilterId,
-                                      const boost::shared_ptr<const InterestFilter>& filter)
+                                      const std::shared_ptr<const InterestFilter>& filter)
 {
-    boost::shared_ptr<Data> d = generateLatestPacket();
+    std::shared_ptr<Data> d = generateLatestPacket();
     face.putData(*d);
 
     {
@@ -660,23 +660,23 @@ VideoStreamImpl2::onLatestMetaRequest(const boost::shared_ptr<const Name>& prefi
 }
 
 void
-VideoStreamImpl2::onStreamMetaRequest(const boost::shared_ptr<const Name>& prefix,
-                                      const boost::shared_ptr<const Interest>& interest, Face& face,
+VideoStreamImpl2::onStreamMetaRequest(const std::shared_ptr<const Name>& prefix,
+                                      const std::shared_ptr<const Interest>& interest, Face& face,
                                       uint64_t interestFilterId,
-                                      const boost::shared_ptr<const InterestFilter>& filter)
+                                      const std::shared_ptr<const InterestFilter>& filter)
 {
     face.putData(*meta_);
 
     LogDebugC << "_meta request satisfied: " << meta_->getName() << endl;
 }
 
-boost::shared_ptr<Data>
+std::shared_ptr<Data>
 VideoStreamImpl2::generateLatestPacket()
 {
     Name packetName = prefixInfo_.getPrefix(NameFilter::Stream)
                         .append(NameComponents::Latest)
                         .appendVersion(lastPublishEpochMs_);
-    boost::shared_ptr<Data> d = boost::make_shared<Data>(packetName);
+    std::shared_ptr<Data> d = std::make_shared<Data>(packetName);
     d->getMetaInfo().setFreshnessPeriod(freshness_.latest_);
 
     DelegationSet set;
@@ -689,7 +689,7 @@ VideoStreamImpl2::generateLatestPacket()
     return d;
 }
 
-boost::shared_ptr<Data>
+std::shared_ptr<Data>
 VideoStreamImpl2::generateLivePacket()
 {
     int64_t seconds = lastCycleMonotonicNs_ / 1E9;
@@ -721,7 +721,7 @@ VideoStreamImpl2::generateLivePacket()
     Name packetName = prefixInfo_.getPrefix(NameFilter::Stream)
                         .append(NameComponents::Live)
                         .appendVersion(lastPublishEpochMs_);
-    boost::shared_ptr<Data> d = boost::make_shared<Data>(packetName);
+    std::shared_ptr<Data> d = std::make_shared<Data>(packetName);
     d->getMetaInfo().setFreshnessPeriod(freshness_.live_);
     d->setContent(Blob::fromRawStr(liveMeta.SerializeAsString()));
 

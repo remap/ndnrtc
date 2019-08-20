@@ -43,7 +43,7 @@ typedef _I420Buffer WebRtcVideoFrameBuffer;  // TODO: rename
 
  // TODO: rename
 template<typename T>
-using WebRtcSmartPtr = boost::shared_ptr<T>;
+using WebRtcSmartPtr = std::shared_ptr<T>;
 
 // TODO: rename
 namespace webrtc {

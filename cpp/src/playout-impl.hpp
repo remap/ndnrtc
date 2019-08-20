@@ -22,14 +22,14 @@ namespace ndnrtc {
     {
     public:
         PlayoutImpl(boost::asio::io_service& io,
-                const boost::shared_ptr<IPlaybackQueue>& queue,
-                const boost::shared_ptr<statistics::StatisticsStorage> statStorage);
+                const std::shared_ptr<IPlaybackQueue>& queue,
+                const std::shared_ptr<statistics::StatisticsStorage> statStorage);
         ~PlayoutImpl();
         
         virtual void start(unsigned int fastForwardMs = 0);
         virtual void stop();
         
-        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+        void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
         void setDescription(const std::string& desc);
         bool isRunning() const { return isRunning_; }
         
@@ -42,13 +42,13 @@ namespace ndnrtc {
         
         mutable boost::recursive_mutex mutex_;
         std::atomic<bool> isRunning_;
-        boost::shared_ptr<IPlaybackQueue> pqueue_;
+        std::shared_ptr<IPlaybackQueue> pqueue_;
         JitterTiming jitterTiming_;
         int64_t lastTimestamp_, lastDelay_, delayAdjustment_;
         std::vector<IPlayoutObserver*> observers_;
         
         void extractSample();
-        virtual bool processSample(const boost::shared_ptr<const BufferSlot>&) { return false; }
+        virtual bool processSample(const std::shared_ptr<const BufferSlot>&) { return false; }
         
         void correctAdjustment(int64_t newSampleTimestamp);
         int64_t adjustDelay(int64_t delay);

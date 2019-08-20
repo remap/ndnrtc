@@ -15,8 +15,8 @@ namespace ndnrtc
 	namespace async {
 
 		void dispatchAsync(boost::asio::io_service& io,
-			boost::function<void(void)> dispatchBlock,
-			boost::function<void(void)> onCompletion)
+			std::function<void(void)> dispatchBlock,
+			std::function<void(void)> onCompletion)
 		{
 			io.dispatch([=]{
 				dispatchBlock();
@@ -25,8 +25,8 @@ namespace ndnrtc
 		}
 		
 		void dispatchSync(boost::asio::io_service& io,
-			boost::function<void(void)> dispatchBlock,
-			boost::function<void(void)> onCompletion)
+			std::function<void(void)> dispatchBlock,
+			std::function<void(void)> onCompletion)
 		{
 			boost::mutex m;
 			boost::unique_lock<boost::mutex> lock(m);

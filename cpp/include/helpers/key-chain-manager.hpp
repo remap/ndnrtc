@@ -1,4 +1,4 @@
-// 
+//
 // key-chain-manager.hpp
 //
 // Copyright (c) 2018. Regents of the University of California
@@ -28,23 +28,23 @@ namespace ndnrtc {
 
         class KeyChainManager : public ndnlog::new_api::ILoggingObject {
         public:
-            KeyChainManager(boost::shared_ptr<ndn::Face> face,
-                boost::shared_ptr<ndn::KeyChain> keyChain,
+            KeyChainManager(std::shared_ptr<ndn::Face> face,
+                std::shared_ptr<ndn::KeyChain> keyChain,
                 const std::string& identityName,
                 const std::string& instanceName,
                 const std::string& configPolicy,
                 unsigned int instanceCertLifetime,
-                boost::shared_ptr<ndnlog::new_api::Logger> logger);
+                std::shared_ptr<ndnlog::new_api::Logger> logger);
             ~KeyChainManager() {}
 
-            boost::shared_ptr<ndn::KeyChain> defaultKeyChain() { return defaultKeyChain_; }
-            boost::shared_ptr<ndn::KeyChain> instanceKeyChain() { return instanceKeyChain_; }
+            std::shared_ptr<ndn::KeyChain> defaultKeyChain() { return defaultKeyChain_; }
+            std::shared_ptr<ndn::KeyChain> instanceKeyChain() { return instanceKeyChain_; }
             std::string instancePrefix() const { return instanceIdentity_; }
 
-            const boost::shared_ptr<ndn::Data> instanceCertificate() const
+            const std::shared_ptr<ndn::Data> instanceCertificate() const
             { return instanceCert_; }
 
-            const boost::shared_ptr<ndn::Data> signingIdentityCertificate() const
+            const std::shared_ptr<ndn::Data> signingIdentityCertificate() const
             { return signingCert_; }
 
             // Will register prefixes for serving instance and signing certificates.
@@ -52,30 +52,30 @@ namespace ndnrtc {
             // Does not re-publbish certificates.
             void publishCertificates();
 
-            boost::shared_ptr<ndn::MemoryContentCache> memoryContentCache() const
+            std::shared_ptr<ndn::MemoryContentCache> memoryContentCache() const
             { return memoryContentCache_; }
 
-            // Creates a KeyChain. Depending on provided argument, either system default 
+            // Creates a KeyChain. Depending on provided argument, either system default
             // key chain will be created or file-based keychain will be created.
             // If storagePath != "" then file-base key chain is created. In this case,
             // under storagePath, two items will be created:
             //      - folder "keys" - for storing private and public keys
             //      - file "public-info.db" - for storing pubblic certificates
             // If these files already exist, will create key chain using them.
-            static boost::shared_ptr<ndn::KeyChain> createKeyChain(std::string storagePath);
+            static std::shared_ptr<ndn::KeyChain> createKeyChain(std::string storagePath);
 
         private:
-            boost::shared_ptr<ndn::Face> face_;
+            std::shared_ptr<ndn::Face> face_;
             std::string signingIdentity_, instanceName_,
             configPolicy_, instanceIdentity_;
             unsigned int runTime_;
 
-            boost::shared_ptr<ndn::PolicyManager> configPolicyManager_;
-            boost::shared_ptr<ndn::KeyChain> defaultKeyChain_, instanceKeyChain_;
-            boost::shared_ptr<ndn::Data> instanceCert_, signingCert_;
-            boost::shared_ptr<ndn::IdentityStorage> identityStorage_;
-            boost::shared_ptr<ndn::PrivateKeyStorage> privateKeyStorage_;
-            boost::shared_ptr<ndn::MemoryContentCache> memoryContentCache_;
+            std::shared_ptr<ndn::PolicyManager> configPolicyManager_;
+            std::shared_ptr<ndn::KeyChain> defaultKeyChain_, instanceKeyChain_;
+            std::shared_ptr<ndn::Data> instanceCert_, signingCert_;
+            std::shared_ptr<ndn::IdentityStorage> identityStorage_;
+            std::shared_ptr<ndn::PrivateKeyStorage> privateKeyStorage_;
+            std::shared_ptr<ndn::MemoryContentCache> memoryContentCache_;
 
             void setupDefaultKeyChain();
             void setupInstanceKeyChain();

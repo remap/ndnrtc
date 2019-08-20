@@ -29,10 +29,10 @@ class VideoThread : public NdnRtcComponent,
     VideoThread(const VideoCoderParams &coderParams);
     ~VideoThread();
 
-    boost::shared_ptr<VideoFramePacketT<Mutable>> encode(const WebRtcVideoFrame &frame);
+    std::shared_ptr<VideoFramePacketT<Mutable>> encode(const WebRtcVideoFrame &frame);
 
     void
-        setLogger(boost::shared_ptr<ndnlog::new_api::Logger>);
+        setLogger(std::shared_ptr<ndnlog::new_api::Logger>);
 
     unsigned int
     getEncodedNum() { return nEncoded_; }
@@ -53,7 +53,7 @@ class VideoThread : public NdnRtcComponent,
 
 #warning using shared pointer here as libstdc++ on OSX does not support std::move
     // TODO: update code to use std::move on Ubuntu
-    boost::shared_ptr<VideoFramePacketT<Mutable>> videoFramePacket_;
+    std::shared_ptr<VideoFramePacketT<Mutable>> videoFramePacket_;
 
     void
     onEncodingStarted();

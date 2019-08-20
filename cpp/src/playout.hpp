@@ -48,15 +48,15 @@ namespace ndnrtc {
     {
     public:
         Playout(boost::asio::io_service& io,
-            const boost::shared_ptr<IPlaybackQueue>& queue,
-            const boost::shared_ptr<StatStorage> statStorage = 
-                boost::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
+            const std::shared_ptr<IPlaybackQueue>& queue,
+            const std::shared_ptr<StatStorage> statStorage = 
+                std::shared_ptr<StatStorage>(StatStorage::createConsumerStatistics()));
 
         void start(unsigned int fastForwardMs = 0) override;
         void stop() override;
         void addAdjustment(int64_t adjMs) override;
 
-        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+        void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
         void setDescription(const std::string& desc);
         bool isRunning() const;
 
@@ -64,13 +64,13 @@ namespace ndnrtc {
         void detach(IPlayoutObserver* observer);
 
     protected:
-        Playout(boost::shared_ptr<PlayoutImpl> pimpl):pimpl_(pimpl){}
+        Playout(std::shared_ptr<PlayoutImpl> pimpl):pimpl_(pimpl){}
 
         PlayoutImpl* pimpl();
         PlayoutImpl* pimpl() const;
 
     private:
-        boost::shared_ptr<PlayoutImpl> pimpl_;
+        std::shared_ptr<PlayoutImpl> pimpl_;
     };
 }
 

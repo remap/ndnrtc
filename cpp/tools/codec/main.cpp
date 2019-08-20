@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 
     int err = 0;
     boost::asio::io_service io;
-    boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
+    shared_ptr<boost::asio::io_service::work> work(make_shared<boost::asio::io_service::work>(io));
     thread t([&io, &err]() {
         try
         {
@@ -284,7 +284,7 @@ void runDecoder(VideoCodec& codec, string inFile, string outFile, string statFil
 void printStats(const VideoCodec::Stats& codecStats, string statFile)
 {
     static FILE *statF = nullptr;
-    
+
     if (statFile != "")
     {
         if (!statF)
@@ -294,14 +294,14 @@ void printStats(const VideoCodec::Stats& codecStats, string statFile)
                 throw runtime_error("couldn't open stat file "+statFile);
             fprintf(statF, "captured\tprocessed\tdropped\tkeynum\tbytesIn\tbytesOut\n");
         }
-        
+
         fprintf(statF, "%d\t%d\t%d\t%d\t%llu\t%llu\n",
                 codecStats.nFrames_, codecStats.nProcessed_,
                 codecStats.nDropped_, codecStats.nKey_,
                 codecStats.bytesIn_, codecStats.bytesOut_);
         fflush(statF);
     }
-    
+
     cout << "\r"
          << "[ captured " << codecStats.nFrames_
          << " processed: " << codecStats.nProcessed_

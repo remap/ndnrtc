@@ -119,67 +119,67 @@ class PipelineControl : public NdnRtcComponent,
   public:
     ~PipelineControl();
 
-    void start(const boost::shared_ptr<NetworkDataAlias>&);
+    void start(const std::shared_ptr<NetworkDataAlias>&);
     void stop();
 
-    void segmentArrived(const boost::shared_ptr<WireSegment> &);
+    void segmentArrived(const std::shared_ptr<WireSegment> &);
     void segmentRequestTimeout(const NamespaceInfo &,
-                               const boost::shared_ptr<const ndn::Interest> &);
+                               const std::shared_ptr<const ndn::Interest> &);
     void segmentNack(const NamespaceInfo &, int,
-                     const boost::shared_ptr<const ndn::Interest> &);
+                     const std::shared_ptr<const ndn::Interest> &);
     void segmentStarvation();
 
     bool needPipelineAdjustment(const PipelineAdjust &);
-    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+    void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
 
     static PipelineControl defaultPipelineControl(const ndn::Name &threadPrefix,
-                                                  const boost::shared_ptr<DrdEstimator> drdEstimator,
-                                                  const boost::shared_ptr<IBuffer> buffer,
-                                                  const boost::shared_ptr<IPipeliner> pipeliner,
-                                                  const boost::shared_ptr<IInterestControl> interestControl,
-                                                  const boost::shared_ptr<ILatencyControl> latencyControl,
-                                                  const boost::shared_ptr<IPlayoutControl> playoutControl,
-                                                  const boost::shared_ptr<SampleEstimator> sampleEstimator,
-                                                  const boost::shared_ptr<statistics::StatisticsStorage> &storage);
+                                                  const std::shared_ptr<DrdEstimator> drdEstimator,
+                                                  const std::shared_ptr<IBuffer> buffer,
+                                                  const std::shared_ptr<IPipeliner> pipeliner,
+                                                  const std::shared_ptr<IInterestControl> interestControl,
+                                                  const std::shared_ptr<ILatencyControl> latencyControl,
+                                                  const std::shared_ptr<IPlayoutControl> playoutControl,
+                                                  const std::shared_ptr<SampleEstimator> sampleEstimator,
+                                                  const std::shared_ptr<statistics::StatisticsStorage> &storage);
     static PipelineControl videoPipelineControl(const ndn::Name &threadPrefix,
-                                                const boost::shared_ptr<DrdEstimator> drdEstimator,
-                                                const boost::shared_ptr<IBuffer> buffer,
-                                                const boost::shared_ptr<IPipeliner> pipeliner,
-                                                const boost::shared_ptr<IInterestControl> interestControl,
-                                                const boost::shared_ptr<ILatencyControl> latencyControl,
-                                                const boost::shared_ptr<IPlayoutControl> playoutControl,
-                                                const boost::shared_ptr<SampleEstimator> sampleEstimator,
-                                                const boost::shared_ptr<statistics::StatisticsStorage> &storage);
+                                                const std::shared_ptr<DrdEstimator> drdEstimator,
+                                                const std::shared_ptr<IBuffer> buffer,
+                                                const std::shared_ptr<IPipeliner> pipeliner,
+                                                const std::shared_ptr<IInterestControl> interestControl,
+                                                const std::shared_ptr<ILatencyControl> latencyControl,
+                                                const std::shared_ptr<IPlayoutControl> playoutControl,
+                                                const std::shared_ptr<SampleEstimator> sampleEstimator,
+                                                const std::shared_ptr<statistics::StatisticsStorage> &storage);
 
     static PipelineControl seedPipelineControl(const RemoteVideoStream::FetchingRuleSet& ruleset,
                                                 const ndn::Name &threadPrefix,
-                                                const boost::shared_ptr<DrdEstimator> drdEstimator,
-                                                const boost::shared_ptr<IBuffer> buffer,
-                                                const boost::shared_ptr<IPipeliner> pipeliner,
-                                                const boost::shared_ptr<IInterestControl> interestControl,
-                                                const boost::shared_ptr<ILatencyControl> latencyControl,
-                                                const boost::shared_ptr<IPlayoutControl> playoutControl,
-                                                const boost::shared_ptr<SampleEstimator> sampleEstimator,
-                                                const boost::shared_ptr<statistics::StatisticsStorage> &storage);
+                                                const std::shared_ptr<DrdEstimator> drdEstimator,
+                                                const std::shared_ptr<IBuffer> buffer,
+                                                const std::shared_ptr<IPipeliner> pipeliner,
+                                                const std::shared_ptr<IInterestControl> interestControl,
+                                                const std::shared_ptr<ILatencyControl> latencyControl,
+                                                const std::shared_ptr<IPlayoutControl> playoutControl,
+                                                const std::shared_ptr<SampleEstimator> sampleEstimator,
+                                                const std::shared_ptr<statistics::StatisticsStorage> &storage);
 
   private:
     PipelineControlStateMachine machine_;
-    boost::shared_ptr<IInterestControl> interestControl_;
-    boost::shared_ptr<IPipeliner> pipeliner_;
+    std::shared_ptr<IInterestControl> interestControl_;
+    std::shared_ptr<IPipeliner> pipeliner_;
     // TODO: clean this up. bootstrapping process is messed up
     // making quick fixes for EB workshop.
-    boost::shared_ptr<NetworkDataAlias> metadata_;
+    std::shared_ptr<NetworkDataAlias> metadata_;
 
-    PipelineControl(const boost::shared_ptr<statistics::StatisticsStorage> &statStorage,
+    PipelineControl(const std::shared_ptr<statistics::StatisticsStorage> &statStorage,
                     const PipelineControlStateMachine &machine,
-                    const boost::shared_ptr<IInterestControl> &interestControl,
-                    const boost::shared_ptr<IPipeliner> pipeliner_);
+                    const std::shared_ptr<IInterestControl> &interestControl,
+                    const std::shared_ptr<IPipeliner> pipeliner_);
 
-    void onStateMachineChangedState(const boost::shared_ptr<const PipelineControlEvent> &,
+    void onStateMachineChangedState(const std::shared_ptr<const PipelineControlEvent> &,
                                     std::string);
-    void onStateMachineReceivedEvent(const boost::shared_ptr<const PipelineControlEvent> &,
+    void onStateMachineReceivedEvent(const std::shared_ptr<const PipelineControlEvent> &,
                                      std::string);
-    void onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>> &interests);
+    void onRetransmissionRequired(const std::vector<std::shared_ptr<const ndn::Interest>> &interests);
 };
 #endif
 }

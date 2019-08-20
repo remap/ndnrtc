@@ -35,19 +35,19 @@ class RequestQueueImpl : public NdnRtcComponent,
 public:
     RequestQueueImpl(boost::asio::io_service& io,
                      ndn::Face *face,
-                     const boost::shared_ptr<statistics::StatisticsStorage>& statStorage);
+                     const std::shared_ptr<statistics::StatisticsStorage>& statStorage);
     ~RequestQueueImpl();
     
     void
-    enqueueInterest(const boost::shared_ptr<const Interest>& interest,
-                    boost::shared_ptr<DeadlinePriority> priority,
+    enqueueInterest(const std::shared_ptr<const Interest>& interest,
+                    std::shared_ptr<DeadlinePriority> priority,
                     OnData onData,
                     OnTimeout onTimeout,
                     OnNetworkNack onNetworkNack);
     
     void
-    enqueueRequest(boost::shared_ptr<DataRequest>& request,
-                   boost::shared_ptr<DeadlinePriority> priority);
+    enqueueRequest(std::shared_ptr<DataRequest>& request,
+                   std::shared_ptr<DeadlinePriority> priority);
     
     void reset();
     void registerObserver(IInterestQueueObserver *observer) { observer_ = observer; }
@@ -77,8 +77,8 @@ private:
             bool inverted_;
         };
         
-        QueueEntry(const boost::shared_ptr<const ndn::Interest>& interest,
-                   const boost::shared_ptr<RequestQueue::IPriority>& priority,
+        QueueEntry(const std::shared_ptr<const ndn::Interest>& interest,
+                   const std::shared_ptr<RequestQueue::IPriority>& priority,
                    OnData onData,
                    OnTimeout onTimeout,
                    OnNetworkNack onNetworkNack,
@@ -102,8 +102,8 @@ private:
     private:
         friend RequestQueueImpl;
         
-        boost::shared_ptr<const ndn::Interest> interest_;
-        boost::shared_ptr<RequestQueue::IPriority> priority_;
+        std::shared_ptr<const ndn::Interest> interest_;
+        std::shared_ptr<RequestQueue::IPriority> priority_;
         OnData onDataCallback_;
         OnTimeout onTimeoutCallback_;
         OnNetworkNack onNetworkNack_;
@@ -122,7 +122,7 @@ private:
     estimators::Filter drdEstimator_;
     uint64_t lastRequestId_, lastRcvdRequestId_;
     
-    void enqueue(QueueEntry&, boost::shared_ptr<DeadlinePriority> priority);
+    void enqueue(QueueEntry&, std::shared_ptr<DeadlinePriority> priority);
     void drainQueueSafe();
     void drainQueue();
     void processEntry(const QueueEntry &entry);
@@ -132,21 +132,21 @@ private:
 
 //******************************************************************************
 RequestQueue::RequestQueue(boost::asio::io_service& io,
-                           const boost::shared_ptr<ndn::Face> &face,
-                           const boost::shared_ptr<StatisticsStorage>& statStorage)
-: pimpl_(boost::make_shared<RequestQueueImpl>(io, face.get(), statStorage))
+                           const std::shared_ptr<ndn::Face> &face,
+                           const std::shared_ptr<StatisticsStorage>& statStorage)
+: pimpl_(std::make_shared<RequestQueueImpl>(io, face.get(), statStorage))
 {}
 
 RequestQueue::RequestQueue(boost::asio::io_service& io,
                            ndn::Face *face,
-                           const boost::shared_ptr<StatisticsStorage>& statStorage)
-: pimpl_(boost::make_shared<RequestQueueImpl>(io, face, statStorage))
+                           const std::shared_ptr<StatisticsStorage>& statStorage)
+: pimpl_(std::make_shared<RequestQueueImpl>(io, face, statStorage))
 {}
 
 RequestQueue::RequestQueue(boost::asio::io_service& io,
                            ndn::Face *face)
-: pimpl_(boost::make_shared<RequestQueueImpl>(io, face,
-                                              boost::shared_ptr<StatisticsStorage>(StatisticsStorage::createConsumerStatistics())))
+: pimpl_(std::make_shared<RequestQueueImpl>(io, face,
+                                              std::shared_ptr<StatisticsStorage>(StatisticsStorage::createConsumerStatistics())))
 {
 }
 
@@ -155,8 +155,8 @@ RequestQueue::~RequestQueue()
 }
 
 void
-RequestQueue::enqueueInterest(const boost::shared_ptr<const ndn::Interest> &interest,
-                              boost::shared_ptr<DeadlinePriority> priority,
+RequestQueue::enqueueInterest(const std::shared_ptr<const ndn::Interest> &interest,
+                              std::shared_ptr<DeadlinePriority> priority,
                               OnData onData,
                               OnTimeout onTimeout,
                               OnNetworkNack onNetworkNack)
@@ -165,15 +165,15 @@ RequestQueue::enqueueInterest(const boost::shared_ptr<const ndn::Interest> &inte
 }
 
 void
-RequestQueue::enqueueRequest(boost::shared_ptr<DataRequest> &request,
-                             boost::shared_ptr<DeadlinePriority> priority)
+RequestQueue::enqueueRequest(std::shared_ptr<DataRequest> &request,
+                             std::shared_ptr<DeadlinePriority> priority)
 {
     pimpl_->enqueueRequest(request, priority);
 }
 
 void
-RequestQueue::enqueueRequests(vector<boost::shared_ptr<DataRequest>>& requests,
-                boost::shared_ptr<DeadlinePriority> priority)
+RequestQueue::enqueueRequests(vector<std::shared_ptr<DataRequest>>& requests,
+                std::shared_ptr<DeadlinePriority> priority)
 {
     for (auto &r:requests)
         pimpl_->enqueueRequest(r, priority);
@@ -183,7 +183,7 @@ void RequestQueue::reset() { pimpl_->reset(); }
 void RequestQueue::registerObserver(IInterestQueueObserver *observer) { pimpl_->registerObserver(observer); }
 void RequestQueue::unregisterObserver() { pimpl_->unregisterObserver(); }
 size_t RequestQueue::size() const { return pimpl_->size(); }
-void RequestQueue::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger) { pimpl_->setLogger(logger); }
+void RequestQueue::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger) { pimpl_->setLogger(logger); }
 double RequestQueue::getDrdEstimate() const { return pimpl_->getEstimator().value(); }
 double RequestQueue::getJitterEstimate() const { return pimpl_->getEstimator().variation(); }
 const statistics::StatisticsStorage& RequestQueue::getStatistics() const { return pimpl_->getStatistics(); }
@@ -192,8 +192,8 @@ boost::asio::io_service& RequestQueue::getIoService() const { return pimpl_->get
 
 //******************************************************************************
 #pragma mark - construction/destruction
-RequestQueueImpl::QueueEntry::QueueEntry(const boost::shared_ptr<const ndn::Interest>& interest,
-                                         const boost::shared_ptr<RequestQueue::IPriority>& priority,
+RequestQueueImpl::QueueEntry::QueueEntry(const std::shared_ptr<const ndn::Interest>& interest,
+                                         const std::shared_ptr<RequestQueue::IPriority>& priority,
                                          OnData onData,
                                          OnTimeout onTimeout,
                                          OnNetworkNack onNetworkNack,
@@ -234,14 +234,14 @@ DeadlinePriority::getArrivalDeadlineFromEnqueue() const
 //******************************************************************************
 RequestQueueImpl::RequestQueueImpl(boost::asio::io_service& io,
                       Face *face,
-                      const boost::shared_ptr<statistics::StatisticsStorage>& statStorage)
+                      const std::shared_ptr<statistics::StatisticsStorage>& statStorage)
 : StatObject(statStorage)
 , faceIo_(io)
 , face_(face)
 , queue_(PriorityQueue(QueueEntry::Comparator(true)))
 , isDrainingQueue_(false)
 , observer_(nullptr)
-//, drdEstimator_(boost::make_shared<estimators::TimeWindow>(NW_ESTIMATE_WINDOW))
+//, drdEstimator_(std::make_shared<estimators::TimeWindow>(NW_ESTIMATE_WINDOW))
 , drdEstimator_(15./16., 15./16.)
 , lastRequestId_(0)
 , lastRcvdRequestId_(0)
@@ -258,8 +258,8 @@ RequestQueueImpl::~RequestQueueImpl()
 //******************************************************************************
 #pragma mark - public
 void
-RequestQueueImpl::enqueueInterest(const boost::shared_ptr<const Interest>& interest,
-                                  boost::shared_ptr<DeadlinePriority> priority,
+RequestQueueImpl::enqueueInterest(const std::shared_ptr<const Interest>& interest,
+                                  std::shared_ptr<DeadlinePriority> priority,
                                   OnData onData,
                                   OnTimeout onTimeout,
                                   OnNetworkNack onNetworkNack)
@@ -271,15 +271,15 @@ RequestQueueImpl::enqueueInterest(const boost::shared_ptr<const Interest>& inter
 }
 
 void
-RequestQueueImpl::enqueueRequest(boost::shared_ptr<DataRequest> &request,
-                                 boost::shared_ptr<DeadlinePriority> priority)
+RequestQueueImpl::enqueueRequest(std::shared_ptr<DataRequest> &request,
+                                 std::shared_ptr<DeadlinePriority> priority)
 {
     assert(request.get());
     
-    boost::shared_ptr<InterestQueue> me = boost::dynamic_pointer_cast<InterestQueue>(shared_from_this());
+    std::shared_ptr<InterestQueue> me = std::dynamic_pointer_cast<InterestQueue>(shared_from_this());
     QueueEntry entry(request->getInterest(), priority,
-                     [request, me, this](const boost::shared_ptr<const Interest>&,
-                               const boost::shared_ptr<Data>& d){
+                     [request, me, this](const std::shared_ptr<const Interest>&,
+                               const std::shared_ptr<Data>& d){
                          request->timestampReply();
                          request->setData(d);
                          
@@ -305,7 +305,7 @@ RequestQueueImpl::enqueueRequest(boost::shared_ptr<DataRequest> &request,
                              request->triggerEvent(DataRequest::Status::Data);
                          }
                      },
-                     [request, me, this](const boost::shared_ptr<const Interest>& i){
+                     [request, me, this](const std::shared_ptr<const Interest>& i){
                          LogTraceC << "timeout " << i->getName() << endl;
                          
                          request->timestampReply();
@@ -313,8 +313,8 @@ RequestQueueImpl::enqueueRequest(boost::shared_ptr<DataRequest> &request,
                          request->setStatus(DataRequest::Status::Timeout);
                          request->triggerEvent(DataRequest::Status::Timeout);
                      },
-                     [request, me, this](const boost::shared_ptr<const ndn::Interest>& interest,
-                               const boost::shared_ptr<ndn::NetworkNack>& networkNack){
+                     [request, me, this](const std::shared_ptr<const ndn::Interest>& interest,
+                               const std::shared_ptr<ndn::NetworkNack>& networkNack){
                          LogTraceC << "network nack " << interest->getName() << " - " << networkNack->getReason() << endl;
                          
                          request->timestampReply();
@@ -322,7 +322,7 @@ RequestQueueImpl::enqueueRequest(boost::shared_ptr<DataRequest> &request,
                          request->setStatus(DataRequest::Status::NetworkNack);
                          request->triggerEvent(DataRequest::Status::NetworkNack);
                      },
-                     [request, me, this](const boost::shared_ptr<const Interest>& i){
+                     [request, me, this](const std::shared_ptr<const Interest>& i){
                          lastRequestId_++;
                          request->setId(lastRequestId_);
                          if (request->getStatus() != DataRequest::Status::Created)
@@ -355,7 +355,7 @@ RequestQueueImpl::callLater(uint64_t usecDelay, DelayedCallback callback)
 //******************************************************************************
 #pragma mark - private
 void
-RequestQueueImpl::enqueue(QueueEntry &qe, boost::shared_ptr<DeadlinePriority> priority)
+RequestQueueImpl::enqueue(QueueEntry &qe, std::shared_ptr<DeadlinePriority> priority)
 {
     priority->setEnqueueTimestamp(clock::millisecondTimestamp());
     {
@@ -365,8 +365,8 @@ RequestQueueImpl::enqueue(QueueEntry &qe, boost::shared_ptr<DeadlinePriority> pr
         if (!isDrainingQueue_)
         {
             isDrainingQueue_ = true;
-            boost::shared_ptr<RequestQueueImpl> me =
-                boost::dynamic_pointer_cast<RequestQueueImpl>(shared_from_this());
+            std::shared_ptr<RequestQueueImpl> me =
+                std::dynamic_pointer_cast<RequestQueueImpl>(shared_from_this());
             async::dispatchAsync(faceIo_, boost::bind(&RequestQueueImpl::drainQueueSafe, me));
         }
     }

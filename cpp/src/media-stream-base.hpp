@@ -48,11 +48,11 @@ class MediaStreamBase : public NdnRtcComponent,
     std::string getBasePrefix() const { return basePrefix_; }
     std::string getStreamName() const { return settings_.params_.streamName_; }
 
-    boost::shared_ptr<StorageEngine> getStorage() const { return storage_; }
+    std::shared_ptr<StorageEngine> getStorage() const { return storage_; }
 
     virtual std::vector<std::string> getThreads() const = 0;
     statistics::StatisticsStorage getStatistics() const;
-    virtual void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+    virtual void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
 
     // callback for storing cached data into the storage
     void onSegmentsCached(PublishedDataPtrVector segments);
@@ -79,10 +79,10 @@ class MediaStreamBase : public NdnRtcComponent,
     MediaStreamSettings settings_;
     std::string basePrefix_;
     ndn::Name streamPrefix_;
-    boost::shared_ptr<ndn::MemoryContentCache> cache_;
-    boost::shared_ptr<CommonPacketPublisher> metadataPublisher_;
-    boost::shared_ptr<statistics::StatisticsStorage> statStorage_;
-    boost::shared_ptr<StorageEngine> storage_;
+    std::shared_ptr<ndn::MemoryContentCache> cache_;
+    std::shared_ptr<CommonPacketPublisher> metadataPublisher_;
+    std::shared_ptr<statistics::StatisticsStorage> statStorage_;
+    std::shared_ptr<StorageEngine> storage_;
     uint64_t streamTimestamp_;
     uint32_t metaVersion_;
 

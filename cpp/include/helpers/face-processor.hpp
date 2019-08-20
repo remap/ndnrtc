@@ -10,8 +10,6 @@
 #define face_processor_hpp
 
 #include <stdio.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/function.hpp>
 #include <boost/asio.hpp>
 
 namespace ndn {
@@ -23,17 +21,17 @@ namespace ndn {
 
 namespace ndnrtc {
     namespace helpers {
-        typedef boost::function<void
-            (const boost::shared_ptr<const ndn::Name>& prefix,
-             const boost::shared_ptr<const ndn::Interest>& interest, 
+        typedef std::function<void
+            (const std::shared_ptr<const ndn::Name>& prefix,
+             const std::shared_ptr<const ndn::Interest>& interest,
              ndn::Face& face, uint64_t interestFilterId,
-             const boost::shared_ptr<const ndn::InterestFilter>& filter)> OnInterestCallback;
+             const std::shared_ptr<const ndn::InterestFilter>& filter)> OnInterestCallback;
 
-        typedef boost::function<void
-            (const boost::shared_ptr<const ndn::Name>& prefix)> OnRegisterFailed;
+        typedef std::function<void
+            (const std::shared_ptr<const ndn::Name>& prefix)> OnRegisterFailed;
 
-        typedef boost::function<void
-            (const boost::shared_ptr<const ndn::Name>& prefix, 
+        typedef std::function<void
+            (const std::shared_ptr<const ndn::Name>& prefix,
              uint64_t registeredPrefixId)> OnRegisterSuccess;
 
         class FaceProcessorImpl;
@@ -48,32 +46,32 @@ namespace ndnrtc {
             bool isProcessing();
 
             boost::asio::io_service& getIo();
-            boost::shared_ptr<ndn::Face> getFace();
+            std::shared_ptr<ndn::Face> getFace();
 
             // non blocking
-            void dispatchSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
+            void dispatchSynchronized(std::function<void(std::shared_ptr<ndn::Face>)> dispatchBlock);
             // blocking
-            void performSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
+            void performSynchronized(std::function<void(std::shared_ptr<ndn::Face>)> dispatchBlock);
 
             // helper method for registering a prefix on the face
-            void registerPrefix(const ndn::Name& prefix, 
+            void registerPrefix(const ndn::Name& prefix,
                 const OnInterestCallback& onInterest,
                 const OnRegisterFailed& onRegisterFailed,
                 const OnRegisterSuccess& onRegisterSuccess);
 
-            // synchronizer prefix registration - calller will block until 
-            // receiving either onRegisterFailed or onRegisterSuccess callback 
-            void registerPrefixBlocking(const ndn::Name& prefix, 
+            // synchronizer prefix registration - calller will block until
+            // receiving either onRegisterFailed or onRegisterSuccess callback
+            void registerPrefixBlocking(const ndn::Name& prefix,
                 const OnInterestCallback& onInterest,
                 const OnRegisterFailed& onRegisterFailed,
                 const OnRegisterSuccess& onRegisterSuccess);
 
 
-            static boost::shared_ptr<FaceProcessor> forLocalhost();
+            static std::shared_ptr<FaceProcessor> forLocalhost();
             static bool checkNfdConnection();
 
         private:
-            boost::shared_ptr<FaceProcessorImpl> _pimpl;
+            std::shared_ptr<FaceProcessorImpl> _pimpl;
         };
     }
 }

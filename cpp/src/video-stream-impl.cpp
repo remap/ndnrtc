@@ -37,9 +37,9 @@ using namespace std;
 using namespace ndn;
 using namespace estimators;
 
-typedef boost::shared_ptr<VideoFramePacket> FramePacketPtr;
+typedef std::shared_ptr<VideoFramePacket> FramePacketPtr;
 typedef boost::future<FramePacketPtr> FutureFrame;
-typedef boost::shared_ptr<boost::future<FramePacketPtr>> FutureFramePtr;
+typedef std::shared_ptr<boost::future<FramePacketPtr>> FutureFramePtr;
 
 VideoStreamImpl::VideoStreamImpl(const std::string &streamPrefix,
                                  const MediaStreamSettings &settings, bool useFec)
@@ -70,7 +70,7 @@ VideoStreamImpl::VideoStreamImpl(const std::string &streamPrefix,
         ps.onSegmentsCached_ = boost::bind(&MediaStreamBase::onSegmentsCached, this, _1);
     }
 
-    framePublisher_ = boost::make_shared<VideoPacketPublisher>(ps);
+    framePublisher_ = std::make_shared<VideoPacketPublisher>(ps);
     framePublisher_->setDescription("seg-publisher-" + settings_.params_.streamName_);
 }
 
@@ -114,7 +114,7 @@ int VideoStreamImpl::incomingFrame(const YUV_NV21FrameWrapper &w)
     return -1;
 }
 
-void VideoStreamImpl::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+void VideoStreamImpl::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
     boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
     MediaStreamBase::setLogger(logger);
@@ -141,12 +141,12 @@ void VideoStreamImpl::add(const MediaThreadParams *mp)
     {
         boost::lock_guard<boost::mutex> scopedLock(internalMutex_);
 
-        threads_[params->threadName_] = boost::make_shared<VideoThread>(params->coderParams_);
-        scalers_[params->threadName_] = boost::make_shared<FrameScaler>(params->coderParams_.encodeWidth_,
+        threads_[params->threadName_] = std::make_shared<VideoThread>(params->coderParams_);
+        scalers_[params->threadName_] = std::make_shared<FrameScaler>(params->coderParams_.encodeWidth_,
                                                                         params->coderParams_.encodeHeight_);
         seqCounters_[params->threadName_].first = -1;
         seqCounters_[params->threadName_].second = -1;
-        metaKeepers_[params->threadName_] = boost::make_shared<MetaKeeper>(params);
+        metaKeepers_[params->threadName_] = std::make_shared<MetaKeeper>(params);
 
         threads_[params->threadName_]->setDescription("thread-" + params->threadName_);
     }
@@ -188,7 +188,7 @@ bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame &frame)
         for (auto it : threads_)
         {
             FutureFramePtr ff =
-                boost::make_shared<FutureFrame>(boost::move(boost::async(boost::launch::async,
+                std::make_shared<FutureFrame>(boost::move(boost::async(boost::launch::async,
                                                                          boost::bind(&VideoThread::encode, it.second.get(),
                                                                          (*scalers_[it.first])(frame)))));
             futureFrames[it.first] = ff;
@@ -217,7 +217,7 @@ bool VideoStreamImpl::feedFrame(const WebRtcVideoFrame &frame)
 
         if (!isPeriodicInvocationSet())
         {
-            boost::shared_ptr<VideoStreamImpl> me = boost::dynamic_pointer_cast<VideoStreamImpl>(shared_from_this());
+            std::shared_ptr<VideoStreamImpl> me = std::dynamic_pointer_cast<VideoStreamImpl>(shared_from_this());
             setupInvocation(MediaStreamBase::MetaCheckIntervalMs,
                             boost::bind(&VideoStreamImpl::periodicInvocation, me));
         }
@@ -264,7 +264,7 @@ void VideoStreamImpl::publish(map<string, FramePacketPtr> &frames)
 
 std::string VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
 {
-    boost::shared_ptr<NetworkData> parityData = fp->getParityData(
+    std::shared_ptr<NetworkData> parityData = fp->getParityData(
         VideoFrameSegment::payloadLength(settings_.params_.producerParams_.segmentSize_),
         PARITY_RATIO);
 
@@ -282,8 +282,8 @@ std::string VideoStreamImpl::publish(const string &thread, FramePacketPtr &fp)
                                                    settings_.params_.producerParams_.segmentSize_);
     size_t nParitySeg = VideoFrameSegment::numSlices(*parityData,
                                                      settings_.params_.producerParams_.segmentSize_);
-    boost::shared_ptr<VideoStreamImpl> me = boost::static_pointer_cast<VideoStreamImpl>(shared_from_this());
-    boost::shared_ptr<MetaKeeper> keeper = metaKeepers_[thread];
+    std::shared_ptr<VideoStreamImpl> me = boost::static_pointer_cast<VideoStreamImpl>(shared_from_this());
+    std::shared_ptr<MetaKeeper> keeper = metaKeepers_[thread];
 
     LogTraceC << "spawned publish task for "
               << seqNo
@@ -401,7 +401,7 @@ bool VideoStreamImpl::updateMeta()
 }
 
 void VideoStreamImpl::publishRdrPointer(const std::string& thread,
-                                        boost::shared_ptr<MetaKeeper> metaKeeper)
+                                        std::shared_ptr<MetaKeeper> metaKeeper)
 {
     Name threadPrefix(Name(streamPrefix_).append(thread));
     DelegationSet pointers;
@@ -413,7 +413,7 @@ void VideoStreamImpl::publishRdrPointer(const std::string& thread,
                         .appendSequenceNumber(metaKeeper->getMeta().getSeqNo().second));
 
 
-    boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(threadPrefix)
+    std::shared_ptr<Data> d = std::make_shared<Data>(Name(threadPrefix)
                                                         .append(NameComponents::NameComponentRdrLatest)
                                                         .appendVersion(metaKeeper->getVersionNumber()));
     d->setContent(pointers.wireEncode());
@@ -428,11 +428,11 @@ void VideoStreamImpl::publishRdrPointer(const std::string& thread,
 //******************************************************************************
 VideoStreamImpl::MetaKeeper::MetaKeeper(const VideoThreadParams *params)
     : BaseMetaKeeper(params),
-      rateMeter_(FreqMeter(boost::make_shared<TimeWindow>(1000))),
-      deltaData_(Average(boost::make_shared<TimeWindow>(100))),
-      deltaParity_(Average(boost::make_shared<TimeWindow>(100))),
-      keyData_(Average(boost::make_shared<SampleWindow>(2))),
-      keyParity_(Average(boost::make_shared<SampleWindow>(2))),
+      rateMeter_(FreqMeter(std::make_shared<TimeWindow>(1000))),
+      deltaData_(Average(std::make_shared<TimeWindow>(100))),
+      deltaParity_(Average(std::make_shared<TimeWindow>(100))),
+      keyData_(Average(std::make_shared<SampleWindow>(2))),
+      keyParity_(Average(std::make_shared<SampleWindow>(2))),
       versionNumber_(0)
 {
 }

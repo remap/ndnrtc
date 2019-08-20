@@ -8,12 +8,12 @@
 
 #include "helpers/face-processor.hpp"
 
-#include <boost/function.hpp>
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 #include <boost/asio.hpp>
 #include <boost/asio/io_service.hpp>
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <ndn-cpp/threadsafe-face.hpp>
 #include <ndn-cpp/face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
@@ -23,7 +23,7 @@
 #define USE_THREADSAFE_FACE
 
 using namespace ndn;
-using namespace boost;
+using namespace std;
 using namespace boost::asio;
 using namespace ndnrtc::helpers;
 
@@ -39,9 +39,9 @@ namespace ndnrtc {
             bool isProcessing();
 
             // non blocking
-            void dispatchSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
+            void dispatchSynchronized(function<void(shared_ptr<ndn::Face>)> dispatchBlock);
             // blocking
-            void performSynchronized(boost::function<void(boost::shared_ptr<ndn::Face>)> dispatchBlock);
+            void performSynchronized(function<void(shared_ptr<ndn::Face>)> dispatchBlock);
 
             bool initFace();
             void runFace();
@@ -78,24 +78,24 @@ bool FaceProcessor::checkNfdConnection()
     // trying to sign with the default key
     shared_ptr<MemoryIdentityStorage> identityStorage = make_shared<MemoryIdentityStorage>();
     shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage = make_shared<MemoryPrivateKeyStorage>();
-    
+
     KeyChain keyChain(make_shared<IdentityManager>(identityStorage, privateKeyStorage));
     keyChain.createIdentityAndCertificate("connectivity-check");
     keyChain.getIdentityManager()->setDefaultIdentity("connectivity-check");
 #endif
     Face face;
-    
+
     face.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
     face.registerPrefix(ndn::Name("/nfd-connectivity-check"),
-                        [](const boost::shared_ptr<const ndn::Name>& prefix,
-                                                    const boost::shared_ptr<const ndn::Interest>& interest, ndn::Face& face,
+                        [](const shared_ptr<const ndn::Name>& prefix,
+                                                    const shared_ptr<const ndn::Interest>& interest, ndn::Face& face,
                                                     uint64_t interestFilterId,
-                                                    const boost::shared_ptr<const ndn::InterestFilter>& filter){},
-                        [&done](const boost::shared_ptr<const ndn::Name>& prefix){
+                                                    const shared_ptr<const ndn::InterestFilter>& filter){},
+                        [&done](const shared_ptr<const ndn::Name>& prefix){
                             // failure
                             done = true;
                         },
-                        [&done,&registeredPrefixId](const boost::shared_ptr<const ndn::Name>& prefix,
+                        [&done,&registeredPrefixId](const shared_ptr<const ndn::Name>& prefix,
                                                     uint64_t prefId){
                             // success
                             registeredPrefixId = prefId;
@@ -103,12 +103,12 @@ bool FaceProcessor::checkNfdConnection()
                         });
     while(!done) face.processEvents();
     if (registeredPrefixId) face.removeRegisteredPrefix(registeredPrefixId);
-    
+
     return (registeredPrefixId != 0);
 }
 
 FaceProcessor::FaceProcessor(std::string host):
-_pimpl(boost::make_shared<FaceProcessorImpl>(host))
+_pimpl(make_shared<FaceProcessorImpl>(host))
 {
     if (_pimpl->initFace())
         _pimpl->runFace();
@@ -133,29 +133,29 @@ void FaceProcessor::performSynchronized(function<void (shared_ptr<Face>)> dispat
     return _pimpl->performSynchronized(dispatchBlock);
 }
 boost::asio::io_service& FaceProcessor::getIo() { return _pimpl->getIo(); }
-boost::shared_ptr<Face> FaceProcessor::getFace() { return _pimpl->getFace(); }
-void FaceProcessor::registerPrefix(const Name& prefix, 
+shared_ptr<Face> FaceProcessor::getFace() { return _pimpl->getFace(); }
+void FaceProcessor::registerPrefix(const Name& prefix,
                                    const OnInterestCallback& onInterest,
                                    const OnRegisterFailed& onRegisterFailed,
                                    const OnRegisterSuccess& onRegisterSuccess)
 {
-    _pimpl->performSynchronized([prefix, onInterest, onRegisterFailed, onRegisterSuccess](boost::shared_ptr<ndn::Face> face){
+    _pimpl->performSynchronized([prefix, onInterest, onRegisterFailed, onRegisterSuccess](shared_ptr<ndn::Face> face){
         face->registerPrefix(prefix, onInterest, onRegisterFailed, onRegisterSuccess);
     });
 }
 
-void FaceProcessor::registerPrefixBlocking(const ndn::Name& prefix, 
+void FaceProcessor::registerPrefixBlocking(const ndn::Name& prefix,
                 const OnInterestCallback& onInterest,
                 const OnRegisterFailed& onRegisterFailed,
                 const OnRegisterSuccess& onRegisterSuccess)
 {
-    boost::mutex m;
-    boost::unique_lock<boost::mutex> lock(m);
-    boost::condition_variable isDone;
-    boost::atomic<bool> completed(false);
+    mutex m;
+    unique_lock<mutex> lock(m);
+    condition_variable isDone;
+    atomic<bool> completed(false);
     bool registered = false;
 
-    _pimpl->dispatchSynchronized([prefix, onInterest, onRegisterFailed, onRegisterSuccess](boost::shared_ptr<ndn::Face> face){
+    _pimpl->dispatchSynchronized([prefix, onInterest, onRegisterFailed, onRegisterSuccess](shared_ptr<ndn::Face> face){
         face->registerPrefix(prefix, onInterest, onRegisterFailed, onRegisterSuccess);
     });
 
@@ -184,7 +184,7 @@ void FaceProcessorImpl::stop()
     if (isRunningFace_)
     {
         isRunningFace_ = false;
-        
+
 #ifdef USE_THREADSAFE_FACE
         face_->shutdown();
         ioWork_.reset();
@@ -205,7 +205,7 @@ bool FaceProcessorImpl::isProcessing()
     return isRunningFace_;
 }
 
-void FaceProcessorImpl::dispatchSynchronized(boost::function<void (boost::shared_ptr<ndn::Face>)> dispatchBlock)
+void FaceProcessorImpl::dispatchSynchronized(function<void (shared_ptr<ndn::Face>)> dispatchBlock)
 {
     if (isRunningFace_)
     {
@@ -216,7 +216,7 @@ void FaceProcessorImpl::dispatchSynchronized(boost::function<void (boost::shared
     }
 }
 
-void FaceProcessorImpl::performSynchronized(boost::function<void (boost::shared_ptr<ndn::Face>)> dispatchBlock)
+void FaceProcessorImpl::performSynchronized(function<void (shared_ptr<ndn::Face>)> dispatchBlock)
 {
     if (isRunningFace_)
     {
@@ -229,13 +229,13 @@ void FaceProcessorImpl::performSynchronized(boost::function<void (boost::shared_
             condition_variable isDone;
             atomic<bool> doneFlag(false);
             shared_ptr<Face> face = face_;
-            
+
             io_.dispatch([dispatchBlock, face, &isDone, &doneFlag](){
                 dispatchBlock(face);
                 doneFlag = true;
                 isDone.notify_one();
             });
-            
+
             isDone.wait(lock, [&doneFlag](){ return doneFlag.load(); });
         }
     }
@@ -262,7 +262,7 @@ bool FaceProcessorImpl::initFace()
         // notify about error
         return false;
     }
-    
+
     return true;
 }
 
@@ -272,9 +272,9 @@ void FaceProcessorImpl::runFace()
     ioWork_ = make_shared<io_service::work>(io_);
 #endif
     isRunningFace_ = false;
-    
+
     shared_ptr<FaceProcessorImpl> self = shared_from_this();
-    
+
     t_ = thread([self](){
         self->isRunningFace_ = true;
         while (self->isRunningFace_)
@@ -296,6 +296,6 @@ void FaceProcessorImpl::runFace()
             }
         }
     });
-    
+
     while (!isRunningFace_) usleep(10000);
 }

@@ -28,7 +28,7 @@ namespace lib_chrono=boost::chrono;
 using namespace ndnrtc;
 
 namespace ndnrtc {
-	class PeriodicImpl : public boost::enable_shared_from_this<PeriodicImpl> 
+	class PeriodicImpl : public std::enable_shared_from_this<PeriodicImpl> 
 	{
 	public:
 		PeriodicImpl(boost::asio::io_service& io);
@@ -40,13 +40,13 @@ namespace ndnrtc {
 
 		boost::atomic<bool> isRunning_;
 		boost::asio::io_service& io_;
-		boost::function<unsigned int(void)> workFunc_;
+		std::function<unsigned int(void)> workFunc_;
 		boost::asio::steady_timer timer_;
 	};
 }
 
 Periodic::Periodic(boost::asio::io_service& io):
-pimpl_(boost::make_shared<PeriodicImpl>(io))
+pimpl_(std::make_shared<PeriodicImpl>(io))
 {
 }
 
@@ -57,7 +57,7 @@ Periodic::~Periodic()
 
 void 
 Periodic::setupInvocation(unsigned int intervalMs, 
-	boost::function<unsigned int(void)> callback)
+	std::function<unsigned int(void)> callback)
 {
 	if (!pimpl_->isRunning_)
 	{
@@ -120,5 +120,5 @@ PeriodicImpl::cancel()
 {
 	isRunning_ = false;
 	timer_.cancel();
-    workFunc_ = boost::function<unsigned int(void)>();
+    workFunc_ = std::function<unsigned int(void)>();
 }

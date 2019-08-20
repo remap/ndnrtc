@@ -29,7 +29,7 @@ namespace ndnrtc {
      */
 	class SampleEstimator : public ISegmentControllerObserver {
 	public:
-        SampleEstimator(const boost::shared_ptr<statistics::StatisticsStorage>&);
+        SampleEstimator(const std::shared_ptr<statistics::StatisticsStorage>&);
 		~SampleEstimator();
         
         /**
@@ -45,7 +45,7 @@ namespace ndnrtc {
         /**
          * Called by SegmentController each time new segment arrives
          */
-		void segmentArrived(const boost::shared_ptr<WireSegment>&);
+		void segmentArrived(const std::shared_ptr<WireSegment>&);
         
         /**
          * Resets estimatior
@@ -79,12 +79,12 @@ namespace ndnrtc {
 		} Estimators;
 		typedef std::map<std::pair<SampleClass, SegmentClass>, Estimators> EstimatorMap;
 		EstimatorMap estimators_;
-        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
+        std::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
 		void segmentRequestTimeout(const NamespaceInfo&, 
-                                   const boost::shared_ptr<const ndn::Interest> &){}
+                                   const std::shared_ptr<const ndn::Interest> &){}
         void segmentNack(const NamespaceInfo&, int, 
-                         const boost::shared_ptr<const ndn::Interest> &){}
+                         const std::shared_ptr<const ndn::Interest> &){}
 		void segmentStarvation(){}
 	};
 }

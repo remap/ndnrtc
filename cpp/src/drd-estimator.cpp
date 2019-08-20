@@ -16,9 +16,9 @@ using namespace estimators;
 DrdEstimator::DrdEstimator(unsigned int initialEstimationMs, unsigned int windowMs):
 initialEstimation_(initialEstimationMs),
 windowSize_(windowMs),
-cachedDrd_(Average(boost::make_shared<TimeWindow>(windowMs))),
-originalDrd_(Average(boost::make_shared<TimeWindow>(windowMs))),
-generationDelay_(Average(boost::make_shared<TimeWindow>(windowMs))),
+cachedDrd_(Average(std::make_shared<TimeWindow>(windowMs))),
+originalDrd_(Average(std::make_shared<TimeWindow>(windowMs))),
+generationDelay_(Average(std::make_shared<TimeWindow>(windowMs))),
 latest_(&originalDrd_)
 {}
 
@@ -63,8 +63,8 @@ DrdEstimator::getOriginalEstimation() const
 void
 DrdEstimator::reset()
 {
-	cachedDrd_ = Average(boost::make_shared<TimeWindow>(windowSize_));
-	originalDrd_ = Average(boost::make_shared<TimeWindow>(windowSize_));
+	cachedDrd_ = Average(std::make_shared<TimeWindow>(windowSize_));
+	originalDrd_ = Average(std::make_shared<TimeWindow>(windowSize_));
 }
 
 void DrdEstimator::attach(IDrdEstimatorObserver* o)

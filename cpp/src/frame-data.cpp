@@ -22,7 +22,7 @@ using namespace webrtc;
 namespace ndnrtc {
 
 template <>
-boost::shared_ptr<VideoFramePacket>
+std::shared_ptr<VideoFramePacket>
 VideoFramePacket::merge(const std::vector<ImmutableHeaderPacket<VideoFrameSegmentHeader>> &segments)
 {
     std::vector<uint8_t> packetBytes;
@@ -31,12 +31,12 @@ VideoFramePacket::merge(const std::vector<ImmutableHeaderPacket<VideoFrameSegmen
                            s.getPayload().begin(), s.getPayload().end());
 
     NetworkData packetData(boost::move(packetBytes));
-    return boost::make_shared<VideoFramePacket>(boost::move(packetData));
+    return std::make_shared<VideoFramePacket>(boost::move(packetData));
 }
 
 //******************************************************************************
 template <>
-boost::shared_ptr<AudioBundlePacket>
+std::shared_ptr<AudioBundlePacket>
 AudioBundlePacket::merge(const std::vector<ImmutableHeaderPacket<DataSegmentHeader>> &segments)
 {
     std::vector<uint8_t> packetBytes;
@@ -45,22 +45,7 @@ AudioBundlePacket::merge(const std::vector<ImmutableHeaderPacket<DataSegmentHead
                            s.getPayload().begin(), s.getPayload().end());
 
     NetworkData packetData(boost::move(packetBytes));
-    return boost::make_shared<AudioBundlePacket>(boost::move(packetData));
-}
-
-// ****
-// TBD: this needs to be re-designed :sigh: (the whole network/frame data thing)
-boost::shared_ptr<WireSegment>
-WireSegment::createSegment(const NamespaceInfo &namespaceInfo,
-                           const boost::shared_ptr<ndn::Data> &data,
-                           const boost::shared_ptr<const ndn::Interest> &interest)
-{
-    if (namespaceInfo.streamType_ == MediaStreamParams::MediaStreamType::MediaStreamTypeVideo &&
-        (namespaceInfo.segmentClass_ == SegmentClass::Data || namespaceInfo.segmentClass_ == SegmentClass::Parity))
-        return boost::make_shared<WireData<VideoFrameSegmentHeader>>(namespaceInfo, data, interest);
-
-    return boost::make_shared<WireData<DataSegmentHeader>>(namespaceInfo, data, interest);
-    ;
+    return std::make_shared<AudioBundlePacket>(boost::move(packetData));
 }
 
 }

@@ -22,7 +22,7 @@ using namespace ndnrtc::statistics;
 const unsigned int InterestControl::MinPipelineSize = 3;
 
 void InterestControl::StrategyDefault::getLimits(double rate,
-                                                 boost::shared_ptr<DrdEstimator> drdEstimator,
+                                                 std::shared_ptr<DrdEstimator> drdEstimator,
                                                  unsigned int &lowerLimit, unsigned int &upperLimit)
 {
     int interestDemand = calculateDemand(rate, 
@@ -67,9 +67,9 @@ int InterestControl::StrategyDefault::withhold(unsigned int currentLimit,
 }
 
 //******************************************************************************
-InterestControl::InterestControl(const boost::shared_ptr<DrdEstimator> &drdEstimator,
-                                 const boost::shared_ptr<statistics::StatisticsStorage> &storage,
-                                 boost::shared_ptr<IInterestControlStrategy> strategy)
+InterestControl::InterestControl(const std::shared_ptr<DrdEstimator> &drdEstimator,
+                                 const std::shared_ptr<statistics::StatisticsStorage> &storage,
+                                 std::shared_ptr<IInterestControlStrategy> strategy)
     : initialized_(false),
       lowerLimit_(InterestControl::MinPipelineSize),
       limit_(InterestControl::MinPipelineSize),

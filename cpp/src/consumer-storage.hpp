@@ -27,13 +27,13 @@ class
  */
 class ConsumerStorage : public NdnRtcComponent, public IBufferObserver {
     public: 
-    ConsumerStorage(const boost::shared_ptr<StorageEngine>&, const std::string& streamPrefix,
-        const boost::shared_ptr<ndn::Face>& face, 
-        const boost::shared_ptr<ndn::KeyChain> keyChain = boost::make_shared<ndn::KeyChain>(nullptr)){}
+    ConsumerStorage(const std::shared_ptr<StorageEngine>&, const std::string& streamPrefix,
+        const std::shared_ptr<ndn::Face>& face, 
+        const std::shared_ptr<ndn::KeyChain> keyChain = std::make_shared<ndn::KeyChain>(nullptr)){}
     
     private:
     // IBufferObserver interface
-    virtual void onNewRequest(const boost::shared_ptr<BufferSlot>&) {}
+    virtual void onNewRequest(const std::shared_ptr<BufferSlot>&) {}
     virtual void onNewData(const BufferReceipt& receipt) {}
     virtual void onReset() {}
 };

@@ -33,13 +33,13 @@ namespace ndnrtc {
     class FrameFetcherImpl;
     class IFrameFetcher;
 
-    typedef boost::function<uint8_t*(const boost::shared_ptr<IFrameFetcher>&,
+    typedef std::function<uint8_t*(const std::shared_ptr<IFrameFetcher>&,
                                      int width, int height,
                                      IExternalRenderer::BufferType *bufferType)> OnBufferAllocate;
-    typedef boost::function<void(const boost::shared_ptr<IFrameFetcher>&,
+    typedef std::function<void(const std::shared_ptr<IFrameFetcher>&,
                                  const FrameInfo&, int nFramesFetched,
                                  int width, int height, const uint8_t* buffer)> OnFrameFetched;
-    typedef boost::function<void(const boost::shared_ptr<IFrameFetcher>&,
+    typedef std::function<void(const std::shared_ptr<IFrameFetcher>&,
                                  std::string reason)> OnFetchFailure;
 
     class IFrameFetcher {
@@ -81,13 +81,13 @@ namespace ndnrtc {
         /**
          * Fetches frames from local persistent storage.
          */
-        FrameFetcher(const boost::shared_ptr<StorageEngine>& storage);
+        FrameFetcher(const std::shared_ptr<StorageEngine>& storage);
 
         /**
          * Fetches frames by expressing interests on the provided face object.
          */
-        FrameFetcher(const boost::shared_ptr<ndn::Face>&,
-                     const boost::shared_ptr<ndn::KeyChain>&);
+        FrameFetcher(const std::shared_ptr<ndn::Face>&,
+                     const std::shared_ptr<ndn::KeyChain>&);
         ~FrameFetcher(){}
 
         /**
@@ -117,10 +117,10 @@ namespace ndnrtc {
          */
         State getState() const;
 
-        void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+        void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
 
     private:
-       boost::shared_ptr<FrameFetcherImpl> pimpl_;
+       std::shared_ptr<FrameFetcherImpl> pimpl_;
     };
 }
 

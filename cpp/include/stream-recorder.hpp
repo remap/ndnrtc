@@ -70,7 +70,7 @@ namespace ndnrtc {
             size_t pendingFrames_;
         } Stats;
 
-        typedef std::function<void(const boost::shared_ptr<const ndn::Data> &)> StoreData;
+        typedef std::function<void(const std::shared_ptr<const ndn::Data> &)> StoreData;
 
         static const FetchSettings Default;
 
@@ -85,8 +85,8 @@ namespace ndnrtc {
          */
         StreamRecorder(StoreData storeDataFun, 
                         const NamespaceInfo& ninfo,
-                        const boost::shared_ptr<ndn::Face>& face, 
-                        const boost::shared_ptr<ndn::KeyChain> keyChain);
+                        const std::shared_ptr<ndn::Face>& face, 
+                        const std::shared_ptr<ndn::KeyChain> keyChain);
         ~StreamRecorder(){ pimpl_.reset(); }
 
         /**
@@ -101,11 +101,11 @@ namespace ndnrtc {
         bool isFetching();
         const std::string getStreamPrefix() const;
         const std::string getThreadName() const;
-        void setLogger(const boost::shared_ptr<ndnlog::new_api::Logger>& logger);
+        void setLogger(const std::shared_ptr<ndnlog::new_api::Logger>& logger);
         const Stats& getCurrentStats() const;
 
         private:
-        boost::shared_ptr<StreamRecorderImpl> pimpl_;
+        std::shared_ptr<StreamRecorderImpl> pimpl_;
     };
 }
 

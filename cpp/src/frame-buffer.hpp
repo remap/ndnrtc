@@ -48,11 +48,11 @@ namespace ndnrtc
     class SlotSegment {
     public:
 
-        SlotSegment(const boost::shared_ptr<const ndn::Interest>&);
+        SlotSegment(const std::shared_ptr<const ndn::Interest>&);
 
         const NamespaceInfo& getInfo() const;
-        void setData(const boost::shared_ptr<WireSegment>& data);
-        const boost::shared_ptr<WireSegment>& getData() const { return data_; }
+        void setData(const std::shared_ptr<WireSegment>& data);
+        const std::shared_ptr<WireSegment>& getData() const { return data_; }
 
         bool isFetched() const { return data_.get(); }
         bool isPending() const { return !data_.get(); }
@@ -79,7 +79,7 @@ namespace ndnrtc
         /**
          * Returns interest used to fetch this segment
          */
-        boost::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
+        std::shared_ptr<const ndn::Interest> getInterest() const { return interest_; }
 
         /**
          * Takes into account if the segment is original or not.
@@ -90,9 +90,9 @@ namespace ndnrtc
         int64_t getDgen() const;
 
     private:
-        boost::shared_ptr<const ndn::Interest> interest_;
+        std::shared_ptr<const ndn::Interest> interest_;
         NamespaceInfo interestInfo_;
-        boost::shared_ptr<WireSegment> data_;
+        std::shared_ptr<WireSegment> data_;
         int64_t requestTimeUsec_, arrivalTimeUsec_;
         size_t requestNo_;
         bool isVerified_;
@@ -109,7 +109,7 @@ namespace ndnrtc
 
     class BufferSlot : public IPoolObject
                      , public IPipelineSlot
-                     , public boost::enable_shared_from_this<BufferSlot>
+                     , public std::enable_shared_from_this<BufferSlot>
     {
     public:
         enum State {
@@ -142,8 +142,8 @@ namespace ndnrtc
         ~BufferSlot(){}
 
         PipelineSlotState getState() const override { return slotState_; }
-        void setRequests(const std::vector<boost::shared_ptr<DataRequest>>&) override;
-        const std::vector<boost::shared_ptr<DataRequest>>& getRequests() const;
+        void setRequests(const std::vector<std::shared_ptr<DataRequest>>&) override;
+        const std::vector<std::shared_ptr<DataRequest>>& getRequests() const;
 
         const ndn::Name& getPrefix() const override  { return name_; }
         SlotTriggerConnection subscribe(PipelineSlotState, OnSlotStateUpdate) override;
@@ -175,7 +175,7 @@ namespace ndnrtc
         std::string
         dump(bool showLastSegment = false) const;
 
-        boost::shared_ptr<const packets::Meta> getMetaPacket() const { return meta_; }
+        std::shared_ptr<const packets::Meta> getMetaPacket() const { return meta_; }
 
         size_t getDataSegmentsNum() const { return nDataSegments_; }
         size_t getFetchedDataSegmentsNum() const { return nDataSegmentsFetched_; }
@@ -187,13 +187,13 @@ namespace ndnrtc
 
     private:
         PipelineSlotState slotState_;
-        std::vector<boost::shared_ptr<DataRequest>> requests_;
+        std::vector<std::shared_ptr<DataRequest>> requests_;
         std::vector<RequestTriggerConnection> requestConnections_;
         SlotTrigger onPending_, onAssembling_, onReady_, onUnfetchable_;
         NeedDataTrigger onMissing_;
         bool metaIsFetched_, manifestIsFetched_;
-        boost::shared_ptr<const packets::Meta> meta_;
-        boost::shared_ptr<const packets::Manifest> manifest_;
+        std::shared_ptr<const packets::Meta> meta_;
+        std::shared_ptr<const packets::Manifest> manifest_;
         SegmentNumber maxDataSegNo_, maxParitySegNo_;
 
         int64_t firstRequestTsUsec_, firstDataTsUsec_, lastDataTsUsec_;
@@ -225,7 +225,7 @@ namespace ndnrtc
          * @see clear()
          */
         void
-        segmentsRequested(const std::vector<boost::shared_ptr<const ndn::Interest>>& interests) DEPRECATED;
+        segmentsRequested(const std::vector<std::shared_ptr<const ndn::Interest>>& interests) DEPRECATED;
 
         /**
          * Adds received segment to this slot.
@@ -237,8 +237,8 @@ namespace ndnrtc
          * expressed Interest; it can be used for retrieving segment-level metadata
          * like Data Retrieval Delays, etc.
          */
-        const boost::shared_ptr<SlotSegment>
-        segmentReceived(const boost::shared_ptr<WireSegment>& segment) DEPRECATED;
+        const std::shared_ptr<SlotSegment>
+        segmentReceived(const std::shared_ptr<WireSegment>& segment) DEPRECATED;
 
         /**
          * Returns an array of names of missing segments
@@ -248,12 +248,12 @@ namespace ndnrtc
         /**
          * Returns an array of pending Interests for this slot
          */
-        const std::vector<boost::shared_ptr<const ndn::Interest>> getPendingInterests() const DEPRECATED;
+        const std::vector<std::shared_ptr<const ndn::Interest>> getPendingInterests() const DEPRECATED;
 
         /**
          *
          */
-        const std::vector<boost::shared_ptr<const SlotSegment>> getFetchedSegments() const DEPRECATED;
+        const std::vector<std::shared_ptr<const SlotSegment>> getFetchedSegments() const DEPRECATED;
 
 
 //        State getState(int phony = 0) const DEPRECATED { return state_; }
@@ -277,11 +277,11 @@ namespace ndnrtc
 
 
         // ???
-//        std::map<ndn::Name, boost::shared_ptr<DataRequest>> expressed_;
-//        std::map<ndn::Name, boost::shared_ptr<DataRequest>> fetched_;
-//        std::map<ndn::Name, boost::shared_ptr<DataRequest>> nacked_;
-//        std::map<ndn::Name, boost::shared_ptr<DataRequest>> appNacked_;
-//        std::map<ndn::Name, boost::shared_ptr<DataRequest>> timedout_;
+//        std::map<ndn::Name, std::shared_ptr<DataRequest>> expressed_;
+//        std::map<ndn::Name, std::shared_ptr<DataRequest>> fetched_;
+//        std::map<ndn::Name, std::shared_ptr<DataRequest>> nacked_;
+//        std::map<ndn::Name, std::shared_ptr<DataRequest>> appNacked_;
+//        std::map<ndn::Name, std::shared_ptr<DataRequest>> timedout_;
 
         // ----------------------------------------------------------------------------------------
         // CODE BELOW IS DEPRECATED
@@ -296,8 +296,8 @@ namespace ndnrtc
 
         ndn::Name name_;
         NamespaceInfo nameInfo_;
-        std::map<ndn::Name, boost::shared_ptr<SlotSegment>> requested_, fetched_;
-        boost::shared_ptr<SlotSegment> lastFetched_;
+        std::map<ndn::Name, std::shared_ptr<SlotSegment>> requested_, fetched_;
+        std::shared_ptr<SlotSegment> lastFetched_;
         unsigned int consistency_, nRtx_, assembledSize_;
 
         bool hasOriginalSegments_;
@@ -308,10 +308,10 @@ namespace ndnrtc
 
         int64_t requestTimeUsec_, firstSegmentTimeUsec_, assembledTimeUsec_;
 //        double assembled_, asmLevel_;
-//        mutable boost::shared_ptr<Manifest> manifest_;
+//        mutable std::shared_ptr<Manifest> manifest_;
         mutable Verification verified_;
 
-        virtual void updateConsistencyState(const boost::shared_ptr<SlotSegment>& segment);
+        virtual void updateConsistencyState(const std::shared_ptr<SlotSegment>& segment);
         void updateAssembledLevel();
 
 
@@ -336,14 +336,14 @@ namespace ndnrtc
          * @return shared_ptr of ImmutableVideoFramePacket or nullptr if
          * recovery attempt failed
          */
-        boost::shared_ptr<ImmutableFrameAlias>
+        std::shared_ptr<ImmutableFrameAlias>
         readPacket(const BufferSlot& slot, bool& recovered);
 
         _VideoFrameSegmentHeader
         readSegmentHeader(const BufferSlot& slot);
 
     private:
-        boost::shared_ptr<std::vector<uint8_t>> storage_;
+        std::shared_ptr<std::vector<uint8_t>> storage_;
         std::vector<uint8_t> fecList_;
     };
 
@@ -362,11 +362,11 @@ namespace ndnrtc
          * @return shared_ptr of ImmutableAudioBundle packet or nullptr if
          * failed to read data.
          */
-        boost::shared_ptr<ImmutableAudioBundleAlias>
+        std::shared_ptr<ImmutableAudioBundleAlias>
         readBundle(const BufferSlot& slot);
 
     private:
-        boost::shared_ptr<std::vector<uint8_t>> storage_;
+        std::shared_ptr<std::vector<uint8_t>> storage_;
     };
 
     //******************************************************************************
@@ -374,8 +374,8 @@ namespace ndnrtc
     public:
         SlotPool(const size_t& capacity = 300);
 
-        boost::shared_ptr<BufferSlot> pop();
-        bool push(const boost::shared_ptr<BufferSlot>& slot);
+        std::shared_ptr<BufferSlot> pop();
+        bool push(const std::shared_ptr<BufferSlot>& slot);
 
         size_t capacity() const { return capacity_; }
         size_t size() const { return pool_.size(); }
@@ -384,7 +384,7 @@ namespace ndnrtc
         SlotPool(const SlotPool&) = delete;
 
         size_t capacity_;
-        std::vector<boost::shared_ptr<BufferSlot>> pool_;
+        std::vector<std::shared_ptr<BufferSlot>> pool_;
     };
 
     //******************************************************************************
@@ -392,36 +392,36 @@ namespace ndnrtc
     class PlaybackQueue;
 
     typedef struct _BufferReceipt {
-        boost::shared_ptr<const BufferSlot> slot_;
-        boost::shared_ptr<const SlotSegment> segment_;
+        std::shared_ptr<const BufferSlot> slot_;
+        std::shared_ptr<const SlotSegment> segment_;
         BufferSlot::State oldState_;
     } BufferReceipt;
 
     class IBuffer {
     public:
         virtual void reset() = 0;
-        virtual bool requested(const std::vector<boost::shared_ptr<const ndn::Interest>>&) = 0;
-        virtual BufferReceipt received(const boost::shared_ptr<WireSegment>&) = 0;
-        virtual bool isRequested(const boost::shared_ptr<WireSegment>&) const = 0;
+        virtual bool requested(const std::vector<std::shared_ptr<const ndn::Interest>>&) = 0;
+        virtual BufferReceipt received(const std::shared_ptr<WireSegment>&) = 0;
+        virtual bool isRequested(const std::shared_ptr<WireSegment>&) const = 0;
         virtual unsigned int getSlotsNum(const ndn::Name&, int) const = 0;
         virtual std::string shortdump() const = 0;
         virtual void attach(IBufferObserver* observer) = 0;
         virtual void detach(IBufferObserver* observer) = 0;
     };
 
-    typedef boost::signals2::signal<void(const boost::shared_ptr<BufferSlot>&)> BufferSlotUpdateTrigger;
+    typedef boost::signals2::signal<void(const std::shared_ptr<BufferSlot>&)> BufferSlotUpdateTrigger;
     typedef BufferSlotUpdateTrigger OnSlotUnfetchable;
     typedef BufferSlotUpdateTrigger OnSlotReady;
     typedef BufferSlotUpdateTrigger OnSlotDiscard;
     
     class Buffer : public NdnRtcComponent, public IBuffer {
     public:
-        Buffer(boost::shared_ptr<RequestQueue> interestQ,
+        Buffer(std::shared_ptr<RequestQueue> interestQ,
                uint64_t slotRetainIntervalUsec = 3E6,
-               boost::shared_ptr<statistics::StatisticsStorage> storage =
-                boost::shared_ptr<statistics::StatisticsStorage>(statistics::StatisticsStorage::createConsumerStatistics()));
+               std::shared_ptr<statistics::StatisticsStorage> storage =
+                std::shared_ptr<statistics::StatisticsStorage>(statistics::StatisticsStorage::createConsumerStatistics()));
         
-        void newSlot(boost::shared_ptr<IPipelineSlot>);
+        void newSlot(std::shared_ptr<IPipelineSlot>);
         void removeSlot(const PacketNumber&);
         double getDelayEstimate() const { return delayEstimate_; }
         
@@ -443,22 +443,22 @@ namespace ndnrtc
         
         // CODE BELOW IS DEPRECATED
         
-//        Buffer(boost::shared_ptr<statistics::StatisticsStorage> storage,
-//               boost::shared_ptr<SlotPool> pool =
-//                boost::shared_ptr<SlotPool>(new SlotPool()));
+//        Buffer(std::shared_ptr<statistics::StatisticsStorage> storage,
+//               std::shared_ptr<SlotPool> pool =
+//                std::shared_ptr<SlotPool>(new SlotPool()));
 
-        bool requested(const std::vector<boost::shared_ptr<const ndn::Interest>>&);
-        BufferReceipt received(const boost::shared_ptr<WireSegment>& segment);
-        bool isRequested(const boost::shared_ptr<WireSegment>& segment) const;
+        bool requested(const std::vector<std::shared_ptr<const ndn::Interest>>&);
+        BufferReceipt received(const std::shared_ptr<WireSegment>& segment);
+        bool isRequested(const std::shared_ptr<WireSegment>& segment) const;
         unsigned int getSlotsNum(const ndn::Name& prefix, int stateMask) const;
 
         void attach(IBufferObserver* observer);
         void detach(IBufferObserver* observer);
-        boost::shared_ptr<SlotPool> getPool() const { return pool_; }
+        std::shared_ptr<SlotPool> getPool() const { return pool_; }
 
     private:
         typedef struct _SlotEntry {
-            boost::shared_ptr<BufferSlot> slot_;
+            std::shared_ptr<BufferSlot> slot_;
             NeedDataTriggerConnection onMissingDataConn_;
             SlotTriggerConnection onReadyConn_, onUnfetchableConn_, onAssemblingConn_;
             uint64_t insertedUsec_, pushDeadlineUsec_;
@@ -467,7 +467,7 @@ namespace ndnrtc
         
 //        class FrameGop {
 //        public:
-//            void add(boost::shared_ptr<BufferSlot> slot);
+//            void add(std::shared_ptr<BufferSlot> slot);
 //            bool hasKeyFrame() const;
 //            bool isFullyDecodable() const;
 //            size_t size() const;
@@ -491,10 +491,10 @@ namespace ndnrtc
         
         std::map<PacketNumber, SlotEntry> slots_;
         std::map<int32_t, PacketNumber> gopDecodeMap_;
-        boost::shared_ptr<BufferSlot> lastPushedSlot_;
+        std::shared_ptr<BufferSlot> lastPushedSlot_;
         
-        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
-        boost::shared_ptr<RequestQueue> requestQ_;
+        std::shared_ptr<statistics::StatisticsStorage> sstorage_;
+        std::shared_ptr<RequestQueue> requestQ_;
         boost::asio::steady_timer slotPushTimer_;
         uint64_t slotPushFireTime_;
         int64_t slotPushDelay_;
@@ -509,7 +509,7 @@ namespace ndnrtc
         void
         doCleanup(uint64_t);
         void
-        setSlotPushDeadline(const boost::shared_ptr<BufferSlot>&, uint64_t ts);
+        setSlotPushDeadline(const std::shared_ptr<BufferSlot>&, uint64_t ts);
         void
         setupPushTimer(uint64_t);
         
@@ -517,30 +517,30 @@ namespace ndnrtc
         friend PlaybackQueue;
 
         mutable boost::recursive_mutex mutex_;
-        boost::shared_ptr<SlotPool> pool_;
-        std::map<ndn::Name, boost::shared_ptr<BufferSlot>> activeSlots_, reservedSlots_;
+        std::shared_ptr<SlotPool> pool_;
+        std::map<ndn::Name, std::shared_ptr<BufferSlot>> activeSlots_, reservedSlots_;
         std::vector<IBufferObserver*> observers_;
     
         void
         dumpSlotDictionary(std::stringstream&,
-            const std::map<ndn::Name, boost::shared_ptr<BufferSlot>> &) const;
+            const std::map<ndn::Name, std::shared_ptr<BufferSlot>> &) const;
 
         void invalidate(const ndn::Name& slotPrefix);
         void invalidatePrevious(const ndn::Name& slotPrefix);
 
-        void reserveSlot(const boost::shared_ptr<const BufferSlot>& slot);
-        void releaseSlot(const boost::shared_ptr<const BufferSlot>& slot);
+        void reserveSlot(const std::shared_ptr<const BufferSlot>& slot);
+        void releaseSlot(const std::shared_ptr<const BufferSlot>& slot);
     };
 
     class IBufferObserver {
     public:
-        virtual void onNewRequest(const boost::shared_ptr<BufferSlot>&) = 0;
+        virtual void onNewRequest(const std::shared_ptr<BufferSlot>&) = 0;
         virtual void onNewData(const BufferReceipt& receipt) = 0;
         virtual void onReset() = 0;
     };
 
     //******************************************************************************
-    typedef boost::function<void(const boost::shared_ptr<const BufferSlot>& slot, double playTimeMs)> ExtractSlot;
+    typedef std::function<void(const std::shared_ptr<const BufferSlot>& slot, double playTimeMs)> ExtractSlot;
     class IPlaybackQueueObserver;
 
     class IPlaybackQueue {
@@ -565,7 +565,7 @@ namespace ndnrtc
     {
     public:
         PlaybackQueue(const ndn::Name& streamPrefix,
-            const boost::shared_ptr<Buffer>& buffer);
+            const std::shared_ptr<Buffer>& buffer);
         ~PlaybackQueue();
 
         void
@@ -594,26 +594,26 @@ namespace ndnrtc
     private:
         class Sample {
         public:
-            Sample(const boost::shared_ptr<const BufferSlot>& slot):slot_(slot){}
+            Sample(const std::shared_ptr<const BufferSlot>& slot):slot_(slot){}
 
-            boost::shared_ptr<const BufferSlot> slot() const { return slot_; }
+            std::shared_ptr<const BufferSlot> slot() const { return slot_; }
             int64_t timestamp() const;
             bool operator<(const Sample& sample) const
             { return this->timestamp() < sample.timestamp(); }
 
         private:
-            boost::shared_ptr<const BufferSlot> slot_;
+            std::shared_ptr<const BufferSlot> slot_;
         };
 
         mutable boost::recursive_mutex mutex_;
         ndn::Name streamPrefix_;
-        boost::shared_ptr<Buffer> buffer_;
+        std::shared_ptr<Buffer> buffer_;
         double packetRate_;
         std::set<Sample> queue_;
         std::vector<IPlaybackQueueObserver*> observers_;
-        boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
+        std::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
-        virtual void onNewRequest(const boost::shared_ptr<BufferSlot>&);
+        virtual void onNewRequest(const std::shared_ptr<BufferSlot>&);
         virtual void onNewData(const BufferReceipt& receipt);
         virtual void onReset();
     };

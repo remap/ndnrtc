@@ -53,7 +53,7 @@ class ILatencyControl
     virtual PipelineAdjust getCurrentCommand() const = 0;
     virtual void registerObserver(ILatencyControlObserver *o) = 0;
     virtual void unregisterObserver() = 0;
-    virtual void setPlayoutControl(boost::shared_ptr<IPlayoutControl> playoutControl) = 0;
+    virtual void setPlayoutControl(std::shared_ptr<IPlayoutControl> playoutControl) = 0;
 };
 
 /**
@@ -71,8 +71,8 @@ class LatencyControl : public NdnRtcComponent,
 {
   public:
     LatencyControl(unsigned int timeoutWindowMs,
-                   const boost::shared_ptr<const DrdEstimator> &drd,
-                   const boost::shared_ptr<statistics::StatisticsStorage> &storage);
+                   const std::shared_ptr<const DrdEstimator> &drd,
+                   const std::shared_ptr<statistics::StatisticsStorage> &storage);
     ~LatencyControl();
 
     void onDrdUpdate();
@@ -83,7 +83,7 @@ class LatencyControl : public NdnRtcComponent,
     void sampleArrived(const PacketNumber &playbackNo);
     void reset();
 
-    void setPlayoutControl(boost::shared_ptr<IPlayoutControl> playoutControl)
+    void setPlayoutControl(std::shared_ptr<IPlayoutControl> playoutControl)
     {
         playoutControl_ = playoutControl;
     }
@@ -93,7 +93,7 @@ class LatencyControl : public NdnRtcComponent,
 
     PipelineAdjust getCurrentCommand() const { return currentCommand_; }
 
-    void setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger);
+    void setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger);
 
   private:
     class IQueueSizeStrategy
@@ -113,19 +113,19 @@ class LatencyControl : public NdnRtcComponent,
     };
 
     boost::mutex mutex_;
-    boost::shared_ptr<StabilityEstimator> stabilityEstimator_;
-    boost::shared_ptr<DrdChangeEstimator> drdChangeEstimator_;
-    boost::shared_ptr<IPlayoutControl> playoutControl_;
-    boost::shared_ptr<IQueueSizeStrategy> queueSizeStrategy_;
+    std::shared_ptr<StabilityEstimator> stabilityEstimator_;
+    std::shared_ptr<DrdChangeEstimator> drdChangeEstimator_;
+    std::shared_ptr<IPlayoutControl> playoutControl_;
+    std::shared_ptr<IQueueSizeStrategy> queueSizeStrategy_;
     bool waitForChange_, waitForStability_;
     int64_t timestamp_;
     unsigned int timeoutWindowMs_;
-    boost::shared_ptr<const DrdEstimator> drd_;
+    std::shared_ptr<const DrdEstimator> drd_;
     estimators::Average interArrival_;
     double targetRate_;
     ILatencyControlObserver *observer_;
     PipelineAdjust currentCommand_;
-    boost::shared_ptr<statistics::StatisticsStorage> sstorage_;
+    std::shared_ptr<statistics::StatisticsStorage> sstorage_;
 
     void pipelineChanged(int64_t now);
 };

@@ -26,9 +26,9 @@ class RetransmissionController : public NdnRtcComponent,
                                  public statistics::StatObject
 {
   public:
-    RetransmissionController(boost::shared_ptr<statistics::StatisticsStorage> storage,
-                             boost::shared_ptr<IPlaybackQueue> playbackQueue,
-                             const boost::shared_ptr<DrdEstimator> &drdEstimator);
+    RetransmissionController(std::shared_ptr<statistics::StatisticsStorage> storage,
+                             std::shared_ptr<IPlaybackQueue> playbackQueue,
+                             const std::shared_ptr<DrdEstimator> &drdEstimator);
 
     void attach(IRtxObserver *observer);
     void detach(IRtxObserver *observer);
@@ -39,20 +39,20 @@ class RetransmissionController : public NdnRtcComponent,
   private:
     typedef struct _ActiveSlotListEntry
     {
-        boost::shared_ptr<BufferSlot> slot_;
+        std::shared_ptr<BufferSlot> slot_;
         int64_t deadlineTimestamp_;
     } ActiveSlotListEntry;
 
     std::vector<IRtxObserver *> observers_;
     std::map<ndn::Name, ActiveSlotListEntry> activeSlots_;
-    boost::shared_ptr<IPlaybackQueue> playbackQueue_;
-    boost::shared_ptr<DrdEstimator> drdEstimator_;
+    std::shared_ptr<IPlaybackQueue> playbackQueue_;
+    std::shared_ptr<DrdEstimator> drdEstimator_;
     bool enabled_;
 
     void checkRetransmissions();
 
     // IBuffer observer
-    void onNewRequest(const boost::shared_ptr<BufferSlot> &);
+    void onNewRequest(const std::shared_ptr<BufferSlot> &);
     void onNewData(const BufferReceipt &receipt);
     void onReset();
 };
@@ -60,7 +60,7 @@ class RetransmissionController : public NdnRtcComponent,
 class IRtxObserver
 {
   public:
-    virtual void onRetransmissionRequired(const std::vector<boost::shared_ptr<const ndn::Interest>> &) = 0;
+    virtual void onRetransmissionRequired(const std::vector<std::shared_ptr<const ndn::Interest>> &) = 0;
 };
 }
 

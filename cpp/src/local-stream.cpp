@@ -32,7 +32,7 @@ LocalAudioStream::getPlayoutDevices()
 //******************************************************************************
 LocalAudioStream::LocalAudioStream(const std::string& basePrefix, 
 			const MediaStreamSettings& settings):
-pimpl_(boost::make_shared<AudioStreamImpl>(basePrefix, settings))
+pimpl_(std::make_shared<AudioStreamImpl>(basePrefix, settings))
 {
 	pimpl_->setupInvocation(MediaStreamBase::MetaCheckIntervalMs, 
 		boost::bind(&MediaStreamBase::periodicInvocation, pimpl_));
@@ -96,12 +96,12 @@ LocalAudioStream::getThreads() const
 }
 
 void
-LocalAudioStream::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+LocalAudioStream::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
 	pimpl_->setLogger(logger);
 }
 
-boost::shared_ptr<ndnlog::new_api::Logger> 
+std::shared_ptr<ndnlog::new_api::Logger> 
 LocalAudioStream::getLogger() const
 {
     return pimpl_->getLogger();
@@ -114,7 +114,7 @@ LocalAudioStream::getStatistics() const
 	return pimpl_->getStatistics();
 }
 
-boost::shared_ptr<StorageEngine> 
+std::shared_ptr<StorageEngine> 
 LocalAudioStream::getStorage() const
 {
     return pimpl_->getStorage();
@@ -123,7 +123,7 @@ LocalAudioStream::getStorage() const
 //******************************************************************************
 LocalVideoStream::LocalVideoStream(const std::string& streamPrefix,
 	const MediaStreamSettings& settings, bool useFec):
-pimpl_(boost::make_shared<VideoStreamImpl>(streamPrefix, settings, useFec))
+pimpl_(std::make_shared<VideoStreamImpl>(streamPrefix, settings, useFec))
 {
 	pimpl_->setupInvocation(MediaStreamBase::MetaCheckIntervalMs, 
 		boost::bind(&MediaStreamBase::periodicInvocation, pimpl_));
@@ -216,12 +216,12 @@ LocalVideoStream::getThreads() const
 }
 
 void
-LocalVideoStream::setLogger(boost::shared_ptr<ndnlog::new_api::Logger> logger)
+LocalVideoStream::setLogger(std::shared_ptr<ndnlog::new_api::Logger> logger)
 {
 	pimpl_->setLogger(logger);
 }
 
-boost::shared_ptr<ndnlog::new_api::Logger> 
+std::shared_ptr<ndnlog::new_api::Logger> 
 LocalVideoStream::getLogger() const
 {
     return pimpl_->getLogger();
@@ -233,7 +233,7 @@ LocalVideoStream::getStatistics() const
 	return pimpl_->getStatistics();
 }
 
-boost::shared_ptr<StorageEngine> 
+std::shared_ptr<StorageEngine> 
 LocalVideoStream::getStorage() const
 {
     return pimpl_->getStorage();

@@ -34,9 +34,9 @@ using namespace ndnlog;
 using namespace ndnlog::new_api;
 
 int readYUV420(FILE *f, int width, int height, uint8_t **buf);
-void registerPrefix(boost::shared_ptr<Face> &face, const KeyChainManager &keyChainManager);
-void serveCerts(boost::shared_ptr<Face> &face, KeyChainManager &keyManager);
-void printStats(const VideoStream&, const vector<boost::shared_ptr<Data>>&);
+void registerPrefix(shared_ptr<Face> &face, const KeyChainManager &keyChainManager);
+void serveCerts(shared_ptr<Face> &face, KeyChainManager &keyManager);
+void printStats(const VideoStream&, const vector<shared_ptr<Data>>&);
 
 void
 runPublishing(boost::asio::io_service &io,
@@ -57,12 +57,12 @@ runPublishing(boost::asio::io_service &io,
     stringstream instanceId;
     instanceId << duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 
-    boost::shared_ptr<Face> face = boost::make_shared<ThreadsafeFace>(io);
-    helpers::KeyChainManager keyChainManager(face, boost::make_shared<KeyChain>(),
+    shared_ptr<Face> face = make_shared<ThreadsafeFace>(io);
+    helpers::KeyChainManager keyChainManager(face, make_shared<KeyChain>(),
         signingIdentity, instanceId.str(), "", 3600,
         Logger::getLoggerPtr(AppLog));
 
-    boost::shared_ptr<MemoryContentCache> memCache = boost::make_shared<MemoryContentCache>(face.get());
+    shared_ptr<MemoryContentCache> memCache = make_shared<MemoryContentCache>(face.get());
     memCache->setMinimumCacheLifetime(5000); // keep last 5 seconds of data
     VideoStream::Settings s(settings);
     s.memCache_ = memCache;
@@ -75,7 +75,7 @@ runPublishing(boost::asio::io_service &io,
     // setup mem cache for serving data
     // register data prefix if it's different from instance identity
     memCache->registerPrefix(basePrefix,
-                             [](const boost::shared_ptr<const Name> &prefix) {
+                             [](const shared_ptr<const Name> &prefix) {
                                  LogError(AppLog) << "Prefix registration failure (" << prefix << ")" << std::endl;
                                  throw std::runtime_error("Prefix registration failed");
                              });
@@ -125,11 +125,11 @@ runPublishing(boost::asio::io_service &io,
                 }
             }
 
-            vector<boost::shared_ptr<Data>> framePackets = stream.processImage(ImageFormat::I420, imgData);
+            vector<shared_ptr<Data>> framePackets = stream.processImage(ImageFormat::I420, imgData);
             size_t bytesRaw = 0;
             for (auto &d:framePackets)
                 bytesRaw += d->getDefaultWireEncoding().size();
-            
+
 //            cout << stream.getSeqNo()
 //                 << "\t" << stream.getGopNo()
 //                 << "\t" << framePackets.size()
@@ -140,9 +140,9 @@ runPublishing(boost::asio::io_service &io,
             if (AppLog != "" ||
                 (AppLog == "" && Logger::getLoggerPtr(AppLog)->getLogLevel() <= ndnlog::NdnLoggerDetailLevelDefault))
                 printStats(stream, framePackets);
-            
+
             dumpStats(csv, stats, stream.getStatistics());
-            
+
         };
 
         PreciseGenerator gen(io,
@@ -181,26 +181,26 @@ readYUV420(FILE *f, int width, int height, uint8_t **imgData)
 }
 
 void
-registerPrefix(boost::shared_ptr<Face> &face,
+registerPrefix(shared_ptr<Face> &face,
                const KeyChainManager &keyChainManager)
 {
     face->registerPrefix(Name(keyChainManager.instancePrefix()),
-                         [](const boost::shared_ptr<const Name> &prefix,
-                            const boost::shared_ptr<const Interest> &interest,
-                            Face &face, uint64_t, const boost::shared_ptr<const InterestFilter> &) {
+                         [](const shared_ptr<const Name> &prefix,
+                            const shared_ptr<const Interest> &interest,
+                            Face &face, uint64_t, const shared_ptr<const InterestFilter> &) {
                              LogTrace(AppLog) << "Unexpected incoming interest " << interest->getName() << std::endl;
                          },
-                         [](const boost::shared_ptr<const Name> &prefix) {
+                         [](const shared_ptr<const Name> &prefix) {
                              LogError(AppLog) << "Prefix registration failure (" << *prefix << ")" << std::endl;
                              throw std::runtime_error("Prefix registration failed");
                          },
-                         [](const boost::shared_ptr<const Name> &p, uint64_t) {
+                         [](const shared_ptr<const Name> &p, uint64_t) {
                              LogDebug(AppLog) << "Successfully registered prefix " << *p << std::endl;
                          });
 }
 
 void
-serveCerts(boost::shared_ptr<Face> &face, KeyChainManager &keyManager)
+serveCerts(shared_ptr<Face> &face, KeyChainManager &keyManager)
 {
     static MemoryContentCache cache(face.get());
     Name filter;
@@ -216,14 +216,14 @@ serveCerts(boost::shared_ptr<Face> &face, KeyChainManager &keyManager)
     cache.add(*(keyManager.instanceCertificate().get()));
 }
 
-void printStats(const VideoStream& s, const vector<boost::shared_ptr<Data>>& packets)
+void printStats(const VideoStream& s, const vector<shared_ptr<Data>>& packets)
 {
     static uint64_t startTime = 0;
     StatisticsStorage ss(s.getStatistics());
 
     if (startTime == 0)
         startTime = clock::millisecondTimestamp();
-    
+
     cout << "\r"
          << "[ "
          << setw(5) << setprecision(2) << (clock::millisecondTimestamp() - startTime)/1000. << "sec "
