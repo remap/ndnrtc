@@ -63,7 +63,7 @@ runPublishing(boost::asio::io_service &io,
         Logger::getLoggerPtr(AppLog));
 
     boost::shared_ptr<MemoryContentCache> memCache = boost::make_shared<MemoryContentCache>(face.get());
-    memCache->setMinimumCacheLifetime(5000); // keep last 5 seconds of datandnr
+    memCache->setMinimumCacheLifetime(5000); // keep last 5 seconds of data
     VideoStream::Settings s(settings);
     s.memCache_ = memCache;
     s.storeInMemCache_ = true;
@@ -94,6 +94,7 @@ runPublishing(boost::asio::io_service &io,
                  << " sample interval " << sampleIntervalUsec << "us" << endl;
 
     int res = 0;
+    bool isLooped = (nLoops == 0 ? true : false);
 
     do
     {
@@ -190,7 +191,7 @@ registerPrefix(boost::shared_ptr<Face> &face,
                              LogTrace(AppLog) << "Unexpected incoming interest " << interest->getName() << std::endl;
                          },
                          [](const boost::shared_ptr<const Name> &prefix) {
-                             LogError(AppLog) << "Prefix registration failure (" << prefix << ")" << std::endl;
+                             LogError(AppLog) << "Prefix registration failure (" << *prefix << ")" << std::endl;
                              throw std::runtime_error("Prefix registration failed");
                          },
                          [](const boost::shared_ptr<const Name> &p, uint64_t) {
