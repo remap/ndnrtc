@@ -172,8 +172,8 @@ int main(int argc, char **argv)
                          true,               // show help if requested
                          (string(TOOL_NAME)+string(PACKAGE_VERSION)).c_str());  // version string
 
-     for(auto const& arg : args)
-         std::cout << arg.first << " " <<  arg.second << std::endl;
+     // for(auto const& arg : args)
+     //     std::cout << arg.first << " " <<  arg.second << std::endl;
 
     AppLog = args["--log"].asString();
     cout << AppLog << endl;
