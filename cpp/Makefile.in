@@ -181,11 +181,8 @@ DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
-CONFIG_CLEAN_FILES = client/params.cfg client/sample-consumer.cfg \
-	client/sample-producer.cfg client/test-freeculture.cfg
-CONFIG_CLEAN_VPATH_FILES = tests/default.cfg tests/sample-consumer.cfg \
-	tests/sample-producer.cfg tests/sample-bad1.cfg \
-	tests/consumer-audio.cfg tests/consumer-video.cfg
+CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_VPATH_FILES =
 @HAVE_NANOMSG_TRUE@am__EXEEXT_1 = nanopipe-adaptor$(EXEEXT)
 @HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_2 = stream-recorder$(EXEEXT) \
 @HAVE_PERSISTENT_STORAGE_TRUE@	networked-storage$(EXEEXT)
@@ -2804,16 +2801,9 @@ TEST_LOGS = $(am__test_logs2:.test.log=.log)
 TEST_LOG_DRIVER = $(SHELL) $(top_srcdir)/test-driver
 TEST_LOG_COMPILE = $(TEST_LOG_COMPILER) $(AM_TEST_LOG_FLAGS) \
 	$(TEST_LOG_FLAGS)
-am__DIST_COMMON = $(srcdir)/Makefile.in \
-	$(top_srcdir)/tests/consumer-audio.cfg \
-	$(top_srcdir)/tests/consumer-video.cfg \
-	$(top_srcdir)/tests/default.cfg \
-	$(top_srcdir)/tests/sample-bad1.cfg \
-	$(top_srcdir)/tests/sample-consumer.cfg \
-	$(top_srcdir)/tests/sample-producer.cfg \
-	$(top_srcdir)/tests/test-freeculture.cfg AUTHORS COPYING \
-	ChangeLog NEWS ar-lib compile config.guess config.sub depcomp \
-	install-sh ltmain.sh missing test-driver
+am__DIST_COMMON = $(srcdir)/Makefile.in AUTHORS COPYING ChangeLog NEWS \
+	ar-lib compile config.guess config.sub depcomp install-sh \
+	ltmain.sh missing test-driver
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)

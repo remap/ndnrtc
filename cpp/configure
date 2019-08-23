@@ -2407,6 +2407,48 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_cxx_check_func
+
+# ac_fn_cxx_try_run LINENO
+# ------------------------
+# Try to link conftest.$ac_ext, and return whether this succeeded. Assumes
+# that executables *can* be run.
+ac_fn_cxx_try_run ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  if { { ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_link") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && { ac_try='./conftest$ac_exeext'
+  { { case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: program exited with status $ac_status" >&5
+       $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+       ac_retval=$ac_status
+fi
+  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+  as_fn_set_status $ac_retval
+
+} # ac_fn_cxx_try_run
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -3426,25 +3468,6 @@ else
 fi
 AM_BACKSLASH='\'
 
-
-#AC_ARG_VAR([BOOSTDIR], [Path to the directory which contains Boost library headers folder (default is /usr/local/include)])
-#AC_ARG_VAR([BOOSTLIB], [Path to the directory which contains Boost library binaries folder (default is /usr/local/lib)])
-#AC_ARG_VAR([NDNCPPDIR], [Path to the directory which contains NDN-CPP library headers folder (default is /usr/local/include)])
-#AC_ARG_VAR([NDNCPPLIB], [Path to the directory which contains NDN-CPP library binaries (default is /usr/local/lib)])
-#AC_ARG_VAR([OPENFECDIR], [Path to the directory which contains OpenFEC library])
-#AC_ARG_VAR([OPENFECSRC], [Path to the directory which contains OpenFEC library header files (default is $OPENFECDIR/src)])
-#AC_ARG_VAR([OPENFECLIB], [Path to the directory which contains OpenFEC library binaries (default is $OPENFECDIR/bin/Release)])
-#AC_ARG_VAR([WEBRTCDIR], [Path to the directory which contains WebRTC trunk])
-#AC_ARG_VAR([WEBRTCSRC], [Path to the directory which contains WebRTC header files (default is $WEBRTCDIR/webrtc)])
-#AC_ARG_VAR([WEBRTCLIB], [Path to the directory which contains WebRTC libraries (default is $WEBRTCDIR/out/Release)])
-#AC_ARG_VAR([LCONFIGDIR], [Optional (for client demo app): path to the directory which contains libconfig library headers (default is /usr/local/include)])
-#AC_ARG_VAR([LCONFIGLIB], [Optional (for client demo app): path to the directory which contains libconfig library binaries (default is /usr/local/lib)])
-#AC_ARG_VAR([NANOMSGGDIR], [Optional (for client demo app): path to the directory which contains nanomsg library headers (default is /usr/local/include)])
-#AC_ARG_VAR([NANOMSGLIB], [Optional (for client demo app): path to the directory which contains nanomsg library binaries (default is /usr/local/lib)])
-#AC_ARG_VAR([PSTORAGEDIR], [Optional: path to the directory which contains persistent storage library headers (LevelDB for Android or RocksDB otherwise, default is /usr/local/include)])
-#AC_ARG_VAR([PSTORAGELIB], [Optional: path to the directory which contains persistent storage library binaries (LevelDB for Android or RocksDB otherwise, default is /usr/local/lib)])
-#AC_ARG_VAR([CNLCPPDIR], [Path to the directory which contains CNL-CPP library headers folder (default is /usr/local/include)])
-#AC_ARG_VAR([CNLCPPLIB], [Path to the directory which contains CNL-CPP library binaries (default is /usr/local/lib)])
 
 # Check whether --enable-logging was given.
 if test "${enable_logging+set}" = set; then :
@@ -17245,168 +17268,6 @@ case $host_os in
 		;;
 esac
 
-#if test ${BOOSTDIR}; then
-#	DIR=$(cd $BOOSTDIR && pwd || echo "not found")
-#	if [[[ "$DIR" = "not found" ]]];
-#	then
-#		AC_MSG_ERROR([directory not found - $BOOSTDIR])
-#	fi
-#	BOOSTDIR=$DIR
-#else
-#	BOOSTDIR="/usr/local/include"
-#fi
-#
-#if test ${BOOSTLIB}; then
-#	DIR=$(cd $BOOSTLIB && pwd || echo "not found")
-#	if [[[ "$DIR" = "not found" ]]];
-#	then
-#		AC_MSG_ERROR([directory not found - $BOOSTLIB])
-#	fi
-#	BOOSTLIB=$DIR
-#else
-#	BOOSTLIB="/usr/local/lib"
-#fi
-#
-#if test ${NDNCPPDIR}; then
-#	DIR=$(cd $NDNCPPDIR && pwd || echo "not found")
-#	if [[[ "$DIR" = "not found" ]]];
-#	then
-#		AC_MSG_ERROR([directory not found - $NDNCPPDIR])
-#	fi
-#	NDNCPPDIR=$DIR
-#else
-#	NDNCPPDIR="/usr/local/include"
-#fi
-#
-#if test ${NDNCPPLIB}; then
-#	DIR=$(cd $NDNCPPLIB && pwd || echo "not found")
-#	if [[[ "$DIR" = "not found" ]]];
-#	then
-#		AC_MSG_ERROR([directory not found - $NDNCPPLIB])
-#	fi
-#	NDNCPPLIB=$DIR
-#else
-#	NDNCPPLIB="/usr/local/lib"
-#fi
-#
-#if test ${OPENFECDIR}; then
-#	DIR=$(cd $OPENFECDIR && pwd || echo "not found")
-#	if [[[ "$DIR" = "not found" ]]];
-#	then
-#		AC_MSG_ERROR([directory not found - $OPENFECDIR])
-#	fi
-#	OPENFECDIR=$DIR
-#fi
-#
-#if test "x${OPENFECSRC}" = "x"; then
-#	OPENFECSRC="$OPENFECDIR/src"
-#fi
-#
-#if test "x${OPENFECLIB}" = "x"; then
-#	OPENFECLIB="$OPENFECDIR/bin/Release"
-#fi
-#
-#if test ${WEBRTCDIR}; then
-#	DIR=$(cd $WEBRTCDIR && pwd || echo "not found")
-#	if [[[ "$DIR" = "not found" ]]];
-#	then
-#		AC_MSG_ERROR([directory not found - $W])
-#	fi
-#	WEBRTCDIR=$DIR
-#fi
-#
-#if test "x${WEBRTCSRC}" = "x"; then
-#	WEBRTCSRC="$WEBRTCDIR/webrtc"
-#fi
-#
-#if test "x${WEBRTCLIB}" = "x"; then
-#	WEBRTCLIB="$WEBRTCDIR/out/Default/obj/webrtc"
-#fi
-#
-#if test ${LCONFIGDIR}; then
-#	LCONFIGDIR=$(cd $LCONFIGDIR; pwd)
-#else
-#	LCONFIGDIR="/usr/local/include"
-#fi
-#
-#if test ${LCONFIGLIB}; then
-#	LCONFIGLIB=$(cd $LCONFIGLIB; pwd)
-#else
-#	LCONFIGLIB="/usr/local/lib"
-#fi
-#
-#if test ${NANOMSGDIR}; then
-#	NANOMSGDIR=$(cd $NANOMSGDIR; pwd)
-#else
-#	NANOMSGDIR="/usr/local/include"
-#fi
-#
-#if test ${NANOMSGLIB}; then
-#	NANOMSGLIB=$(cd $NANOMSGLIB; pwd)
-#else
-#	NANOMSGLIB="/usr/local/lib"
-#fi
-#
-#if test ${PSTORAGEDIR}; then
-#	PSTORAGEDIR=$(cd $PSTORAGEDIR; pwd)
-#else
-#	PSTORAGEDIR="/usr/local/include"
-#fi
-#
-#if test ${PSTORAGELIB}; then
-#	PSTORAGELIB=$(cd $PSTORAGELIB; pwd)
-#else
-#	PSTORAGELIB="/usr/local/lib"
-#fi
-#
-#if test ${CNLCPPDIR}; then
-#	DIR=$(cd $CNLCPPDIR && pwd || echo "not found")
-#	if [[[ "$DIR" = "not found" ]]];
-#	then
-#		AC_MSG_ERROR([directory not found - $CNLCPPDIR])
-#	fi
-#	CNLCPPDIR=$DIR
-#else
-#	CNLCPPDIR="/usr/local/include"
-#fi
-#
-#if test ${CNLCPPLIB}; then
-#	DIR=$(cd $CNLCPPLIB && pwd || echo "not found")
-#	if [[[ "$DIR" = "not found" ]]];
-#	then
-#		AC_MSG_ERROR([directory not found - $CNLCPPLIB])
-#	fi
-#	CNLCPPLIB=$DIR
-#else
-#	CNLCPPLIB="/usr/local/lib"
-#fi
-
-# create links for client config file
-ac_config_links="$ac_config_links client/params.cfg:tests/default.cfg"
-
-ac_config_links="$ac_config_links client/sample-consumer.cfg:tests/sample-consumer.cfg"
-
-ac_config_links="$ac_config_links client/sample-producer.cfg:tests/sample-producer.cfg"
-
-ac_config_links="$ac_config_links client/test-freeculture.cfg:tests/test-freeculture.cfg"
-
-ac_config_links="$ac_config_links tests/default.cfg:tests/default.cfg"
-
-ac_config_links="$ac_config_links tests/sample-consumer.cfg:tests/sample-consumer.cfg"
-
-ac_config_links="$ac_config_links tests/sample-producer.cfg:tests/sample-producer.cfg"
-
-
-ac_config_links="$ac_config_links tests/sample-bad1.cfg:tests/sample-bad1.cfg"
-
-ac_config_links="$ac_config_links tests/consumer-audio.cfg:tests/consumer-audio.cfg"
-
-ac_config_links="$ac_config_links tests/consumer-video.cfg:tests/consumer-video.cfg"
-
-
-# create links for resources folder
-#AC_CONFIG_LINKS([resources/dummy:resources/dummy])
-
 # setting conditionals for automake
  if test $os_module = darwin; then
   OS_DARWIN_TRUE=
@@ -17835,8 +17696,6 @@ $as_echo "#define HAVE_CXX11 1" >>confdefs.h
 
 
 # Checks for library functions.
-#AC_FUNC_MALLOC
-#AC_FUNC_REALLOC
 for ac_func in gettimeofday memset sqrt strstr
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
@@ -18671,15 +18530,10 @@ fi
 	LDFLAGS="$LDFLAGS_SAVED"
 	fi
 
-#AX_BOOST_CHRONO
-#AX_BOOST_REGEX
 
-# this is because AX_BOOST_TIMER and AX_BOOST_FILESYSTEM fail when cross-compiling
-# I've added libboost_timer to ndnrtc_client_LDADD in Makefile.am manually (for android)
+# this is because AX_BOOST_FILESYSTEM fails when cross-compiling
 if test "$cross_compiling" != "yes"
 then
-    #AX_BOOST_THREAD
-    #AX_BOOST_TIMER
 
 
 # Check whether --with-boost-filesystem was given.
@@ -19128,12 +18982,6 @@ done
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NDN-CPP library..." >&5
 $as_echo_n "checking for NDN-CPP library...... " >&6; }
 
-#AC_LINK_IFELSE(
-# 	[AC_LANG_PROGRAM([#include <ndn-cpp/interest.hpp>],
-# 		[ndn::Interest interest])],
-# 		[AC_MSG_RESULT([yes])],
-# 		[AC_MSG_FAILURE([can't find NDN-CPP lib])]
-#)
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ndn_getNowMilliseconds in -lndn-cpp" >&5
 $as_echo_n "checking for ndn_getNowMilliseconds in -lndn-cpp... " >&6; }
 if ${ac_cv_lib_ndn_cpp_ndn_getNowMilliseconds+:} false; then :
@@ -19179,26 +19027,51 @@ _ACEOF
 
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if NDN-CPP library was compiled for using std::shared_ptr" >&5
+$as_echo_n "checking if NDN-CPP library was compiled for using std::shared_ptr... " >&6; }
+if test "$build_os" == "$host_os"; then
+	if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
 
-#AC_MSG_CHECKING([if NDN-CPP library was compiled for using boost::shared_ptr])
+			#include <ndn-cpp/interest.hpp>
+			#include <memory>
 
-#if test "$build_os" == "$host_os"; then
-#	AC_RUN_IFELSE(
-#		[AC_LANG_PROGRAM([
-#			#include <ndn-cpp/interest.hpp>
-#			#include <boost/shared_ptr.hpp>
-#			],
-#			[
-#				ndn::ptr_lib::shared_ptr<int> ptrlibPtr(new int(5));
-#				boost::shared_ptr<int> boostPtr(new int(6));
-#				ptrlibPtr = boostPtr;
-#			]
-#		)],
-#		[AC_MSG_RESULT([yes])],
-#		[AC_MSG_RESULT([no])]
-#		[AC_MSG_FAILURE([NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr])]
-#	)
-#fi
+int
+main ()
+{
+
+				ndn::ptr_lib::shared_ptr<int> ptrlibPtr(new int(5));
+				std::shared_ptr<int> boostPtr(new int(6));
+				ptrlibPtr = boostPtr;
+
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_run "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "NDN-CPP installation at $NDNCPPBIN does not provide support for boost::shared_ptr
+See \`config.log' for more details" "$LINENO" 5; }
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ndntools_getGeneralizedContentMetaComponent in -lndn-cpp-tools" >&5
 $as_echo_n "checking for ndntools_getGeneralizedContentMetaComponent in -lndn-cpp-tools... " >&6; }
@@ -20264,7 +20137,6 @@ esac
 cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
 # Files that config.status was made for.
 config_files="$ac_config_files"
-config_links="$ac_config_links"
 config_commands="$ac_config_commands"
 
 _ACEOF
@@ -20289,9 +20161,6 @@ Usage: $0 [OPTION]... [TAG]...
 
 Configuration files:
 $config_files
-
-Configuration links:
-$config_links
 
 Configuration commands:
 $config_commands
@@ -20805,16 +20674,6 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
-    "client/params.cfg") CONFIG_LINKS="$CONFIG_LINKS client/params.cfg:tests/default.cfg" ;;
-    "client/sample-consumer.cfg") CONFIG_LINKS="$CONFIG_LINKS client/sample-consumer.cfg:tests/sample-consumer.cfg" ;;
-    "client/sample-producer.cfg") CONFIG_LINKS="$CONFIG_LINKS client/sample-producer.cfg:tests/sample-producer.cfg" ;;
-    "client/test-freeculture.cfg") CONFIG_LINKS="$CONFIG_LINKS client/test-freeculture.cfg:tests/test-freeculture.cfg" ;;
-    "tests/default.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/default.cfg:tests/default.cfg" ;;
-    "tests/sample-consumer.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/sample-consumer.cfg:tests/sample-consumer.cfg" ;;
-    "tests/sample-producer.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/sample-producer.cfg:tests/sample-producer.cfg" ;;
-    "tests/sample-bad1.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/sample-bad1.cfg:tests/sample-bad1.cfg" ;;
-    "tests/consumer-audio.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/consumer-audio.cfg:tests/consumer-audio.cfg" ;;
-    "tests/consumer-video.cfg") CONFIG_LINKS="$CONFIG_LINKS tests/consumer-video.cfg:tests/consumer-video.cfg" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -20827,7 +20686,6 @@ done
 # bizarre bug on SunOS 4.1.3.
 if $ac_need_defaults; then
   test "${CONFIG_FILES+set}" = set || CONFIG_FILES=$config_files
-  test "${CONFIG_LINKS+set}" = set || CONFIG_LINKS=$config_links
   test "${CONFIG_COMMANDS+set}" = set || CONFIG_COMMANDS=$config_commands
 fi
 
@@ -21017,7 +20875,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 fi # test -n "$CONFIG_FILES"
 
 
-eval set X "  :F $CONFIG_FILES    :L $CONFIG_LINKS  :C $CONFIG_COMMANDS"
+eval set X "  :F $CONFIG_FILES      :C $CONFIG_COMMANDS"
 shift
 for ac_tag
 do
@@ -21237,38 +21095,7 @@ which seems to be undefined.  Please make sure it is defined" >&2;}
   || as_fn_error $? "could not create $ac_file" "$LINENO" 5
  ;;
 
-  :L)
-  #
-  # CONFIG_LINK
-  #
 
-  if test "$ac_source" = "$ac_file" && test "$srcdir" = '.'; then
-    :
-  else
-    # Prefer the file from the source tree if names are identical.
-    if test "$ac_source" = "$ac_file" || test ! -r "$ac_source"; then
-      ac_source=$srcdir/$ac_source
-    fi
-
-    { $as_echo "$as_me:${as_lineno-$LINENO}: linking $ac_source to $ac_file" >&5
-$as_echo "$as_me: linking $ac_source to $ac_file" >&6;}
-
-    if test ! -r "$ac_source"; then
-      as_fn_error $? "$ac_source: file not found" "$LINENO" 5
-    fi
-    rm -f "$ac_file"
-
-    # Try a relative symlink, then a hard link, then a copy.
-    case $ac_source in
-    [\\/$]* | ?:[\\/]* ) ac_rel_source=$ac_source ;;
-	*) ac_rel_source=$ac_top_build_prefix$ac_source ;;
-    esac
-    ln -s "$ac_rel_source" "$ac_file" 2>/dev/null ||
-      ln "$ac_source" "$ac_file" 2>/dev/null ||
-      cp -p "$ac_source" "$ac_file" ||
-      as_fn_error $? "cannot link or copy $ac_source to $ac_file" "$LINENO" 5
-  fi
- ;;
   :C)  { $as_echo "$as_me:${as_lineno-$LINENO}: executing $ac_file commands" >&5
 $as_echo "$as_me: executing $ac_file commands" >&6;}
  ;;
