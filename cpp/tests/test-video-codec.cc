@@ -53,14 +53,62 @@ TEST(TestCodec, TestImage)
    }
 }
 
+TEST(TestCodec, TestImageCopy)
+{
+    {
+        size_t w = 1280, h = 720;
+        size_t i420_size = 3*w*h/2;
+        FILE *fIn = fopen((resources_path+"/eb_samples/eb_dog_1280x720_240.yuv").c_str(), "rb");
+        if (!fIn)
+            FAIL() << "couldn't open input video file";
+
+        uint8_t *rawData = (uint8_t*)malloc(i420_size);
+        int n = fread(rawData, 1, i420_size, fIn);
+        ASSERT_TRUE(n == i420_size);
+
+        VideoCodec::Image raw(w, h, ImageFormat::I420, rawData);
+        uint8_t *copiedData = (uint8_t*)malloc(i420_size);
+        memset(copiedData, 0, i420_size);
+
+        raw.copyTo(copiedData);
+
+        EXPECT_EQ(memcmp(rawData, copiedData, i420_size), 0);
+   }
+   {
+       size_t w = 1280, h = 720;
+       size_t i420_size = 3*w*h/2;
+       FILE *fIn = fopen((resources_path+"/eb_samples/eb_dog_1280x720_240.yuv").c_str(), "rb");
+       if (!fIn)
+           FAIL() << "couldn't open input video file";
+
+       uint8_t *rawData = (uint8_t*)malloc(i420_size);
+       int n = fread(rawData, 1, i420_size, fIn);
+       ASSERT_TRUE(n == i420_size);
+
+       vpx_image_t *vpx_img = nullptr;
+       vpx_img = vpx_img_wrap(vpx_img, VPX_IMG_FMT_I420, w, h, 0, rawData);
+       ASSERT_TRUE(vpx_img != nullptr);
+
+       VideoCodec::Image raw(vpx_img);
+       EXPECT_EQ(raw.getDataSize(), i420_size);
+
+       uint8_t *copiedData = (uint8_t*)malloc(i420_size);
+       memset(copiedData, 0, i420_size);
+
+       raw.copyTo(copiedData);
+
+       EXPECT_EQ(memcmp(rawData, copiedData, i420_size), 0);
+   }
+}
+
 TEST(TestCodec, TestCreate)
 {
-    { // uninitialized settings
-        CodecSettings s;
-        VideoCodec vc;
-
-        EXPECT_ANY_THROW(vc.initEncoder(s));
-    }
+    // { // uninitialized settings
+    //     CodecSettings s;
+    //     VideoCodec vc;
+    // 
+    //     EXPECT_ANY_THROW(vc.initEncoder(s));
+    // }
     { // default settings
         VideoCodec vc;
         EXPECT_NO_THROW(vc.initEncoder(VideoCodec::defaultCodecSettings()));

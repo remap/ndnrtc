@@ -40,12 +40,14 @@ VideoCodec::Image::Image(const vpx_image_t *img)
 
 VideoCodec::Image::Image(const VideoCodec::Image& img)
 {
-    throw runtime_error("not implemented");
+    throw runtime_error("not implemented: "
+                        "VideoCodec::Image::Image(const VideoCodec::Image& img)");
 }
 
 VideoCodec::Image::Image(VideoCodec::Image&& img)
 {
-    throw runtime_error("not implemented");
+    throw runtime_error("not implemented"
+                        "VideoCodec::Image::Image(VideoCodec::Image&& img)");
 }
 
 VideoCodec::Image::~Image()
@@ -114,6 +116,42 @@ VideoCodec::Image::write(FILE *file) const
     return 1;
 }
 
+int
+VideoCodec::Image::copyTo(uint8_t* dataBuf) const
+{
+    int res = 0;
+
+    if (!isWrapped_)
+    {
+        size_t len = getAllocationSize();
+        memcpy((void*)dataBuf, (void*)data_, len);
+    }
+    else
+    {
+        vpx_image_t *img = (vpx_image_t*)data_;
+        // write it plane by plane (borrowed from https://github.com/webmproject/libvpx/blob/a5d499e16570d00d5e1348b1c7977ced7af3670f/tools_common.c#L219)
+        int plane;
+        size_t nCopied = 0;
+        for (plane = 0; plane < 3; ++plane) {
+            const unsigned char *buf = img->planes[plane];
+            const int stride = img->stride[plane];
+            const int w = vpxImgPlaneWidth(img, plane) *
+            ((img->fmt & VPX_IMG_FMT_HIGHBITDEPTH) ? 2 : 1);
+            const int h = vpxImgPlaneHeight(img, plane);
+            int y;
+
+            for (y = 0; y < h; ++y) {
+                memcpy((void*)dataBuf, (void*)buf, w);
+                dataBuf += w;
+                buf += stride;
+                nCopied += w;
+            }
+        }
+    }
+
+    return 1;
+}
+
 void
 VideoCodec::Image::wrap(const vpx_image_t *img)
 {
@@ -151,6 +189,32 @@ VideoCodec::Image::toVpxImage(vpx_image_t **img) const
     else
     {
         *img = (vpx_image_t*)data_;
+    }
+}
+
+size_t
+VideoCodec::Image::getDataSize() const
+{
+    if (!isWrapped_)
+    {
+        if (allocatedSz_)
+            return getAllocatedSize();
+        else
+            return getAllocationSize();
+    }
+    else
+    {
+        size_t sz = 0;
+        vpx_image_t *img = (vpx_image_t*)data_;
+        int plane;
+        for (plane = 0; plane < 3; ++plane) {
+            const int w = vpxImgPlaneWidth(img, plane) *
+                ((img->fmt & VPX_IMG_FMT_HIGHBITDEPTH) ? 2 : 1);
+            const int h = vpxImgPlaneHeight(img, plane);
+            sz += h*w;
+        }
+
+        return sz;
     }
 }
 
@@ -239,7 +303,7 @@ void VideoCodec::initEncoder(const CodecSettings &settings)
 
     res = vpx_codec_enc_config_default(codecIface, &cfg, 0);
     if (res)
-        throw runtime_error("failed to get deafult encoder config");
+        throw runtime_error("failed to get default encoder config");
 
     cfg.g_pass = VPX_RC_ONE_PASS;
     cfg.g_lag_in_frames = 0;
@@ -285,7 +349,7 @@ void VideoCodec::initEncoder(const CodecSettings &settings)
     res = vpx_codec_control(&vpxCodec_, VP8E_SET_MAX_INTRA_BITRATE_PCT, 130);	// TODO: tune like in WebRTC?
     if (res)
         throw runtime_error("codec control error: failed to set INTRA bitrate cap");
-    
+
     res = vpx_codec_control_(&vpxCodec_, VP9E_SET_MAX_INTER_BITRATE_PCT, 200);   // TODO: tune like in WebRTC?
     if (res)
         throw runtime_error("codec control error: failed to set INTER bitrate cap");
@@ -323,9 +387,9 @@ void VideoCodec::initDecoder(const CodecSettings &settings)
     vpx_codec_iface_t *codecIface = vpx_codec_vp9_dx();
 
     cfg.threads = std::min(settings.numCores_, 8u);
-    vpx_codec_dec_init(&vpxCodec_, codecIface, &cfg, 0);
+    res = vpx_codec_dec_init(&vpxCodec_, codecIface, &cfg, 0);
     if (res)
-        throw runtime_error("error initializing decoder");
+        throw runtime_error("error initializing decoder: "+to_string(res));
 
     if (settings.rowMt_)
     {

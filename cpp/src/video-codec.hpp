@@ -44,6 +44,7 @@ public:
 
       int read(FILE *file);
       int write(FILE *file) const;
+      int copyTo(uint8_t*) const;
 
       #if HAVE_LIBVPX
             void wrap(const vpx_image_t *img);
@@ -60,6 +61,7 @@ public:
       // returns size of actually allocated data
       size_t getAllocatedSize() const { return allocatedSz_; }
       bool getIsWrapped() const { return isWrapped_; }
+      size_t getDataSize() const;
 
       void setUserData(void *uData) { uData_ = uData; }
       void* getUserData() const { return uData_; }
