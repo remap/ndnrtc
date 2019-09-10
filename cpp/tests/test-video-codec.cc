@@ -67,6 +67,9 @@ TEST(TestCodec, TestImageCopy)
         ASSERT_TRUE(n == i420_size);
 
         VideoCodec::Image raw(w, h, ImageFormat::I420, rawData);
+        EXPECT_EQ(raw.getWidth(), w);
+        EXPECT_EQ(raw.getHeight(), h);
+        
         uint8_t *copiedData = (uint8_t*)malloc(i420_size);
         memset(copiedData, 0, i420_size);
 
@@ -91,6 +94,8 @@ TEST(TestCodec, TestImageCopy)
 
        VideoCodec::Image raw(vpx_img);
        EXPECT_EQ(raw.getDataSize(), i420_size);
+       EXPECT_EQ(raw.getWidth(), w);
+       EXPECT_EQ(raw.getHeight(), h);
 
        uint8_t *copiedData = (uint8_t*)malloc(i420_size);
        memset(copiedData, 0, i420_size);
@@ -160,6 +165,8 @@ TEST(TestCodec, TestEncodeDecode)
     int nRead = 0, nBytes = 0, nDropped = 0, nEncoded = 0, nKey = 0, nDecoded = 0;
     while (raw.read(fIn))
     {
+        EXPECT_EQ(raw.getWidth(), 1280);
+        EXPECT_EQ(raw.getHeight(), 720);
         nRead ++;
         int res = ec.encode(raw, false,
             [&nEncoded, &nDecoded, &nBytes, &nKey, &dc](const EncodedFrame& frame){
@@ -170,6 +177,8 @@ TEST(TestCodec, TestEncodeDecode)
 
                 int res = dc.decode(frame,
                                     [&nDecoded](const VideoCodec::Image& raw){
+                                        EXPECT_EQ(raw.getWidth(), 1280);
+                                        EXPECT_EQ(raw.getHeight(), 720);
                                         nDecoded++;
                                     });
                 EXPECT_EQ(res, 0);
