@@ -12,7 +12,6 @@
 #include "video-codec.hpp"
 #include <vpx/vp8cx.h>
 #include <vpx/vp8dx.h>
-#include <vpx/vpx_decoder.h>
 
 using namespace ndnrtc;
 using namespace std;
@@ -272,6 +271,19 @@ VideoCodec::Image::vpxImgPlaneHeight(const vpx_image_t *img, int plane) const
 }
 
 //------------------------------------------------------------------------------
+// vpx callbacks for external frame buffers
+static int getFrameBuffer(void *user_priv, size_t min_size, vpx_codec_frame_buffer_t *fb)
+{
+    IFrameBufferList *fbList = reinterpret_cast<IFrameBufferList*>(user_priv);
+    return fbList->getFreeFrameBuffer(min_size, fb);
+}
+
+static int releaseFrameBuffer(void *user_priv, vpx_codec_frame_buffer_t *fb)
+{
+    IFrameBufferList *fbList = reinterpret_cast<IFrameBufferList*>(user_priv);
+    return fbList->returnFrameBuffer(fb);
+}
+
 VideoCodec::VideoCodec():
     raw_(nullptr)
     , isInit_(false)
@@ -396,6 +408,13 @@ void VideoCodec::initDecoder(const CodecSettings &settings)
         res = vpx_codec_control(&vpxCodec_, VP9D_SET_ROW_MT, 1);
         if (res)
             throw runtime_error("codec control error: failed to set row-wise multithreading: "+to_string(res));
+    }
+
+    if (settings.spec_.decoder_.frameBufferList_)
+    {
+        res = vpx_codec_set_frame_buffer_functions(&vpxCodec_,
+                getFrameBuffer, releaseFrameBuffer,
+                settings.spec_.decoder_.frameBufferList_);
     }
 
     isInit_ = true;

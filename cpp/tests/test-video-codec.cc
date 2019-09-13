@@ -69,7 +69,7 @@ TEST(TestCodec, TestImageCopy)
         VideoCodec::Image raw(w, h, ImageFormat::I420, rawData);
         EXPECT_EQ(raw.getWidth(), w);
         EXPECT_EQ(raw.getHeight(), h);
-        
+
         uint8_t *copiedData = (uint8_t*)malloc(i420_size);
         memset(copiedData, 0, i420_size);
 
@@ -111,7 +111,7 @@ TEST(TestCodec, TestCreate)
     // { // uninitialized settings
     //     CodecSettings s;
     //     VideoCodec vc;
-    // 
+    //
     //     EXPECT_ANY_THROW(vc.initEncoder(s));
     // }
     { // default settings
@@ -160,7 +160,9 @@ TEST(TestCodec, TestEncodeDecode)
                           ec.getSettings().spec_.encoder_.height_,
                           ImageFormat::I420);
 
-    dc.initDecoder(VideoCodec::defaultCodecSettings());
+    CodecSettings s = VideoCodec::defaultCodecSettings();
+    s.spec_.decoder_.frameBufferList_ = nullptr;
+    dc.initDecoder(s);
 
     int nRead = 0, nBytes = 0, nDropped = 0, nEncoded = 0, nKey = 0, nDecoded = 0;
     while (raw.read(fIn))

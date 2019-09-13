@@ -22,6 +22,11 @@ typedef PacketNumber FrameNumber;
 /**
  * Video Codec structures
  */
+namespace ndnrtc
+{
+class IFrameBufferList;
+}
+
 // Video Codec settings
  typedef struct _Settings {
      unsigned int numCores_; // number of hardware cores for concurrency
@@ -36,6 +41,9 @@ typedef PacketNumber FrameNumber;
              uint16_t fps_;      // target FPS
              bool dropFrames_;   // indicates whether encoder can drop frames
          } encoder_;
+         struct _decoder {
+             ndnrtc::IFrameBufferList* frameBufferList_;
+         } decoder_;
      } spec_;
  } CodecSettings;
 

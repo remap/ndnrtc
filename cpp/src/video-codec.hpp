@@ -14,6 +14,7 @@
 
 #if HAVE_LIBVPX
 #include <vpx/vpx_encoder.h>
+#include <vpx/vpx_decoder.h>
 #endif
 
 #include "ndnrtc-object.hpp"
@@ -150,6 +151,17 @@ private:
 #endif
 
 };
+
+#if HAVE_LIBVPX
+class IFrameBufferList {
+public:
+    virtual ~IFrameBufferList(){}
+    virtual int getFreeFrameBuffer(size_t minSize, vpx_codec_frame_buffer_t *fb) = 0;
+    virtual int returnFrameBuffer(vpx_codec_frame_buffer_t *fb) = 0;
+    virtual size_t getUsedBufferNum() = 0;
+    virtual size_t getFreeBufferNum() = 0;
+};
+#endif
 
 }
 
