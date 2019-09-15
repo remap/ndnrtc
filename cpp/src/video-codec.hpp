@@ -50,6 +50,9 @@ public:
       #if HAVE_LIBVPX
             void wrap(const vpx_image_t *img);
             void toVpxImage(vpx_image_t **img) const;
+            // If getIsWrapped() == true, this returns underlying vpx_image_t
+            // pointer.
+            const vpx_image_t* getVpxImage() const;
       #endif
 
       uint16_t getWidth() const { return width_; }
@@ -75,6 +78,7 @@ public:
       int strides_[4];
       size_t allocatedSz_;
       bool isWrapped_;
+      vpx_image_t wrapper_;
 
       void allocate();
       int vpxImgPlaneWidth(const vpx_image_t *img, int plane) const;

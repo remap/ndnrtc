@@ -198,6 +198,181 @@ TEST(TestCodec, TestEncodeDecode)
     fclose(fIn);
 }
 
+class FrameBufferList : public ndnrtc::IFrameBufferList {
+    typedef struct _FrameBuffer {
+        uint8_t *data_;
+        size_t dataSize_;
+        bool inUse_;
+    } FrameBuffer;
+
+public:
+    ~FrameBufferList(){
+        for (int i = 0; i < nBuffers_; ++i)
+            free(fbList_[i].data_);
+        free(fbList_);
+    }
+
+    virtual int getFreeFrameBuffer(size_t minSize, vpx_codec_frame_buffer_t *fb)
+    {
+        nGetCalls_++;
+        int bufIdx = getFreeBuffer();
+
+        if (fbList_[bufIdx].dataSize_ < minSize)
+        {
+            free(fbList_[bufIdx].data_);
+            fbList_[bufIdx].data_ = (uint8_t*)malloc(minSize);
+            memset(fbList_[bufIdx].data_, 0, minSize);
+            fbList_[bufIdx].dataSize_ = minSize;
+        }
+
+        fb->data = fbList_[bufIdx].data_;
+        fb->size = fbList_[bufIdx].dataSize_;
+        fb->priv = (void*)bufIdx;
+        fbList_[bufIdx].inUse_ = true;
+
+        return 0;
+    }
+
+    virtual int returnFrameBuffer(vpx_codec_frame_buffer_t *fb)
+    {
+        nReturnCalls_++;
+        int64_t bufIdx = reinterpret_cast<int64_t>(fb->priv);
+        assert(bufIdx < nBuffers_);
+        FrameBuffer &extFb = fbList_[bufIdx];
+        assert(extFb.inUse_);
+        extFb.inUse_ = false;
+
+        return 0;
+    }
+
+    virtual size_t getUsedBufferNum()
+    {
+        size_t nFree = 0;
+        for (int i = 0; i < nBuffers_; ++i)
+            if (!fbList_[i].inUse_)
+                nFree++;
+        return nFree;
+    }
+
+    virtual size_t getFreeBufferNum()
+    {
+        size_t nFree = 0;
+        for (int i = 0; i < nBuffers_; ++i)
+            if (!fbList_[i].inUse_)
+                nFree++;
+        return nFree;
+    }
+
+    int nGetCalls_ = 0;
+    int nReturnCalls_ = 0;
+private:
+
+    size_t nBuffers_ = 0;
+    FrameBuffer *fbList_;
+
+    int getFreeBuffer() {
+        if (!getFreeBufferNum())
+        {
+            int firstFreeBufIdx = nBuffers_;
+            if (nBuffers_ == 0)
+            {
+                nBuffers_ = 10;
+                fbList_ = (FrameBuffer*)malloc(sizeof(FrameBuffer)*nBuffers_);
+            }
+            else
+            {
+                nBuffers_ *= 2;
+                // allocate more
+                fbList_ = (FrameBuffer*)realloc(fbList_, sizeof(FrameBuffer)*nBuffers_);
+            }
+
+            for (int i = firstFreeBufIdx; i < nBuffers_; ++i)
+                memset(&fbList_[i], 0, sizeof(FrameBuffer));
+            return firstFreeBufIdx;
+        }
+        else
+        {
+            int idx = getFirstFreeBuffer();
+            assert(idx >= 0);
+            return idx;
+        }
+    }
+
+    int getFirstFreeBuffer(){
+        for (int i = 0; i < nBuffers_; ++i)
+            if (!fbList_[i].inUse_)
+                return i;
+        return -1;
+    }
+};
+
+static int getFrameBuffer(void *user_priv, size_t min_size, vpx_codec_frame_buffer_t *fb)
+{
+    IFrameBufferList *fbList = reinterpret_cast<IFrameBufferList*>(user_priv);
+    return fbList->getFreeFrameBuffer(min_size, fb);
+}
+
+static int releaseFrameBuffer(void *user_priv, vpx_codec_frame_buffer_t *fb)
+{
+    IFrameBufferList *fbList = reinterpret_cast<IFrameBufferList*>(user_priv);
+    return fbList->returnFrameBuffer(fb);
+}
+
+TEST(TestCodec, TestEncodeDecodeExtFrameBuffer)
+{
+    FILE *fIn = fopen((resources_path+"/eb_samples/eb_dog_1280x720_240.yuv").c_str(), "rb");
+    if (!fIn)
+        FAIL() << "couldn't open input video file";
+    FrameBufferList fbList;
+    int nRead = 0, nBytes = 0, nDropped = 0, nEncoded = 0, nKey = 0, nDecoded = 0;
+    {
+    VideoCodec ec, dc;
+    ec.initEncoder(VideoCodec::defaultCodecSettings());
+    VideoCodec::Image raw(ec.getSettings().spec_.encoder_.width_,
+                          ec.getSettings().spec_.encoder_.height_,
+                          ImageFormat::I420);
+
+    CodecSettings s = VideoCodec::defaultCodecSettings();
+    s.spec_.decoder_.frameBufferList_ = &fbList;
+    dc.initDecoder(s);
+
+    while (raw.read(fIn))
+    {
+        EXPECT_EQ(raw.getWidth(), 1280);
+        EXPECT_EQ(raw.getHeight(), 720);
+        nRead ++;
+        int res = ec.encode(raw, false,
+            [&nEncoded, &nDecoded, &nBytes, &nKey, &dc](const EncodedFrame& frame){
+                nEncoded++;
+                nBytes += frame.length_;
+                if (frame.type_ == FrameType::Key)
+                    nKey++;
+
+                int res = dc.decode(frame,
+                                    [&nDecoded](const VideoCodec::Image& raw){
+                                        EXPECT_EQ(raw.getWidth(), 1280);
+                                        EXPECT_EQ(raw.getHeight(), 720);
+                                        nDecoded++;
+                                    });
+                EXPECT_EQ(res, 0);
+            },
+            [&nDropped](const VideoCodec::Image&){
+                    nDropped++;
+                });
+        EXPECT_EQ(res, 0);
+    }
+    }
+
+    EXPECT_EQ(fbList.nGetCalls_, 240);
+    // TODO: figure out what this should be
+    // EXPECT_EQ(fbList.nReturnCalls_, 240-nDropped);
+    EXPECT_EQ(nRead, 240);
+    EXPECT_EQ(nDropped+nEncoded, 240);
+    EXPECT_EQ(nEncoded, nDecoded);
+    EXPECT_EQ(nKey, 8);
+    fclose(fIn);
+}
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

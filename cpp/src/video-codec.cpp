@@ -93,7 +93,7 @@ VideoCodec::Image::write(FILE *file) const
     }
     else
     {
-        vpx_image_t *img = (vpx_image_t*)data_;
+        const vpx_image_t *img = &wrapper_;
         // write it plane by plane (borrowed from https://github.com/webmproject/libvpx/blob/a5d499e16570d00d5e1348b1c7977ced7af3670f/tools_common.c#L219)
         int plane;
         for (plane = 0; plane < 3; ++plane) {
@@ -127,7 +127,7 @@ VideoCodec::Image::copyTo(uint8_t* dataBuf) const
     }
     else
     {
-        vpx_image_t *img = (vpx_image_t*)data_;
+        const vpx_image_t *img = &wrapper_;
         // write it plane by plane (borrowed from https://github.com/webmproject/libvpx/blob/a5d499e16570d00d5e1348b1c7977ced7af3670f/tools_common.c#L219)
         int plane;
         size_t nCopied = 0;
@@ -167,10 +167,8 @@ VideoCodec::Image::wrap(const vpx_image_t *img)
 
         for (int i = 0; i < 4; ++i) strides_[i] = img->stride[i];
         uData_ = img->planes[0]; //img->user_priv;
-        // since VPX may not store planes data in continuous block of memory,
-        // we store the whole structure so that later we can write it to file
-        // plane by plane
         data_ = (uint8_t*)img;
+        wrapper_ = *img;
     }
     else
         throw runtime_error("unsupported image format");
@@ -187,8 +185,17 @@ VideoCodec::Image::toVpxImage(vpx_image_t **img) const
     }
     else
     {
-        *img = (vpx_image_t*)data_;
+        *img = const_cast<vpx_image_t*>(&wrapper_);
     }
+}
+
+const vpx_image_t*
+VideoCodec::Image::getVpxImage() const
+{
+    if (!isWrapped_)
+        return nullptr;
+
+    return &wrapper_;
 }
 
 size_t
@@ -204,7 +211,7 @@ VideoCodec::Image::getDataSize() const
     else
     {
         size_t sz = 0;
-        vpx_image_t *img = (vpx_image_t*)data_;
+        const vpx_image_t *img = &wrapper_;
         int plane;
         for (plane = 0; plane < 3; ++plane) {
             const int w = vpxImgPlaneWidth(img, plane) *
