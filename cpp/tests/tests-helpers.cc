@@ -15,12 +15,14 @@
 #include <climits>
 #include <algorithm>
 #include <functional>
+#include <thread>
 
 #include "tests-helpers.hpp"
 #include "src/proto/ndnrtc.pb.h"
 #include "src/clock.hpp"
 
 using namespace std;
+using namespace std::placeholders;
 using namespace ndnrtc;
 using namespace ndn;
 
@@ -137,29 +139,29 @@ StreamMeta sampleStreamMeta()
     return meta;
 }
 
-boost::shared_ptr<Data> sampleStreamMetaData(const Name& streamPrefix)
+shared_ptr<Data> sampleStreamMetaData(const Name& streamPrefix)
 {
-    boost::shared_ptr<Data> data = boost::make_shared<Data>(Name(streamPrefix).append(NameComponents::Meta));
+    shared_ptr<Data> data = make_shared<Data>(Name(streamPrefix).append(NameComponents::Meta));
     StreamMeta meta = sampleStreamMeta();
     string s = meta.SerializeAsString();
     data->setContent(Blob::fromRawStr(s));
     return data;
 }
 
-vector<boost::shared_ptr<Data>>
+vector<shared_ptr<Data>>
 getSampleFrameData(Name prefix, int nData, int nParity)
 {
     srand(time(nullptr));
-    
+
     nData = (nData == 0 ? std::rand() % 10+10 : nData);
     nParity = (nParity == 0 ?  int(0.2*(float)nData) : nParity);
     int gopNo = std::rand();
     int gopPos = std::rand() % 30;
     int genD = std::rand()%500;
-    
+
     google::protobuf::Timestamp *ts = new google::protobuf::Timestamp(clock::protobufMillisecondTimestamp());
     FrameMeta meta;
-    
+
     meta.set_allocated_capture_timestamp(ts);
     meta.set_parity_size(nParity);
     meta.set_dataseg_num(nData);
@@ -167,86 +169,103 @@ getSampleFrameData(Name prefix, int nData, int nParity)
     meta.set_gop_number(gopNo);
     meta.set_gop_position(gopPos);
     meta.set_generation_delay(genD);
-    
+
     ndntools::ContentMetaInfo metaInfo;
     metaInfo.setTimestamp(ndn_getNowMilliseconds());
     metaInfo.setHasSegments(true);
-    
+
     string s = meta.SerializeAsString();
     metaInfo.setOther(Blob::fromRawStr(s));
-    
-    vector<boost::shared_ptr<Data>> packets;
+
+    vector<shared_ptr<Data>> packets;
     random_bytes_engine rbe;
     std::vector<unsigned char> data(8000);
-    
+
     // publish data
     for (int seg = 0; seg < nData; ++seg)
     {
         Name segName = Name(prefix).appendSegment(seg);
-        boost::shared_ptr<Data> d = boost::make_shared<Data>(segName);
+        shared_ptr<Data> d = make_shared<Data>(segName);
         std::generate(begin(data), end(data), std::ref(rbe));
-        
+
         d->setContent(data);
         d->getMetaInfo().setFinalBlockId(Name::Component::fromSegment(nData - 1));
         d->getMetaInfo().setFreshnessPeriod(30);
-        
+
         packets.push_back(d);
     }
-    
+
     // publish parity
-    for (int seg = 0; seg < nParity; ++seg)
+    if (nParity)
     {
-        Name segName = Name(prefix).append(NameComponents::Parity).appendSegment(seg);
-        boost::shared_ptr<Data> d = boost::make_shared<Data>(segName);
-        std::generate(begin(data), end(data), std::ref(rbe));
-        
-        d->setContent(data);
-        d->getMetaInfo().setFinalBlockId(Name::Component::fromSegment(nParity-1));
-        d->getMetaInfo().setFreshnessPeriod(30);
-        
-        packets.push_back(d);
+        vector<uint8_t> fecData(nParity * data.size(), 0);
+        fec::Rs28Encoder enc(nData, nParity, data.size());
+        vector<uint8_t> paddedData(nData*data.size(), 0);
+        uint8_t *ptr = paddedData.data();
+        for (auto& d : packets)
+        {
+            copy(d->getContent()->begin(), d->getContent()->end(), ptr);
+            ptr += d->getContent().size();
+        }
+        if (enc.encode(paddedData.data(), fecData.data()) != 0)
+            fecData.resize(0);
+
+        assert(fecData.size());
+        ptr = fecData.data();
+        for (int seg = 0; seg < nParity; ++seg)
+        {
+            Name segName = Name(prefix).append(NameComponents::Parity).appendSegment(seg);
+            shared_ptr<Data> d = make_shared<Data>(segName);
+
+            d->setContent(ptr, data.size());
+            d->getMetaInfo().setFinalBlockId(Name::Component::fromSegment(nParity-1));
+            d->getMetaInfo().setFreshnessPeriod(30);
+
+            packets.push_back(d);
+            ptr += data.size();
+        }
     }
-    
+
     // publish _manifest
     {
-        boost::shared_ptr<Data> m = boost::make_shared<Data>(Name(prefix).append(NameComponents::Manifest));
+        shared_ptr<Data> m = make_shared<Data>(Name(prefix).append(NameComponents::Manifest));
         size_t DigestSize = 32;
         vector<uint8_t> payload(DigestSize*packets.size(), 0);
         uint8_t *ptr = payload.data();
-        
+
         for (auto &d : packets)
         {
             Blob digest = (*d->getFullName())[-1].getValue();
             copy(digest->begin(), digest->end(), ptr);
             ptr += DigestSize;
         }
-        
+
         m->setContent(payload);
         packets.push_back(m);
     }
-    
+
     // publish _meta
     {
-        boost::shared_ptr<Data> d = boost::make_shared<Data>(Name(prefix).append(NameComponents::Meta));
+        shared_ptr<Data> d = make_shared<Data>(Name(prefix).append(NameComponents::Meta));
         d->setContent(metaInfo.wireEncode());
-        
+
         packets.push_back(d);
     }
-    
+
     return packets;
 }
 
-boost::shared_ptr<ndn::Data> getRandomData(size_t size)
+shared_ptr<ndn::Data> getRandomData(size_t size)
 {
     srand(time(nullptr));
     random_bytes_engine rbe;
-    
+
     std::vector<unsigned char> data(size);
-    boost::shared_ptr<Data> d = boost::make_shared<Data>();
+    shared_ptr<Data> d = make_shared<Data>();
     std::generate(begin(data), end(data), std::ref(rbe));
-    
+
     d->setContent(data);
-    
+
     return d;
 }
 
@@ -512,7 +531,7 @@ VideoFramePacket getVideoFramePacket(size_t frameLen, double rate, int64_t pubTs
 std::vector<VideoFrameSegment> sliceFrame(VideoFramePacket &vp,
                                           PacketNumber playNo, PacketNumber pairedSeqNo)
 {
-    boost::shared_ptr<NetworkData> parity = vp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
+    shared_ptr<NetworkData> parity = vp.getParityData(VideoFrameSegment::payloadLength(1000), 0.2);
 
     std::vector<VideoFrameSegment> frameSegments = VideoFrameSegment::slice(vp, 1000);
     std::vector<CommonSegment> paritySegments = CommonSegment::slice(*parity, 1000);
@@ -541,7 +560,7 @@ std::vector<VideoFrameSegment> sliceFrame(VideoFramePacket &vp,
     return frameSegments;
 }
 
-std::vector<VideoFrameSegment> sliceParity(VideoFramePacket &vp, boost::shared_ptr<NetworkData> &parity)
+std::vector<VideoFrameSegment> sliceParity(VideoFramePacket &vp, shared_ptr<NetworkData> &parity)
 {
     DataSegmentHeader header;
     header.interestNonce_ = 0x1234;
@@ -564,17 +583,17 @@ std::vector<VideoFrameSegment> sliceParity(VideoFramePacket &vp, boost::shared_p
     return paritySegments;
 }
 
-std::vector<boost::shared_ptr<ndn::Data>>
+std::vector<shared_ptr<ndn::Data>>
 dataFromSegments(std::string frameName,
                  const std::vector<VideoFrameSegment> &segments)
 {
-    std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
+    std::vector<shared_ptr<ndn::Data>> dataSegments;
     int segIdx = 0;
     for (auto &s : segments)
     {
         ndn::Name n(frameName);
         n.appendSegment(segIdx++);
-        boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
+        shared_ptr<ndn::Data> ds(make_shared<ndn::Data>(n));
         ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size() - 1));
         ds->setContent(s.getNetworkData()->getData(), s.size());
         dataSegments.push_back(ds);
@@ -583,17 +602,17 @@ dataFromSegments(std::string frameName,
     return dataSegments;
 }
 
-std::vector<boost::shared_ptr<ndn::Data>>
+std::vector<shared_ptr<ndn::Data>>
 dataFromParitySegments(std::string frameName,
                        const std::vector<VideoFrameSegment> &segments)
 {
-    std::vector<boost::shared_ptr<ndn::Data>> dataSegments;
+    std::vector<shared_ptr<ndn::Data>> dataSegments;
     int segIdx = 0;
     for (auto &s : segments)
     {
         ndn::Name n(frameName);
         n.append(NameComponents::NameComponentParity).appendSegment(segIdx++);
-        boost::shared_ptr<ndn::Data> ds(boost::make_shared<ndn::Data>(n));
+        shared_ptr<ndn::Data> ds(make_shared<ndn::Data>(n));
         ds->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(segments.size() - 1));
         ds->setContent(s.getNetworkData()->getData(), s.size());
         dataSegments.push_back(ds);
@@ -602,18 +621,18 @@ dataFromParitySegments(std::string frameName,
     return dataSegments;
 }
 
-std::vector<boost::shared_ptr<Interest>>
+std::vector<shared_ptr<Interest>>
 getInterests(std::string frameName, unsigned int startSeg, size_t nSeg,
              unsigned int parityStartSeg, size_t parityNSeg, unsigned int startNonce)
 {
-    std::vector<boost::shared_ptr<Interest>> interests;
+    std::vector<shared_ptr<Interest>> interests;
 
     int nonce = startNonce;
     for (int i = startSeg; i < startSeg + nSeg; ++i)
     {
         Name n(frameName);
         n.appendSegment(i);
-        interests.push_back(boost::make_shared<Interest>(n, 1000));
+        interests.push_back(make_shared<Interest>(n, 1000));
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
         interests.back()->setNonce(Blob((uint8_t *)&(nonce), sizeof(int)));
@@ -626,7 +645,7 @@ getInterests(std::string frameName, unsigned int startSeg, size_t nSeg,
     {
         Name n(frameName);
         n.append(NameComponents::NameComponentParity).appendSegment(i);
-        interests.push_back(boost::make_shared<Interest>(n, 1000));
+        interests.push_back(make_shared<Interest>(n, 1000));
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
         interests.back()->setNonce(Blob((uint8_t *)&(nonce), sizeof(int)));
@@ -637,16 +656,16 @@ getInterests(std::string frameName, unsigned int startSeg, size_t nSeg,
     return interests;
 }
 
-std::vector<boost::shared_ptr<const Interest>>
-makeInterestsConst(const std::vector<boost::shared_ptr<Interest>> &interests)
+std::vector<shared_ptr<const Interest>>
+makeInterestsConst(const std::vector<shared_ptr<Interest>> &interests)
 {
-    std::vector<boost::shared_ptr<const Interest>> cinterests;
+    std::vector<shared_ptr<const Interest>> cinterests;
     for (auto &i : interests)
-        cinterests.push_back(boost::make_shared<const Interest>(*i));
+        cinterests.push_back(make_shared<const Interest>(*i));
     return cinterests;
 }
 
-boost::shared_ptr<WireSegment>
+shared_ptr<WireSegment>
 getFakeSegment(std::string threadPrefix, SampleClass cls, SegmentClass segCls,
                PacketNumber pNo, unsigned int segNo)
 {
@@ -659,8 +678,8 @@ getFakeSegment(std::string threadPrefix, SampleClass cls, SegmentClass segCls,
 
     n.appendSegment(segNo);
 
-    boost::shared_ptr<const Interest> interest(boost::make_shared<Interest>(n, 1000));
-    boost::shared_ptr<Data> data(boost::make_shared<Data>(n));
+    shared_ptr<const Interest> interest(make_shared<Interest>(n, 1000));
+    shared_ptr<Data> data(make_shared<Data>(n));
 
     int nSegments = 0;
 
@@ -689,21 +708,21 @@ getFakeSegment(std::string threadPrefix, SampleClass cls, SegmentClass segCls,
     else
         data->setContent(segments[1].getNetworkData()->getData(), segments[1].size());
 
-    return boost::make_shared<WireData<VideoFrameSegmentHeader>>(data, interest);;
+    return make_shared<WireData<VideoFrameSegmentHeader>>(data, interest);;
 }
 
-boost::shared_ptr<ndnrtc::WireSegment>
+shared_ptr<ndnrtc::WireSegment>
 getFakeThreadMetadataSegment(std::string threadPrefix, const ndnrtc::DataPacket &metadata)
 {
-    boost::shared_ptr<WireSegment> segment;
+    shared_ptr<WireSegment> segment;
 
     Name n(threadPrefix);
     n.append(NameComponents::NameComponentMeta)
         .appendVersion(0)
         .appendSegment(0);
 
-    boost::shared_ptr<const Interest> interest(boost::make_shared<Interest>(n, 1000));
-    boost::shared_ptr<Data> data(boost::make_shared<Data>(n));
+    shared_ptr<const Interest> interest(make_shared<Interest>(n, 1000));
+    shared_ptr<Data> data(make_shared<Data>(n));
 
     data->getMetaInfo().setFinalBlockId(ndn::Name::Component::fromSegment(0));
 
@@ -713,7 +732,7 @@ getFakeThreadMetadataSegment(std::string threadPrefix, const ndnrtc::DataPacket 
     segs[0].setHeader(hdr);
     data->setContent(segs[0].getNetworkData()->getData(), segs[0].size());
 
-    segment = boost::make_shared<WireSegment>(data, interest);
+    segment = make_shared<WireSegment>(data, interest);
 
     return segment;
 }
@@ -728,12 +747,12 @@ Name certName(Name keyName)
     return keyName.getSubName(0, keyName.size() - 1).append("KEY").append(keyName[-1]).append("ID-CERT").append("0");
 }
 
-boost::shared_ptr<KeyChain> memoryKeyChain(const std::string name)
+shared_ptr<KeyChain> memoryKeyChain(const std::string name)
 {
-    boost::shared_ptr<MemoryIdentityStorage> identityStorage(new MemoryIdentityStorage());
-    boost::shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(new MemoryPrivateKeyStorage());
-    boost::shared_ptr<KeyChain> keyChain(boost::make_shared<KeyChain>(boost::make_shared<IdentityManager>(identityStorage, privateKeyStorage),
-                                                                      boost::make_shared<SelfVerifyPolicyManager>(identityStorage.get())));
+    shared_ptr<MemoryIdentityStorage> identityStorage(new MemoryIdentityStorage());
+    shared_ptr<MemoryPrivateKeyStorage> privateKeyStorage(new MemoryPrivateKeyStorage());
+    shared_ptr<KeyChain> keyChain(make_shared<KeyChain>(make_shared<IdentityManager>(identityStorage, privateKeyStorage),
+                                                                      make_shared<SelfVerifyPolicyManager>(identityStorage.get())));
 
     // Initialize the storage.
     Name kn = keyName(name);
@@ -751,13 +770,13 @@ bool checkNfd()
 {
     try
     {
-        boost::mutex m;
-        boost::unique_lock<boost::mutex> lock(m);
-        boost::condition_variable isDone;
+        std::mutex m;
+        std::unique_lock<std::mutex> lock(m);
+        std::condition_variable isDone;
 
         boost::asio::io_service io;
-        boost::shared_ptr<boost::asio::io_service::work> work(boost::make_shared<boost::asio::io_service::work>(io));
-        boost::thread t([&isDone, &io]() {
+        shared_ptr<boost::asio::io_service::work> work(make_shared<boost::asio::io_service::work>(io));
+        std::thread t([&isDone, &io]() {
             try
             {
                 io.run();
@@ -770,7 +789,7 @@ bool checkNfd()
 
         ThreadsafeFace f(io);
 
-        boost::shared_ptr<KeyChain> keyChain = memoryKeyChain("/test");
+        shared_ptr<KeyChain> keyChain = memoryKeyChain("/test");
         f.setCommandSigningInfo(*keyChain, certName(keyName("/test")));
 
         OnInterestCallback dummy = [](const ptr_lib::shared_ptr<const Name> &prefix,
@@ -819,7 +838,7 @@ void DelayQueue::push(QueueBlock block)
     TPoint fireTime = Clock::now() + Msec(fireDelayMs);
 
     {
-        boost::lock_guard<boost::recursive_mutex> scopedLock(m_);
+        std::lock_guard<std::recursive_mutex> scopedLock(m_);
         queue_[fireTime].push_back(block);
     }
 
@@ -844,7 +863,7 @@ void DelayQueue::pop(const boost::system::error_code &e)
     {
         std::vector<QueueBlock> first;
         {
-            boost::lock_guard<boost::recursive_mutex> scopedLock(m_);
+            std::lock_guard<std::recursive_mutex> scopedLock(m_);
             first = queue_.begin()->second;
 
             if (queue_.size() > 1)
@@ -868,19 +887,19 @@ void DelayQueue::pop(const boost::system::error_code &e)
 
 size_t DelayQueue::size() const
 {
-    boost::lock_guard<boost::recursive_mutex> scopedLock(m_);
+    std::lock_guard<std::recursive_mutex> scopedLock(m_);
     return queue_.size();
 }
 
-void DataCache::addInterest(const boost::shared_ptr<ndn::Interest> interest, OnDataT onData)
+void DataCache::addInterest(const shared_ptr<ndn::Interest> interest, OnDataT onData)
 {
 
     if (data_.find(interest->getName()) != data_.end())
     {
-        boost::shared_ptr<ndn::Data> d;
+        shared_ptr<ndn::Data> d;
         OnInterestT onInterest;
         {
-            boost::lock_guard<boost::mutex> scopedLock(m_);
+            std::lock_guard<std::mutex> scopedLock(m_);
             d = data_[interest->getName()];
 
             if (onInterestCallbacks_.find(interest->getName()) != onInterestCallbacks_.end())
@@ -898,21 +917,21 @@ void DataCache::addInterest(const boost::shared_ptr<ndn::Interest> interest, OnD
     }
     else
     {
-        boost::lock_guard<boost::mutex> scopedLock(m_);
+        std::lock_guard<std::mutex> scopedLock(m_);
 
         interests_[interest->getName()] = interest;
         onDataCallbacks_[interest->getName()] = onData;
     }
 }
 
-void DataCache::addData(const boost::shared_ptr<ndn::Data> &data, OnInterestT onInterest)
+void DataCache::addData(const shared_ptr<ndn::Data> &data, OnInterestT onInterest)
 {
     if (interests_.find(data->getName()) != interests_.end())
     {
         OnDataT onData = onDataCallbacks_[data->getName()];
-        boost::shared_ptr<ndn::Interest> i;
+        shared_ptr<ndn::Interest> i;
         {
-            boost::lock_guard<boost::mutex> scopedLock(m_);
+            std::lock_guard<std::mutex> scopedLock(m_);
             i = interests_[data->getName()];
             interests_.erase(interests_.find(data->getName()));
             onDataCallbacks_.erase(onDataCallbacks_.find(data->getName()));
@@ -924,7 +943,7 @@ void DataCache::addData(const boost::shared_ptr<ndn::Data> &data, OnInterestT on
     }
     else
     {
-        boost::lock_guard<boost::mutex> scopedLock(m_);
+        std::lock_guard<std::mutex> scopedLock(m_);
 
         data_[data->getName()] = data;
     }

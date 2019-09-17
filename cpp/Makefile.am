@@ -452,7 +452,8 @@ check_PROGRAMS += bin/tests/test-video-codec \
 	bin/tests/test-pipeline \
 	bin/tests/test-name-components \
 	bin/tests/test-packets \
-	bin/tests/test-network-data
+	bin/tests/test-network-data \
+	bin/tests/test-decode-queue
 
 bin_tests_test_video_codec_SOURCES = tests/test-video-codec.cc ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_video_codec_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
@@ -494,11 +495,15 @@ bin_tests_test_frame_buffer_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_frame_buffer_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_frame_buffer_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
 
-
 bin_tests_test_estimators_SOURCES = tests/test-estimators.cc src/estimators.cpp tools/stream/precise-generator.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_estimators_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_estimators_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_estimators_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
+
+bin_tests_test_decode_queue_SOURCES = tests/test-decode-queue.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_decode_queue_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_decode_queue_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_decode_queue_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem
 
 
 TESTS = ${check_PROGRAMS}

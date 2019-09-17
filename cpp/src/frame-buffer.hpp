@@ -17,10 +17,14 @@
 #include <set>
 
 #include <boost/signals2.hpp>
+#include <boost/asio.hpp>
 #include <ndn-cpp/name.hpp>
 
 #include "ndnrtc-common.hpp"
 #include "name-components.hpp"
+
+#include "pool.hpp"
+#include "video-codec.hpp"
 
 #include "slot-buffer.hpp"
 #include "statistics.hpp"
@@ -391,6 +395,7 @@ namespace ndnrtc
     };
 
     //******************************************************************************
+    class DecodeQueue;
     class IBufferObserver;
     class PlaybackQueue;
 
@@ -420,6 +425,7 @@ namespace ndnrtc
     class Buffer : public NdnRtcComponent, public IBuffer {
     public:
         Buffer(std::shared_ptr<RequestQueue> interestQ,
+               std::shared_ptr<DecodeQueue> decodeQ,
                uint64_t slotRetainIntervalUsec = 3E6,
                std::shared_ptr<statistics::StatisticsStorage> storage =
                 std::shared_ptr<statistics::StatisticsStorage>(statistics::StatisticsStorage::createConsumerStatistics()));
@@ -444,11 +450,7 @@ namespace ndnrtc
         std::string
         dump() const;
 
-        // CODE BELOW IS DEPRECATED
-
-//        Buffer(std::shared_ptr<statistics::StatisticsStorage> storage,
-//               std::shared_ptr<SlotPool> pool =
-//                std::shared_ptr<SlotPool>(new SlotPool()));
+        // DEPRECATED CODE BLOCK START
 
         bool requested(const std::vector<std::shared_ptr<const ndn::Interest>>&);
         BufferReceipt received(const std::shared_ptr<WireSegment>& segment);
@@ -459,6 +461,7 @@ namespace ndnrtc
         void detach(IBufferObserver* observer);
         std::shared_ptr<SlotPool> getPool() const { return pool_; }
 
+        // DEPRECATED CODE BLOCK END
     private:
         typedef struct _SlotEntry {
             std::shared_ptr<BufferSlot> slot_;
@@ -468,36 +471,28 @@ namespace ndnrtc
             bool pushedForDecode_;
         } SlotEntry;
 
-//        class FrameGop {
-//        public:
-//            void add(std::shared_ptr<BufferSlot> slot);
-//            bool hasKeyFrame() const;
-//            bool isFullyDecodable() const;
-//            size_t size() const;
-//
-//        };
-
         // jitter buffer delay is calculated according to the formula:
         //      B(i) = Dqav(i) + gamma * Jitter
         //  where Jitter is a network jitter estimation from RequestQueue and
         //  Dqav:
         //      Dqav(i) = theta * Dqav(i-1) + (1-theta) * Dq(i)
         //          where Dq(i) -- i-th frame re-assembly delay
+        //
+        // ??? -- why use network jitter instead of Dq jitter?
+        // TODO: try running estimation when using Dq jitter
         double delayEstimateGamma_, delayEstimateTheta_, delayEstimate_;
         estimators::Filter dqFilter_;
         bool isJitterCompensationOn_;
         uint64_t cleanupIntervalUsec_, lastCleanupUsec_, slotRetainIntervalUsec_;
 
-//        typedef struct _SlotQ {
-//            std::map<PacketNumber, SlotEntry> pending_, ready_, unfetchable_;
-//        } SlotQ;
-
         std::map<PacketNumber, SlotEntry> slots_;
         std::map<int32_t, PacketNumber> gopDecodeMap_;
+        PacketNumber lastPushedSampleNo_;
         std::shared_ptr<BufferSlot> lastPushedSlot_;
 
         std::shared_ptr<statistics::StatisticsStorage> sstorage_;
         std::shared_ptr<RequestQueue> requestQ_;
+        std::shared_ptr<DecodeQueue> decodeQ_;
         boost::asio::steady_timer slotPushTimer_;
         uint64_t slotPushFireTime_;
         int64_t slotPushDelay_;
@@ -543,6 +538,280 @@ namespace ndnrtc
     };
 
     //******************************************************************************
+
+    class DecodeQueue : public NdnRtcComponent
+    {
+    public:
+        /**
+         * DecodeQueue
+         */
+        DecodeQueue(boost::asio::io_service&, uint32_t size = 150,
+                    uint32_t capacity = 160);
+        ~DecodeQueue(){}
+
+        // signal which will be called when an slot is discarded
+        // decode queue keeps capacity number of slots, discarding
+        // old slots. when this happens, this signal will be triggered for
+        // every slot in discarded GOP
+        OnSlotDiscard onSlotDiscard;
+
+        void push(const std::shared_ptr<const BufferSlot>&);
+//        PacketNumber getCurrentPlaybackPointer() const { return pbPointer_; };
+        size_t getSize() const { return frames_.size(); }
+
+        /**
+         * Get access to decoded frame that is currently pointed by playback
+         * pointer and advance playback pointer by the specified step. This does
+         * not remove frame from the queue.
+         * @param step Step (number of frames) by which to advance playback
+         *      pointer after frame retrieval. Negative step advances playback
+         *      pointer backwards.
+         * @param allowDecoding If true, will attempt to decode frame if current frame
+         *      is not decoded.
+         * @return Returns valid VideoCodec::Image, if requested frame can be
+         *      returned (frame is either already decoded or will be decoded
+         *      during this call). If frame can not be retrieved, or decoded
+         *      (if allowDecoding==false),
+         *      returns null VideoCodec::Image. Client code should check for
+         *      "image.getAllocatedSize() == 0" to check validity.
+         *      Returned image must be discared after manipulation or saved
+         *      into a file/memory. The validity of the image is  guaranteed
+         *      until the next call to this method.
+         */
+        const VideoCodec::Image& get(int32_t step = 0, bool allowDecoding = true);
+
+        /**
+         * Advances playback pointer by specified number of frames.
+         * @param step Number of frames by which current playback pointer will
+         *          be advanced. To get to the most recent frame (end of the
+         *          queue), pass getSize() as an argument. To get to the oldest
+         *          frame (beginning of the queue), pass -getSize() as an
+         *          argument.
+         * @return Actual number of frames the pointer was advanced.
+         */
+        int32_t seek(int32_t step);
+
+        /**
+         * Dumps contents of DecodeQueue into a string.
+         */
+        std::string dump() const;
+    protected:
+        class BitstreamData : public IPoolObject {
+        public:
+            BitstreamData(size_t reservedBytes = 32768)
+            {
+                bitstreamData_.reserve(reservedBytes);
+                fecList_.reserve(256);
+            }
+
+            void clear()
+            {
+                slot_.reset();
+                memset(&encodedFrame_, 0, sizeof(encodedFrame_));
+                memset(bitstreamData_.data(), 0, bitstreamData_.capacity());
+                memset(fecList_.data(), 0, fecList_.capacity());
+            }
+
+            const EncodedFrame& loadFrom(std::shared_ptr<const BufferSlot>&,
+                bool& recovered);
+        private:
+            EncodedFrame encodedFrame_;
+            std::shared_ptr<const BufferSlot> slot_;
+            std::vector<uint8_t> bitstreamData_;
+            std::vector<uint8_t> fecList_;
+        };
+
+        class VpxExternalBufferList : public IFrameBufferList, public NdnRtcComponent {
+        public:
+            class DecodedData : public IPoolObject {
+            public:
+                DecodedData(size_t reservedBytes = (2 << 20))
+                {
+                    rawData_.reserve(reservedBytes);
+                    clear();
+                }
+
+                void clear();
+                void memset(uint8_t c);
+                bool hasImage() const { return rawData_.size(); }
+                void setImage(const VideoCodec::Image& img, const NamespaceInfo&);
+                const VideoCodec::Image& getImage() const;
+                bool getIsInUseByDecoder() const { return inUseByDecoder_; }
+
+           protected:
+                friend VpxExternalBufferList;
+
+                uint8_t *getData() const { return const_cast<uint8_t*>(rawData_.data()); }
+                size_t getSize() const { return rawData_.size(); }
+                size_t getCapacity() const { return rawData_.capacity(); }
+                void reserve(size_t nBytes) { rawData_.reserve(nBytes); }
+                void resize(size_t length) { rawData_.resize(length); }
+
+                bool inUseByDecoder_;
+
+            private:
+
+                NamespaceInfo ni_;
+                std::vector<uint8_t> rawData_;
+                std::shared_ptr<VideoCodec::Image> img_;
+            };
+
+            VpxExternalBufferList(uint32_t capacity);
+
+            void recycle(DecodedData *dd);
+
+            // IFrameBufferList interface
+            int getFreeFrameBuffer(size_t minSize, vpx_codec_frame_buffer_t *fb);
+            int returnFrameBuffer(vpx_codec_frame_buffer_t *fb);
+            size_t getUsedBufferNum();
+            size_t getFreeBufferNum();
+
+        private:
+            Pool<DecodedData> framePool_;
+            std::vector<std::shared_ptr<DecodedData>> dataInUse_;
+            std::vector<std::shared_ptr<DecodedData>> delayedPurgeList_;
+
+            std::shared_ptr<DecodedData> getPointer(DecodedData*);
+            void doCleanup();
+        };
+
+    private:
+        static std::shared_ptr<const VideoCodec::Image> ZeroImage;
+        typedef struct _FrameQueueEntry {
+            bool operator<(const _FrameQueueEntry& sample) const
+            { return slot_->getNameInfo().sampleNo_ < sample.slot_->getNameInfo().sampleNo_; }
+
+            std::shared_ptr<const BufferSlot> slot_;
+            mutable std::shared_ptr<BitstreamData> bitstreamData_;
+            mutable VpxExternalBufferList::DecodedData* rawData_; // owned by the frame buffer pool
+        } FrameQueueEntry;
+        typedef std::set<FrameQueueEntry> FrameQueue;
+        typedef struct _CodecContext {
+            std::recursive_mutex mtx_;
+            VideoCodec codec_;
+            FrameQueue::iterator lastDecoded_;
+            FrameQueue::iterator gopStart_, gopEnd_;
+
+            bool isGopComplete() const { return lastDecoded_ == gopEnd_; }
+        } CodecContext;
+        typedef struct _GopEntry {
+            int32_t no_;
+            uint32_t nDecoded_;
+            FrameQueue::iterator start_, end_;
+        } GopEntry;
+
+        boost::asio::io_service &io_;
+        uint32_t size_;
+        FrameQueue frames_;
+        std::map<int32_t, GopEntry> gops_;
+        CodecContext codecContext_;
+
+        // lock hierarchy: masterMtx_ -> playbackMtx_ -> codecContext_.mtx_
+        std::recursive_mutex masterMtx_;
+        std::recursive_mutex playbackMtx_;
+        FrameQueue::iterator pbPointer_; // current playback pointer
+        int32_t lastAsked_; // last asked frame
+        FrameQueue::iterator lastRetrieved_;
+
+        VpxExternalBufferList::DecodedData *lockedRecycleData_;
+        int32_t discardGop_;
+
+        Pool<BitstreamData> bitstreamDataPool_;
+        VpxExternalBufferList vpxFbList_;
+        std::atomic<bool> isCheckFramesScheduled_;
+        // checks current frames and runs decoder on frames that can be decoded
+        void checkFrames();
+
+        /**
+         * Runs decoder on multiple frames. Decoding may halt if there's no free memory left
+         * for decoded frames or time limit is reached.
+         * @param ctx Codec context. Updated as decoding progresses.
+         * @param start Iterator to a start frame with which decoding will start.
+         * @param nToDecode Number of frames to decode. If all frames decode, lastDecoded_ will
+         *                  point to (start + nToDecode) frame.
+         * @param timeLimitMs Time limit for decoding. 0 means no time limit. Decoding many
+         *                    frames in a row may take considerable time. If timeLimit is
+         *                    specified, this function will return when limit is reached. One
+         *                    must compare ctx.lastDecoded_ and start in order to get number of
+         *                    frames actually decoded.
+         */
+        void runDecoder(CodecContext& ctx, FrameQueue::iterator start, int32_t nToDecode,
+                        uint32_t timeLimitMs = 0);
+        void resetCodecContext();
+        void doCleanup();
+        bool frameIteratorWithinRange(const FrameQueue::iterator&, const FrameQueue::iterator&,
+                                      const FrameQueue::iterator&);
+
+        int32_t getEncodedNum(const GopEntry& ge);
+      
+        /**
+         * Finds encoded or decoded frame in frames_ that is closest to the iterator in a given
+         * direction.
+         * @param p             Iterator from which search will start
+         * @param encoded       If true, checks for encoded frames, otherwise -- decoded frames
+         * @param directionFwd  If true, search in forward direction, otherwise -- backward
+         *                      direction
+         * @return  Returns an increment number which can advance p to the found iterator.
+         */
+        int32_t getClosest(const FrameQueue::iterator &p, bool encoded, bool directionFwd)
+        {
+            FrameQueue::iterator it = p;
+            while (it != frames_.end())
+            {
+                if (it != p)
+                {
+                    if (encoded && !it->rawData_) break;
+                    if (!encoded && it->rawData_) break;
+                }
+
+                if (it == frames_.begin())
+                    it = frames_.end();
+                else
+                    it = (directionFwd ? std::next(it) : std::prev(it));
+            }
+
+            if (it == frames_.end()) return 0;
+
+            return directionFwd ? distance(p, it) : -distance(it, p);
+        }
+
+        // gets an offset for the farthest encoded/decoded frame from the frame pointed by
+        // the given iterator
+        // search begins at the given iterator and progresses in the given direction (forward
+        // or backward) until frame of the opposite state is found (i.e. !encoded)
+        int32_t getFarthest(const FrameQueue::iterator &p, bool encoded, bool directionFwd)
+        {
+            FrameQueue::iterator it = p;
+            FrameQueue::iterator found = it;
+            
+            while (it != frames_.end() && (it->rawData_ && found->rawData_)^encoded )
+            {
+                if (it != p)
+                {
+                    if (encoded^(bool)it->rawData_) found = it;
+                }
+
+                if (it == frames_.begin())
+                    it = frames_.end();
+                else
+                    it = (directionFwd ? std::next(it) : std::prev(it));
+            }
+            
+            return directionFwd ? distance(p, found) : -distance(found, p);
+        }
+
+        inline bool checkAssignMemory(FrameQueue::iterator& it)
+        {
+            if (!it->bitstreamData_)
+            {
+                if (!it->bitstreamData_)
+                    it->bitstreamData_ = bitstreamDataPool_.pop();
+            }
+
+            return (it->bitstreamData_.get() != nullptr);
+        }
+    };
+
     typedef std::function<void(const std::shared_ptr<const BufferSlot>& slot, double playTimeMs)> ExtractSlot;
     class IPlaybackQueueObserver;
 

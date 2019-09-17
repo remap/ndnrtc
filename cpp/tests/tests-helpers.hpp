@@ -45,31 +45,31 @@ public:
     void triggerEvent(ndnrtc::DataRequest::Status s, ndnrtc::DataRequest &r) { r.triggerEvent(s); }
     void timestampRequest(ndnrtc::DataRequest &r) { r.timestampRequest(); }
     void timestampReply(ndnrtc::DataRequest &r) { r.timestampReply(); }
-    void setData(const boost::shared_ptr<const ndn::Data> &d, ndnrtc::DataRequest &r) { r.setData(d); }
-    void setNack(const boost::shared_ptr<const ndn::NetworkNack> &n, ndnrtc::DataRequest &r) { r.setNack(n); }
+    void setData(const std::shared_ptr<const ndn::Data> &d, ndnrtc::DataRequest &r) { r.setData(d); }
+    void setNack(const std::shared_ptr<const ndn::NetworkNack> &n, ndnrtc::DataRequest &r) { r.setNack(n); }
     void setTimeout(ndnrtc::DataRequest &r) { r.setTimeout(); }
 };
 
 class FaceStub {
 public:
-    MOCK_METHOD2(onData, void(const boost::shared_ptr<const ndn::Interest>& interest,
-                              const boost::shared_ptr<ndn::Data>& data));
-    MOCK_METHOD1(onTimeout, void(const boost::shared_ptr<const ndn::Interest>& interest));
-    MOCK_METHOD2(onNack, void(const boost::shared_ptr<const ndn::Interest>& interest,
-                              const boost::shared_ptr<ndn::NetworkNack>& networkNack));
-    MOCK_METHOD5(onInterest, void(const boost::shared_ptr<const ndn::Name>& prefix,
-                                  const boost::shared_ptr<const ndn::Interest>& interest, ndn::Face& face,
+    MOCK_METHOD2(onData, void(const std::shared_ptr<const ndn::Interest>& interest,
+                              const std::shared_ptr<ndn::Data>& data));
+    MOCK_METHOD1(onTimeout, void(const std::shared_ptr<const ndn::Interest>& interest));
+    MOCK_METHOD2(onNack, void(const std::shared_ptr<const ndn::Interest>& interest,
+                              const std::shared_ptr<ndn::NetworkNack>& networkNack));
+    MOCK_METHOD5(onInterest, void(const std::shared_ptr<const ndn::Name>& prefix,
+                                  const std::shared_ptr<const ndn::Interest>& interest, ndn::Face& face,
                                   uint64_t interestFilterId,
-                                  const boost::shared_ptr<const ndn::InterestFilter>& filter));
-    MOCK_METHOD1(onRegisterFailure, void(const boost::shared_ptr<const ndn::Name>& prefix));
-    MOCK_METHOD2(onRegisterSuccess, void(const boost::shared_ptr<const ndn::Name>& prefix,
+                                  const std::shared_ptr<const ndn::InterestFilter>& filter));
+    MOCK_METHOD1(onRegisterFailure, void(const std::shared_ptr<const ndn::Name>& prefix));
+    MOCK_METHOD2(onRegisterSuccess, void(const std::shared_ptr<const ndn::Name>& prefix,
                                          uint64_t registeredPrefixId));
 };
 
 ndnrtc::StreamMeta sampleStreamMeta();
-boost::shared_ptr<ndn::Data> sampleStreamMetaData(const ndn::Name& streamPrefix);
-std::vector<boost::shared_ptr<ndn::Data>> getSampleFrameData(ndn::Name prefix, int nData = 0, int nParity = 0);
-boost::shared_ptr<ndn::Data> getRandomData(size_t size = 8000);
+std::shared_ptr<ndn::Data> sampleStreamMetaData(const ndn::Name& streamPrefix);
+std::vector<std::shared_ptr<ndn::Data>> getSampleFrameData(ndn::Name prefix, int nData = 0, int nParity = 0);
+std::shared_ptr<ndn::Data> getRandomData(size_t size = 8000);
 
 // ------------------------------------------------------------------------------------------------
 ndnrtc::VideoCoderParams
@@ -95,26 +95,26 @@ std::vector<ndnrtc::VideoFrameSegment>
 sliceFrame(ndnrtc::VideoFramePacket &vp, PacketNumber playNo = 0, PacketNumber pairedSeqNo = 1);
 
 std::vector<ndnrtc::VideoFrameSegment>
-sliceParity(ndnrtc::VideoFramePacket &vp, boost::shared_ptr<ndnrtc::NetworkData> &parity);
+sliceParity(ndnrtc::VideoFramePacket &vp, std::shared_ptr<ndnrtc::NetworkData> &parity);
 
-std::vector<boost::shared_ptr<ndn::Data>>
+std::vector<std::shared_ptr<ndn::Data>>
 dataFromSegments(std::string frameName, const std::vector<ndnrtc::VideoFrameSegment> &segments);
 
-std::vector<boost::shared_ptr<ndn::Data>>
+std::vector<std::shared_ptr<ndn::Data>>
 dataFromParitySegments(std::string frameName, const std::vector<ndnrtc::VideoFrameSegment> &segments);
 
-std::vector<boost::shared_ptr<ndn::Interest>>
+std::vector<std::shared_ptr<ndn::Interest>>
 getInterests(std::string frameName, unsigned int startSeg, size_t nSeg, unsigned int parityStartSeg = 0,
              size_t parityNSeg = 0, unsigned int startNonce = 0x1234);
 
-std::vector<boost::shared_ptr<const ndn::Interest>>
-makeInterestsConst(const std::vector<boost::shared_ptr<ndn::Interest>> &interests);
+std::vector<std::shared_ptr<const ndn::Interest>>
+makeInterestsConst(const std::vector<std::shared_ptr<ndn::Interest>> &interests);
 
-boost::shared_ptr<ndnrtc::WireSegment>
+std::shared_ptr<ndnrtc::WireSegment>
 getFakeSegment(std::string threadPrefix, ndnrtc::SampleClass cls, ndnrtc::SegmentClass segCls,
                PacketNumber pNo, unsigned int segNo);
 
-boost::shared_ptr<ndnrtc::WireSegment>
+std::shared_ptr<ndnrtc::WireSegment>
 getFakeThreadMetadataSegment(std::string threadPrefix, const ndnrtc::DataPacket &d);
 
 ndn::Name
@@ -123,7 +123,7 @@ keyName(std::string s);
 ndn::Name
 certName(ndn::Name keyName);
 
-boost::shared_ptr<ndn::KeyChain>
+std::shared_ptr<ndn::KeyChain>
 memoryKeyChain(const std::string name);
 
 bool checkNfd();
@@ -145,7 +145,7 @@ extern void ColoredPrintf(GTestColor color, const char *fmt, ...);
 }
 
 //******************************************************************************
-typedef boost::function<void(void)> QueueBlock;
+typedef std::function<void(void)> QueueBlock;
 
 #if BOOST_ASIO_HAS_STD_CHRONO
 
@@ -180,8 +180,8 @@ class DelayQueue
     bool isActive() const { return timerSet_; }
 
   private:
-    mutable boost::recursive_mutex m_;
-    boost::atomic<bool> timerSet_;
+    mutable std::recursive_mutex m_;
+    std::atomic<bool> timerSet_;
     int delayMs_, dev_;
     boost::asio::steady_timer timer_;
     std::map<TPoint, std::vector<QueueBlock>> queue_;
@@ -189,20 +189,20 @@ class DelayQueue
     void pop(const boost::system::error_code &e);
 };
 
-typedef boost::function<void(const boost::shared_ptr<ndn::Interest> &)> OnInterestT;
-typedef boost::function<void(const boost::shared_ptr<ndn::Data> &, const boost::shared_ptr<ndn::Interest>)> OnDataT;
+typedef std::function<void(const std::shared_ptr<ndn::Interest> &)> OnInterestT;
+typedef std::function<void(const std::shared_ptr<ndn::Data> &, const std::shared_ptr<ndn::Interest>)> OnDataT;
 
 class DataCache
 {
   public:
-    void addInterest(const boost::shared_ptr<ndn::Interest> interest, OnDataT onData);
-    void addData(const boost::shared_ptr<ndn::Data> &data, OnInterestT onInterest = OnInterestT());
+    void addInterest(const std::shared_ptr<ndn::Interest> interest, OnDataT onData);
+    void addData(const std::shared_ptr<ndn::Data> &data, OnInterestT onInterest = OnInterestT());
 
   private:
-    boost::mutex m_;
-    std::map<ndn::Name, boost::shared_ptr<ndn::Interest>> interests_;
+    std::mutex m_;
+    std::map<ndn::Name, std::shared_ptr<ndn::Interest>> interests_;
     std::map<ndn::Name, OnDataT> onDataCallbacks_;
-    std::map<ndn::Name, boost::shared_ptr<ndn::Data>> data_;
+    std::map<ndn::Name, std::shared_ptr<ndn::Data>> data_;
     std::map<ndn::Name, OnInterestT> onInterestCallbacks_;
 };
 

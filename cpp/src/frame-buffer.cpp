@@ -10,9 +10,11 @@
 
 #include "frame-buffer.hpp"
 
+#include <thread>
 #include <ndn-cpp/interest.hpp>
 #include <ndn-cpp/data.hpp>
 
+#include "async.hpp"
 #include "clock.hpp"
 #include "fec.hpp"
 #include "frame-data.hpp"
@@ -384,7 +386,7 @@ BufferSlot::updateAssemblingProgress(const DataRequest &dr)
 
     size_t dataSize = dr.getData()->getContent().size();
     fetchedBytesTotal_ += dataSize;
-    if (dr. getNamespaceInfo().segmentClass_ == SegmentClass::Data)
+    if (dr.getNamespaceInfo().segmentClass_ == SegmentClass::Data)
     {
         fetchedBytesData_ += dataSize;
         nDataSegmentsFetched_++;
@@ -866,10 +868,12 @@ SlotPool::push(const std::shared_ptr<BufferSlot>& slot)
 
 //******************************************************************************
 Buffer::Buffer(std::shared_ptr<RequestQueue> interestQ,
+               shared_ptr<DecodeQueue> decodeQ,
                uint64_t slotRetainIntervalUsec,
                std::shared_ptr<StatisticsStorage> storage)
     : sstorage_(storage)
     , requestQ_(interestQ)
+    , decodeQ_(decodeQ)
     , delayEstimateGamma_(4.)
     , delayEstimateTheta_(15./16.)
     , dqFilter_(delayEstimateTheta_)
@@ -880,6 +884,7 @@ Buffer::Buffer(std::shared_ptr<RequestQueue> interestQ,
     , slotPushTimer_(interestQ->getIoService())
     , slotPushFireTime_(0)
     , slotPushDelay_(0)
+    , lastPushedSampleNo_(0)
 {
     assert(sstorage_.get());
     description_ = "buffer";
@@ -1021,6 +1026,7 @@ Buffer::checkReadySlots(uint64_t now)
     // 3. check for cleanup of old frames
 
     {
+        vector<shared_ptr<BufferSlot>> slotsForDecode;
         std::lock_guard<std::recursive_mutex> scopedLock(mutex_);
         for (auto &e : slots_)
         {
@@ -1032,13 +1038,12 @@ Buffer::checkReadySlots(uint64_t now)
                 int32_t gopNo = slot->getMetaPacket()->getFrameMeta().gop_number();
                 bool isKey = (slot->getMetaPacket()->getFrameMeta().type() == FrameMeta_FrameType_Key);
                 bool prevDecodable = (gopDecodeMap_.find(gopNo) != gopDecodeMap_.end() ? (gopDecodeMap_[gopNo] + 1 == sampleNo) : false);
+                int64_t d = (int64_t)e.second.pushDeadlineUsec_ - (int64_t)now;
 
                 LogTraceC << sampleNo << " isKey " << isKey
                     << " previous decodable " << prevDecodable
-                << " last GOP decodable " << (gopDecodeMap_.find(gopNo) != gopDecodeMap_.end() ? gopDecodeMap_[gopNo] : 0)
-                << " now " << now
-                << " deadline " << e.second.pushDeadlineUsec_
-                << " diff " << e.second.pushDeadlineUsec_-now
+                    << " last GOP decodable " << (gopDecodeMap_.find(gopNo) != gopDecodeMap_.end() ? gopDecodeMap_[gopNo] : 0)
+                    << (isKey ? " deadline in " : "") << (isKey ? d : 0)
                     << endl;
 
                 if (isKey || prevDecodable)
@@ -1048,36 +1053,46 @@ Buffer::checkReadySlots(uint64_t now)
                     // 2. it's a Delta frame
                     // 3. it's out-of-order old frame
                     bool pushForDecode =
-                        (isKey && now >= e.second.pushDeadlineUsec_) ||
+                        (isKey && d <= 0) ||
                         (!isKey) ||
-                        (lastPushedSlot_ && sampleNo < lastPushedSlot_->getNameInfo().sampleNo_);
+                        (sampleNo < lastPushedSampleNo_);
+                        // (lastPushedSlot_ && sampleNo < lastPushedSlot_->getNameInfo().sampleNo_);
 
                     // TODO: check for getIsJitterCompensationOn()
                     if (pushForDecode)
                     {
-                        int64_t d = (int64_t)now - (int64_t)e.second.pushDeadlineUsec_;
-                        // if frame is Key -- add to push delay so we can adjust for it
-                        // in the future
+                        // this is the adjustment for d (since we will never be accurate on push deadline)
+                        // slotPusDelay_ should be accounted for in the next push deadline calculation
                         if (isKey)
                             slotPushDelay_ += d;
 
                         // push to decodeQ
-                        LogTraceC << "push to decode Q. late by "
+                        LogDebugC << "decodeQ push now. late by "
                                   << d << "usec "
                                   << slot->dump() << endl;
-                        lastPushedSlot_ = slot;
+
                         e.second.pushedForDecode_ = true;
+                        lastPushedSampleNo_ = sampleNo;
                         gopDecodeMap_[gopNo] = sampleNo;
+
+                        slotsForDecode.push_back(slot);
                     }
                     else
                     {
                         // setup timer to push this frame at a later time
-                        LogTraceC << "push later. in "
-                                  << (int64_t)e.second.pushDeadlineUsec_ - (int64_t)now << "usec "
+                        LogDebugC << "decodeQ push later. in "
+                                  << d << "usec "
                                   << slot->dump() << endl;
                     }
                 }
             }
+        }
+
+        // push slots for decode and remove them from the buffer
+        for (auto &s: slotsForDecode)
+        {
+            removeSlot(s->getNameInfo().sampleNo_);
+            decodeQ_->push(s);
         }
     }
 
@@ -1089,7 +1104,7 @@ Buffer::doCleanup(uint64_t now)
 {
     if (lastCleanupUsec_ == 0 || now - lastCleanupUsec_ >= cleanupIntervalUsec_)
     {
-        cout << "CLEANUP " << dump() << endl;
+        // cout << "CLEANUP " << dump() << endl;
 
         // iterate over slots and remove all that have insertedUsec timestamp older
         // than slotRetainInterval
@@ -1100,13 +1115,13 @@ Buffer::doCleanup(uint64_t now)
                 (now - e.second.insertedUsec_ >= slotRetainIntervalUsec_ ||
                 e.second.pushedForDecode_))
             {
-                cout << "SLOT DISCARD "
-                     << now << " "
-                     << e.second.insertedUsec_ << " "
-                     << e.second.slot_->getFirstRequestTsUsec() << " "
-                     << slotRetainIntervalUsec_ << " "
-                     << now - e.second.insertedUsec_ << " "
-                     << e.second.slot_->dump() << endl;
+                // cout << "SLOT DISCARD "
+                //      << now << " "
+                //      << e.second.insertedUsec_ << " "
+                //      << e.second.slot_->getFirstRequestTsUsec() << " "
+                //      << slotRetainIntervalUsec_ << " "
+                //      << now - e.second.insertedUsec_ << " "
+                //      << e.second.slot_->dump() << endl;
 
                 LogTraceC << "old slot discard " << e.second.slot_ << endl;
                 oldSlots.push_back(e.second.slot_->getNameInfo().sampleNo_);
@@ -1128,12 +1143,30 @@ void
 Buffer::setSlotPushDeadline(const std::shared_ptr<BufferSlot> &s, uint64_t now)
 {
     uint64_t delayUsec = (uint64_t)getDelayEstimate();
-    uint64_t pushDeadlineUsec = now + delayUsec;
+    uint64_t delayAdjustedUsec = delayUsec;
+    uint64_t pushDeadlineUsec = now;
+
+    // account for dealyed pushes from previous iterations
+    if (delayUsec + slotPushDelay_ < 0)
+    {
+        slotPushDelay_ += delayUsec;
+        delayAdjustedUsec = 0;
+    }
+    else
+    {
+        delayAdjustedUsec += slotPushDelay_;
+        slotPushDelay_ = 0;
+    }
+
+    pushDeadlineUsec += delayAdjustedUsec;
+
     slots_[s->getNameInfo().sampleNo_].pushDeadlineUsec_ = pushDeadlineUsec;
 
-    setupPushTimer(pushDeadlineUsec);
+    setupPushTimer(pushDeadlineUsec); // ???
 
-    LogTraceC << "slot push deadline is " << delayUsec << "usec from now. "
+    LogTraceC << "decodeQ push deadline is "
+              << delayAdjustedUsec << "usec from now. (non-adjusted "
+              << delayUsec << "usec)"
               << s->dump() << endl;
 }
 
@@ -1434,6 +1467,1023 @@ Buffer::dumpSlotDictionary(stringstream& ss,
         ss << (s.second->getAssembledLevel() >= 1 ? "■" :
             (s.second->getAssembledLevel() > 0 ? "◘" : "☐" ));
     }
+}
+
+shared_ptr<const VideoCodec::Image> DecodeQueue::ZeroImage = make_shared<const VideoCodec::Image>(0,0,ImageFormat::I420);
+//******************************************************************************
+
+const EncodedFrame&
+DecodeQueue::BitstreamData::loadFrom(shared_ptr<const BufferSlot>& slot,
+    bool& recovered)
+{
+    assert(slot);
+    assert(slot->isReadyForDecoder());
+
+    if (slot == slot_)
+        return encodedFrame_;
+
+    // 1. copy all (data and parity) segments from the slot to the bitstream storage
+    // 2. check whether frame must (and can) be recovered
+    // 3. recover frame if needed
+    // 4. wrap EncodedFrame structure around resulting bitstream data
+
+    clear();
+    slot_ = slot;
+    size_t segmentSize = 0; // we assume const segment sizes
+    fecList_.assign(slot->getDataSegmentsNum()+slot->getParitySegmentsNum(), FEC_RLIST_SYMEMPTY);
+
+    for (auto &r : slot->getRequests())
+    {
+        SegmentClass sc = r->getNamespaceInfo().segmentClass_;
+
+        if (r->getStatus() == DataRequest::Status::Data &&
+            (sc == SegmentClass::Parity || sc == SegmentClass::Data))
+        {
+            uint32_t segNo = r->getNamespaceInfo().segNo_;
+            auto d = r->getData();
+
+            if (sc == SegmentClass::Parity)
+                segNo += slot->getDataSegmentsNum();
+            if (!segmentSize)
+            {
+                segmentSize = d->getContent().size();
+                bitstreamData_.reserve(segmentSize*(slot->getDataSegmentsNum() + slot->getParitySegmentsNum()));
+                bitstreamData_.resize(segmentSize*slot->getDataSegmentsNum());
+            }
+
+            copy(d->getContent()->begin(), d->getContent()->end(),
+                 bitstreamData_.begin()+segmentSize*segNo);
+            fecList_[segNo] = FEC_RLIST_SYMREADY;
+        }
+    }
+
+    // check if need to recover using FEC data
+    if (slot->getFetchedDataSegmentsNum() < slot->getDataSegmentsNum())
+    {
+        fec::Rs28Decoder dec(slot->getDataSegmentsNum(), slot->getParitySegmentsNum(),
+                             segmentSize);
+        int nRecovered = dec.decode(bitstreamData_.data(),
+                                    bitstreamData_.data() + segmentSize*slot->getDataSegmentsNum(),
+                                    fecList_.data());
+        recovered = (nRecovered + slot->getFetchedDataSegmentsNum() >= slot->getDataSegmentsNum());
+    }
+    else
+        recovered = false;
+
+    encodedFrame_.type_ = slot->getMetaPacket()->getFrameMeta().type() == FrameMeta_FrameType_Key ? FrameType::Key : FrameType::Delta;
+    encodedFrame_.data_ = bitstreamData_.data();
+    encodedFrame_.length_ = bitstreamData_.size();
+
+    return encodedFrame_;
+}
+
+void
+DecodeQueue::VpxExternalBufferList::DecodedData::clear()
+{
+    inUseByDecoder_ = false;
+    img_ = std::const_pointer_cast<VideoCodec::Image>(ZeroImage);
+//    rawData_.clear();
+}
+
+void
+DecodeQueue::VpxExternalBufferList::DecodedData::memset(uint8_t c)
+{
+    ::memset(rawData_.data(), c, rawData_.capacity());
+}
+
+void
+DecodeQueue::VpxExternalBufferList::DecodedData::setImage(const VideoCodec::Image& img,
+    const NamespaceInfo& ni)
+{
+    ni_ = ni;
+
+    assert(img.getDataSize());
+    assert(img.getIsWrapped());
+
+    img_ = make_shared<VideoCodec::Image>(img.getVpxImage());
+    img_->setUserData((void*)&ni_);
+}
+
+const VideoCodec::Image&
+DecodeQueue::VpxExternalBufferList::DecodedData::getImage() const
+{
+    return *img_;
+}
+
+DecodeQueue::VpxExternalBufferList::VpxExternalBufferList(uint32_t capacity)
+: framePool_(capacity)
+{}
+
+void
+DecodeQueue::VpxExternalBufferList::recycle(DecodedData *dd)
+{
+    assert(dd);
+
+    shared_ptr<DecodedData> ddPtr = getPointer(dd);
+    assert(ddPtr);
+
+    if (ddPtr->inUseByDecoder_)
+    {
+        LogTraceC << "in use by decoder or locked. purge later" << endl;
+        delayedPurgeList_.push_back(ddPtr);
+    }
+    else
+        framePool_.push(ddPtr);
+
+    remove(dataInUse_.begin(), dataInUse_.end(), ddPtr);
+    doCleanup();
+}
+
+shared_ptr<DecodeQueue::VpxExternalBufferList::DecodedData>
+DecodeQueue::VpxExternalBufferList::getPointer(DecodedData *dd)
+{
+    auto it = find_if(dataInUse_.begin(), dataInUse_.end(),
+                [&](shared_ptr<DecodedData>& ddPtr){
+                     return ddPtr.get() == dd;
+                 });
+
+    if (it != dataInUse_.end())
+        return *it;
+
+    return shared_ptr<DecodedData>();
+}
+
+void
+DecodeQueue::VpxExternalBufferList::doCleanup()
+{
+    auto it = delayedPurgeList_.begin();
+
+    while (it != delayedPurgeList_.end())
+    {
+        if ((*it)->inUseByDecoder_)
+        {
+            framePool_.push(*it);
+            it = delayedPurgeList_.erase(it);
+        }
+    }
+}
+
+int
+DecodeQueue::VpxExternalBufferList::getFreeFrameBuffer(size_t minSize,
+                                                       vpx_codec_frame_buffer_t *fb)
+{
+    auto dd = framePool_.pop();
+    if (!dd)
+    {
+        LogErrorC << "FATAL: no free memory for decoded data. "
+                  << framePool_.size() << " decoded frames in-memory"
+                  << endl;
+        return 1;
+    }
+    else
+    {
+        if (dd->getCapacity() < minSize)
+        {
+            dd->reserve(minSize);
+            dd->memset(0);
+        }
+
+        dd->resize(minSize);
+
+        fb->data = dd->getData();
+        fb->size = dd->getSize();
+        fb->priv = dd.get();
+        dd->inUseByDecoder_ = true;
+        dataInUse_.push_back(dd);
+    }
+
+    return 0;
+}
+
+int
+DecodeQueue::VpxExternalBufferList::returnFrameBuffer(vpx_codec_frame_buffer_t *fb)
+{
+    auto *dd = (DecodedData*)fb->priv;
+    assert(dd);
+    dd->inUseByDecoder_ = false;
+
+    return 0;
+}
+
+size_t
+DecodeQueue::VpxExternalBufferList::getUsedBufferNum()
+{
+    return framePool_.capacity() - framePool_.size();
+}
+
+size_t
+DecodeQueue::VpxExternalBufferList::getFreeBufferNum()
+{
+    return framePool_.size();
+}
+
+DecodeQueue::DecodeQueue(boost::asio::io_service& io, uint32_t size, uint32_t capacity)
+: io_(io)
+, size_(size)
+, bitstreamDataPool_(capacity)
+, vpxFbList_(capacity)
+, pbPointer_(frames_.end())
+, lastAsked_(-1)
+, lastRetrieved_(frames_.end())
+, lockedRecycleData_(nullptr)
+, discardGop_(-1)
+, isCheckFramesScheduled_(false)
+{
+    setDescription("decodeQ");
+    CodecSettings codecSettings;// = VideoCodec::defaultCodecSettings();
+    codecSettings.numCores_ = thread::hardware_concurrency();
+    codecSettings.rowMt_ = true;
+    codecSettings.spec_.decoder_.frameBufferList_ = &vpxFbList_;
+    codecContext_.codec_.initDecoder(codecSettings);
+    resetCodecContext();
+}
+
+void
+DecodeQueue::push(const shared_ptr<const BufferSlot>& slot)
+{
+    lock_guard<recursive_mutex> mLock(masterMtx_);
+    pair<FrameQueue::iterator, bool> res = frames_.insert(FrameQueueEntry{slot,
+                                bitstreamDataPool_.pop(),
+                                nullptr});
+    // result will be false if frame with same number is already in the queue
+    assert(res.second);
+
+    LogTraceC << slot->dump() << endl;
+
+    int32_t gopNo = slot->getMetaPacket()->getFrameMeta().gop_number();
+    bool isKey = (slot->getMetaPacket()->getFrameMeta().type() == FrameMeta_FrameType_Key);
+    PacketNumber sampleNo = slot->getNameInfo().sampleNo_;
+
+    if (gops_.find(gopNo) == gops_.end())
+    {
+        gops_[gopNo] = {gopNo, 0, frames_.end(), frames_.end()};
+        LogTraceC << "new gop " << gopNo << endl;
+    }
+
+    if (isKey)
+    {
+        gops_[gopNo].start_ = res.first;
+        LogTraceC << "gop " << gopNo << " start " << sampleNo << endl;
+    }
+
+    // check if we can close gop boundary
+    //   - current frame is GOP start -> check previous GOP
+    //   - current frame is the last one in its' GOP --> check next GOP
+    {
+        int32_t prevGop = (gops_.find(gopNo-1) == gops_.end() ? -1 : gopNo-1);
+        int32_t nextGop = (gops_.find(gopNo+1) == gops_.end() ? -1 : gopNo+1);
+
+        if (prevGop >= 0 && res.first != frames_.begin())
+        {
+            shared_ptr<const BufferSlot> prevSlot = prev(res.first)->slot_;
+            if (prevSlot->getMetaPacket()->getFrameMeta().gop_number() == prevGop)
+            {
+                gops_[prevGop].end_ = prev(res.first);
+
+                LogTraceC << "gop " << prevGop << " end " << prevSlot->getNameInfo().sampleNo_ << endl;
+            }
+        }
+
+        if (nextGop > 0 && next(res.first) != frames_.end())
+        {
+            shared_ptr<const BufferSlot> nextSlot = next(res.first)->slot_;
+            if (nextSlot->getMetaPacket()->getFrameMeta().gop_number() == nextGop)
+            {
+                gops_[gopNo].end_ = res.first;
+
+                LogTraceC << "gop " << gopNo << " end " << sampleNo << endl;
+            }
+        }
+    }
+
+    if (pbPointer_ == frames_.end())
+    {
+        lock_guard<recursive_mutex> lock(playbackMtx_);
+        
+        pbPointer_ = res.first;
+        LogTraceC << "set pb pointer " << pbPointer_->slot_->dump() << endl;
+    }
+
+    if (!isCheckFramesScheduled_)
+    {
+        isCheckFramesScheduled_ = true;
+        shared_ptr<DecodeQueue> me = dynamic_pointer_cast<DecodeQueue>(shared_from_this());
+        async::dispatchAsync(io_, bind(&DecodeQueue::checkFrames, me));
+    }
+}
+
+const VideoCodec::Image&
+DecodeQueue::get(int32_t step, bool allowDecoding)
+{
+    VpxExternalBufferList::DecodedData* rawData = nullptr;
+    
+    {
+        lock_guard<recursive_mutex> pLock(playbackMtx_);
+        
+        if (pbPointer_ != frames_.end())
+        {
+            LogTraceC << pbPointer_->slot_->dump() << endl;
+            
+            if (pbPointer_->rawData_)
+                rawData = pbPointer_->rawData_;
+            else if (allowDecoding)
+            {
+                LogTraceC << "requested frame not decoded. trying to decode" << endl;
+                
+                // try to decode now
+                int32_t gopNo = pbPointer_->slot_->getMetaPacket()->getFrameMeta().gop_number();
+                assert(gops_.find(gopNo) != gops_.end());
+                
+                if (gops_[gopNo].start_ != frames_.end())
+                {
+                    lock_guard<recursive_mutex> cLock(codecContext_.mtx_);
+                    
+                    if (codecContext_.lastDecoded_ != frames_.end() &&
+                        frameIteratorWithinRange(next(codecContext_.lastDecoded_),
+                                                 gops_[gopNo].start_, pbPointer_))
+                        runDecoder(codecContext_, next(codecContext_.lastDecoded_),
+                                   distance(codecContext_.lastDecoded_, pbPointer_));
+                    else
+                    {
+                        runDecoder(codecContext_, gops_[gopNo].start_, distance(gops_[gopNo].start_, pbPointer_)+1);
+                        resetCodecContext();
+                    }
+                    
+                    if (!pbPointer_->rawData_)
+                        return *ZeroImage;
+                    
+                    assert(pbPointer_->rawData_->hasImage());
+                    rawData = pbPointer_->rawData_;
+                }
+                else
+                {
+                    LogErrorC << "frame is not decodable" << endl;
+                    assert(false);
+                }
+            }
+            else
+                return *ZeroImage;
+            
+            // {
+            // lock_guard<recursive_mutex> lock(pbMutex_);
+            lastRetrieved_ = pbPointer_;
+            // }
+            //        seek(step);
+            
+            //        return rawData->getImage();
+        }
+    }
+    
+    if (step) seek(step);
+
+    return rawData ? rawData->getImage() : *ZeroImage;
+}
+
+int32_t
+DecodeQueue::seek(int32_t step)
+{
+    if (!step) return 0;
+
+    lock_guard<recursive_mutex> lock(masterMtx_);
+    int32_t maxAdvance = 0;
+
+    if (step < 0)
+        maxAdvance = -distance(frames_.begin(), pbPointer_);
+    else
+    {
+        if (pbPointer_ == frames_.end())
+            maxAdvance = 0;
+        else
+            maxAdvance = distance(pbPointer_, prev(frames_.end()));
+    }
+
+    int32_t d = 0;
+
+    if (abs(step) >= abs(maxAdvance))
+    {
+        d = maxAdvance;
+        advance(pbPointer_, maxAdvance);
+    }
+    else
+    {
+        d = step;
+        advance(pbPointer_, step);
+    }
+
+    if (d != 0 && lockedRecycleData_)
+    {
+        vpxFbList_.recycle(lockedRecycleData_);
+        lockedRecycleData_ = nullptr;
+    }
+
+    LogTraceC << "advance pb pointer by " << d << ": "
+        << (pbPointer_ == frames_.end() ? "" : pbPointer_->slot_->dump())
+        << endl;
+    return d;
+}
+
+void
+DecodeQueue::checkFrames()
+{
+    // checks what frame can be and should be decoded next
+    // it follows this logic in choosing next frame/gop to decode:
+    // - continue decoding GOP_cur (current gop)
+    // - if no current gop OR current gop decoded:
+    //      - find encoded frame E that is the closest to the pbPointer (or lastRetrieved)
+    //      - set GOP_cur = GOP_e (E frames' GOP)
+    // - if no closest encoded frame E:
+    //      - set GOP_cur = GOP_cur + 1
+    // - if no GOP_cur + 1:
+    //      - GOP_cur = pbPointer gop, if has encoded frames
+    // - otherwise:
+    //      - scan all GOPs and select first GOP that has any encoded frames
+{
+    lock_guard<recursive_mutex> mLock(masterMtx_);
+    LogTraceC << dump() << endl;
+
+    int32_t lastDecodedSampleNo = -1;
+    int32_t curGopCanDecode = 0;
+
+    int32_t curSampleNo = -1;
+    int32_t leftToDecode = 0;
+    FrameQueue::iterator decodeStart = frames_.end();
+
+    if (codecContext_.lastDecoded_ != frames_.end())
+    {
+        shared_ptr<const BufferSlot> lastDecodedSlot = codecContext_.lastDecoded_->slot_;
+        lastDecodedSampleNo = lastDecodedSlot->getNameInfo().sampleNo_;
+        GopEntry ge = gops_[lastDecodedSlot->getMetaPacket()->getFrameMeta().gop_number()];
+        leftToDecode = getEncodedNum(ge);
+
+        if (leftToDecode)
+            decodeStart = next(codecContext_.lastDecoded_);
+    }
+    assert(leftToDecode >= 0);
+
+    // find encoded frame that is the closest to the pbPointer
+    if (!leftToDecode)
+    {
+        // lock_guard<recursive_mutex> lock(pbMutex_);
+        FrameQueue::iterator p = (pbPointer_ == frames_.end() ? lastRetrieved_ : pbPointer_);
+
+        if (p != frames_.end())
+        {
+            int32_t closestEncodedLeftOffset = getClosest(p, true, false);
+            int32_t closestEncodedRightOffset = getClosest(p, true, true);
+
+            if (closestEncodedRightOffset != abs(closestEncodedLeftOffset))
+            {
+                int32_t offset = 0;
+                if (closestEncodedRightOffset < abs(closestEncodedLeftOffset))
+                    offset = closestEncodedRightOffset;
+                else
+//                if (closestEncodedRightOffset > abs(closestEncodedLeftOffset))
+                    offset = closestEncodedLeftOffset;
+
+                if (offset)
+                {
+                    advance(p, offset);
+                    GopEntry ge = gops_[p->slot_->getMetaPacket()->getFrameMeta().gop_number()];
+
+                    decodeStart = ge.start_;
+                    advance(decodeStart, ge.nDecoded_);
+                    leftToDecode = getEncodedNum(ge);
+
+                    if (leftToDecode)
+                    {
+                        codecContext_.gopStart_ = ge.start_;
+                        codecContext_.gopEnd_ = ge.end_;
+
+                        LogTraceC << "closest to decode " << decodeStart->slot_->dump() << endl;
+                    }
+                }
+            }
+        }
+    }
+    assert(leftToDecode >= 0);
+    
+    // prioritise pbPointer gop
+    if (!leftToDecode)
+    {
+        if (pbPointer_ != frames_.end())
+        {
+            GopEntry &ge = gops_[pbPointer_->slot_->getMetaPacket()->getFrameMeta().gop_number()];
+            decodeStart = ge.start_;
+            advance(decodeStart, ge.nDecoded_);
+            leftToDecode = getEncodedNum(ge);
+            
+            if (leftToDecode)
+            {
+                codecContext_.gopStart_ = ge.start_;
+                codecContext_.gopEnd_ = ge.end_;
+
+                LogTraceC << "decode by pb pointer " << decodeStart->slot_->dump() << endl;
+            }
+        }
+    }
+    assert(leftToDecode >= 0);
+
+    // scan all GOPs and find a candidate that has encoded frames
+    if (!leftToDecode)
+    {
+        for (auto &it : gops_)
+        {
+            GopEntry &ge = it.second;
+            // has Key frame to start decoding -- good
+            if (ge.start_ != frames_.end())
+            {
+                // calculate how many frames left to decode (include +1 if GOP end is not frames_.end())
+                int32_t gopLeftToDecode = getEncodedNum(ge);
+
+                if (gopLeftToDecode > 0)
+                {
+                    decodeStart = ge.start_;
+                    leftToDecode = gopLeftToDecode;
+                    codecContext_.gopStart_ = ge.start_;
+                    codecContext_.gopEnd_ = ge.end_;
+
+                    LogTraceC << "gop candidate " << ge.no_
+                              << " left to decode " << gopLeftToDecode << endl;
+
+                    break;
+                }
+            }
+        }
+    }
+    assert(leftToDecode >= 0);
+
+    if (leftToDecode > 0)
+    {
+        lock_guard<recursive_mutex> cLock(codecContext_.mtx_);
+        
+        runDecoder(codecContext_, decodeStart, leftToDecode, 30);
+        if (distance(decodeStart, codecContext_.lastDecoded_) < leftToDecode)
+        {
+            // schedule again
+            shared_ptr<DecodeQueue> me = dynamic_pointer_cast<DecodeQueue>(shared_from_this());
+            async::dispatchAsync(io_, bind(&DecodeQueue::checkFrames, me));
+        }
+        else
+            isCheckFramesScheduled_ = false;
+    }
+    else
+    {
+        isCheckFramesScheduled_ = false;
+        LogTraceC << "nothing to decode" << endl;
+    }
+    
+#if 0
+    //    if (codecContext_.lastDecoded_ != frames_.end())
+    //    {
+    //        int32_t curGop = -1;
+    //        shared_ptr<const BufferSlot> lastDecodedSlot = codecContext_.lastDecoded_->slot_;
+    //        lastDecodedSampleNo = lastDecodedSlot->getNameInfo().sampleNo_;
+    //        curGop = lastDecodedSlot->getMetaPacket()->getFrameMeta().gop_number();
+    //
+    //        if (gops_.find(curGop) != gops_.end())
+    //            codecContext_.gopEnd_ = gops_[curGop].end_;
+    //        curGopCanDecode = distance(codecContext_.lastDecoded_, codecContext_.gopEnd_);
+    //
+    //        if (codecContext_.gopEnd_ == frames_.end())
+    //            curGopCanDecode -= 1;
+    //    }
+
+    GopEntry candidateGop {-1, 0, frames_.end(), frames_.end()};
+    // find new candidates for decoding
+    for (auto &it : gops_)
+    {
+        GopEntry &ge = it.second;
+
+        // has Key frame to start decoding -- good
+        if (ge.start_ != frames_.end())
+        {
+            // calculate how many frames left to decode (include +1 if GOP end is not frames_.end())
+            int32_t leftToDecode = distance(ge.start_, ge.end_) - ge.nDecoded_
+                    + (ge.end_ == frames_.end() ? 0 : 1);
+
+            LogTraceC << "left to decode " << ge.no_ << " " << leftToDecode << endl;
+
+            if (leftToDecode > 0)
+            {
+                candidateGop = ge;
+                break;
+            }
+
+//            if (ge.end_ != frames_.end())
+//            {
+//                gopSize = distance(ge.start_, ge.end_)+1;
+//                leftToDecode = distance(ge.start_, ge.end_)+1 - ge.nDecoded_;
+//            }
+//            else
+//            {
+//                if (ge.nDecoded_ > distance(ge.start_, ge.end_);
+//            }
+//
+//            // if we don't have last frame in this GOP, check if there are frames to decode
+//            if (leftToDecode == -1)
+//            {
+//                FrameQueue::iterator it(ge.start_);
+//                advance(it, ge.nDecoded_);
+//
+//                if (it != frames_.end())
+//                {
+//                    candidateGop = ge;
+//                    break;
+//                }
+//                // else -- there's nothing to do
+//            }
+//            else if (leftToDecode > 0)
+//            {
+//                candidateGop = ge;
+//                break;
+//            }
+        }
+    }
+
+
+    // check if we can continue decoding what's already is being decoded
+    if (lastDecodedSampleNo >= 0 && curGopCanDecode)
+    {
+        LogTraceC << "continue decode " << next(codecContext_.lastDecoded_)->slot_->dump () << endl;
+
+        runDecoder(codecContext_, next(codecContext_.lastDecoded_), curGopCanDecode, 50);
+    }
+    else if (candidateGop.no_ >= 0)
+    {
+        LogTraceC << "start decode " << candidateGop.start_->slot_->dump() << endl;
+
+        codecContext_.gopStart_ = candidateGop.start_;
+        runDecoder(codecContext_, candidateGop.start_,
+                   distance(candidateGop.start_, candidateGop.end_), 50);
+    }
+#endif
+    }
+
+    doCleanup();
+}
+
+void
+DecodeQueue::runDecoder(CodecContext &ctx, FrameQueue::iterator start,
+                        int32_t nToDecode, uint32_t timeLimit)
+{
+    FrameQueue::iterator& decodeIt = start;
+
+    LogTraceC << nToDecode << " frames. starting from " << decodeIt->slot_->dump() << endl;
+
+    uint64_t decodingTime = 0;
+    for (int i = 0; i < nToDecode; ++i)
+    {
+        if (timeLimit && decodingTime > timeLimit)
+        {
+            LogTraceC << "time limit reached: " << decodingTime << endl;
+            break;
+        }
+
+        if (checkAssignMemory(decodeIt))
+        {
+            bool recovered = false;
+            shared_ptr<const BufferSlot> slot = decodeIt->slot_;
+            GopEntry& ge = gops_[slot->getMetaPacket()->getFrameMeta().gop_number()];
+            EncodedFrame ef = decodeIt->bitstreamData_->loadFrom(slot, recovered);
+
+            // LogTraceC << "poking " << decodeIt->slot_->dump() << endl;
+
+            if (ef.data_)
+            {
+                // check if this frame has been already decoded
+                // if so, recycle decoded data
+                // (we have to decode this frame again in order to setup codec context
+                // for the final frame)
+                if (decodeIt->rawData_)
+                {
+                    vpxFbList_.recycle(decodeIt->rawData_);
+                    decodeIt->rawData_ = nullptr;
+                }
+
+                if (vpxFbList_.getFreeBufferNum())
+                {
+                    LogTraceC << "will decode " << slot->dump()
+                              << " free slots " << vpxFbList_.getFreeBufferNum() << endl;
+
+                    uint64_t decodingStart = clock::millisecondTimestamp();
+                    int res = ctx.codec_.decode(ef, [&](const VideoCodec::Image& img){
+                        LogDebugC << "decoded " << slot->getNameInfo().sampleNo_
+                        << " " << img.getWidth() << "x" << img.getHeight()
+                        << ". fec used: " << (recovered ? "YES " : "NO ")
+                        << slot->dump() << endl;
+
+                        VpxExternalBufferList::DecodedData* ddPtr = (VpxExternalBufferList::DecodedData*)img.getVpxImage()->fb_priv;
+                        assert(ddPtr);
+
+                        decodeIt->rawData_ = ddPtr;
+                        ddPtr->setImage(img, slot->getNameInfo());
+
+                        ctx.lastDecoded_ = decodeIt;
+                        ge.nDecoded_++;
+                        decodingTime += (clock::millisecondTimestamp() - decodingStart);
+                    });
+
+                    if (res)
+                    {
+                        LogErrorC << "decode error " << slot->dump() << endl;
+                        break;
+                    }
+
+                    ctx.lastDecoded_ = decodeIt;
+                }
+                else
+                {
+                    LogErrorC << "no free memory for decoding" << endl;
+                    break;
+                }
+
+                decodeIt = next(decodeIt);
+                if (decodeIt == frames_.end())
+                {
+                    assert(codecContext_.lastDecoded_ != frames_.end());
+                    return;
+                }
+            }
+            else
+                LogErrorC << "fail acquiring slot data " << slot->dump() << endl;
+        }
+        else
+        {
+            LogWarnC << "unable to assign pre-allocated memory. "
+                        "increase pool capacity to silence this warning."
+                        " pool sizes: "
+                     << bitstreamDataPool_.size()
+                     << " " << vpxFbList_.getFreeBufferNum() << endl;
+            break;
+        }
+    }
+}
+
+void
+DecodeQueue::resetCodecContext()
+{
+    {
+        lock_guard<recursive_mutex> lock(codecContext_.mtx_);
+
+        codecContext_.lastDecoded_ =
+            codecContext_.gopStart_ =
+            codecContext_.gopEnd_ = frames_.end();
+
+        LogTraceC << "reset" << endl;
+    }
+}
+
+void
+DecodeQueue::doCleanup()
+{
+    lock_guard<recursive_mutex> mLock(masterMtx_);
+    lock_guard<recursive_mutex> pLock(playbackMtx_);
+    lock_guard<recursive_mutex> cLock(codecContext_.mtx_);
+
+    // discard old slots
+    // since decode queue provides random access, we can't discard only based on frame numbers
+    // slots can be discarded from either end of the queue
+    //   - check lastRetrieved_ GOP
+    //          if it's closer to the end -- remove from the front
+    //          if it's closer to the front -- remove from the end
+    //          if it's undefined -- assume forward access and remove from the front
+    //   - update playback pointer as needed
+
+    // slots discarded only from the ends of the queue
+    // discard slots policy (checks in descending priority order):
+    // - decoded frame that is farthest from the playback pointer (or lastRetrieved)
+    // - previously selected GOP
+    // - edge frame of one of two edge GOPs which has max nDecoded
+    // - frame from the front of the queue
+    while (frames_.size() > size_)
+    {
+        FrameQueue::iterator removeIt = frames_.end();
+        FrameQueue::iterator p;
+
+        // {
+            // lock_guard<recursive_mutex> lock(pbMutex_);
+            p = (pbPointer_ == frames_.end() ? lastRetrieved_ : pbPointer_);
+        // }
+
+        // check farthest frames
+        if (p != frames_.end())
+        {
+            int32_t farthestDecodedLeftOffset = getFarthest(p, false, false);
+            int32_t farthestDecodedRightOffset = getFarthest(p, false, true);
+
+            if (farthestDecodedRightOffset != abs(farthestDecodedLeftOffset))
+            {
+                int32_t offset = 0;
+                if (farthestDecodedRightOffset > abs(farthestDecodedLeftOffset))
+                    offset = farthestDecodedRightOffset;
+                else
+                    offset = farthestDecodedLeftOffset;
+
+                if (offset)
+                {
+                    removeIt = p;
+                    advance(removeIt, offset);
+
+                    LogTraceC << "discard farthest decoded " << removeIt->slot_->dump() << endl;
+                }
+            }
+        }
+
+        // check GOPs with max nDecoded
+        if (removeIt == frames_.end())
+        {
+            GopEntry leftGop = gops_.begin()->second;
+            GopEntry rightGop = gops_.rbegin()->second;
+
+            if (leftGop.nDecoded_ > rightGop.nDecoded_)
+            {
+//                int32_t offset = distance(frames_.begin(), leftGop.end_);
+                removeIt = frames_.begin();
+                discardGop_ = leftGop.no_;
+
+                LogTraceC << "discard left GOP edge frame " << removeIt->slot_->dump() << endl;
+            }
+            else if (rightGop.nDecoded_ > leftGop.nDecoded_)
+            {
+                removeIt = prev(frames_.rbegin().base());
+                discardGop_ = rightGop.no_;
+
+                LogTraceC << "discard right GOP edge frame " << removeIt->slot_->dump() << endl;
+            }
+        }
+
+        // previously selected gop
+        if (removeIt == frames_.end() && discardGop_ != -1)
+        {
+            if (gops_.begin()->first == discardGop_)
+            {
+                removeIt = frames_.begin();
+
+                LogTraceC << "discard edge frame from " << discardGop_
+                          << " " << removeIt->slot_->dump() << endl;
+            }
+            else if (gops_.rbegin()->first == discardGop_)
+            {
+                removeIt = prev(frames_.rbegin().base());
+
+                LogTraceC << "discard edge frame from " << discardGop_
+                << " " << removeIt->slot_->dump() << endl;
+            }
+            else
+                discardGop_ = -1;
+        }
+
+        if (removeIt == frames_.end())
+        {
+            removeIt = frames_.begin();
+
+            LogTraceC << "discard from the front of the queue "
+                      << removeIt->slot_->dump() << endl;
+        }
+
+        // check updates to codec context
+        if (codecContext_.lastDecoded_ == removeIt)
+            resetCodecContext();
+
+        // check updates to any GOPs
+        int32_t gopNo = removeIt->slot_->getMetaPacket()->getFrameMeta().gop_number();
+        GopEntry& ge = gops_[gopNo];
+        if (ge.start_ == removeIt)
+            ge.start_ = frames_.end();
+        if (ge.end_ == removeIt)
+            ge.end_ = frames_.end();
+        if (ge.end_ == ge.start_)
+        {
+            gops_.erase(gopNo);
+            LogTraceC << "discard GOP " << gopNo << endl;
+        }
+
+        bitstreamDataPool_.push(removeIt->bitstreamData_);
+        if (lastRetrieved_ == removeIt)
+        {
+            lockedRecycleData_ = removeIt->rawData_;
+            lastRetrieved_ = frames_.end();
+        }
+        else
+            vpxFbList_.recycle(removeIt->rawData_);
+        
+        if (pbPointer_ == frames_.end())
+        {
+            pbPointer_ = frames_.end();
+            LogTraceC << "reset pb pointer" << endl;
+        }
+
+        // TODO: come back to this later
+        // internally, we want slots to be const
+        // however, returning slots back to client code is easier if we pass non-const
+        // (since they typically will return it to the pool righ away, which requires
+        // non-const-ness)
+        shared_ptr<BufferSlot> s = const_pointer_cast<BufferSlot>(removeIt->slot_);
+        frames_.erase(removeIt);
+
+        LogTraceC << "discard frame " << s->dump()
+                  << " total frames " << frames_.size()
+                  << " pools " << bitstreamDataPool_.size()
+                  << " " << vpxFbList_.getFreeBufferNum()
+                  << endl;
+
+        // TODO call it outside lock context
+        onSlotDiscard(s);
+    }
+}
+
+bool
+DecodeQueue::frameIteratorWithinRange(const FrameQueue::iterator& it,
+                                      const FrameQueue::iterator& start,
+                                      const FrameQueue::iterator& end)
+{
+    int32_t itSampleNo = -1;
+    int32_t startSampleNo = -1;
+    int32_t endSampleNo = -1;
+
+    if (it != frames_.end())
+        itSampleNo = it->slot_->getNameInfo().sampleNo_;
+
+    if (start != frames_.end())
+        startSampleNo = start->slot_->getNameInfo().sampleNo_;
+
+    if (end != frames_.end())
+        endSampleNo = end->slot_->getNameInfo().sampleNo_;
+
+    if (startSampleNo != -1)
+    {
+        if (endSampleNo != -1)
+            return itSampleNo >= startSampleNo && itSampleNo <= endSampleNo;
+        return itSampleNo >= startSampleNo;
+    }
+
+    // else
+    return itSampleNo <= endSampleNo;
+}
+
+int32_t
+DecodeQueue::getEncodedNum(const GopEntry& ge)
+{
+    if (ge.start_ == frames_.end())
+    {
+        if (ge.end_ != frames_.end())
+        {
+            int32_t nEncoded = -ge.nDecoded_;
+            FrameQueue::iterator it = ge.end_;
+            while (it != frames_.begin() &&
+                   it->slot_->getMetaPacket()->getFrameMeta().gop_number() == ge.no_)
+            {
+                if (it->rawData_ == nullptr)
+                    nEncoded += 1;
+                    else
+                        break;
+                it = prev(it);
+            }
+            return  (nEncoded < 0 ? 0 : nEncoded);
+        }
+        return 0;
+    }
+    
+    return distance(ge.start_, ge.end_) - ge.nDecoded_ + (ge.end_ == frames_.end() ? 0 : 1);
+}
+
+string
+DecodeQueue::dump() const
+{
+    stringstream ss;
+    ss << "[";
+
+    int32_t prevGopNo = -1;
+    for (auto& qe : frames_)
+    {
+        assert(qe.slot_);
+        assert(qe.slot_->getMetaPacket());
+
+        PacketNumber sampleNo = qe.slot_->getNameInfo().sampleNo_;
+        int32_t gopNo = qe.slot_->getMetaPacket()->getFrameMeta().gop_number();
+        int32_t gopPos = qe.slot_->getMetaPacket()->getFrameMeta().gop_position();
+        bool isKey = (qe.slot_->getMetaPacket()->getFrameMeta().type() ==
+                      FrameMeta_FrameType_Key);
+        bool isDecoded = qe.rawData_ ? qe.rawData_->hasImage() : false;
+        bool isPbPointer = (pbPointer_ == frames_.end()) ? false : (qe.slot_ == pbPointer_->slot_);
+
+        if (gopNo != prevGopNo)
+        {
+            if (prevGopNo != -1) ss << ")";
+            ss << "(" << gopNo << ":" << sampleNo
+            << (isKey ? "K" : "D");
+//            << (isKey ? (isDecoded ? "K" : "k") : (isDecoded ? "D" : "d"));
+            prevGopNo = gopNo;
+        }
+//        else
+        {
+            if (!qe.bitstreamData_) ss << "#";
+            else ss << (isDecoded ? (isPbPointer ? "*" : "+") : (isPbPointer ? "x" :"."));
+        }
+    }
+
+    ss << ")]";
+    return ss.str();
 }
 
 //******************************************************************************

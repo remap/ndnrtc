@@ -19027,8 +19027,8 @@ _ACEOF
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if NDN-CPP library was compiled for using std::shared_ptr" >&5
-$as_echo_n "checking if NDN-CPP library was compiled for using std::shared_ptr... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if NDN-CPP library was compiled with std::shared_ptr" >&5
+$as_echo_n "checking if NDN-CPP library was compiled with std::shared_ptr... " >&6; }
 if test "$build_os" == "$host_os"; then
 	if test "$cross_compiling" = yes; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5

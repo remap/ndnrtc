@@ -160,7 +160,8 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-pipeline$(EXEEXT) \
 	bin/tests/test-name-components$(EXEEXT) \
 	bin/tests/test-packets$(EXEEXT) \
-	bin/tests/test-network-data$(EXEEXT)
+	bin/tests/test-network-data$(EXEEXT) \
+	bin/tests/test-decode-queue$(EXEEXT)
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_20 = bin/tests/test-persistent-storage
 TESTS = $(check_PROGRAMS)
 subdir = .
@@ -517,6 +518,27 @@ bin_tests_test_data_validator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(bin_tests_test_data_validator_LDFLAGS) $(LDFLAGS) -o $@
+am__bin_tests_test_decode_queue_SOURCES_DIST =  \
+	tests/test-decode-queue.cc \
+	contrib/gtest/googlemock/src/gmock-all.cc \
+	contrib/gtest/googletest/src/gtest-all.cc \
+	client/src/ipc-shim.c client/src/ipc-shim.h
+@HAVE_NANOMSG_TRUE@am__objects_17 = client/src/bin_tests_test_decode_queue-ipc-shim.$(OBJEXT)
+am__objects_18 = contrib/gtest/googlemock/src/bin_tests_test_decode_queue-gmock-all.$(OBJEXT) \
+	contrib/gtest/googletest/src/bin_tests_test_decode_queue-gtest-all.$(OBJEXT) \
+	$(am__objects_17)
+am_bin_tests_test_decode_queue_OBJECTS =  \
+	tests/bin_tests_test_decode_queue-test-decode-queue.$(OBJEXT) \
+	$(am__objects_18)
+bin_tests_test_decode_queue_OBJECTS =  \
+	$(am_bin_tests_test_decode_queue_OBJECTS)
+bin_tests_test_decode_queue_DEPENDENCIES =  \
+	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3)
+bin_tests_test_decode_queue_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(bin_tests_test_decode_queue_LDFLAGS) $(LDFLAGS) -o $@
 am__bin_tests_test_drd_estimator_SOURCES_DIST =  \
 	tests/test-drd-estimator.cc src/drd-estimator.cpp \
 	src/estimators.cpp src/clock.cpp tests/tests-helpers.cc \
@@ -524,10 +546,10 @@ am__bin_tests_test_drd_estimator_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_17 = client/src/bin_tests_test_drd_estimator-ipc-shim.$(OBJEXT)
-am__objects_18 = contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_19 = client/src/bin_tests_test_drd_estimator-ipc-shim.$(OBJEXT)
+am__objects_20 = contrib/gtest/googlemock/src/bin_tests_test_drd_estimator-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_drd_estimator-gtest-all.$(OBJEXT) \
-	$(am__objects_17)
+	$(am__objects_19)
 am_bin_tests_test_drd_estimator_OBJECTS = tests/bin_tests_test_drd_estimator-test-drd-estimator.$(OBJEXT) \
 	src/bin_tests_test_drd_estimator-drd-estimator.$(OBJEXT) \
 	src/bin_tests_test_drd_estimator-estimators.$(OBJEXT) \
@@ -536,7 +558,7 @@ am_bin_tests_test_drd_estimator_OBJECTS = tests/bin_tests_test_drd_estimator-tes
 	src/bin_tests_test_drd_estimator-fec.$(OBJEXT) \
 	src/bin_tests_test_drd_estimator-name-components.$(OBJEXT) \
 	src/bin_tests_test_drd_estimator-frame-data.$(OBJEXT) \
-	$(am__objects_18)
+	$(am__objects_20)
 bin_tests_test_drd_estimator_OBJECTS =  \
 	$(am_bin_tests_test_drd_estimator_OBJECTS)
 bin_tests_test_drd_estimator_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -550,15 +572,15 @@ am__bin_tests_test_estimators_SOURCES_DIST = tests/test-estimators.cc \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_19 = client/src/bin_tests_test_estimators-ipc-shim.$(OBJEXT)
-am__objects_20 = contrib/gtest/googlemock/src/bin_tests_test_estimators-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_21 = client/src/bin_tests_test_estimators-ipc-shim.$(OBJEXT)
+am__objects_22 = contrib/gtest/googlemock/src/bin_tests_test_estimators-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_estimators-gtest-all.$(OBJEXT) \
-	$(am__objects_19)
+	$(am__objects_21)
 am_bin_tests_test_estimators_OBJECTS =  \
 	tests/bin_tests_test_estimators-test-estimators.$(OBJEXT) \
 	src/bin_tests_test_estimators-estimators.$(OBJEXT) \
 	tools/stream/bin_tests_test_estimators-precise-generator.$(OBJEXT) \
-	$(am__objects_20)
+	$(am__objects_22)
 bin_tests_test_estimators_OBJECTS =  \
 	$(am_bin_tests_test_estimators_OBJECTS)
 bin_tests_test_estimators_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
@@ -572,14 +594,14 @@ am__bin_tests_test_frame_buffer_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_21 = client/src/bin_tests_test_frame_buffer-ipc-shim.$(OBJEXT)
-am__objects_22 = contrib/gtest/googlemock/src/bin_tests_test_frame_buffer-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_23 = client/src/bin_tests_test_frame_buffer-ipc-shim.$(OBJEXT)
+am__objects_24 = contrib/gtest/googlemock/src/bin_tests_test_frame_buffer-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_frame_buffer-gtest-all.$(OBJEXT) \
-	$(am__objects_21)
+	$(am__objects_23)
 am_bin_tests_test_frame_buffer_OBJECTS =  \
 	tests/bin_tests_test_frame_buffer-test-frame-buffer.$(OBJEXT) \
 	tests/bin_tests_test_frame_buffer-tests-helpers.$(OBJEXT) \
-	$(am__objects_22)
+	$(am__objects_24)
 bin_tests_test_frame_buffer_OBJECTS =  \
 	$(am_bin_tests_test_frame_buffer_OBJECTS)
 bin_tests_test_frame_buffer_DEPENDENCIES =  \
@@ -595,17 +617,17 @@ am__bin_tests_test_frame_converter_SOURCES_DIST =  \
 	src/frame-data.cpp contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_23 = client/src/bin_tests_test_frame_converter-ipc-shim.$(OBJEXT)
-am__objects_24 = contrib/gtest/googlemock/src/bin_tests_test_frame_converter-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_25 = client/src/bin_tests_test_frame_converter-ipc-shim.$(OBJEXT)
+am__objects_26 = contrib/gtest/googlemock/src/bin_tests_test_frame_converter-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_frame_converter-gtest-all.$(OBJEXT) \
-	$(am__objects_23)
+	$(am__objects_25)
 am_bin_tests_test_frame_converter_OBJECTS = tests/bin_tests_test_frame_converter-test-frame-converter.$(OBJEXT) \
 	tests/bin_tests_test_frame_converter-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_frame_converter-fec.$(OBJEXT) \
 	src/bin_tests_test_frame_converter-frame-converter.$(OBJEXT) \
 	src/bin_tests_test_frame_converter-name-components.$(OBJEXT) \
 	src/bin_tests_test_frame_converter-frame-data.$(OBJEXT) \
-	$(am__objects_24)
+	$(am__objects_26)
 bin_tests_test_frame_converter_OBJECTS =  \
 	$(am_bin_tests_test_frame_converter_OBJECTS)
 bin_tests_test_frame_converter_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -619,14 +641,14 @@ am__bin_tests_test_frame_io_SOURCES_DIST = tests/test-frame-io.cc \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_25 = client/src/bin_tests_test_frame_io-ipc-shim.$(OBJEXT)
-am__objects_26 = contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_27 = client/src/bin_tests_test_frame_io-ipc-shim.$(OBJEXT)
+am__objects_28 = contrib/gtest/googlemock/src/bin_tests_test_frame_io-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_frame_io-gtest-all.$(OBJEXT) \
-	$(am__objects_25)
+	$(am__objects_27)
 am_bin_tests_test_frame_io_OBJECTS =  \
 	tests/bin_tests_test_frame_io-test-frame-io.$(OBJEXT) \
 	client/src/bin_tests_test_frame_io-frame-io.$(OBJEXT) \
-	$(am__objects_26)
+	$(am__objects_28)
 bin_tests_test_frame_io_OBJECTS =  \
 	$(am_bin_tests_test_frame_io_OBJECTS)
 bin_tests_test_frame_io_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
@@ -640,14 +662,14 @@ am__bin_tests_test_generator_SOURCES_DIST = tests/test-generator.cc \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_27 = client/src/bin_tests_test_generator-ipc-shim.$(OBJEXT)
-am__objects_28 = contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_29 = client/src/bin_tests_test_generator-ipc-shim.$(OBJEXT)
+am__objects_30 = contrib/gtest/googlemock/src/bin_tests_test_generator-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_generator-gtest-all.$(OBJEXT) \
-	$(am__objects_27)
+	$(am__objects_29)
 am_bin_tests_test_generator_OBJECTS =  \
 	tests/bin_tests_test_generator-test-generator.$(OBJEXT) \
 	client/src/bin_tests_test_generator-precise-generator.$(OBJEXT) \
-	$(am__objects_28)
+	$(am__objects_30)
 bin_tests_test_generator_OBJECTS =  \
 	$(am_bin_tests_test_generator_OBJECTS)
 bin_tests_test_generator_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
@@ -664,10 +686,10 @@ am__bin_tests_test_interest_control_SOURCES_DIST =  \
 	src/statistics.cpp contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_29 = client/src/bin_tests_test_interest_control-ipc-shim.$(OBJEXT)
-am__objects_30 = contrib/gtest/googlemock/src/bin_tests_test_interest_control-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_31 = client/src/bin_tests_test_interest_control-ipc-shim.$(OBJEXT)
+am__objects_32 = contrib/gtest/googlemock/src/bin_tests_test_interest_control-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_interest_control-gtest-all.$(OBJEXT) \
-	$(am__objects_29)
+	$(am__objects_31)
 am_bin_tests_test_interest_control_OBJECTS = tests/bin_tests_test_interest_control-test-interest-control.$(OBJEXT) \
 	src/bin_tests_test_interest_control-interest-control.$(OBJEXT) \
 	tests/bin_tests_test_interest_control-tests-helpers.$(OBJEXT) \
@@ -680,7 +702,7 @@ am_bin_tests_test_interest_control_OBJECTS = tests/bin_tests_test_interest_contr
 	src/bin_tests_test_interest_control-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_interest_control-estimators.$(OBJEXT) \
 	src/bin_tests_test_interest_control-statistics.$(OBJEXT) \
-	$(am__objects_30)
+	$(am__objects_32)
 bin_tests_test_interest_control_OBJECTS =  \
 	$(am_bin_tests_test_interest_control_OBJECTS)
 bin_tests_test_interest_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -697,10 +719,10 @@ am__bin_tests_test_interest_queue_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_31 = client/src/bin_tests_test_interest_queue-ipc-shim.$(OBJEXT)
-am__objects_32 = contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_33 = client/src/bin_tests_test_interest_queue-ipc-shim.$(OBJEXT)
+am__objects_34 = contrib/gtest/googlemock/src/bin_tests_test_interest_queue-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_interest_queue-gtest-all.$(OBJEXT) \
-	$(am__objects_31)
+	$(am__objects_33)
 am_bin_tests_test_interest_queue_OBJECTS = tests/bin_tests_test_interest_queue-test-interest-queue.$(OBJEXT) \
 	tests/bin_tests_test_interest_queue-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_interest_queue-interest-queue.$(OBJEXT) \
@@ -712,7 +734,7 @@ am_bin_tests_test_interest_queue_OBJECTS = tests/bin_tests_test_interest_queue-t
 	src/bin_tests_test_interest_queue-name-components.$(OBJEXT) \
 	src/bin_tests_test_interest_queue-fec.$(OBJEXT) \
 	src/bin_tests_test_interest_queue-frame-data.$(OBJEXT) \
-	$(am__objects_32)
+	$(am__objects_34)
 bin_tests_test_interest_queue_OBJECTS =  \
 	$(am_bin_tests_test_interest_queue_OBJECTS)
 bin_tests_test_interest_queue_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -730,10 +752,10 @@ am__bin_tests_test_latency_control_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_33 = client/src/bin_tests_test_latency_control-ipc-shim.$(OBJEXT)
-am__objects_34 = contrib/gtest/googlemock/src/bin_tests_test_latency_control-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_35 = client/src/bin_tests_test_latency_control-ipc-shim.$(OBJEXT)
+am__objects_36 = contrib/gtest/googlemock/src/bin_tests_test_latency_control-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_latency_control-gtest-all.$(OBJEXT) \
-	$(am__objects_33)
+	$(am__objects_35)
 am_bin_tests_test_latency_control_OBJECTS = tests/bin_tests_test_latency_control-test-latency-control.$(OBJEXT) \
 	tests/bin_tests_test_latency_control-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_latency_control-fec.$(OBJEXT) \
@@ -747,7 +769,7 @@ am_bin_tests_test_latency_control_OBJECTS = tests/bin_tests_test_latency_control
 	src/bin_tests_test_latency_control-drd-estimator.$(OBJEXT) \
 	src/bin_tests_test_latency_control-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_latency_control-statistics.$(OBJEXT) \
-	$(am__objects_34)
+	$(am__objects_36)
 bin_tests_test_latency_control_OBJECTS =  \
 	$(am_bin_tests_test_latency_control_OBJECTS)
 bin_tests_test_latency_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -771,10 +793,10 @@ am__bin_tests_test_local_media_stream_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_35 = client/src/bin_tests_test_local_media_stream-ipc-shim.$(OBJEXT)
-am__objects_36 = contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_37 = client/src/bin_tests_test_local_media_stream-ipc-shim.$(OBJEXT)
+am__objects_38 = contrib/gtest/googlemock/src/bin_tests_test_local_media_stream-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_local_media_stream-gtest-all.$(OBJEXT) \
-	$(am__objects_35)
+	$(am__objects_37)
 am_bin_tests_test_local_media_stream_OBJECTS = tests/bin_tests_test_local_media_stream-test-local-media-stream.$(OBJEXT) \
 	tests/bin_tests_test_local_media_stream-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_local_media_stream-local-stream.$(OBJEXT) \
@@ -800,7 +822,7 @@ am_bin_tests_test_local_media_stream_OBJECTS = tests/bin_tests_test_local_media_
 	src/bin_tests_test_local_media_stream-periodic.$(OBJEXT) \
 	src/bin_tests_test_local_media_stream-statistics.$(OBJEXT) \
 	src/persistent-storage/bin_tests_test_local_media_stream-storage-engine.$(OBJEXT) \
-	$(am__objects_36)
+	$(am__objects_38)
 bin_tests_test_local_media_stream_OBJECTS =  \
 	$(am_bin_tests_test_local_media_stream_OBJECTS)
 bin_tests_test_local_media_stream_DEPENDENCIES =  \
@@ -841,10 +863,10 @@ am__bin_tests_test_loop_SOURCES_DIST = tests/test-loop.cc \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_37 = client/src/bin_tests_test_loop-ipc-shim.$(OBJEXT)
-am__objects_38 = contrib/gtest/googlemock/src/bin_tests_test_loop-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_39 = client/src/bin_tests_test_loop-ipc-shim.$(OBJEXT)
+am__objects_40 = contrib/gtest/googlemock/src/bin_tests_test_loop-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_loop-gtest-all.$(OBJEXT) \
-	$(am__objects_37)
+	$(am__objects_39)
 am_bin_tests_test_loop_OBJECTS =  \
 	tests/bin_tests_test_loop-test-loop.$(OBJEXT) \
 	tests/bin_tests_test_loop-tests-helpers.$(OBJEXT) \
@@ -906,7 +928,7 @@ am_bin_tests_test_loop_OBJECTS =  \
 	src/bin_tests_test_loop-sample-validator.$(OBJEXT) \
 	src/bin_tests_test_loop-rtx-controller.$(OBJEXT) \
 	src/persistent-storage/bin_tests_test_loop-storage-engine.$(OBJEXT) \
-	$(am__objects_38)
+	$(am__objects_40)
 bin_tests_test_loop_OBJECTS = $(am_bin_tests_test_loop_OBJECTS)
 bin_tests_test_loop_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_3)
@@ -925,10 +947,10 @@ am__bin_tests_test_media_thread_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_39 = client/src/bin_tests_test_media_thread-ipc-shim.$(OBJEXT)
-am__objects_40 = contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_41 = client/src/bin_tests_test_media_thread-ipc-shim.$(OBJEXT)
+am__objects_42 = contrib/gtest/googlemock/src/bin_tests_test_media_thread-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_media_thread-gtest-all.$(OBJEXT) \
-	$(am__objects_39)
+	$(am__objects_41)
 am_bin_tests_test_media_thread_OBJECTS =  \
 	tests/bin_tests_test_media_thread-test-media-thread.$(OBJEXT) \
 	src/bin_tests_test_media_thread-video-thread.$(OBJEXT) \
@@ -946,7 +968,7 @@ am_bin_tests_test_media_thread_OBJECTS =  \
 	src/bin_tests_test_media_thread-estimators.$(OBJEXT) \
 	src/bin_tests_test_media_thread-clock.$(OBJEXT) \
 	src/bin_tests_test_media_thread-name-components.$(OBJEXT) \
-	$(am__objects_40)
+	$(am__objects_42)
 bin_tests_test_media_thread_OBJECTS =  \
 	$(am_bin_tests_test_media_thread_OBJECTS)
 bin_tests_test_media_thread_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -960,12 +982,12 @@ am__bin_tests_test_name_components_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_41 = client/src/bin_tests_test_name_components-ipc-shim.$(OBJEXT)
-am__objects_42 = contrib/gtest/googlemock/src/bin_tests_test_name_components-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_43 = client/src/bin_tests_test_name_components-ipc-shim.$(OBJEXT)
+am__objects_44 = contrib/gtest/googlemock/src/bin_tests_test_name_components-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_name_components-gtest-all.$(OBJEXT) \
-	$(am__objects_41)
+	$(am__objects_43)
 am_bin_tests_test_name_components_OBJECTS = tests/bin_tests_test_name_components-test-name-components.$(OBJEXT) \
-	$(am__objects_42)
+	$(am__objects_44)
 bin_tests_test_name_components_OBJECTS =  \
 	$(am_bin_tests_test_name_components_OBJECTS)
 bin_tests_test_name_components_DEPENDENCIES =  \
@@ -980,14 +1002,14 @@ am__bin_tests_test_network_data_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_43 = client/src/bin_tests_test_network_data-ipc-shim.$(OBJEXT)
-am__objects_44 = contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_45 = client/src/bin_tests_test_network_data-ipc-shim.$(OBJEXT)
+am__objects_46 = contrib/gtest/googlemock/src/bin_tests_test_network_data-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_network_data-gtest-all.$(OBJEXT) \
-	$(am__objects_43)
+	$(am__objects_45)
 am_bin_tests_test_network_data_OBJECTS =  \
 	tests/bin_tests_test_network_data-test-network-data.$(OBJEXT) \
 	tests/bin_tests_test_network_data-tests-helpers.$(OBJEXT) \
-	$(am__objects_44)
+	$(am__objects_46)
 bin_tests_test_network_data_OBJECTS =  \
 	$(am_bin_tests_test_network_data_OBJECTS)
 bin_tests_test_network_data_DEPENDENCIES =  \
@@ -1005,10 +1027,10 @@ am__bin_tests_test_packet_publisher_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_45 = client/src/bin_tests_test_packet_publisher-ipc-shim.$(OBJEXT)
-am__objects_46 = contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_47 = client/src/bin_tests_test_packet_publisher-ipc-shim.$(OBJEXT)
+am__objects_48 = contrib/gtest/googlemock/src/bin_tests_test_packet_publisher-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_packet_publisher-gtest-all.$(OBJEXT) \
-	$(am__objects_45)
+	$(am__objects_47)
 am_bin_tests_test_packet_publisher_OBJECTS = tests/bin_tests_test_packet_publisher-test-packet-publisher.$(OBJEXT) \
 	tests/bin_tests_test_packet_publisher-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_packet_publisher-packet-publisher.$(OBJEXT) \
@@ -1018,7 +1040,7 @@ am_bin_tests_test_packet_publisher_OBJECTS = tests/bin_tests_test_packet_publish
 	src/bin_tests_test_packet_publisher-simple-log.$(OBJEXT) \
 	src/bin_tests_test_packet_publisher-name-components.$(OBJEXT) \
 	src/bin_tests_test_packet_publisher-statistics.$(OBJEXT) \
-	$(am__objects_46)
+	$(am__objects_48)
 bin_tests_test_packet_publisher_OBJECTS =  \
 	$(am_bin_tests_test_packet_publisher_OBJECTS)
 bin_tests_test_packet_publisher_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -1031,13 +1053,13 @@ am__bin_tests_test_packets_SOURCES_DIST = tests/test-packets.cc \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_47 = client/src/bin_tests_test_packets-ipc-shim.$(OBJEXT)
-am__objects_48 = contrib/gtest/googlemock/src/bin_tests_test_packets-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_49 = client/src/bin_tests_test_packets-ipc-shim.$(OBJEXT)
+am__objects_50 = contrib/gtest/googlemock/src/bin_tests_test_packets-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_packets-gtest-all.$(OBJEXT) \
-	$(am__objects_47)
+	$(am__objects_49)
 am_bin_tests_test_packets_OBJECTS =  \
 	tests/bin_tests_test_packets-test-packets.$(OBJEXT) \
-	$(am__objects_48)
+	$(am__objects_50)
 bin_tests_test_packets_OBJECTS = $(am_bin_tests_test_packets_OBJECTS)
 bin_tests_test_packets_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
 	$(am__DEPENDENCIES_2) $(am__DEPENDENCIES_3)
@@ -1050,17 +1072,17 @@ am__bin_tests_test_params_SOURCES_DIST = tests/test-params.cc \
 	src/frame-data.cpp contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_49 = client/src/bin_tests_test_params-ipc-shim.$(OBJEXT)
-am__objects_50 = contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_51 = client/src/bin_tests_test_params-ipc-shim.$(OBJEXT)
+am__objects_52 = contrib/gtest/googlemock/src/bin_tests_test_params-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_params-gtest-all.$(OBJEXT) \
-	$(am__objects_49)
+	$(am__objects_51)
 am_bin_tests_test_params_OBJECTS =  \
 	tests/bin_tests_test_params-test-params.$(OBJEXT) \
 	tests/bin_tests_test_params-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_params-fec.$(OBJEXT) \
 	src/bin_tests_test_params-name-components.$(OBJEXT) \
 	src/bin_tests_test_params-frame-data.$(OBJEXT) \
-	$(am__objects_50)
+	$(am__objects_52)
 bin_tests_test_params_OBJECTS = $(am_bin_tests_test_params_OBJECTS)
 bin_tests_test_params_DEPENDENCIES = $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_3)
@@ -1072,14 +1094,14 @@ am__bin_tests_test_periodic_SOURCES_DIST = tests/test-periodic.cc \
 	src/periodic.cpp contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_51 = client/src/bin_tests_test_periodic-ipc-shim.$(OBJEXT)
-am__objects_52 = contrib/gtest/googlemock/src/bin_tests_test_periodic-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_53 = client/src/bin_tests_test_periodic-ipc-shim.$(OBJEXT)
+am__objects_54 = contrib/gtest/googlemock/src/bin_tests_test_periodic-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_periodic-gtest-all.$(OBJEXT) \
-	$(am__objects_51)
+	$(am__objects_53)
 am_bin_tests_test_periodic_OBJECTS =  \
 	tests/bin_tests_test_periodic-test-periodic.$(OBJEXT) \
 	src/bin_tests_test_periodic-periodic.$(OBJEXT) \
-	$(am__objects_52)
+	$(am__objects_54)
 bin_tests_test_periodic_OBJECTS =  \
 	$(am_bin_tests_test_periodic_OBJECTS)
 bin_tests_test_periodic_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -1109,10 +1131,10 @@ am__bin_tests_test_persistent_storage_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_53 = client/src/bin_tests_test_persistent_storage-ipc-shim.$(OBJEXT)
-am__objects_54 = contrib/gtest/googlemock/src/bin_tests_test_persistent_storage-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_55 = client/src/bin_tests_test_persistent_storage-ipc-shim.$(OBJEXT)
+am__objects_56 = contrib/gtest/googlemock/src/bin_tests_test_persistent_storage-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_persistent_storage-gtest-all.$(OBJEXT) \
-	$(am__objects_53)
+	$(am__objects_55)
 am_bin_tests_test_persistent_storage_OBJECTS = tests/bin_tests_test_persistent_storage-test-persistent-storage.$(OBJEXT) \
 	tests/bin_tests_test_persistent_storage-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_persistent_storage-packet-publisher.$(OBJEXT) \
@@ -1146,7 +1168,7 @@ am_bin_tests_test_persistent_storage_OBJECTS = tests/bin_tests_test_persistent_s
 	src/bin_tests_test_persistent_storage-async.$(OBJEXT) \
 	src/bin_tests_test_persistent_storage-audio-thread.$(OBJEXT) \
 	src/bin_tests_test_persistent_storage-threading-capability.$(OBJEXT) \
-	$(am__objects_54)
+	$(am__objects_56)
 bin_tests_test_persistent_storage_OBJECTS =  \
 	$(am_bin_tests_test_persistent_storage_OBJECTS)
 bin_tests_test_persistent_storage_DEPENDENCIES =  \
@@ -1161,14 +1183,14 @@ am__bin_tests_test_pipeline_SOURCES_DIST = tests/test-pipeline.cc \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_55 = client/src/bin_tests_test_pipeline-ipc-shim.$(OBJEXT)
-am__objects_56 = contrib/gtest/googlemock/src/bin_tests_test_pipeline-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_57 = client/src/bin_tests_test_pipeline-ipc-shim.$(OBJEXT)
+am__objects_58 = contrib/gtest/googlemock/src/bin_tests_test_pipeline-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_pipeline-gtest-all.$(OBJEXT) \
-	$(am__objects_55)
+	$(am__objects_57)
 am_bin_tests_test_pipeline_OBJECTS =  \
 	tests/bin_tests_test_pipeline-test-pipeline.$(OBJEXT) \
 	tests/bin_tests_test_pipeline-tests-helpers.$(OBJEXT) \
-	$(am__objects_56)
+	$(am__objects_58)
 bin_tests_test_pipeline_OBJECTS =  \
 	$(am_bin_tests_test_pipeline_OBJECTS)
 bin_tests_test_pipeline_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
@@ -1182,12 +1204,12 @@ am__bin_tests_test_pipeline_control_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_57 = client/src/bin_tests_test_pipeline_control-ipc-shim.$(OBJEXT)
-am__objects_58 = contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_59 = client/src/bin_tests_test_pipeline_control-ipc-shim.$(OBJEXT)
+am__objects_60 = contrib/gtest/googlemock/src/bin_tests_test_pipeline_control-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_pipeline_control-gtest-all.$(OBJEXT) \
-	$(am__objects_57)
+	$(am__objects_59)
 am_bin_tests_test_pipeline_control_OBJECTS = tests/bin_tests_test_pipeline_control-test-pipeline-control.$(OBJEXT) \
-	$(am__objects_58)
+	$(am__objects_60)
 bin_tests_test_pipeline_control_OBJECTS =  \
 	$(am_bin_tests_test_pipeline_control_OBJECTS)
 bin_tests_test_pipeline_control_DEPENDENCIES =  \
@@ -1208,10 +1230,10 @@ am__bin_tests_test_pipeline_control_state_machine_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_59 = client/src/bin_tests_test_pipeline_control_state_machine-ipc-shim.$(OBJEXT)
-am__objects_60 = contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_61 = client/src/bin_tests_test_pipeline_control_state_machine-ipc-shim.$(OBJEXT)
+am__objects_62 = contrib/gtest/googlemock/src/bin_tests_test_pipeline_control_state_machine-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_pipeline_control_state_machine-gtest-all.$(OBJEXT) \
-	$(am__objects_59)
+	$(am__objects_61)
 am_bin_tests_test_pipeline_control_state_machine_OBJECTS = tests/bin_tests_test_pipeline_control_state_machine-test-pipeline-control-state-machine.$(OBJEXT) \
 	src/bin_tests_test_pipeline_control_state_machine-pipeline-control-state-machine.$(OBJEXT) \
 	src/bin_tests_test_pipeline_control_state_machine-clock.$(OBJEXT) \
@@ -1227,7 +1249,7 @@ am_bin_tests_test_pipeline_control_state_machine_OBJECTS = tests/bin_tests_test_
 	src/bin_tests_test_pipeline_control_state_machine-frame-data.$(OBJEXT) \
 	src/bin_tests_test_pipeline_control_state_machine-statistics.$(OBJEXT) \
 	src/bin_tests_test_pipeline_control_state_machine-sample-estimator.$(OBJEXT) \
-	$(am__objects_60)
+	$(am__objects_62)
 bin_tests_test_pipeline_control_state_machine_OBJECTS =  \
 	$(am_bin_tests_test_pipeline_control_state_machine_OBJECTS)
 bin_tests_test_pipeline_control_state_machine_DEPENDENCIES =  \
@@ -1248,10 +1270,10 @@ am__bin_tests_test_pipeliner_SOURCES_DIST = tests/test-pipeliner.cc \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_61 = client/src/bin_tests_test_pipeliner-ipc-shim.$(OBJEXT)
-am__objects_62 = contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_63 = client/src/bin_tests_test_pipeliner-ipc-shim.$(OBJEXT)
+am__objects_64 = contrib/gtest/googlemock/src/bin_tests_test_pipeliner-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_pipeliner-gtest-all.$(OBJEXT) \
-	$(am__objects_61)
+	$(am__objects_63)
 am_bin_tests_test_pipeliner_OBJECTS =  \
 	tests/bin_tests_test_pipeliner-test-pipeliner.$(OBJEXT) \
 	src/bin_tests_test_pipeliner-pipeliner.$(OBJEXT) \
@@ -1272,7 +1294,7 @@ am_bin_tests_test_pipeliner_OBJECTS =  \
 	tests/bin_tests_test_pipeliner-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_pipeliner-drd-estimator.$(OBJEXT) \
 	src/bin_tests_test_pipeliner-statistics.$(OBJEXT) \
-	$(am__objects_62)
+	$(am__objects_64)
 bin_tests_test_pipeliner_OBJECTS =  \
 	$(am_bin_tests_test_pipeliner_OBJECTS)
 bin_tests_test_pipeliner_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -1294,10 +1316,10 @@ am__bin_tests_test_playout_SOURCES_DIST = tests/test-playout.cc \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_63 = client/src/bin_tests_test_playout-ipc-shim.$(OBJEXT)
-am__objects_64 = contrib/gtest/googlemock/src/bin_tests_test_playout-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_65 = client/src/bin_tests_test_playout-ipc-shim.$(OBJEXT)
+am__objects_66 = contrib/gtest/googlemock/src/bin_tests_test_playout-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_playout-gtest-all.$(OBJEXT) \
-	$(am__objects_63)
+	$(am__objects_65)
 am_bin_tests_test_playout_OBJECTS =  \
 	tests/bin_tests_test_playout-test-playout.$(OBJEXT) \
 	tests/bin_tests_test_playout-tests-helpers.$(OBJEXT) \
@@ -1320,7 +1342,7 @@ am_bin_tests_test_playout_OBJECTS =  \
 	src/bin_tests_test_playout-video-thread.$(OBJEXT) \
 	src/bin_tests_test_playout-video-coder.$(OBJEXT) \
 	src/bin_tests_test_playout-threading-capability.$(OBJEXT) \
-	$(am__objects_64)
+	$(am__objects_66)
 bin_tests_test_playout_OBJECTS = $(am_bin_tests_test_playout_OBJECTS)
 bin_tests_test_playout_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -1334,10 +1356,10 @@ am__bin_tests_test_playout_control_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_65 = client/src/bin_tests_test_playout_control-ipc-shim.$(OBJEXT)
-am__objects_66 = contrib/gtest/googlemock/src/bin_tests_test_playout_control-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_67 = client/src/bin_tests_test_playout_control-ipc-shim.$(OBJEXT)
+am__objects_68 = contrib/gtest/googlemock/src/bin_tests_test_playout_control-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_playout_control-gtest-all.$(OBJEXT) \
-	$(am__objects_65)
+	$(am__objects_67)
 am_bin_tests_test_playout_control_OBJECTS = tests/bin_tests_test_playout_control-test-playout-control.$(OBJEXT) \
 	src/bin_tests_test_playout_control-playout-control.$(OBJEXT) \
 	src/bin_tests_test_playout_control-ndnrtc-object.$(OBJEXT) \
@@ -1349,7 +1371,7 @@ am_bin_tests_test_playout_control_OBJECTS = tests/bin_tests_test_playout_control
 	src/bin_tests_test_playout_control-fec.$(OBJEXT) \
 	src/bin_tests_test_playout_control-name-components.$(OBJEXT) \
 	src/bin_tests_test_playout_control-frame-data.$(OBJEXT) \
-	$(am__objects_66)
+	$(am__objects_68)
 bin_tests_test_playout_control_OBJECTS =  \
 	$(am_bin_tests_test_playout_control_OBJECTS)
 bin_tests_test_playout_control_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -1363,15 +1385,15 @@ am__bin_tests_test_renderer_SOURCES_DIST = tests/test-renderer.cc \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_67 = client/src/bin_tests_test_renderer-ipc-shim.$(OBJEXT)
-am__objects_68 = contrib/gtest/googlemock/src/bin_tests_test_renderer-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_69 = client/src/bin_tests_test_renderer-ipc-shim.$(OBJEXT)
+am__objects_70 = contrib/gtest/googlemock/src/bin_tests_test_renderer-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_renderer-gtest-all.$(OBJEXT) \
-	$(am__objects_67)
+	$(am__objects_69)
 am_bin_tests_test_renderer_OBJECTS =  \
 	tests/bin_tests_test_renderer-test-renderer.$(OBJEXT) \
 	client/src/bin_tests_test_renderer-renderer.$(OBJEXT) \
 	client/src/bin_tests_test_renderer-frame-io.$(OBJEXT) \
-	$(am__objects_68)
+	$(am__objects_70)
 bin_tests_test_renderer_OBJECTS =  \
 	$(am_bin_tests_test_renderer_OBJECTS)
 bin_tests_test_renderer_DEPENDENCIES = $(top_builddir)/libndnrtc.la \
@@ -1388,10 +1410,10 @@ am__bin_tests_test_rtx_controller_SOURCES_DIST =  \
 	src/statistics.cpp contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_69 = client/src/bin_tests_test_rtx_controller-ipc-shim.$(OBJEXT)
-am__objects_70 = contrib/gtest/googlemock/src/bin_tests_test_rtx_controller-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_71 = client/src/bin_tests_test_rtx_controller-ipc-shim.$(OBJEXT)
+am__objects_72 = contrib/gtest/googlemock/src/bin_tests_test_rtx_controller-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_rtx_controller-gtest-all.$(OBJEXT) \
-	$(am__objects_69)
+	$(am__objects_71)
 am_bin_tests_test_rtx_controller_OBJECTS = tests/bin_tests_test_rtx_controller-test-rtx-controller.$(OBJEXT) \
 	tests/bin_tests_test_rtx_controller-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_rtx_controller-rtx-controller.$(OBJEXT) \
@@ -1403,7 +1425,7 @@ am_bin_tests_test_rtx_controller_OBJECTS = tests/bin_tests_test_rtx_controller-t
 	src/bin_tests_test_rtx_controller-simple-log.$(OBJEXT) \
 	src/bin_tests_test_rtx_controller-ndnrtc-object.$(OBJEXT) \
 	src/bin_tests_test_rtx_controller-statistics.$(OBJEXT) \
-	$(am__objects_70)
+	$(am__objects_72)
 bin_tests_test_rtx_controller_OBJECTS =  \
 	$(am_bin_tests_test_rtx_controller_OBJECTS)
 bin_tests_test_rtx_controller_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -1419,10 +1441,10 @@ am__bin_tests_test_sample_estimator_SOURCES_DIST =  \
 	src/statistics.cpp contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_71 = client/src/bin_tests_test_sample_estimator-ipc-shim.$(OBJEXT)
-am__objects_72 = contrib/gtest/googlemock/src/bin_tests_test_sample_estimator-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_73 = client/src/bin_tests_test_sample_estimator-ipc-shim.$(OBJEXT)
+am__objects_74 = contrib/gtest/googlemock/src/bin_tests_test_sample_estimator-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_sample_estimator-gtest-all.$(OBJEXT) \
-	$(am__objects_71)
+	$(am__objects_73)
 am_bin_tests_test_sample_estimator_OBJECTS = tests/bin_tests_test_sample_estimator-test-sample-estimator.$(OBJEXT) \
 	tests/bin_tests_test_sample_estimator-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_sample_estimator-fec.$(OBJEXT) \
@@ -1432,7 +1454,7 @@ am_bin_tests_test_sample_estimator_OBJECTS = tests/bin_tests_test_sample_estimat
 	src/bin_tests_test_sample_estimator-frame-data.$(OBJEXT) \
 	src/bin_tests_test_sample_estimator-name-components.$(OBJEXT) \
 	src/bin_tests_test_sample_estimator-statistics.$(OBJEXT) \
-	$(am__objects_72)
+	$(am__objects_74)
 bin_tests_test_sample_estimator_OBJECTS =  \
 	$(am_bin_tests_test_sample_estimator_OBJECTS)
 bin_tests_test_sample_estimator_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -1449,10 +1471,10 @@ am__bin_tests_test_segment_controller_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_73 = client/src/bin_tests_test_segment_controller-ipc-shim.$(OBJEXT)
-am__objects_74 = contrib/gtest/googlemock/src/bin_tests_test_segment_controller-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_75 = client/src/bin_tests_test_segment_controller-ipc-shim.$(OBJEXT)
+am__objects_76 = contrib/gtest/googlemock/src/bin_tests_test_segment_controller-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_segment_controller-gtest-all.$(OBJEXT) \
-	$(am__objects_73)
+	$(am__objects_75)
 am_bin_tests_test_segment_controller_OBJECTS = tests/bin_tests_test_segment_controller-test-segment-controller.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-segment-controller.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-simple-log.$(OBJEXT) \
@@ -1463,7 +1485,7 @@ am_bin_tests_test_segment_controller_OBJECTS = tests/bin_tests_test_segment_cont
 	src/bin_tests_test_segment_controller-periodic.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-clock.$(OBJEXT) \
 	src/bin_tests_test_segment_controller-statistics.$(OBJEXT) \
-	$(am__objects_74)
+	$(am__objects_76)
 bin_tests_test_segment_controller_OBJECTS =  \
 	$(am_bin_tests_test_segment_controller_OBJECTS)
 bin_tests_test_segment_controller_DEPENDENCIES =  \
@@ -1478,14 +1500,14 @@ am__bin_tests_test_stat_collector_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_75 = client/src/bin_tests_test_stat_collector-ipc-shim.$(OBJEXT)
-am__objects_76 = contrib/gtest/googlemock/src/bin_tests_test_stat_collector-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_77 = client/src/bin_tests_test_stat_collector-ipc-shim.$(OBJEXT)
+am__objects_78 = contrib/gtest/googlemock/src/bin_tests_test_stat_collector-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_stat_collector-gtest-all.$(OBJEXT) \
-	$(am__objects_75)
+	$(am__objects_77)
 am_bin_tests_test_stat_collector_OBJECTS = tests/bin_tests_test_stat_collector-test-stat-collector.$(OBJEXT) \
 	client/src/bin_tests_test_stat_collector-stat-collector.$(OBJEXT) \
 	client/src/bin_tests_test_stat_collector-precise-generator.$(OBJEXT) \
-	$(am__objects_76)
+	$(am__objects_78)
 bin_tests_test_stat_collector_OBJECTS =  \
 	$(am_bin_tests_test_stat_collector_OBJECTS)
 bin_tests_test_stat_collector_DEPENDENCIES =  \
@@ -1499,13 +1521,13 @@ am__bin_tests_test_video_codec_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_77 = client/src/bin_tests_test_video_codec-ipc-shim.$(OBJEXT)
-am__objects_78 = contrib/gtest/googlemock/src/bin_tests_test_video_codec-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_79 = client/src/bin_tests_test_video_codec-ipc-shim.$(OBJEXT)
+am__objects_80 = contrib/gtest/googlemock/src/bin_tests_test_video_codec-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_codec-gtest-all.$(OBJEXT) \
-	$(am__objects_77)
+	$(am__objects_79)
 am_bin_tests_test_video_codec_OBJECTS =  \
 	tests/bin_tests_test_video_codec-test-video-codec.$(OBJEXT) \
-	$(am__objects_78)
+	$(am__objects_80)
 bin_tests_test_video_codec_OBJECTS =  \
 	$(am_bin_tests_test_video_codec_OBJECTS)
 bin_tests_test_video_codec_DEPENDENCIES =  \
@@ -1523,10 +1545,10 @@ am__bin_tests_test_video_coder_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_79 = client/src/bin_tests_test_video_coder-ipc-shim.$(OBJEXT)
-am__objects_80 = contrib/gtest/googlemock/src/bin_tests_test_video_coder-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_81 = client/src/bin_tests_test_video_coder-ipc-shim.$(OBJEXT)
+am__objects_82 = contrib/gtest/googlemock/src/bin_tests_test_video_coder-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_coder-gtest-all.$(OBJEXT) \
-	$(am__objects_79)
+	$(am__objects_81)
 am_bin_tests_test_video_coder_OBJECTS =  \
 	tests/bin_tests_test_video_coder-test-video-coder.$(OBJEXT) \
 	tests/bin_tests_test_video_coder-tests-helpers.$(OBJEXT) \
@@ -1537,7 +1559,7 @@ am_bin_tests_test_video_coder_OBJECTS =  \
 	src/bin_tests_test_video_coder-name-components.$(OBJEXT) \
 	src/bin_tests_test_video_coder-frame-data.$(OBJEXT) \
 	src/bin_tests_test_video_coder-threading-capability.$(OBJEXT) \
-	$(am__objects_80)
+	$(am__objects_82)
 bin_tests_test_video_coder_OBJECTS =  \
 	$(am_bin_tests_test_video_coder_OBJECTS)
 bin_tests_test_video_coder_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -1555,10 +1577,10 @@ am__bin_tests_test_video_decoder_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_81 = client/src/bin_tests_test_video_decoder-ipc-shim.$(OBJEXT)
-am__objects_82 = contrib/gtest/googlemock/src/bin_tests_test_video_decoder-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_83 = client/src/bin_tests_test_video_decoder-ipc-shim.$(OBJEXT)
+am__objects_84 = contrib/gtest/googlemock/src/bin_tests_test_video_decoder-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_decoder-gtest-all.$(OBJEXT) \
-	$(am__objects_81)
+	$(am__objects_83)
 am_bin_tests_test_video_decoder_OBJECTS = tests/bin_tests_test_video_decoder-test-video-decoder.$(OBJEXT) \
 	tests/bin_tests_test_video_decoder-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_video_decoder-video-decoder.$(OBJEXT) \
@@ -1570,7 +1592,7 @@ am_bin_tests_test_video_decoder_OBJECTS = tests/bin_tests_test_video_decoder-tes
 	src/bin_tests_test_video_decoder-frame-data.$(OBJEXT) \
 	src/bin_tests_test_video_decoder-clock.$(OBJEXT) \
 	src/bin_tests_test_video_decoder-threading-capability.$(OBJEXT) \
-	$(am__objects_82)
+	$(am__objects_84)
 bin_tests_test_video_decoder_OBJECTS =  \
 	$(am_bin_tests_test_video_decoder_OBJECTS)
 bin_tests_test_video_decoder_DEPENDENCIES = $(am__DEPENDENCIES_2) \
@@ -1593,10 +1615,10 @@ am__bin_tests_test_video_playout_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_83 = client/src/bin_tests_test_video_playout-ipc-shim.$(OBJEXT)
-am__objects_84 = contrib/gtest/googlemock/src/bin_tests_test_video_playout-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_85 = client/src/bin_tests_test_video_playout-ipc-shim.$(OBJEXT)
+am__objects_86 = contrib/gtest/googlemock/src/bin_tests_test_video_playout-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_playout-gtest-all.$(OBJEXT) \
-	$(am__objects_83)
+	$(am__objects_85)
 am_bin_tests_test_video_playout_OBJECTS = tests/bin_tests_test_video_playout-test-video-playout.$(OBJEXT) \
 	tests/bin_tests_test_video_playout-tests-helpers.$(OBJEXT) \
 	src/bin_tests_test_video_playout-video-playout.$(OBJEXT) \
@@ -1620,7 +1642,7 @@ am_bin_tests_test_video_playout_OBJECTS = tests/bin_tests_test_video_playout-tes
 	src/bin_tests_test_video_playout-video-thread.$(OBJEXT) \
 	src/bin_tests_test_video_playout-video-coder.$(OBJEXT) \
 	src/bin_tests_test_video_playout-threading-capability.$(OBJEXT) \
-	$(am__objects_84)
+	$(am__objects_86)
 bin_tests_test_video_playout_OBJECTS =  \
 	$(am_bin_tests_test_video_playout_OBJECTS)
 bin_tests_test_video_playout_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
@@ -1634,10 +1656,10 @@ am__bin_tests_test_video_source_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_85 = client/src/bin_tests_test_video_source-ipc-shim.$(OBJEXT)
-am__objects_86 = contrib/gtest/googlemock/src/bin_tests_test_video_source-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_87 = client/src/bin_tests_test_video_source-ipc-shim.$(OBJEXT)
+am__objects_88 = contrib/gtest/googlemock/src/bin_tests_test_video_source-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_source-gtest-all.$(OBJEXT) \
-	$(am__objects_85)
+	$(am__objects_87)
 am_bin_tests_test_video_source_OBJECTS =  \
 	tests/bin_tests_test_video_source-test-video-source.$(OBJEXT) \
 	client/src/bin_tests_test_video_source-frame-io.$(OBJEXT) \
@@ -1646,7 +1668,7 @@ am_bin_tests_test_video_source_OBJECTS =  \
 	src/bin_tests_test_video_source-simple-log.$(OBJEXT) \
 	src/bin_tests_test_video_source-estimators.$(OBJEXT) \
 	src/bin_tests_test_video_source-clock.$(OBJEXT) \
-	$(am__objects_86)
+	$(am__objects_88)
 bin_tests_test_video_source_OBJECTS =  \
 	$(am_bin_tests_test_video_source_OBJECTS)
 bin_tests_test_video_source_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
@@ -1658,13 +1680,13 @@ am__bin_tests_test_video_stream_SOURCES_DIST =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
 	contrib/gtest/googletest/src/gtest-all.cc \
 	client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_87 = client/src/bin_tests_test_video_stream-ipc-shim.$(OBJEXT)
-am__objects_88 = contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.$(OBJEXT) \
+@HAVE_NANOMSG_TRUE@am__objects_89 = client/src/bin_tests_test_video_stream-ipc-shim.$(OBJEXT)
+am__objects_90 = contrib/gtest/googlemock/src/bin_tests_test_video_stream-gmock-all.$(OBJEXT) \
 	contrib/gtest/googletest/src/bin_tests_test_video_stream-gtest-all.$(OBJEXT) \
-	$(am__objects_87)
+	$(am__objects_89)
 am_bin_tests_test_video_stream_OBJECTS =  \
 	tests/bin_tests_test_video_stream-test-video-stream.$(OBJEXT) \
-	$(am__objects_88)
+	$(am__objects_90)
 bin_tests_test_video_stream_OBJECTS =  \
 	$(am_bin_tests_test_video_stream_OBJECTS)
 bin_tests_test_video_stream_DEPENDENCIES =  \
@@ -1705,7 +1727,7 @@ am__ndnrtc_client_SOURCES_DIST = client/src/main.cpp \
 	client/src/precise-generator.hpp \
 	client/src/precise-generator.cpp client/src/ipc-shim.c \
 	client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_89 = client/src/ndnrtc_client-ipc-shim.$(OBJEXT)
+@HAVE_NANOMSG_TRUE@am__objects_91 = client/src/ndnrtc_client-ipc-shim.$(OBJEXT)
 am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
 	client/src/ndnrtc_client-renderer.$(OBJEXT) \
 	client/src/ndnrtc_client-config.$(OBJEXT) \
@@ -1714,7 +1736,7 @@ am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
 	client/src/ndnrtc_client-frame-io.$(OBJEXT) \
 	client/src/ndnrtc_client-video-source.$(OBJEXT) \
 	client/src/ndnrtc_client-precise-generator.$(OBJEXT) \
-	$(am__objects_89)
+	$(am__objects_91)
 ndnrtc_client_OBJECTS = $(am_ndnrtc_client_OBJECTS)
 ndnrtc_client_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_1) \
@@ -1825,6 +1847,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	client/src/$(DEPDIR)/bin_tests_test_config_load-config.Po \
 	client/src/$(DEPDIR)/bin_tests_test_config_load-ipc-shim.Po \
 	client/src/$(DEPDIR)/bin_tests_test_data_validator-ipc-shim.Po \
+	client/src/$(DEPDIR)/bin_tests_test_decode_queue-ipc-shim.Po \
 	client/src/$(DEPDIR)/bin_tests_test_drd_estimator-ipc-shim.Po \
 	client/src/$(DEPDIR)/bin_tests_test_estimators-ipc-shim.Po \
 	client/src/$(DEPDIR)/bin_tests_test_frame_buffer-ipc-shim.Po \
@@ -1906,6 +1929,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client_params-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_config_load-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Po \
+	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_decode_queue-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_drd_estimator-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_estimators-gmock-all.Po \
 	contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_buffer-gmock-all.Po \
@@ -1950,6 +1974,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client_params-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_config_load-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Po \
+	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_decode_queue-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_drd_estimator-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_estimators-gtest-all.Po \
 	contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_frame_buffer-gtest-all.Po \
@@ -2391,6 +2416,7 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Po \
 	tests/$(DEPDIR)/bin_tests_test_config_load-test-config-load.Po \
 	tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Po \
+	tests/$(DEPDIR)/bin_tests_test_decode_queue-test-decode-queue.Po \
 	tests/$(DEPDIR)/bin_tests_test_drd_estimator-test-drd-estimator.Po \
 	tests/$(DEPDIR)/bin_tests_test_drd_estimator-tests-helpers.Po \
 	tests/$(DEPDIR)/bin_tests_test_estimators-test-estimators.Po \
@@ -2507,6 +2533,7 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_client_params_SOURCES) \
 	$(bin_tests_test_config_load_SOURCES) \
 	$(bin_tests_test_data_validator_SOURCES) \
+	$(bin_tests_test_decode_queue_SOURCES) \
 	$(bin_tests_test_drd_estimator_SOURCES) \
 	$(bin_tests_test_estimators_SOURCES) \
 	$(bin_tests_test_frame_buffer_SOURCES) \
@@ -2556,6 +2583,7 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_client_params_SOURCES_DIST) \
 	$(am__bin_tests_test_config_load_SOURCES_DIST) \
 	$(am__bin_tests_test_data_validator_SOURCES_DIST) \
+	$(am__bin_tests_test_decode_queue_SOURCES_DIST) \
 	$(am__bin_tests_test_drd_estimator_SOURCES_DIST) \
 	$(am__bin_tests_test_estimators_SOURCES_DIST) \
 	$(am__bin_tests_test_frame_buffer_SOURCES_DIST) \
@@ -3339,6 +3367,10 @@ bin_tests_test_estimators_SOURCES = tests/test-estimators.cc src/estimators.cpp 
 bin_tests_test_estimators_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_estimators_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
 bin_tests_test_estimators_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_}
+bin_tests_test_decode_queue_SOURCES = tests/test-decode-queue.cc ${UNIT_TESTS_COMMON_SOURCES_}
+bin_tests_test_decode_queue_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
+bin_tests_test_decode_queue_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
+bin_tests_test_decode_queue_LDADD = $(top_builddir)/libndnrtc.la ${libndnrtc_la_LIBADD} ${UNIT_TESTS_LDADD_} -lboost_filesystem
 all: all-am
 
 .SUFFIXES:
@@ -3892,6 +3924,21 @@ client/src/bin_tests_test_data_validator-ipc-shim.$(OBJEXT):  \
 bin/tests/test-data-validator$(EXEEXT): $(bin_tests_test_data_validator_OBJECTS) $(bin_tests_test_data_validator_DEPENDENCIES) $(EXTRA_bin_tests_test_data_validator_DEPENDENCIES) bin/tests/$(am__dirstamp)
 	@rm -f bin/tests/test-data-validator$(EXEEXT)
 	$(AM_V_CXXLD)$(bin_tests_test_data_validator_LINK) $(bin_tests_test_data_validator_OBJECTS) $(bin_tests_test_data_validator_LDADD) $(LIBS)
+tests/bin_tests_test_decode_queue-test-decode-queue.$(OBJEXT):  \
+	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googlemock/src/bin_tests_test_decode_queue-gmock-all.$(OBJEXT):  \
+	contrib/gtest/googlemock/src/$(am__dirstamp) \
+	contrib/gtest/googlemock/src/$(DEPDIR)/$(am__dirstamp)
+contrib/gtest/googletest/src/bin_tests_test_decode_queue-gtest-all.$(OBJEXT):  \
+	contrib/gtest/googletest/src/$(am__dirstamp) \
+	contrib/gtest/googletest/src/$(DEPDIR)/$(am__dirstamp)
+client/src/bin_tests_test_decode_queue-ipc-shim.$(OBJEXT):  \
+	client/src/$(am__dirstamp) \
+	client/src/$(DEPDIR)/$(am__dirstamp)
+
+bin/tests/test-decode-queue$(EXEEXT): $(bin_tests_test_decode_queue_OBJECTS) $(bin_tests_test_decode_queue_DEPENDENCIES) $(EXTRA_bin_tests_test_decode_queue_DEPENDENCIES) bin/tests/$(am__dirstamp)
+	@rm -f bin/tests/test-decode-queue$(EXEEXT)
+	$(AM_V_CXXLD)$(bin_tests_test_decode_queue_LINK) $(bin_tests_test_decode_queue_OBJECTS) $(bin_tests_test_decode_queue_LDADD) $(LIBS)
 tests/bin_tests_test_drd_estimator-test-drd-estimator.$(OBJEXT):  \
 	tests/$(am__dirstamp) tests/$(DEPDIR)/$(am__dirstamp)
 src/bin_tests_test_drd_estimator-drd-estimator.$(OBJEXT):  \
@@ -5336,6 +5383,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_config_load-config.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_config_load-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_data_validator-ipc-shim.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_decode_queue-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_drd_estimator-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_estimators-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_frame_buffer-ipc-shim.Po@am__quote@ # am--include-marker
@@ -5417,6 +5465,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client_params-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_config_load-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_decode_queue-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_drd_estimator-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_estimators-gmock-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_buffer-gmock-all.Po@am__quote@ # am--include-marker
@@ -5461,6 +5510,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client_params-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_config_load-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_decode_queue-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_drd_estimator-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_estimators-gtest-all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_frame_buffer-gtest-all.Po@am__quote@ # am--include-marker
@@ -5902,6 +5952,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_config_load-test-config-load.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_decode_queue-test-decode-queue.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_drd_estimator-test-drd-estimator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_drd_estimator-tests-helpers.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@tests/$(DEPDIR)/bin_tests_test_estimators-test-estimators.Po@am__quote@ # am--include-marker
@@ -6115,6 +6166,20 @@ client/src/bin_tests_test_data_validator-ipc-shim.obj: client/src/ipc-shim.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/src/ipc-shim.c' object='client/src/bin_tests_test_data_validator-ipc-shim.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/bin_tests_test_data_validator-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
+
+client/src/bin_tests_test_decode_queue-ipc-shim.o: client/src/ipc-shim.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/src/bin_tests_test_decode_queue-ipc-shim.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_decode_queue-ipc-shim.Tpo -c -o client/src/bin_tests_test_decode_queue-ipc-shim.o `test -f 'client/src/ipc-shim.c' || echo '$(srcdir)/'`client/src/ipc-shim.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_decode_queue-ipc-shim.Tpo client/src/$(DEPDIR)/bin_tests_test_decode_queue-ipc-shim.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/src/ipc-shim.c' object='client/src/bin_tests_test_decode_queue-ipc-shim.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/bin_tests_test_decode_queue-ipc-shim.o `test -f 'client/src/ipc-shim.c' || echo '$(srcdir)/'`client/src/ipc-shim.c
+
+client/src/bin_tests_test_decode_queue-ipc-shim.obj: client/src/ipc-shim.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/src/bin_tests_test_decode_queue-ipc-shim.obj -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_decode_queue-ipc-shim.Tpo -c -o client/src/bin_tests_test_decode_queue-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/bin_tests_test_decode_queue-ipc-shim.Tpo client/src/$(DEPDIR)/bin_tests_test_decode_queue-ipc-shim.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/src/ipc-shim.c' object='client/src/bin_tests_test_decode_queue-ipc-shim.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/bin_tests_test_decode_queue-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
 
 client/src/bin_tests_test_drd_estimator-ipc-shim.o: client/src/ipc-shim.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/src/bin_tests_test_drd_estimator-ipc-shim.o -MD -MP -MF client/src/$(DEPDIR)/bin_tests_test_drd_estimator-ipc-shim.Tpo -c -o client/src/bin_tests_test_drd_estimator-ipc-shim.o `test -f 'client/src/ipc-shim.c' || echo '$(srcdir)/'`client/src/ipc-shim.c
@@ -8239,6 +8304,48 @@ contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.obj: contri
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_data_validator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_data_validator-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+
+tests/bin_tests_test_decode_queue-test-decode-queue.o: tests/test-decode-queue.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_decode_queue-test-decode-queue.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_decode_queue-test-decode-queue.Tpo -c -o tests/bin_tests_test_decode_queue-test-decode-queue.o `test -f 'tests/test-decode-queue.cc' || echo '$(srcdir)/'`tests/test-decode-queue.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_decode_queue-test-decode-queue.Tpo tests/$(DEPDIR)/bin_tests_test_decode_queue-test-decode-queue.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tests/test-decode-queue.cc' object='tests/bin_tests_test_decode_queue-test-decode-queue.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_decode_queue-test-decode-queue.o `test -f 'tests/test-decode-queue.cc' || echo '$(srcdir)/'`tests/test-decode-queue.cc
+
+tests/bin_tests_test_decode_queue-test-decode-queue.obj: tests/test-decode-queue.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_decode_queue-test-decode-queue.obj -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_decode_queue-test-decode-queue.Tpo -c -o tests/bin_tests_test_decode_queue-test-decode-queue.obj `if test -f 'tests/test-decode-queue.cc'; then $(CYGPATH_W) 'tests/test-decode-queue.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-decode-queue.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tests/$(DEPDIR)/bin_tests_test_decode_queue-test-decode-queue.Tpo tests/$(DEPDIR)/bin_tests_test_decode_queue-test-decode-queue.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='tests/test-decode-queue.cc' object='tests/bin_tests_test_decode_queue-test-decode-queue.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tests/bin_tests_test_decode_queue-test-decode-queue.obj `if test -f 'tests/test-decode-queue.cc'; then $(CYGPATH_W) 'tests/test-decode-queue.cc'; else $(CYGPATH_W) '$(srcdir)/tests/test-decode-queue.cc'; fi`
+
+contrib/gtest/googlemock/src/bin_tests_test_decode_queue-gmock-all.o: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_decode_queue-gmock-all.o -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_decode_queue-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_decode_queue-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_decode_queue-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_decode_queue-gmock-all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_decode_queue-gmock-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_decode_queue-gmock-all.o `test -f 'contrib/gtest/googlemock/src/gmock-all.cc' || echo '$(srcdir)/'`contrib/gtest/googlemock/src/gmock-all.cc
+
+contrib/gtest/googlemock/src/bin_tests_test_decode_queue-gmock-all.obj: contrib/gtest/googlemock/src/gmock-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googlemock/src/bin_tests_test_decode_queue-gmock-all.obj -MD -MP -MF contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_decode_queue-gmock-all.Tpo -c -o contrib/gtest/googlemock/src/bin_tests_test_decode_queue-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_decode_queue-gmock-all.Tpo contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_decode_queue-gmock-all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googlemock/src/gmock-all.cc' object='contrib/gtest/googlemock/src/bin_tests_test_decode_queue-gmock-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googlemock/src/bin_tests_test_decode_queue-gmock-all.obj `if test -f 'contrib/gtest/googlemock/src/gmock-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googlemock/src/gmock-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googlemock/src/gmock-all.cc'; fi`
+
+contrib/gtest/googletest/src/bin_tests_test_decode_queue-gtest-all.o: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_decode_queue-gtest-all.o -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_decode_queue-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_decode_queue-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_decode_queue-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_decode_queue-gtest-all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_decode_queue-gtest-all.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_decode_queue-gtest-all.o `test -f 'contrib/gtest/googletest/src/gtest-all.cc' || echo '$(srcdir)/'`contrib/gtest/googletest/src/gtest-all.cc
+
+contrib/gtest/googletest/src/bin_tests_test_decode_queue-gtest-all.obj: contrib/gtest/googletest/src/gtest-all.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT contrib/gtest/googletest/src/bin_tests_test_decode_queue-gtest-all.obj -MD -MP -MF contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_decode_queue-gtest-all.Tpo -c -o contrib/gtest/googletest/src/bin_tests_test_decode_queue-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_decode_queue-gtest-all.Tpo contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_decode_queue-gtest-all.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='contrib/gtest/googletest/src/gtest-all.cc' object='contrib/gtest/googletest/src/bin_tests_test_decode_queue-gtest-all.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_decode_queue_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o contrib/gtest/googletest/src/bin_tests_test_decode_queue-gtest-all.obj `if test -f 'contrib/gtest/googletest/src/gtest-all.cc'; then $(CYGPATH_W) 'contrib/gtest/googletest/src/gtest-all.cc'; else $(CYGPATH_W) '$(srcdir)/contrib/gtest/googletest/src/gtest-all.cc'; fi`
 
 tests/bin_tests_test_drd_estimator-test-drd-estimator.o: tests/test-drd-estimator.cc
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_drd_estimator_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tests/bin_tests_test_drd_estimator-test-drd-estimator.o -MD -MP -MF tests/$(DEPDIR)/bin_tests_test_drd_estimator-test-drd-estimator.Tpo -c -o tests/bin_tests_test_drd_estimator-test-drd-estimator.o `test -f 'tests/test-drd-estimator.cc' || echo '$(srcdir)/'`tests/test-drd-estimator.cc
@@ -15394,6 +15501,13 @@ bin/tests/test-network-data.log: bin/tests/test-network-data$(EXEEXT)
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+bin/tests/test-decode-queue.log: bin/tests/test-decode-queue$(EXEEXT)
+	@p='bin/tests/test-decode-queue$(EXEEXT)'; \
+	b='bin/tests/test-decode-queue'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 .test.log:
 	@p='$<'; \
 	$(am__set_b); \
@@ -15678,6 +15792,7 @@ distclean: distclean-am
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_config_load-config.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_config_load-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_data_validator-ipc-shim.Po
+	-rm -f client/src/$(DEPDIR)/bin_tests_test_decode_queue-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_drd_estimator-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_estimators-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_frame_buffer-ipc-shim.Po
@@ -15759,6 +15874,7 @@ distclean: distclean-am
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client_params-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_config_load-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Po
+	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_decode_queue-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_drd_estimator-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_estimators-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_buffer-gmock-all.Po
@@ -15803,6 +15919,7 @@ distclean: distclean-am
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client_params-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_config_load-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Po
+	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_decode_queue-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_drd_estimator-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_estimators-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_frame_buffer-gtest-all.Po
@@ -16244,6 +16361,7 @@ distclean: distclean-am
 	-rm -f tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_config_load-test-config-load.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Po
+	-rm -f tests/$(DEPDIR)/bin_tests_test_decode_queue-test-decode-queue.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_drd_estimator-test-drd-estimator.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_drd_estimator-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_estimators-test-estimators.Po
@@ -16382,6 +16500,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_config_load-config.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_config_load-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_data_validator-ipc-shim.Po
+	-rm -f client/src/$(DEPDIR)/bin_tests_test_decode_queue-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_drd_estimator-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_estimators-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_frame_buffer-ipc-shim.Po
@@ -16463,6 +16582,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_client_params-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_config_load-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_data_validator-gmock-all.Po
+	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_decode_queue-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_drd_estimator-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_estimators-gmock-all.Po
 	-rm -f contrib/gtest/googlemock/src/$(DEPDIR)/bin_tests_test_frame_buffer-gmock-all.Po
@@ -16507,6 +16627,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_client_params-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_config_load-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_data_validator-gtest-all.Po
+	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_decode_queue-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_drd_estimator-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_estimators-gtest-all.Po
 	-rm -f contrib/gtest/googletest/src/$(DEPDIR)/bin_tests_test_frame_buffer-gtest-all.Po
@@ -16948,6 +17069,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f tests/$(DEPDIR)/bin_tests_test_client_params-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_config_load-test-config-load.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_data_validator-test-data-validator.Po
+	-rm -f tests/$(DEPDIR)/bin_tests_test_decode_queue-test-decode-queue.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_drd_estimator-test-drd-estimator.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_drd_estimator-tests-helpers.Po
 	-rm -f tests/$(DEPDIR)/bin_tests_test_estimators-test-estimators.Po
