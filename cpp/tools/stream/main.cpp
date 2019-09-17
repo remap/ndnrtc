@@ -91,7 +91,7 @@ R"(NdnRtc Stream.
                                 to discover currently published streams.
       --loop=<nloops>           Indicates how many times source file must be looped.
                                 If passed 0 -- loops indefinitely.
-      --cache                   Size of the producer's cache (in milliseconds). This determines
+      --cache=<cache_size>      Size of the producer's cache (in milliseconds). This determines
                                 the interval at which producer will clean the in-memory cache,
                                 which effectively defines the length of the produced cached video
                                 in milliseconds. [default: 5000]
