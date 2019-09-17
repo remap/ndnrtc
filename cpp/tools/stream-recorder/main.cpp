@@ -14,6 +14,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
 #include <mutex>
+#include <thread>
 
 #include <ndn-cpp/threadsafe-face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>

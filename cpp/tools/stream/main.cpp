@@ -64,7 +64,7 @@ R"(NdnRtc Stream.
                                    [(--v | --vv | --vvv)] [--log=<file>]
                                    [(--csv=<file> --stats=<stat_string>)]
       ndnrtc-stream fetch (<prefix> | (<base_prefix> --rvp)) --output=<out_file> [--use-fec] [--verify-policy=<file>]
-                                   [--pp-size=<pp_size>] [--pp-step=<step>] [--pbc-rate=<rate>]
+                                   [--pp-size=<pp_size>] [--pp-step=<step>] [--pbc=<type>]
                                    [(--v | --vv | --vvv)] [--log=<file>]
                                    [(--csv=<file> --stats=<stat_string>)]
 
@@ -108,9 +108,9 @@ R"(NdnRtc Stream.
                                    based on estimated DRD [default: 0]
       --pp-step=<step>          Pipeline step increment defines next frame sequence number that will
                                    be requested, can be negative [default: 1]
-      --pbc-rate=<rate>         PlayBack Clock: external -- creates external clock for playback
-                                   based on provided FPS rate. If 0, uses internal clock --
-                                   based on frame timestamps set by producer [default: 0]
+      --pbc=<type>              PlayBack Clock: "external" -- creates external clock for playback
+                                   based on provided FPS rate. "internal" -- uses internal clock
+                                   based on frame timestamps set by producer [default: internal]
       --csv=<file>              CSV file to save statistics to
       --stats=<stat_string>     A comma-separated list of statistics keywords that will be collected.
                                    See statistics.cpp - IndicatorKeywords map for available keywords.
@@ -176,8 +176,8 @@ int main(int argc, char **argv)
                          true,               // show help if requested
                          (string(TOOL_NAME)+string(PACKAGE_VERSION)).c_str());  // version string
 
-     // for(auto const& arg : args)
-     //     std::cout << arg.first << " " <<  arg.second << std::endl;
+     for(auto const& arg : args)
+         std::cout << arg.first << " " <<  arg.second << std::endl;
 
     AppLog = args["--log"].asString();
     cout << AppLog << endl;
@@ -245,6 +245,10 @@ int main(int argc, char **argv)
         }
         else if (args["fetch"].asBool())
         {
+            if (args["--pbc"] && !args["--fps"])
+                if (args["--pbc"].asString() == "external")
+                    throw std::runtime_error("--pbc is provided but not --fps");
+
             LogDebug(AppLog) << "initializing fetching" << endl;
 
             if (args["<prefix>"].isString())
@@ -258,7 +262,7 @@ int main(int argc, char **argv)
                                 prefixInfo,
                                 args["--pp-size"].asLong(),
                                 args["--pp-step"].asLong(),
-                                args["--pbc-rate"].asLong(),
+                                (args["--pbc"].asString() == "external" ? args["--fps"].asLong() : 0),
                                 args["--use-fec"].asBool(),
                                 args["--rvp"].asBool(),
                                 args["--verify-policy"].asString(),

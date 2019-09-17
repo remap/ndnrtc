@@ -45,10 +45,12 @@ typedef struct _FetchingParams {
     NamespaceInfo prefixInfo_;
     int ppSize_, ppStep_, pbcRate_;
     bool ppAdjustable_, useFec_;
+    string fileOut_;
 } FetchingParams;
 
 void setupFetching(shared_ptr<KeyChain> keyChain,
                    FetchingParams fetchingParams);
+void setupPlayback(boost::asio::io_service&, FetchingParams fetchingParams);
 void printStats(shared_ptr<BufferSlot> slot,
                 shared_ptr<v4::PipelineControl> ppCtrl,
                 shared_ptr<Pool<BufferSlot>> slotPool);
@@ -64,7 +66,9 @@ shared_ptr<helpers::KeyChainManager> keyChainManager;
 shared_ptr<RequestQueue> requestQ;
 shared_ptr<v4::PipelineControl> pipelineControl;
 shared_ptr<Pipeline> pipeline;
+shared_ptr<DecodeQueue> decodeQ;
 shared_ptr<Buffer> buffer;
+FILE *fOut = nullptr;
 
 shared_ptr<const packets::Meta> streamMeta;
 shared_ptr<const packets::Meta> liveMeta;
@@ -91,6 +95,9 @@ void runFetching(boost::asio::io_service &io,
     requestQ = make_shared<RequestQueue>(io, face.get());
     requestQ->setLogger(Logger::getLoggerPtr(AppLog));
 
+    decodeQ = make_shared<DecodeQueue>(io);
+    decodeQ->setLogger(Logger::getLoggerPtr(AppLog));
+
     FetchingParams params;
     params.prefixInfo_ = prefixInfo;
     params.ppSize_ = (int)ppSize;
@@ -98,16 +105,23 @@ void runFetching(boost::asio::io_service &io,
     params.pbcRate_ = (int)pbcRate;
     params.ppAdjustable_ = (ppSize == 0);
     params.useFec_ = useFec;
+    params.fileOut_ = output;
 
     // check if need to fetch from live stream
     if (prefixInfo.hasSeqNo_ == false)
     {
         auto metaRequests = setupStreamMetaProcessing(params,
-                                bind(setupFetching, keyChainManager->instanceKeyChain(), _1));
+                                                      [&](FetchingParams fp){
+                                                          setupFetching(keyChainManager->instanceKeyChain(), fp);
+                                                          setupPlayback(io, fp);
+                                                      });
         requestQ->enqueueRequests(metaRequests);
     }
     else
+    {
         setupFetching(keyChainManager->instanceKeyChain(), params);
+        setupPlayback(io, params);
+    }
 
     do {
         io.run();
@@ -121,6 +135,8 @@ void runFetching(boost::asio::io_service &io,
             #endif
         }
     } while (!MustTerminate);
+
+    if (fOut) fclose(fOut);
 }
 
 void setupFetching(shared_ptr<KeyChain> keyChain,
@@ -172,26 +188,30 @@ void setupFetching(shared_ptr<KeyChain> keyChain,
         LogDebug(AppLog) << "pipeline-control: pulse skipped" << endl;
     });
 
-    // TEMPORARY: onNewSlot will be connected to a buffer
-    buffer = make_shared<Buffer>(requestQ);
-    pipeline->onNewSlot.connect(bind(&Buffer::newSlot, buffer, _1));
+    // push all slots discarded by decodeQ back in the pool
+    decodeQ->onSlotDiscard.connect(bind(&Pool<BufferSlot>::push, slotPool, _1));
 
+    buffer = make_shared<Buffer>(requestQ, decodeQ);
+    pipeline->onNewSlot.connect(bind(&Buffer::newSlot, buffer, _1));
     buffer->onSlotDiscard.connect(bind(&Pool<BufferSlot>::push, slotPool, _1));
+    // onSlotReady should connect to DecodeQ
     buffer->onSlotReady.connect([slotPool](const shared_ptr<BufferSlot>& bufferSlot)
                                 {
-                                    LogDebug(AppLog) << "slot "
-                                    << bufferSlot->getNameInfo().getSuffix(NameFilter::Sample)
-                                    << " (" << bufferSlot->getNameInfo().sampleNo_ << ") assembled in "
-                                    << bufferSlot->getLongestDrd()/1000 << "ms"
-                                    << endl;
+                                    // LogInfo(AppLog) << "slot "
+                                    // << bufferSlot->getNameInfo().getSuffix(NameFilter::Sample)
+                                    // << " (" << bufferSlot->getNameInfo().sampleNo_
+                                    // << ") fetched in " << bufferSlot->getLongestDrd()/1000 << "ms"
+                                    // << " assmebled in " << (double)bufferSlot->getAssemblingTime()/1000. << "ms"
+                                    // << " buffer delay estimate " << buffer->getDelayEstimate()/1000 << "ms"
+                                    // << endl;
 
                                     if (!(Logger::getLogger(AppLog).getLogLevel() < NdnLoggerDetailLevelDefault && AppLog == ""))
                                         printStats(bufferSlot, pipelineControl, slotPool);
 
-                                    cout << "POOL SIZE " << slotPool->size() << endl;
+                                    // cout << "POOL SIZE " << slotPool->size() << endl;
 
 //                                    buffer->removeSlot(bufferSlot->getNameInfo().sampleNo_);
-                                    LogDebug(AppLog) << buffer->dump() << endl;
+//                                    LogTrace(AppLog) << buffer->dump() << endl;
 
                                     pipelineControl->pulse();
 //                                    slotPool->push(bufferSlot);
@@ -215,6 +235,64 @@ void setupFetching(shared_ptr<KeyChain> keyChain,
     pipelineControl->pulse();
 }
 
+
+void setupPlayback(boost::asio::io_service& io, FetchingParams fetchingParams)
+{
+    int fps = 30;
+    // if (fetchingParams.pbcRate_ == 0)
+    // {
+    //     LogInfo(AppLog) << "set up playback with internal clock" << endl;
+    //     // TODO
+    // }
+    // else
+    {
+        int fps = fetchingParams.pbcRate_ ? fetchingParams.pbcRate_ : 30;
+        LogInfo(AppLog) << "set up playback at " << fps << "FPS" << endl;
+    }
+
+    static int minQsize = 5;
+    static bool playbackRunning = false;
+    auto retrieveForRender = [fetchingParams](){
+        LogDebug(AppLog) << "playback pulse. decodeQ " << decodeQ->dump() << endl;
+
+        int seekD = -1;
+        if (!playbackRunning && decodeQ->getSize() > minQsize)
+        {
+            LogInfo(AppLog) << "starting playback" << endl;
+            playbackRunning = true;
+            fOut = fopen(fetchingParams.fileOut_.c_str(), "wb");
+        }
+        else
+            seekD = decodeQ->seek(1);
+
+        if (playbackRunning)
+        {
+            if (seekD == 0)
+            {
+                LogDebug(AppLog) << "frame is not ready" << endl;
+            }
+            else
+            {
+                const VideoCodec::Image &img = decodeQ->get();
+                if (img.getDataSize())
+                {
+                    NamespaceInfo* ni = (NamespaceInfo*)img.getUserData();
+                    LogDebug(AppLog) << "dumped frame " << ni->sampleNo_
+                                     << " " << ni->getPrefix(prefix_filter::PrefixFilter::Sample) << endl;
+                    img.write(fOut);
+
+                    // pulse pipeline control to request more frames
+                    // pipelineControl->pulse();
+                }
+                // else
+                //     LogWarn(AppLog) << "frame is not decodable" << endl;
+            }
+        }
+    };
+
+    static shared_ptr<PreciseGenerator> playbackPulseGenerator_ = make_shared<PreciseGenerator>(io, (double)fps, retrieveForRender);
+    playbackPulseGenerator_->start();
+}
 
 vector<shared_ptr<DataRequest>>
 setupStreamMetaProcessing(FetchingParams fetchingParams, OnMetaProcessed onMetaProcessed)
@@ -288,7 +366,7 @@ void printStats(shared_ptr<BufferSlot> slot,
     static size_t nAssembled = 0;
     static size_t nUnfetchable = 0 ;
     static uint64_t lastPacketNo = 0;
-    static Average avgEsimtator(make_shared<TimeWindow>(30000));
+    static Average avgEstimator(make_shared<TimeWindow>(30000));
     static uint32_t outOfOrder = 0;
 
     if (startTime == 0)
@@ -304,9 +382,12 @@ void printStats(shared_ptr<BufferSlot> slot,
         lastPacketNo = slot->getNameInfo().sampleNo_;
     }
 
-    avgEsimtator.newValue(slot->getLongestDrd());
+    // avgEstimator.newValue(slot->getLongestDrd());
+    avgEstimator.newValue(slot->getAssemblingTime());
 
-#if 0
+#if 1
+    shared_ptr<const packets::Meta> frameMeta = slot->getMetaPacket();
+
      cout << "\r"
      << "[ "
      << setw(6) << setprecision(5) << (clock::millisecondTimestamp()-startTime)/1000. << "sec "
@@ -319,13 +400,13 @@ void printStats(shared_ptr<BufferSlot> slot,
      << " asm " << setw(6) << (double)slot->getAssemblingTime()/1000.
      << " nw drd " << requestQ->getDrdEstimate()/1000.
      << " nw jttr " << requestQ->getJitterEstimate()/1000.
-     << " ff-est " << avgEsimtator.value()/1000
-     << " ff-jttr " << avgEsimtator.jitter()/1000
-     << " lat-est " << setw(6) << (ndn_getNowMilliseconds() - slot->getFrameMeta()->getContentMetaInfo().getTimestamp())
+     << " ff-est " << avgEstimator.value()/1000
+     << " ff-jttr " << avgEstimator.jitter()/1000
+     << " lat-est " << setw(6) << (ndn_getNowMilliseconds() - frameMeta->getContentMetaInfo().getTimestamp())
      << " ooo " << outOfOrder
      << " ]"
      << flush;
-//#else
+#else
     shared_ptr<const packets::Meta> frameMeta = slot->getMetaPacket();
     double ooo = requestQ->getStatistics()[statistics::Indicator::OutOfOrderNum];
     for (auto &r:slot->getRequests())

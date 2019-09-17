@@ -14,6 +14,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/deadline_timer.hpp>
 #include <mutex>
+#include <thread>
 
 #include <ndn-cpp/threadsafe-face.hpp>
 #include <ndn-cpp/security/key-chain.hpp>
@@ -68,7 +69,7 @@ void handler(int sig)
         mustExit = true;
 }
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
     signal(SIGABRT, handler);
     signal(SIGSEGV, handler);
@@ -105,7 +106,7 @@ int main(int argc, char **argv)
     });
 
     // setup storage
-    std::shared_ptr<StorageEngine> storage = 
+    std::shared_ptr<StorageEngine> storage =
         std::make_shared<StorageEngine>(args["<db_path>"].asString(), true);
 
     // setup face and keychain
@@ -116,7 +117,7 @@ int main(int argc, char **argv)
 
     LogInfo("") << "Scanning available prefixes..." << std::endl;
     storage->scanForLongestPrefixes(io, [&face, storage](const vector<Name>& pp){
-        LogInfo("") << "Scan completed. total keys: " << storage->getKeysNum() 
+        LogInfo("") << "Scan completed. total keys: " << storage->getKeysNum()
             << ", payload size ~ " << storage->getPayloadSize()/1024/1024
             << "MB, number of longest prefixes: " << pp.size() << endl;
 
@@ -146,32 +147,32 @@ int main(int argc, char **argv)
     LogInfo("") << "done" << endl;
 }
 
-void registerPrefix(std::shared_ptr<Face> &face, const Name &prefix, 
+void registerPrefix(std::shared_ptr<Face> &face, const Name &prefix,
     std::shared_ptr<StorageEngine> storage)
 {
     LogInfo("") << "Registering prefix " << prefix << std::endl;
     face->registerPrefix(prefix,
                          [storage](const std::shared_ptr<const Name> &prefix,
                             const std::shared_ptr<const Interest> &interest,
-                            Face &face, uint64_t, const std::shared_ptr<const InterestFilter> &) 
+                            Face &face, uint64_t, const std::shared_ptr<const InterestFilter> &)
                             {
                              LogTrace("") << "Incoming interest " << interest->getName() << std::endl;
                              std::shared_ptr<Data> d = storage->read(*interest);
 
                              if (d)
                              {
-                                LogTrace("") << "Retrieved data of size " << d->getContent().size() 
+                                LogTrace("") << "Retrieved data of size " << d->getContent().size()
                                              << ": " << d->getName() << std::endl;
                                 face.putData(*d);
                              }
                              else
                                 LogTrace("") << "no data for " << interest->getName() << std::endl;
                          },
-                         [](const std::shared_ptr<const Name> &prefix) 
+                         [](const std::shared_ptr<const Name> &prefix)
                          {
                              LogError("") << "Prefix registration failure (" << prefix << ")" << std::endl;
                          },
-                         [](const std::shared_ptr<const Name> &p, uint64_t) 
+                         [](const std::shared_ptr<const Name> &p, uint64_t)
                          {
                              LogInfo("") << "Successfully registered prefix " << *p << std::endl;
                          });
