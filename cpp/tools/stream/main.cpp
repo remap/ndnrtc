@@ -60,7 +60,7 @@ R"(NdnRtc Stream.
     Usage:
       ndnrtc-stream publish <base_prefix> <stream_name> --input=<in_file> --size=<WxH> --signing-identity=<identity>
                                    [--bitrate=<bitrate>] [--gop=<gop>] [--fps=<fps>] [--no-drop] [--use-fec] [--i420]
-                                   [--segment-size=<seg_size>] [--rvp] [--loop=<nloops>]
+                                   [--segment-size=<seg_size>] [--rvp] [--loop=<nloops>] [--cache=<cache_size>]
                                    [(--v | --vv | --vvv)] [--log=<file>]
                                    [(--csv=<file> --stats=<stat_string>)]
       ndnrtc-stream fetch (<prefix> | (<base_prefix> --rvp)) --output=<out_file> [--use-fec] [--verify-policy=<file>]
@@ -91,6 +91,10 @@ R"(NdnRtc Stream.
                                 to discover currently published streams.
       --loop=<nloops>           Indicates how many times source file must be looped.
                                 If passed 0 -- loops indefinitely.
+      --cache                   Size of the producer's cache (in milliseconds). This determines
+                                the interval at which producer will clean the in-memory cache,
+                                which effectively defines the length of the produced cached video
+                                in milliseconds. [default: 5000]
       --size=<WxH>              Size of incoming video frame; must be in "WIDTHxHEIGHT" format
       --bitrate=<bitrate>       Target encoding bitrate in kbps [default: 3000]
       --gop=<gop>               Target group of picture size inframes [default: 30]
@@ -227,6 +231,7 @@ int main(int argc, char **argv)
                              args["<stream_name>"].asString(),
                              args["--signing-identity"].asString(),
                              streamSettings,
+                             args["--cache"].asLong(),
                              args["--rvp"].asBool(),
                              args["--loop"] ? args["--loop"].asLong() : 1,
                              args["--csv"] ? args["--csv"].asString() : "",

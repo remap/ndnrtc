@@ -45,6 +45,7 @@ runPublishing(boost::asio::io_service &io,
               string streamName,
               string signingIdentity,
               const VideoStream::Settings& settings,
+              int cacheSize,
               bool needRvp,
               int nLoops,
               string csv,
@@ -63,7 +64,7 @@ runPublishing(boost::asio::io_service &io,
         Logger::getLoggerPtr(AppLog));
 
     shared_ptr<MemoryContentCache> memCache = make_shared<MemoryContentCache>(face.get());
-    memCache->setMinimumCacheLifetime(5000); // keep last 5 seconds of data
+    memCache->setMinimumCacheLifetime(cacheSize);
     VideoStream::Settings s(settings);
     s.memCache_ = memCache;
     s.storeInMemCache_ = true;
