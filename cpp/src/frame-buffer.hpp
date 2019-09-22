@@ -595,6 +595,8 @@ namespace ndnrtc
          * Dumps contents of DecodeQueue into a string.
          */
         std::string dump() const;
+
+        std::string dumpGops() const;
     protected:
         class BitstreamData : public IPoolObject {
         public:
@@ -621,6 +623,7 @@ namespace ndnrtc
             std::vector<uint8_t> fecList_;
         };
 
+#if HAVE_LIBVPX
         class VpxExternalBufferList : public IFrameBufferList, public NdnRtcComponent {
         public:
             class DecodedData : public IPoolObject {
@@ -674,6 +677,7 @@ namespace ndnrtc
             std::shared_ptr<DecodedData> getPointer(DecodedData*);
             void doCleanup();
         };
+#endif
 
     private:
         static std::shared_ptr<const VideoCodec::Image> ZeroImage;
@@ -683,7 +687,11 @@ namespace ndnrtc
 
             std::shared_ptr<const BufferSlot> slot_;
             mutable std::shared_ptr<BitstreamData> bitstreamData_;
+#if HAVE_LIBVPX
             mutable VpxExternalBufferList::DecodedData* rawData_; // owned by the frame buffer pool
+#else
+            mutable void* rawData_; // owned by the frame buffer pool
+#endif
         } FrameQueueEntry;
         typedef std::set<FrameQueueEntry> FrameQueue;
         typedef struct _CodecContext {
@@ -713,11 +721,13 @@ namespace ndnrtc
         int32_t lastAsked_; // last asked frame
         FrameQueue::iterator lastRetrieved_;
 
-        VpxExternalBufferList::DecodedData *lockedRecycleData_;
         int32_t discardGop_;
 
         Pool<BitstreamData> bitstreamDataPool_;
+#if HAVE_LIBVPX
+        VpxExternalBufferList::DecodedData *lockedRecycleData_;
         VpxExternalBufferList vpxFbList_;
+#endif
         std::atomic<bool> isCheckFramesScheduled_;
         // checks current frames and runs decoder on frames that can be decoded
         void checkFrames();
@@ -743,7 +753,7 @@ namespace ndnrtc
                                       const FrameQueue::iterator&);
 
         int32_t getEncodedNum(const GopEntry& ge);
-      
+
         /**
          * Finds encoded or decoded frame in frames_ that is closest to the iterator in a given
          * direction.
@@ -783,7 +793,7 @@ namespace ndnrtc
         {
             FrameQueue::iterator it = p;
             FrameQueue::iterator found = it;
-            
+
             while (it != frames_.end() && (it->rawData_ && found->rawData_)^encoded )
             {
                 if (it != p)
@@ -796,7 +806,7 @@ namespace ndnrtc
                 else
                     it = (directionFwd ? std::next(it) : std::prev(it));
             }
-            
+
             return directionFwd ? distance(p, found) : -distance(found, p);
         }
 

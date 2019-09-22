@@ -5,13 +5,12 @@
 //  Copyright 2013 Regents of the University of California
 //  For licensing details see the LICENSE file.
 //
-//  Author:  Peter Gusev 
+//  Author:  Peter Gusev
 //  Created: 8/21/13
 //
 
 #ifndef __ndnrtc__ndnrtc_object__
 #define __ndnrtc__ndnrtc_object__
-
 
 #include "simple-log.hpp"
 

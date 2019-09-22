@@ -1759,8 +1759,8 @@ DecodeQueue::push(const shared_ptr<const BufferSlot>& slot)
     if (pbPointer_ == frames_.end())
     {
         lock_guard<recursive_mutex> lock(playbackMtx_);
-        
-        pbPointer_ = res.first;
+
+        pbPointer_ = frames_.begin(); //res.first;
         LogTraceC << "set pb pointer " << pbPointer_->slot_->dump() << endl;
     }
 
@@ -1776,28 +1776,28 @@ const VideoCodec::Image&
 DecodeQueue::get(int32_t step, bool allowDecoding)
 {
     VpxExternalBufferList::DecodedData* rawData = nullptr;
-    
+
     {
         lock_guard<recursive_mutex> pLock(playbackMtx_);
-        
+
         if (pbPointer_ != frames_.end())
         {
             LogTraceC << pbPointer_->slot_->dump() << endl;
-            
+
             if (pbPointer_->rawData_)
                 rawData = pbPointer_->rawData_;
             else if (allowDecoding)
             {
                 LogTraceC << "requested frame not decoded. trying to decode" << endl;
-                
+
                 // try to decode now
                 int32_t gopNo = pbPointer_->slot_->getMetaPacket()->getFrameMeta().gop_number();
                 assert(gops_.find(gopNo) != gops_.end());
-                
+
                 if (gops_[gopNo].start_ != frames_.end())
                 {
                     lock_guard<recursive_mutex> cLock(codecContext_.mtx_);
-                    
+
                     if (codecContext_.lastDecoded_ != frames_.end() &&
                         frameIteratorWithinRange(next(codecContext_.lastDecoded_),
                                                  gops_[gopNo].start_, pbPointer_))
@@ -1808,10 +1808,10 @@ DecodeQueue::get(int32_t step, bool allowDecoding)
                         runDecoder(codecContext_, gops_[gopNo].start_, distance(gops_[gopNo].start_, pbPointer_)+1);
                         resetCodecContext();
                     }
-                    
+
                     if (!pbPointer_->rawData_)
                         return *ZeroImage;
-                    
+
                     assert(pbPointer_->rawData_->hasImage());
                     rawData = pbPointer_->rawData_;
                 }
@@ -1823,17 +1823,17 @@ DecodeQueue::get(int32_t step, bool allowDecoding)
             }
             else
                 return *ZeroImage;
-            
+
             // {
             // lock_guard<recursive_mutex> lock(pbMutex_);
             lastRetrieved_ = pbPointer_;
             // }
             //        seek(step);
-            
+
             //        return rawData->getImage();
         }
     }
-    
+
     if (step) seek(step);
 
     return rawData ? rawData->getImage() : *ZeroImage;
@@ -1900,6 +1900,7 @@ DecodeQueue::checkFrames()
 {
     lock_guard<recursive_mutex> mLock(masterMtx_);
     LogTraceC << dump() << endl;
+    LogTraceC << dumpGops() << endl;
 
     int32_t lastDecodedSampleNo = -1;
     int32_t curGopCanDecode = 0;
@@ -1961,7 +1962,7 @@ DecodeQueue::checkFrames()
         }
     }
     assert(leftToDecode >= 0);
-    
+
     // prioritise pbPointer gop
     if (!leftToDecode)
     {
@@ -1971,7 +1972,7 @@ DecodeQueue::checkFrames()
             decodeStart = ge.start_;
             advance(decodeStart, ge.nDecoded_);
             leftToDecode = getEncodedNum(ge);
-            
+
             if (leftToDecode)
             {
                 codecContext_.gopStart_ = ge.start_;
@@ -2015,7 +2016,7 @@ DecodeQueue::checkFrames()
     if (leftToDecode > 0)
     {
         lock_guard<recursive_mutex> cLock(codecContext_.mtx_);
-        
+
         runDecoder(codecContext_, decodeStart, leftToDecode, 30);
         if (distance(decodeStart, codecContext_.lastDecoded_) < leftToDecode)
         {
@@ -2031,92 +2032,6 @@ DecodeQueue::checkFrames()
         isCheckFramesScheduled_ = false;
         LogTraceC << "nothing to decode" << endl;
     }
-    
-#if 0
-    //    if (codecContext_.lastDecoded_ != frames_.end())
-    //    {
-    //        int32_t curGop = -1;
-    //        shared_ptr<const BufferSlot> lastDecodedSlot = codecContext_.lastDecoded_->slot_;
-    //        lastDecodedSampleNo = lastDecodedSlot->getNameInfo().sampleNo_;
-    //        curGop = lastDecodedSlot->getMetaPacket()->getFrameMeta().gop_number();
-    //
-    //        if (gops_.find(curGop) != gops_.end())
-    //            codecContext_.gopEnd_ = gops_[curGop].end_;
-    //        curGopCanDecode = distance(codecContext_.lastDecoded_, codecContext_.gopEnd_);
-    //
-    //        if (codecContext_.gopEnd_ == frames_.end())
-    //            curGopCanDecode -= 1;
-    //    }
-
-    GopEntry candidateGop {-1, 0, frames_.end(), frames_.end()};
-    // find new candidates for decoding
-    for (auto &it : gops_)
-    {
-        GopEntry &ge = it.second;
-
-        // has Key frame to start decoding -- good
-        if (ge.start_ != frames_.end())
-        {
-            // calculate how many frames left to decode (include +1 if GOP end is not frames_.end())
-            int32_t leftToDecode = distance(ge.start_, ge.end_) - ge.nDecoded_
-                    + (ge.end_ == frames_.end() ? 0 : 1);
-
-            LogTraceC << "left to decode " << ge.no_ << " " << leftToDecode << endl;
-
-            if (leftToDecode > 0)
-            {
-                candidateGop = ge;
-                break;
-            }
-
-//            if (ge.end_ != frames_.end())
-//            {
-//                gopSize = distance(ge.start_, ge.end_)+1;
-//                leftToDecode = distance(ge.start_, ge.end_)+1 - ge.nDecoded_;
-//            }
-//            else
-//            {
-//                if (ge.nDecoded_ > distance(ge.start_, ge.end_);
-//            }
-//
-//            // if we don't have last frame in this GOP, check if there are frames to decode
-//            if (leftToDecode == -1)
-//            {
-//                FrameQueue::iterator it(ge.start_);
-//                advance(it, ge.nDecoded_);
-//
-//                if (it != frames_.end())
-//                {
-//                    candidateGop = ge;
-//                    break;
-//                }
-//                // else -- there's nothing to do
-//            }
-//            else if (leftToDecode > 0)
-//            {
-//                candidateGop = ge;
-//                break;
-//            }
-        }
-    }
-
-
-    // check if we can continue decoding what's already is being decoded
-    if (lastDecodedSampleNo >= 0 && curGopCanDecode)
-    {
-        LogTraceC << "continue decode " << next(codecContext_.lastDecoded_)->slot_->dump () << endl;
-
-        runDecoder(codecContext_, next(codecContext_.lastDecoded_), curGopCanDecode, 50);
-    }
-    else if (candidateGop.no_ >= 0)
-    {
-        LogTraceC << "start decode " << candidateGop.start_->slot_->dump() << endl;
-
-        codecContext_.gopStart_ = candidateGop.start_;
-        runDecoder(codecContext_, candidateGop.start_,
-                   distance(candidateGop.start_, candidateGop.end_), 50);
-    }
-#endif
     }
 
     doCleanup();
@@ -2264,7 +2179,7 @@ DecodeQueue::doCleanup()
             // lock_guard<recursive_mutex> lock(pbMutex_);
             p = (pbPointer_ == frames_.end() ? lastRetrieved_ : pbPointer_);
         // }
-
+#if 0
         // check farthest frames
         if (p != frames_.end())
         {
@@ -2332,7 +2247,7 @@ DecodeQueue::doCleanup()
             else
                 discardGop_ = -1;
         }
-
+#endif
         if (removeIt == frames_.end())
         {
             removeIt = frames_.begin();
@@ -2366,8 +2281,8 @@ DecodeQueue::doCleanup()
         }
         else
             vpxFbList_.recycle(removeIt->rawData_);
-        
-        if (pbPointer_ == frames_.end())
+
+        if (pbPointer_ == removeIt)
         {
             pbPointer_ = frames_.end();
             LogTraceC << "reset pb pointer" << endl;
@@ -2443,8 +2358,38 @@ DecodeQueue::getEncodedNum(const GopEntry& ge)
         }
         return 0;
     }
-    
-    return distance(ge.start_, ge.end_) - ge.nDecoded_ + (ge.end_ == frames_.end() ? 0 : 1);
+
+    FrameQueue::iterator it = ge.start_;
+    advance(it, ge.nDecoded_);
+    int32_t nEncoded = 0;
+
+    while (it != frames_.end() &&
+           it->slot_->getMetaPacket()->getFrameMeta().gop_number() == ge.no_ &&
+           it->rawData_ == nullptr)
+    {
+        nEncoded += 1;
+        it = next(it);
+    }
+
+    int32_t d = nEncoded;
+//    if (ge.end_ == frames_.end())
+//    {
+//        map<int32_t, GopEntry>::iterator it = gops_.find(ge.no_+1);
+//        if (it == gops_.end())
+//            d = distance(ge.start_, ge.end_) - ge.nDecoded_;
+//        else
+//        {
+//            GopEntry &nextGe = it->second;
+//            d = distance(ge.start_, nextGe.start_) - ge.nDecoded_;
+//        }
+//    }
+//    else
+//        d = distance(ge.start_, ge.end_) + 1 - ge.nDecoded_;
+//    int32_t d = distance(ge.start_, ge.end_) - ge.nDecoded_ + (ge.end_ == frames_.end() ? 0 : 1);
+
+    if (d < 0) // TODO: make sure this never happens!
+        d = 0;
+    return d;
 }
 
 string
@@ -2483,6 +2428,28 @@ DecodeQueue::dump() const
     }
 
     ss << ")]";
+    return ss.str();
+}
+
+string
+DecodeQueue::dumpGops() const
+{
+    stringstream ss;
+    ss << "[";
+
+    for (auto& p: gops_)
+    {
+        GopEntry ge = p.second;
+        int32_t gopNo = ge.no_;
+        ss << "("
+           << ge.no_ << " " << ge.nDecoded_ << ": "
+           << (ge.start_ == frames_.end() ? -1 : ge.start_->slot_->getNameInfo().sampleNo_)
+           << "->"
+           << (ge.end_ == frames_.end() ? -1 : ge.end_->slot_->getNameInfo().sampleNo_)
+           << ")";
+    }
+
+    ss << "]";
     return ss.str();
 }
 

@@ -37,8 +37,10 @@ public:
   public:
       Image(const uint16_t& width, const uint16_t& height,
             const ImageFormat& format, uint8_t *data = nullptr);
+#if HAVE_LIBVPX
       // non-copying, wrapping
       Image(const vpx_image_t *img);
+#endif
       Image(const Image&);
       Image(Image&&);
       ~Image();
@@ -70,6 +72,13 @@ public:
       void setUserData(void *uData) { uData_ = uData; }
       void* getUserData() const { return uData_; }
 
+      const uint8_t* yBuffer() const;
+      const uint8_t* uBuffer() const;
+      const uint8_t* vBuffer() const;
+      int yStride() const;
+      int uStride() const;
+      int vStride() const;
+
   private:
       uint16_t width_, height_;
       ImageFormat format_;
@@ -78,11 +87,15 @@ public:
       int strides_[4];
       size_t allocatedSz_;
       bool isWrapped_;
-      vpx_image_t wrapper_;
 
       void allocate();
+
+#if HAVE_LIBVPX
+      vpx_image_t wrapper_;
+
       int vpxImgPlaneWidth(const vpx_image_t *img, int plane) const;
       int vpxImgPlaneHeight(const vpx_image_t *img, int plane) const;
+#endif
   };
 
   typedef struct _Stats {

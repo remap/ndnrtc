@@ -224,6 +224,72 @@ VideoCodec::Image::getDataSize() const
     }
 }
 
+const uint8_t*
+VideoCodec::Image::yBuffer() const
+{
+    if (isWrapped_)
+    {
+        const vpx_image_t *img = &wrapper_;
+        return img->planes[0];
+    }
+    return nullptr;
+}
+
+const uint8_t*
+VideoCodec::Image::uBuffer() const
+{
+    if (isWrapped_)
+    {
+        const vpx_image_t *img = &wrapper_;
+        return img->planes[1];
+    }
+    return nullptr;
+}
+
+const uint8_t*
+VideoCodec::Image::vBuffer() const
+{
+    if (isWrapped_)
+    {
+        const vpx_image_t *img = &wrapper_;
+        return img->planes[2];
+    }
+    return nullptr;
+}
+
+int
+VideoCodec::Image::yStride() const
+{
+    if (isWrapped_)
+    {
+        const vpx_image_t *img = &wrapper_;
+        return img->stride[0];
+    }
+    return 0;
+}
+
+int
+VideoCodec::Image::uStride() const
+{
+    if (isWrapped_)
+    {
+        const vpx_image_t *img = &wrapper_;
+        return img->stride[1];
+    }
+    return 0;
+}
+
+int
+VideoCodec::Image::vStride() const
+{
+    if (isWrapped_)
+    {
+        const vpx_image_t *img = &wrapper_;
+        return img->stride[2];
+    }
+    return 0;
+}
+
 void
 VideoCodec::Image::allocate()
 {

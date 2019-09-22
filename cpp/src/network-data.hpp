@@ -15,7 +15,7 @@
 #include <boost/signals2.hpp>
 #include <ndn-cpp/data.hpp>
 
-#include "ndnrtc-debug.hpp"
+// #include "ndnrtc-debug.hpp"
 #include "ndnrtc-common.hpp"
 #include "name-components.hpp"
 #include "params.hpp"
