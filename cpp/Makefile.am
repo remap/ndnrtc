@@ -14,7 +14,22 @@ pkginclude_HEADERS = include/ndnrtc-common.hpp \
   include/stream.hpp \
   include/stream-recorder.hpp \
   include/remote-stream.hpp \
-  include/c-wrapper.h
+  include/c-wrapper.h \
+  src/ndnrtc-object.hpp \
+  src/interest-queue.hpp \
+  src/pool.hpp \
+  src/network-data.hpp \
+  src/pipeline.hpp \
+  src/pipeline-control.hpp \
+  src/video-codec.hpp \
+  src/slot-buffer.hpp \
+  src/frame-buffer.hpp \
+  src/packets.hpp \
+  src/clock.hpp \
+  src/estimators.hpp
+
+protoincludedir=$(pkgincludedir)/proto
+protoinclude_HEADERS = src/proto/ndnrtc.pb.h
 
 helpersincludedir = $(pkgincludedir)/helpers
 helpersinclude_HEADERS = include/helpers/key-chain-manager.hpp \
@@ -165,53 +180,53 @@ endif
 # client apps	  #
 #################
 #bin_PROGRAMS = ndnrtc-client
-EXTRA_PROGRAMS = ndnrtc-client
-ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp
-ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src ${BOOST_CPPFLAGS} -I$(includedir)
-ndnrtc_client_LDFLAGS = ${BOOST_LDFLAGS} -L$(libdir)
-ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
-noinst_SCRIPTS = client/params.cfg
+# EXTRA_PROGRAMS = ndnrtc-client
+# ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp
+# ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src ${BOOST_CPPFLAGS} -I$(includedir)
+# ndnrtc_client_LDFLAGS = ${BOOST_LDFLAGS} -L$(libdir)
+# ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
+# # noinst_SCRIPTS = client/params.cfg
+#
+# if HAVE_NANOMSG
+# ndnrtc_client_SOURCES += client/src/ipc-shim.c client/src/ipc-shim.h
+# endif
+#
+# if OS_LINUX
+#
+# ndnrtc_client_LDFLAGS += -pthread
+# ndnrtc_client_LDADD += -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes
+# #-lXrender -lXcomposite
+# # TODO: check ubuntu build after commenting below line (part of LDADD flags)
+# #/usr/lib/x86_64-linux-gnu/libboost_system.so
+#
+# endif
+#
+# if OS_DARWIN
+#
+# ndnrtc_client_CPPFLAGS += -DOS_DARWIN
+# ndnrtc_client_LDFLAGS += -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
+# # ndnrtc_client_LDADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
+#
+# endif
+#
+# if OS_ANDROID
+#
+# ndnrtc_client_CPPFLAGS += -fPIE -fexceptions -frtti
+# ndnrtc_client_LDFLAGS += -fPIE -pie
+# ndnrtc_client_LDADD += -llog -lOpenSLES -lboost_timer -lboost_thread
+#
+# endif
 
-if HAVE_NANOMSG
-ndnrtc_client_SOURCES += client/src/ipc-shim.c client/src/ipc-shim.h
-endif
-
-if OS_LINUX
-
-ndnrtc_client_LDFLAGS += -pthread
-ndnrtc_client_LDADD += -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes
-#-lXrender -lXcomposite
-# TODO: check ubuntu build after commenting below line (part of LDADD flags)
-#/usr/lib/x86_64-linux-gnu/libboost_system.so
-
-endif
-
-if OS_DARWIN
-
-ndnrtc_client_CPPFLAGS += -DOS_DARWIN
-ndnrtc_client_LDFLAGS += -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
-# ndnrtc_client_LDADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
-
-endif
-
-if OS_ANDROID
-
-ndnrtc_client_CPPFLAGS += -fPIE -fexceptions -frtti
-ndnrtc_client_LDFLAGS += -fPIE -pie
-ndnrtc_client_LDADD += -llog -lOpenSLES -lboost_timer -lboost_thread
-
-endif
-
-if HAVE_NANOMSG
-
-EXTRA_PROGRAMS += nanopipe-adaptor
- # nanopipe.c ipc-shim.c -std=c++11 -I/usr/local/include -L/usr/local/lib -lnanomsg -onanopipe
-nanopipe_adaptor_SOURCES = client/nanopipe-adaptor/nanopipe.cpp client/nanopipe-adaptor/ipc-shim.c
-nanopipe_adaptor_CXXFLAGS = -std=c++11
-nanopipe_adaptor_CPPFLAGS = -I$(includedir)
-nanopipe_adaptor_LDADD = -lnanomsg
-
-endif
+# if HAVE_NANOMSG
+#
+# EXTRA_PROGRAMS += nanopipe-adaptor
+#  # nanopipe.c ipc-shim.c -std=c++11 -I/usr/local/include -L/usr/local/lib -lnanomsg -onanopipe
+# nanopipe_adaptor_SOURCES = client/nanopipe-adaptor/nanopipe.cpp client/nanopipe-adaptor/ipc-shim.c
+# nanopipe_adaptor_CXXFLAGS = -std=c++11
+# nanopipe_adaptor_CPPFLAGS = -I$(includedir)
+# nanopipe_adaptor_LDADD = -lnanomsg
+#
+# endif
 
 #################
 # unit tests    #

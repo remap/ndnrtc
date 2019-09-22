@@ -16,7 +16,6 @@
 
 
 
-
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -94,29 +93,15 @@ host_triplet = @host@
 @OS_ANDROID_TRUE@am__append_1 = -fexceptions -frtti
 @OS_ANDROID_TRUE@am__append_2 = -llog -lOpenSLES -lboost_timer -lboost_thread
 bin_PROGRAMS = frame-fetcher$(EXEEXT) stream-scrubber$(EXEEXT) \
-	$(am__EXEEXT_2) $(am__EXEEXT_3) $(am__EXEEXT_4)
+	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3)
 @HAVE_PERSISTENT_STORAGE_TRUE@am__append_3 = stream-recorder networked-storage
 @HAVE_VPX_TRUE@am__append_4 = ndnrtc-codec
 @HAVE_CNL_CPP_TRUE@am__append_5 = ndnrtc-stream
-EXTRA_PROGRAMS = ndnrtc-client$(EXEEXT) $(am__EXEEXT_1)
 @HAVE_NANOMSG_TRUE@am__append_6 = client/src/ipc-shim.c client/src/ipc-shim.h
-@OS_LINUX_TRUE@am__append_7 = -pthread
-@OS_LINUX_TRUE@am__append_8 = -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes
-#-lXrender -lXcomposite
-# TODO: check ubuntu build after commenting below line (part of LDADD flags)
-#/usr/lib/x86_64-linux-gnu/libboost_system.so
-@OS_DARWIN_TRUE@am__append_9 = -DOS_DARWIN
-@OS_DARWIN_TRUE@am__append_10 = -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
-# ndnrtc_client_LDADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
-@OS_ANDROID_TRUE@am__append_11 = -fPIE -fexceptions -frtti
-@OS_ANDROID_TRUE@am__append_12 = -fPIE -pie
-@OS_ANDROID_TRUE@am__append_13 = -llog -lOpenSLES -lboost_timer -lboost_thread
-@HAVE_NANOMSG_TRUE@am__append_14 = nanopipe-adaptor
-@HAVE_NANOMSG_TRUE@am__append_15 = client/src/ipc-shim.c client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__append_16 = -DHAVE_NANOMSG
-@HAVE_NANOMSG_TRUE@am__append_17 = -lnanomsg
-@OS_LINUX_TRUE@am__append_18 = -ldl -lX11
-@OS_DARWIN_TRUE@am__append_19 = -DOS_DARWIN
+@HAVE_NANOMSG_TRUE@am__append_7 = -DHAVE_NANOMSG
+@HAVE_NANOMSG_TRUE@am__append_8 = -lnanomsg
+@OS_LINUX_TRUE@am__append_9 = -ldl -lX11
+@OS_DARWIN_TRUE@am__append_10 = -DOS_DARWIN
 check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-packet-publisher$(EXEEXT) \
 	bin/tests/test-data-validator$(EXEEXT) \
@@ -153,7 +138,7 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-video-source$(EXEEXT) \
 	bin/tests/test-renderer$(EXEEXT) \
 	bin/tests/test-stat-collector$(EXEEXT) \
-	bin/tests/test-client$(EXEEXT) $(am__EXEEXT_5) \
+	bin/tests/test-client$(EXEEXT) $(am__EXEEXT_4) \
 	bin/tests/test-video-codec$(EXEEXT) \
 	bin/tests/test-pipeline-control$(EXEEXT) \
 	bin/tests/test-video-stream$(EXEEXT) \
@@ -162,7 +147,7 @@ check_PROGRAMS = bin/tests/test-params$(EXEEXT) \
 	bin/tests/test-packets$(EXEEXT) \
 	bin/tests/test-network-data$(EXEEXT) \
 	bin/tests/test-decode-queue$(EXEEXT)
-@HAVE_PERSISTENT_STORAGE_TRUE@am__append_20 = bin/tests/test-persistent-storage
+@HAVE_PERSISTENT_STORAGE_TRUE@am__append_11 = bin/tests/test-persistent-storage
 TESTS = $(check_PROGRAMS)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -178,20 +163,21 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
 	$(am__configure_deps) $(helpersinclude_HEADERS) \
-	$(pkginclude_HEADERS) $(am__DIST_COMMON)
+	$(pkginclude_HEADERS) $(protoinclude_HEADERS) \
+	$(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-@HAVE_NANOMSG_TRUE@am__EXEEXT_1 = nanopipe-adaptor$(EXEEXT)
-@HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_2 = stream-recorder$(EXEEXT) \
+@HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_1 = stream-recorder$(EXEEXT) \
 @HAVE_PERSISTENT_STORAGE_TRUE@	networked-storage$(EXEEXT)
-@HAVE_VPX_TRUE@am__EXEEXT_3 = ndnrtc-codec$(EXEEXT)
-@HAVE_CNL_CPP_TRUE@am__EXEEXT_4 = ndnrtc-stream$(EXEEXT)
+@HAVE_VPX_TRUE@am__EXEEXT_2 = ndnrtc-codec$(EXEEXT)
+@HAVE_CNL_CPP_TRUE@am__EXEEXT_3 = ndnrtc-stream$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" \
-	"$(DESTDIR)$(helpersincludedir)" "$(DESTDIR)$(pkgincludedir)"
-@HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_5 = bin/tests/test-persistent-storage$(EXEEXT)
+	"$(DESTDIR)$(helpersincludedir)" "$(DESTDIR)$(pkgincludedir)" \
+	"$(DESTDIR)$(protoincludedir)"
+@HAVE_PERSISTENT_STORAGE_TRUE@am__EXEEXT_4 = bin/tests/test-persistent-storage$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -1706,45 +1692,6 @@ frame_fetcher_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(frame_fetcher_CXXFLAGS) $(CXXFLAGS) $(frame_fetcher_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am__nanopipe_adaptor_SOURCES_DIST =  \
-	client/nanopipe-adaptor/nanopipe.cpp \
-	client/nanopipe-adaptor/ipc-shim.c
-@HAVE_NANOMSG_TRUE@am_nanopipe_adaptor_OBJECTS = client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.$(OBJEXT) \
-@HAVE_NANOMSG_TRUE@	client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.$(OBJEXT)
-nanopipe_adaptor_OBJECTS = $(am_nanopipe_adaptor_OBJECTS)
-nanopipe_adaptor_DEPENDENCIES =
-nanopipe_adaptor_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
-am__ndnrtc_client_SOURCES_DIST = client/src/main.cpp \
-	client/src/renderer.hpp client/src/renderer.cpp \
-	client/src/config.cpp client/src/config.hpp \
-	client/src/stat-collector.cpp client/src/stat-collector.hpp \
-	client/src/client.cpp client/src/client.hpp \
-	client/src/frame-io.hpp client/src/frame-io.cpp \
-	client/src/video-source.cpp client/src/video-source.hpp \
-	client/src/precise-generator.hpp \
-	client/src/precise-generator.cpp client/src/ipc-shim.c \
-	client/src/ipc-shim.h
-@HAVE_NANOMSG_TRUE@am__objects_91 = client/src/ndnrtc_client-ipc-shim.$(OBJEXT)
-am_ndnrtc_client_OBJECTS = client/src/ndnrtc_client-main.$(OBJEXT) \
-	client/src/ndnrtc_client-renderer.$(OBJEXT) \
-	client/src/ndnrtc_client-config.$(OBJEXT) \
-	client/src/ndnrtc_client-stat-collector.$(OBJEXT) \
-	client/src/ndnrtc_client-client.$(OBJEXT) \
-	client/src/ndnrtc_client-frame-io.$(OBJEXT) \
-	client/src/ndnrtc_client-video-source.$(OBJEXT) \
-	client/src/ndnrtc_client-precise-generator.$(OBJEXT) \
-	$(am__objects_91)
-ndnrtc_client_OBJECTS = $(am_ndnrtc_client_OBJECTS)
-ndnrtc_client_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(top_builddir)/libndnrtc.la $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
-ndnrtc_client_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) $(ndnrtc_client_LDFLAGS) $(LDFLAGS) \
-	-o $@
 am__ndnrtc_codec_SOURCES_DIST = tools/codec/main.cpp \
 	contrib/docopt/docopt.cpp tools/codec/tools.cpp
 @HAVE_VPX_TRUE@am_ndnrtc_codec_OBJECTS =  \
@@ -1812,7 +1759,6 @@ stream_scrubber_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(stream_scrubber_CXXFLAGS) $(CXXFLAGS) \
 	$(stream_scrubber_LDFLAGS) $(LDFLAGS) -o $@
-SCRIPTS = $(noinst_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -1828,8 +1774,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Po \
-	client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Po \
+am__depfiles_remade =  \
 	client/src/$(DEPDIR)/bin_tests_test_async-ipc-shim.Po \
 	client/src/$(DEPDIR)/bin_tests_test_audio_capturer-ipc-shim.Po \
 	client/src/$(DEPDIR)/bin_tests_test_audio_playout-ipc-shim.Po \
@@ -1906,15 +1851,6 @@ am__depfiles_remade = client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shi
 	client/src/$(DEPDIR)/bin_tests_test_video_source-precise-generator.Po \
 	client/src/$(DEPDIR)/bin_tests_test_video_source-video-source.Po \
 	client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Po \
-	client/src/$(DEPDIR)/ndnrtc_client-client.Po \
-	client/src/$(DEPDIR)/ndnrtc_client-config.Po \
-	client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po \
-	client/src/$(DEPDIR)/ndnrtc_client-ipc-shim.Po \
-	client/src/$(DEPDIR)/ndnrtc_client-main.Po \
-	client/src/$(DEPDIR)/ndnrtc_client-precise-generator.Po \
-	client/src/$(DEPDIR)/ndnrtc_client-renderer.Po \
-	client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po \
-	client/src/$(DEPDIR)/ndnrtc_client-video-source.Po \
 	contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po \
 	contrib/docopt/$(DEPDIR)/ndnrtc_codec-docopt.Po \
 	contrib/docopt/$(DEPDIR)/ndnrtc_stream-docopt.Po \
@@ -2570,8 +2506,7 @@ SOURCES = $(libndnrtc_la_SOURCES) $(bin_tests_test_async_SOURCES) \
 	$(bin_tests_test_video_playout_SOURCES) \
 	$(bin_tests_test_video_source_SOURCES) \
 	$(bin_tests_test_video_stream_SOURCES) \
-	$(frame_fetcher_SOURCES) $(nanopipe_adaptor_SOURCES) \
-	$(ndnrtc_client_SOURCES) $(ndnrtc_codec_SOURCES) \
+	$(frame_fetcher_SOURCES) $(ndnrtc_codec_SOURCES) \
 	$(ndnrtc_stream_SOURCES) $(networked_storage_SOURCES) \
 	$(stream_recorder_SOURCES) $(stream_scrubber_SOURCES)
 DIST_SOURCES = $(libndnrtc_la_SOURCES) \
@@ -2620,9 +2555,7 @@ DIST_SOURCES = $(libndnrtc_la_SOURCES) \
 	$(am__bin_tests_test_video_playout_SOURCES_DIST) \
 	$(am__bin_tests_test_video_source_SOURCES_DIST) \
 	$(am__bin_tests_test_video_stream_SOURCES_DIST) \
-	$(frame_fetcher_SOURCES) $(am__nanopipe_adaptor_SOURCES_DIST) \
-	$(am__ndnrtc_client_SOURCES_DIST) \
-	$(am__ndnrtc_codec_SOURCES_DIST) \
+	$(frame_fetcher_SOURCES) $(am__ndnrtc_codec_SOURCES_DIST) \
 	$(am__ndnrtc_stream_SOURCES_DIST) \
 	$(am__networked_storage_SOURCES_DIST) \
 	$(am__stream_recorder_SOURCES_DIST) $(stream_scrubber_SOURCES)
@@ -2631,7 +2564,8 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-HEADERS = $(helpersinclude_HEADERS) $(pkginclude_HEADERS)
+HEADERS = $(helpersinclude_HEADERS) $(pkginclude_HEADERS) \
+	$(protoinclude_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
@@ -3003,8 +2937,22 @@ pkginclude_HEADERS = include/ndnrtc-common.hpp \
   include/stream.hpp \
   include/stream-recorder.hpp \
   include/remote-stream.hpp \
-  include/c-wrapper.h
+  include/c-wrapper.h \
+  src/ndnrtc-object.hpp \
+  src/interest-queue.hpp \
+  src/pool.hpp \
+  src/network-data.hpp \
+  src/pipeline.hpp \
+  src/pipeline-control.hpp \
+  src/video-codec.hpp \
+  src/slot-buffer.hpp \
+  src/frame-buffer.hpp \
+  src/packets.hpp \
+  src/clock.hpp \
+  src/estimators.hpp
 
+protoincludedir = $(pkgincludedir)/proto
+protoinclude_HEADERS = src/proto/ndnrtc.pb.h
 helpersincludedir = $(pkgincludedir)/helpers
 helpersinclude_HEADERS = include/helpers/key-chain-manager.hpp \
   include/helpers/face-processor.hpp
@@ -3117,26 +3065,58 @@ stream_scrubber_LDADD = libndnrtc.la -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_TIMER
 @HAVE_CNL_CPP_TRUE@ndnrtc_stream_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src -I$(includedir) -I$(top_srcdir)/contrib ${BOOST_CPPFLAGS}
 @HAVE_CNL_CPP_TRUE@ndnrtc_stream_LDFLAGS = ${BOOST_LDFLAGS} -L$(libdir)
 @HAVE_CNL_CPP_TRUE@ndnrtc_stream_LDADD = -lcnl-cpp -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
-ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp \
-	client/src/renderer.cpp client/src/config.cpp \
-	client/src/config.hpp client/src/stat-collector.cpp \
-	client/src/stat-collector.hpp client/src/client.cpp \
-	client/src/client.hpp client/src/frame-io.hpp \
-	client/src/frame-io.cpp client/src/video-source.cpp \
-	client/src/video-source.hpp client/src/precise-generator.hpp \
-	client/src/precise-generator.cpp $(am__append_6)
-ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src ${BOOST_CPPFLAGS} \
-	-I$(includedir) $(am__append_9) $(am__append_11)
-ndnrtc_client_LDFLAGS = ${BOOST_LDFLAGS} -L$(libdir) $(am__append_7) \
-	$(am__append_10) $(am__append_12)
-ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} \
-	${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} \
-	$(top_builddir)/libndnrtc.la $(am__append_8) $(am__append_13)
-noinst_SCRIPTS = client/params.cfg
-@HAVE_NANOMSG_TRUE@nanopipe_adaptor_SOURCES = client/nanopipe-adaptor/nanopipe.cpp client/nanopipe-adaptor/ipc-shim.c
-@HAVE_NANOMSG_TRUE@nanopipe_adaptor_CXXFLAGS = -std=c++11
-@HAVE_NANOMSG_TRUE@nanopipe_adaptor_CPPFLAGS = -I$(includedir)
-@HAVE_NANOMSG_TRUE@nanopipe_adaptor_LDADD = -lnanomsg
+
+#################
+# client apps	  #
+#################
+#bin_PROGRAMS = ndnrtc-client
+# EXTRA_PROGRAMS = ndnrtc-client
+# ndnrtc_client_SOURCES = client/src/main.cpp client/src/renderer.hpp client/src/renderer.cpp client/src/config.cpp client/src/config.hpp client/src/stat-collector.cpp client/src/stat-collector.hpp client/src/client.cpp client/src/client.hpp client/src/frame-io.hpp client/src/frame-io.cpp client/src/video-source.cpp client/src/video-source.hpp client/src/precise-generator.hpp client/src/precise-generator.cpp
+# ndnrtc_client_CPPFLAGS = -I$(top_srcdir)/client/src ${BOOST_CPPFLAGS} -I$(includedir)
+# ndnrtc_client_LDFLAGS = ${BOOST_LDFLAGS} -L$(libdir)
+# ndnrtc_client_LDADD = -lconfig++ -lndn-cpp ${BOOST_SYSTEM_LIB} ${BOOST_CHRONO_LIB} ${BOOST_THREAD_LIB} $(top_builddir)/libndnrtc.la
+# # noinst_SCRIPTS = client/params.cfg
+#
+# if HAVE_NANOMSG
+# ndnrtc_client_SOURCES += client/src/ipc-shim.c client/src/ipc-shim.h
+# endif
+#
+# if OS_LINUX
+#
+# ndnrtc_client_LDFLAGS += -pthread
+# ndnrtc_client_LDADD += -ldl -lX11 -lXdamage -lXext -lnss3 -lssl3 -lXfixes
+# #-lXrender -lXcomposite
+# # TODO: check ubuntu build after commenting below line (part of LDADD flags)
+# #/usr/lib/x86_64-linux-gnu/libboost_system.so
+#
+# endif
+#
+# if OS_DARWIN
+#
+# ndnrtc_client_CPPFLAGS += -DOS_DARWIN
+# ndnrtc_client_LDFLAGS += -framework CoreServices -framework CoreFoundation -framework AudioUnit -framework AudioToolbox -framework CoreAudio
+# # ndnrtc_client_LDADD += -lana_config_proto -lana_debug_dump_proto -lapprtc_common -lapprtc_signaling -laudio -laudio_coder -laudio_coding -laudio_conference_mixer -laudio_device -laudio_encoder_interface -laudio_format_conversion -laudio_frame_manipulator -laudio_frame_operations -laudio_level -laudio_mixer_impl -laudio_network_adaptor -laudio_processing -laudio_processing_sse2 -laudioproc_debug_proto -laudioproc_protobuf_utils -laudioproc_unittest_proto -lbitrate_controller -lboringssl -lbuiltin_audio_decoder_factory -lbuiltin_audio_decoder_factory_internal -lbuiltin_audio_encoder_factory -lbwe_simulator_lib -lcall -lchart_proto -lcng -lcommand_line_parser -lcommon_audio -lcommon_audio_sse2 -lcommon_video -lcongestion_controller -ldesktop_capture -ldesktop_capture_differ_sse2 -ldl -levent_log_visualizer_utils -lexpat -lfield_trial_default -lfile_player -lfile_recorder -lframe_editing_lib -lg711 -lg722 -lgmock -lgtest -lilbc -lisac -lisac_c -lisac_common -lisac_fix -ljingle_peerconnection -ljingle_peerconnection_api -ljpeg -llegacy_encoded_audio_frame -lmedia_file -lmetrics_default -lneteq -lneteq_unittest_proto -lopus -lortc -lpacing -lpcm16b -lprimitives -lprotobuf_full -lprotobuf_lite -lprotoc_lib -lred -lreference_less_video_analysis_lib -lremote_bitrate_estimator -lrent_a_codec -lrtc_base -lrtc_base_approved -lrtc_event_log_impl -lrtc_event_log_parser -lrtc_event_log_proto -lrtc_event_log_source -lrtc_media -lrtc_media_base -lrtc_numerics -lrtc_p2p -lrtc_pc -lrtc_sdk_common_objc -lrtc_sdk_peerconnection_objc -lrtc_stats -lrtc_task_queue -lrtp_rtcp -lsimd -lsimd_asm -lsocketrocket -lsrtp -lstunprober -lsystem_wrappers -lusrsctp -lutility -lvideo -lvideo_capture -lvideo_capture_internal_impl -lvideo_capture_module -lvideo_coding -lvideo_coding_utility -lvideo_processing -lvideo_processing_sse2 -lvideo_quality_analysis -lvoice_engine -lvpx -lvpx_yasm -lwebrtc -lwebrtc_common -lwebrtc_h264 -lwebrtc_h264_video_toolbox -lwebrtc_i420 -lwebrtc_opus -lwebrtc_vp8 -lwebrtc_vp9 -lyasm_utils -lyuv_internal
+#
+# endif
+#
+# if OS_ANDROID
+#
+# ndnrtc_client_CPPFLAGS += -fPIE -fexceptions -frtti
+# ndnrtc_client_LDFLAGS += -fPIE -pie
+# ndnrtc_client_LDADD += -llog -lOpenSLES -lboost_timer -lboost_thread
+#
+# endif
+
+# if HAVE_NANOMSG
+#
+# EXTRA_PROGRAMS += nanopipe-adaptor
+#  # nanopipe.c ipc-shim.c -std=c++11 -I/usr/local/include -L/usr/local/lib -lnanomsg -onanopipe
+# nanopipe_adaptor_SOURCES = client/nanopipe-adaptor/nanopipe.cpp client/nanopipe-adaptor/ipc-shim.c
+# nanopipe_adaptor_CXXFLAGS = -std=c++11
+# nanopipe_adaptor_CPPFLAGS = -I$(includedir)
+# nanopipe_adaptor_LDADD = -lnanomsg
+#
+# endif
 
 #################
 # unit tests    #
@@ -3145,13 +3125,13 @@ UNIT_TESTS_CPPFLAGS_ = -I${GTEST_ROOT} -I${GTEST_ROOT}/include \
 	-I${GMOCK_ROOT} -I${GMOCK_ROOT}/include -I$(top_srcdir) \
 	-I$(top_srcdir)/include -I$(includedir) \
 	${ndnrtc_client_CPPFLAGS} ${libndnrtc_la_CPPFLAGS} @DEFS@ \
-	$(am__append_16) $(am__append_19)
+	$(am__append_7) $(am__append_10)
 UNIT_TESTS_LDFLAGS_ = ${libndnrtc_la_LDFLAGS} ${ndnrtc_client_LDFLAGS}
-UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} $(am__append_17) \
-	$(am__append_18)
+UNIT_TESTS_LDADD_ = ${libndnrtc_la_LIBADD} $(am__append_8) \
+	$(am__append_9)
 UNIT_TESTS_COMMON_SOURCES_ =  \
 	contrib/gtest/googlemock/src/gmock-all.cc \
-	contrib/gtest/googletest/src/gtest-all.cc $(am__append_15)
+	contrib/gtest/googletest/src/gtest-all.cc $(am__append_6)
 bin_tests_test_config_load_SOURCES = tests/test-config-load.cc client/src/config.cpp src/simple-log.cpp ${UNIT_TESTS_COMMON_SOURCES_}
 bin_tests_test_config_load_CPPFLAGS = ${UNIT_TESTS_CPPFLAGS_}
 bin_tests_test_config_load_LDFLAGS = ${UNIT_TESTS_LDFLAGS_}
@@ -5203,50 +5183,6 @@ contrib/docopt/frame_fetcher-docopt.$(OBJEXT):  \
 frame-fetcher$(EXEEXT): $(frame_fetcher_OBJECTS) $(frame_fetcher_DEPENDENCIES) $(EXTRA_frame_fetcher_DEPENDENCIES) 
 	@rm -f frame-fetcher$(EXEEXT)
 	$(AM_V_CXXLD)$(frame_fetcher_LINK) $(frame_fetcher_OBJECTS) $(frame_fetcher_LDADD) $(LIBS)
-client/nanopipe-adaptor/$(am__dirstamp):
-	@$(MKDIR_P) client/nanopipe-adaptor
-	@: > client/nanopipe-adaptor/$(am__dirstamp)
-client/nanopipe-adaptor/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) client/nanopipe-adaptor/$(DEPDIR)
-	@: > client/nanopipe-adaptor/$(DEPDIR)/$(am__dirstamp)
-client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.$(OBJEXT):  \
-	client/nanopipe-adaptor/$(am__dirstamp) \
-	client/nanopipe-adaptor/$(DEPDIR)/$(am__dirstamp)
-client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.$(OBJEXT):  \
-	client/nanopipe-adaptor/$(am__dirstamp) \
-	client/nanopipe-adaptor/$(DEPDIR)/$(am__dirstamp)
-
-nanopipe-adaptor$(EXEEXT): $(nanopipe_adaptor_OBJECTS) $(nanopipe_adaptor_DEPENDENCIES) $(EXTRA_nanopipe_adaptor_DEPENDENCIES) 
-	@rm -f nanopipe-adaptor$(EXEEXT)
-	$(AM_V_CXXLD)$(nanopipe_adaptor_LINK) $(nanopipe_adaptor_OBJECTS) $(nanopipe_adaptor_LDADD) $(LIBS)
-client/src/ndnrtc_client-main.$(OBJEXT): client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-client/src/ndnrtc_client-renderer.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-client/src/ndnrtc_client-config.$(OBJEXT): client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-client/src/ndnrtc_client-stat-collector.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-client/src/ndnrtc_client-client.$(OBJEXT): client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-client/src/ndnrtc_client-frame-io.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-client/src/ndnrtc_client-video-source.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-client/src/ndnrtc_client-precise-generator.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-client/src/ndnrtc_client-ipc-shim.$(OBJEXT):  \
-	client/src/$(am__dirstamp) \
-	client/src/$(DEPDIR)/$(am__dirstamp)
-
-ndnrtc-client$(EXEEXT): $(ndnrtc_client_OBJECTS) $(ndnrtc_client_DEPENDENCIES) $(EXTRA_ndnrtc_client_DEPENDENCIES) 
-	@rm -f ndnrtc-client$(EXEEXT)
-	$(AM_V_CXXLD)$(ndnrtc_client_LINK) $(ndnrtc_client_OBJECTS) $(ndnrtc_client_LDADD) $(LIBS)
 tools/codec/$(am__dirstamp):
 	@$(MKDIR_P) tools/codec
 	@: > tools/codec/$(am__dirstamp)
@@ -5340,7 +5276,6 @@ stream-scrubber$(EXEEXT): $(stream_scrubber_OBJECTS) $(stream_scrubber_DEPENDENC
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
-	-rm -f client/nanopipe-adaptor/*.$(OBJEXT)
 	-rm -f client/src/*.$(OBJEXT)
 	-rm -f contrib/docopt/*.$(OBJEXT)
 	-rm -f contrib/gtest/googlemock/src/*.$(OBJEXT)
@@ -5364,8 +5299,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_async-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_audio_capturer-ipc-shim.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_audio_playout-ipc-shim.Po@am__quote@ # am--include-marker
@@ -5442,15 +5375,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_video_source-precise-generator.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_video_source-video-source.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-client.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-config.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-ipc-shim.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-main.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-precise-generator.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-renderer.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@client/src/$(DEPDIR)/ndnrtc_client-video-source.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/ndnrtc_codec-docopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/docopt/$(DEPDIR)/ndnrtc_stream-docopt.Po@am__quote@ # am--include-marker
@@ -6684,34 +6608,6 @@ client/src/bin_tests_test_video_stream-ipc-shim.obj: client/src/ipc-shim.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/src/ipc-shim.c' object='client/src/bin_tests_test_video_stream-ipc-shim.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(bin_tests_test_video_stream_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/bin_tests_test_video_stream-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
-
-client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o: client/nanopipe-adaptor/ipc-shim.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o -MD -MP -MF client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Tpo -c -o client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o `test -f 'client/nanopipe-adaptor/ipc-shim.c' || echo '$(srcdir)/'`client/nanopipe-adaptor/ipc-shim.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Tpo client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/nanopipe-adaptor/ipc-shim.c' object='client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.o `test -f 'client/nanopipe-adaptor/ipc-shim.c' || echo '$(srcdir)/'`client/nanopipe-adaptor/ipc-shim.c
-
-client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.obj: client/nanopipe-adaptor/ipc-shim.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.obj -MD -MP -MF client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Tpo -c -o client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.obj `if test -f 'client/nanopipe-adaptor/ipc-shim.c'; then $(CYGPATH_W) 'client/nanopipe-adaptor/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/nanopipe-adaptor/ipc-shim.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Tpo client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/nanopipe-adaptor/ipc-shim.c' object='client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/nanopipe-adaptor/nanopipe_adaptor-ipc-shim.obj `if test -f 'client/nanopipe-adaptor/ipc-shim.c'; then $(CYGPATH_W) 'client/nanopipe-adaptor/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/nanopipe-adaptor/ipc-shim.c'; fi`
-
-client/src/ndnrtc_client-ipc-shim.o: client/src/ipc-shim.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/src/ndnrtc_client-ipc-shim.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-ipc-shim.Tpo -c -o client/src/ndnrtc_client-ipc-shim.o `test -f 'client/src/ipc-shim.c' || echo '$(srcdir)/'`client/src/ipc-shim.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-ipc-shim.Tpo client/src/$(DEPDIR)/ndnrtc_client-ipc-shim.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/src/ipc-shim.c' object='client/src/ndnrtc_client-ipc-shim.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/ndnrtc_client-ipc-shim.o `test -f 'client/src/ipc-shim.c' || echo '$(srcdir)/'`client/src/ipc-shim.c
-
-client/src/ndnrtc_client-ipc-shim.obj: client/src/ipc-shim.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT client/src/ndnrtc_client-ipc-shim.obj -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-ipc-shim.Tpo -c -o client/src/ndnrtc_client-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-ipc-shim.Tpo client/src/$(DEPDIR)/ndnrtc_client-ipc-shim.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='client/src/ipc-shim.c' object='client/src/ndnrtc_client-ipc-shim.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o client/src/ndnrtc_client-ipc-shim.obj `if test -f 'client/src/ipc-shim.c'; then $(CYGPATH_W) 'client/src/ipc-shim.c'; else $(CYGPATH_W) '$(srcdir)/client/src/ipc-shim.c'; fi`
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -14563,132 +14459,6 @@ contrib/docopt/frame_fetcher-docopt.obj: contrib/docopt/docopt.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(frame_fetcher_CXXFLAGS) $(CXXFLAGS) -c -o contrib/docopt/frame_fetcher-docopt.obj `if test -f 'contrib/docopt/docopt.cpp'; then $(CYGPATH_W) 'contrib/docopt/docopt.cpp'; else $(CYGPATH_W) '$(srcdir)/contrib/docopt/docopt.cpp'; fi`
 
-client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o: client/nanopipe-adaptor/nanopipe.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) -MT client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o -MD -MP -MF client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Tpo -c -o client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o `test -f 'client/nanopipe-adaptor/nanopipe.cpp' || echo '$(srcdir)/'`client/nanopipe-adaptor/nanopipe.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Tpo client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/nanopipe-adaptor/nanopipe.cpp' object='client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) -c -o client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.o `test -f 'client/nanopipe-adaptor/nanopipe.cpp' || echo '$(srcdir)/'`client/nanopipe-adaptor/nanopipe.cpp
-
-client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.obj: client/nanopipe-adaptor/nanopipe.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) -MT client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.obj -MD -MP -MF client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Tpo -c -o client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.obj `if test -f 'client/nanopipe-adaptor/nanopipe.cpp'; then $(CYGPATH_W) 'client/nanopipe-adaptor/nanopipe.cpp'; else $(CYGPATH_W) '$(srcdir)/client/nanopipe-adaptor/nanopipe.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Tpo client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/nanopipe-adaptor/nanopipe.cpp' object='client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(nanopipe_adaptor_CPPFLAGS) $(CPPFLAGS) $(nanopipe_adaptor_CXXFLAGS) $(CXXFLAGS) -c -o client/nanopipe-adaptor/nanopipe_adaptor-nanopipe.obj `if test -f 'client/nanopipe-adaptor/nanopipe.cpp'; then $(CYGPATH_W) 'client/nanopipe-adaptor/nanopipe.cpp'; else $(CYGPATH_W) '$(srcdir)/client/nanopipe-adaptor/nanopipe.cpp'; fi`
-
-client/src/ndnrtc_client-main.o: client/src/main.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-main.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-main.Tpo -c -o client/src/ndnrtc_client-main.o `test -f 'client/src/main.cpp' || echo '$(srcdir)/'`client/src/main.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-main.Tpo client/src/$(DEPDIR)/ndnrtc_client-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/main.cpp' object='client/src/ndnrtc_client-main.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-main.o `test -f 'client/src/main.cpp' || echo '$(srcdir)/'`client/src/main.cpp
-
-client/src/ndnrtc_client-main.obj: client/src/main.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-main.obj -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-main.Tpo -c -o client/src/ndnrtc_client-main.obj `if test -f 'client/src/main.cpp'; then $(CYGPATH_W) 'client/src/main.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/main.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-main.Tpo client/src/$(DEPDIR)/ndnrtc_client-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/main.cpp' object='client/src/ndnrtc_client-main.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-main.obj `if test -f 'client/src/main.cpp'; then $(CYGPATH_W) 'client/src/main.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/main.cpp'; fi`
-
-client/src/ndnrtc_client-renderer.o: client/src/renderer.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-renderer.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-renderer.Tpo -c -o client/src/ndnrtc_client-renderer.o `test -f 'client/src/renderer.cpp' || echo '$(srcdir)/'`client/src/renderer.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-renderer.Tpo client/src/$(DEPDIR)/ndnrtc_client-renderer.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/renderer.cpp' object='client/src/ndnrtc_client-renderer.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-renderer.o `test -f 'client/src/renderer.cpp' || echo '$(srcdir)/'`client/src/renderer.cpp
-
-client/src/ndnrtc_client-renderer.obj: client/src/renderer.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-renderer.obj -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-renderer.Tpo -c -o client/src/ndnrtc_client-renderer.obj `if test -f 'client/src/renderer.cpp'; then $(CYGPATH_W) 'client/src/renderer.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/renderer.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-renderer.Tpo client/src/$(DEPDIR)/ndnrtc_client-renderer.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/renderer.cpp' object='client/src/ndnrtc_client-renderer.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-renderer.obj `if test -f 'client/src/renderer.cpp'; then $(CYGPATH_W) 'client/src/renderer.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/renderer.cpp'; fi`
-
-client/src/ndnrtc_client-config.o: client/src/config.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-config.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-config.Tpo -c -o client/src/ndnrtc_client-config.o `test -f 'client/src/config.cpp' || echo '$(srcdir)/'`client/src/config.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-config.Tpo client/src/$(DEPDIR)/ndnrtc_client-config.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/config.cpp' object='client/src/ndnrtc_client-config.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-config.o `test -f 'client/src/config.cpp' || echo '$(srcdir)/'`client/src/config.cpp
-
-client/src/ndnrtc_client-config.obj: client/src/config.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-config.obj -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-config.Tpo -c -o client/src/ndnrtc_client-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-config.Tpo client/src/$(DEPDIR)/ndnrtc_client-config.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/config.cpp' object='client/src/ndnrtc_client-config.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-config.obj `if test -f 'client/src/config.cpp'; then $(CYGPATH_W) 'client/src/config.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/config.cpp'; fi`
-
-client/src/ndnrtc_client-stat-collector.o: client/src/stat-collector.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-stat-collector.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Tpo -c -o client/src/ndnrtc_client-stat-collector.o `test -f 'client/src/stat-collector.cpp' || echo '$(srcdir)/'`client/src/stat-collector.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Tpo client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/stat-collector.cpp' object='client/src/ndnrtc_client-stat-collector.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-stat-collector.o `test -f 'client/src/stat-collector.cpp' || echo '$(srcdir)/'`client/src/stat-collector.cpp
-
-client/src/ndnrtc_client-stat-collector.obj: client/src/stat-collector.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-stat-collector.obj -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Tpo -c -o client/src/ndnrtc_client-stat-collector.obj `if test -f 'client/src/stat-collector.cpp'; then $(CYGPATH_W) 'client/src/stat-collector.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/stat-collector.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Tpo client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/stat-collector.cpp' object='client/src/ndnrtc_client-stat-collector.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-stat-collector.obj `if test -f 'client/src/stat-collector.cpp'; then $(CYGPATH_W) 'client/src/stat-collector.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/stat-collector.cpp'; fi`
-
-client/src/ndnrtc_client-client.o: client/src/client.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-client.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-client.Tpo -c -o client/src/ndnrtc_client-client.o `test -f 'client/src/client.cpp' || echo '$(srcdir)/'`client/src/client.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-client.Tpo client/src/$(DEPDIR)/ndnrtc_client-client.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/client.cpp' object='client/src/ndnrtc_client-client.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-client.o `test -f 'client/src/client.cpp' || echo '$(srcdir)/'`client/src/client.cpp
-
-client/src/ndnrtc_client-client.obj: client/src/client.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-client.obj -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-client.Tpo -c -o client/src/ndnrtc_client-client.obj `if test -f 'client/src/client.cpp'; then $(CYGPATH_W) 'client/src/client.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/client.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-client.Tpo client/src/$(DEPDIR)/ndnrtc_client-client.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/client.cpp' object='client/src/ndnrtc_client-client.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-client.obj `if test -f 'client/src/client.cpp'; then $(CYGPATH_W) 'client/src/client.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/client.cpp'; fi`
-
-client/src/ndnrtc_client-frame-io.o: client/src/frame-io.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-frame-io.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-frame-io.Tpo -c -o client/src/ndnrtc_client-frame-io.o `test -f 'client/src/frame-io.cpp' || echo '$(srcdir)/'`client/src/frame-io.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-frame-io.Tpo client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/frame-io.cpp' object='client/src/ndnrtc_client-frame-io.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-frame-io.o `test -f 'client/src/frame-io.cpp' || echo '$(srcdir)/'`client/src/frame-io.cpp
-
-client/src/ndnrtc_client-frame-io.obj: client/src/frame-io.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-frame-io.obj -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-frame-io.Tpo -c -o client/src/ndnrtc_client-frame-io.obj `if test -f 'client/src/frame-io.cpp'; then $(CYGPATH_W) 'client/src/frame-io.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/frame-io.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-frame-io.Tpo client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/frame-io.cpp' object='client/src/ndnrtc_client-frame-io.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-frame-io.obj `if test -f 'client/src/frame-io.cpp'; then $(CYGPATH_W) 'client/src/frame-io.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/frame-io.cpp'; fi`
-
-client/src/ndnrtc_client-video-source.o: client/src/video-source.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-video-source.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-video-source.Tpo -c -o client/src/ndnrtc_client-video-source.o `test -f 'client/src/video-source.cpp' || echo '$(srcdir)/'`client/src/video-source.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-video-source.Tpo client/src/$(DEPDIR)/ndnrtc_client-video-source.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/video-source.cpp' object='client/src/ndnrtc_client-video-source.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-video-source.o `test -f 'client/src/video-source.cpp' || echo '$(srcdir)/'`client/src/video-source.cpp
-
-client/src/ndnrtc_client-video-source.obj: client/src/video-source.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-video-source.obj -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-video-source.Tpo -c -o client/src/ndnrtc_client-video-source.obj `if test -f 'client/src/video-source.cpp'; then $(CYGPATH_W) 'client/src/video-source.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/video-source.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-video-source.Tpo client/src/$(DEPDIR)/ndnrtc_client-video-source.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/video-source.cpp' object='client/src/ndnrtc_client-video-source.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-video-source.obj `if test -f 'client/src/video-source.cpp'; then $(CYGPATH_W) 'client/src/video-source.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/video-source.cpp'; fi`
-
-client/src/ndnrtc_client-precise-generator.o: client/src/precise-generator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-precise-generator.o -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-precise-generator.Tpo -c -o client/src/ndnrtc_client-precise-generator.o `test -f 'client/src/precise-generator.cpp' || echo '$(srcdir)/'`client/src/precise-generator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-precise-generator.Tpo client/src/$(DEPDIR)/ndnrtc_client-precise-generator.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/precise-generator.cpp' object='client/src/ndnrtc_client-precise-generator.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-precise-generator.o `test -f 'client/src/precise-generator.cpp' || echo '$(srcdir)/'`client/src/precise-generator.cpp
-
-client/src/ndnrtc_client-precise-generator.obj: client/src/precise-generator.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT client/src/ndnrtc_client-precise-generator.obj -MD -MP -MF client/src/$(DEPDIR)/ndnrtc_client-precise-generator.Tpo -c -o client/src/ndnrtc_client-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) client/src/$(DEPDIR)/ndnrtc_client-precise-generator.Tpo client/src/$(DEPDIR)/ndnrtc_client-precise-generator.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='client/src/precise-generator.cpp' object='client/src/ndnrtc_client-precise-generator.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(ndnrtc_client_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o client/src/ndnrtc_client-precise-generator.obj `if test -f 'client/src/precise-generator.cpp'; then $(CYGPATH_W) 'client/src/precise-generator.cpp'; else $(CYGPATH_W) '$(srcdir)/client/src/precise-generator.cpp'; fi`
-
 tools/codec/ndnrtc_codec-main.o: tools/codec/main.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ndnrtc_codec_CXXFLAGS) $(CXXFLAGS) -MT tools/codec/ndnrtc_codec-main.o -MD -MP -MF tools/codec/$(DEPDIR)/ndnrtc_codec-main.Tpo -c -o tools/codec/ndnrtc_codec-main.o `test -f 'tools/codec/main.cpp' || echo '$(srcdir)/'`tools/codec/main.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) tools/codec/$(DEPDIR)/ndnrtc_codec-main.Tpo tools/codec/$(DEPDIR)/ndnrtc_codec-main.Po
@@ -14992,6 +14762,27 @@ uninstall-pkgincludeHEADERS:
 	@list='$(pkginclude_HEADERS)'; test -n "$(pkgincludedir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(pkgincludedir)'; $(am__uninstall_files_from_dir)
+install-protoincludeHEADERS: $(protoinclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	@list='$(protoinclude_HEADERS)'; test -n "$(protoincludedir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(protoincludedir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(protoincludedir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_HEADER) $$files '$(DESTDIR)$(protoincludedir)'"; \
+	  $(INSTALL_HEADER) $$files "$(DESTDIR)$(protoincludedir)" || exit $$?; \
+	done
+
+uninstall-protoincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(protoinclude_HEADERS)'; test -n "$(protoincludedir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(protoincludedir)'; $(am__uninstall_files_from_dir)
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -15693,11 +15484,11 @@ check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 check: check-am
-all-am: Makefile $(PROGRAMS) $(LTLIBRARIES) $(SCRIPTS) $(HEADERS)
+all-am: Makefile $(PROGRAMS) $(LTLIBRARIES) $(HEADERS)
 install-binPROGRAMS: install-libLTLIBRARIES
 
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(helpersincludedir)" "$(DESTDIR)$(pkgincludedir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(helpersincludedir)" "$(DESTDIR)$(pkgincludedir)" "$(DESTDIR)$(protoincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -15730,8 +15521,6 @@ distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f bin/tests/$(am__dirstamp)
-	-rm -f client/nanopipe-adaptor/$(DEPDIR)/$(am__dirstamp)
-	-rm -f client/nanopipe-adaptor/$(am__dirstamp)
 	-rm -f client/src/$(DEPDIR)/$(am__dirstamp)
 	-rm -f client/src/$(am__dirstamp)
 	-rm -f contrib/docopt/$(DEPDIR)/$(am__dirstamp)
@@ -15773,9 +15562,7 @@ clean-am: clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-		-rm -f client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Po
-	-rm -f client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Po
-	-rm -f client/src/$(DEPDIR)/bin_tests_test_async-ipc-shim.Po
+		-rm -f client/src/$(DEPDIR)/bin_tests_test_async-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_audio_capturer-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_audio_playout-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_buffer_control-ipc-shim.Po
@@ -15851,15 +15638,6 @@ distclean: distclean-am
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-precise-generator.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-video-source.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-client.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-config.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-ipc-shim.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-main.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-precise-generator.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-renderer.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-video-source.Po
 	-rm -f contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/ndnrtc_codec-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/ndnrtc_stream-docopt.Po
@@ -16450,7 +16228,7 @@ info: info-am
 info-am:
 
 install-data-am: install-helpersincludeHEADERS \
-	install-pkgincludeHEADERS
+	install-pkgincludeHEADERS install-protoincludeHEADERS
 
 install-dvi: install-dvi-am
 
@@ -16481,9 +16259,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-		-rm -f client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-ipc-shim.Po
-	-rm -f client/nanopipe-adaptor/$(DEPDIR)/nanopipe_adaptor-nanopipe.Po
-	-rm -f client/src/$(DEPDIR)/bin_tests_test_async-ipc-shim.Po
+		-rm -f client/src/$(DEPDIR)/bin_tests_test_async-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_audio_capturer-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_audio_playout-ipc-shim.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_buffer_control-ipc-shim.Po
@@ -16559,15 +16335,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-precise-generator.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_source-video-source.Po
 	-rm -f client/src/$(DEPDIR)/bin_tests_test_video_stream-ipc-shim.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-client.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-config.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-frame-io.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-ipc-shim.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-main.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-precise-generator.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-renderer.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-stat-collector.Po
-	-rm -f client/src/$(DEPDIR)/ndnrtc_client-video-source.Po
 	-rm -f contrib/docopt/$(DEPDIR)/frame_fetcher-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/ndnrtc_codec-docopt.Po
 	-rm -f contrib/docopt/$(DEPDIR)/ndnrtc_stream-docopt.Po
@@ -17158,7 +16925,8 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-helpersincludeHEADERS \
-	uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS
+	uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS \
+	uninstall-protoincludeHEADERS
 
 .MAKE: check-am install-am install-strip
 
@@ -17176,14 +16944,15 @@ uninstall-am: uninstall-binPROGRAMS uninstall-helpersincludeHEADERS \
 	install-helpersincludeHEADERS install-html install-html-am \
 	install-info install-info-am install-libLTLIBRARIES \
 	install-man install-pdf install-pdf-am \
-	install-pkgincludeHEADERS install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am recheck tags tags-am uninstall \
-	uninstall-am uninstall-binPROGRAMS \
-	uninstall-helpersincludeHEADERS uninstall-libLTLIBRARIES \
-	uninstall-pkgincludeHEADERS
+	install-pkgincludeHEADERS install-protoincludeHEADERS \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	recheck tags tags-am uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-helpersincludeHEADERS \
+	uninstall-libLTLIBRARIES uninstall-pkgincludeHEADERS \
+	uninstall-protoincludeHEADERS
 
 .PRECIOUS: Makefile
 
@@ -17194,7 +16963,6 @@ uninstall-am: uninstall-binPROGRAMS uninstall-helpersincludeHEADERS \
 	else \
 	  $(PROTOC) --proto_path=$(dir $<) --cpp_out=$(dir $<) $< ; \
 	fi
-@HAVE_NANOMSG_TRUE@ # nanopipe.c ipc-shim.c -std=c++11 -I/usr/local/include -L/usr/local/lib -lnanomsg -onanopipe
 
 res/test-source-1280x720.argb:
 	mkdir -p $(top_builddir)/res/

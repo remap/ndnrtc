@@ -175,8 +175,8 @@ if test "$build_os" == "$host_os"; then
 			],
 			[
 				ndn::ptr_lib::shared_ptr<int> ptrlibPtr(new int(5));
-				std::shared_ptr<int> boostPtr(new int(6));
-				ptrlibPtr = boostPtr;
+				std::shared_ptr<int> stdPtr(new int(6));
+				ptrlibPtr = stdPtr;
 			]
 		)],
 		[AC_MSG_RESULT([yes])],
